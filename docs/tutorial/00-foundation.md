@@ -209,3 +209,90 @@ pnpm add -D vitest
 **Learned / decided:**
 
 - `tsc -b` type-checks test files too, because `tsconfig.app.json` includes all of `src/`. A type error in a test fails the build, the same as one in game code.
+
+---
+
+## Step 5: Lint, including folder boundaries
+
+**What:** add ESLint with general TypeScript and React rules, plus rules that enforce which folders may import from which (standard §9).
+
+**Why:** standard §12 makes lint one of the five CI checks. The boundary rules are what keep the project extendable: if a game could import another game, or the SDK could reach into a game, you could no longer add or remove a game without breaking others.
+
+### Choosing the linter
+
+The Vite template now ships **oxlint** (a very fast linter written in Rust) instead of ESLint. We tried oxlint first, using its `no-restricted-imports` rule for the boundaries, on a set of fake files. It caught every real violation, but it also flagged correct code: `games/charades/views/v.ts` importing `../../../sdk/x` was reported as "a game imports another game". That rule only looks at the import *text*, so the result depends on how deep the importing file is. It also needed a separate config block for every game, and couldn't express "app/ touches games only through the registry".
+
+We chose **ESLint + `eslint-plugin-boundaries`**. That plugin follows each import to the real file, works out which folder (element) the file belongs to, and checks the pair against a list of allowed pairs. "Same game only" is one rule that covers every future game. Speed doesn't matter at this size.
+
+No formatter (Prettier) for now: it isn't one of the CI checks. We'll add one if contributors' code styles start to differ.
+
+### Packages
+
+```bash
+pnpm add -D eslint @eslint/js typescript-eslint eslint-plugin-react-hooks eslint-plugin-boundaries eslint-import-resolver-typescript
+```
+
+| Package | What it's for |
+|---|---|
+| `eslint` | The linter itself. |
+| `@eslint/js` | ESLint's recommended rules for JavaScript (e.g. unreachable code, duplicate keys). |
+| `typescript-eslint` | Lets ESLint read TypeScript, plus recommended TypeScript rules (e.g. no `any`). |
+| `eslint-plugin-react-hooks` | Rules for React hooks: called in the same order every render, effects list their dependencies. |
+| `eslint-plugin-boundaries` | The folder boundary rules. |
+| `eslint-import-resolver-typescript` | Lets the boundaries plugin follow a TypeScript import to the file it really points at. |
+
+pnpm 10 doesn't run packages' install scripts unless you allow them, and it warned about one: `unrs-resolver` (used by the import resolver). It ships prebuilt binaries and its script is only a fallback, so we listed it under `ignoredBuiltDependencies` in a new `pnpm-workspace.yaml`. That file holds pnpm settings; despite the name, this is not a monorepo (D9). Putting the setting in `package.json` under `"pnpm"` had no effect in pnpm 10.20.
+
+### The config: `eslint.config.js`
+
+ESLint reads a list of config blocks, applied in order:
+
+1. `globalIgnores(['dist'])`: don't lint build output.
+2. `js.configs.recommended`, `tseslint.configs.recommended`, `reactHooks.configs.flat.recommended`: the general rule sets.
+3. The boundaries block, which has two parts.
+
+**Elements:** each folder that matters gets a type. The first matching pattern wins.
+
+| Type | Pattern |
+|---|---|
+| `registry` | `src/app/registry` |
+| `app` | `src/app` |
+| `sdk` | `src/sdk` |
+| `ui` | `src/ui` |
+| `game` | `src/games/*`, capturing the folder name as `gameId` |
+
+**Policies:** `default: 'disallow'` makes any import between elements an error unless a policy allows it. The policies are the table in standard §9. "Same game only" is:
+
+```js
+allow: { to: { element: { type: 'game', captured: { gameId: '{{from.element.captured.gameId}}' } } } }
+```
+
+In words: a game may import a game only if the target's `gameId` equals the importer's `gameId`.
+
+### Decided along the way
+
+- **The registry is a folder, `src/app/registry/`, not a file.** The plugin's element patterns match folders; a file pattern needs a deprecated option. A folder also leaves room for the registry to grow.
+- **`ui/` imports only `ui/`.** The standard didn't say. `ui/` holds the lowest-level components (button, dialog), so letting it import the SDK would let it depend on the code built on top of it. Added to standard §9.
+- **npm packages are allowed everywhere.** The plugin's `default: 'disallow'` only applies between our own folders.
+
+### Files changed
+
+- `eslint.config.js` (new)
+- `pnpm-workspace.yaml` (new)
+- `package.json`: `"lint": "eslint ."` and the six packages; `pnpm-lock.yaml`
+- `docs/game-standard.md` §9: the boundaries as a table, with the `ui/` rule and `app/registry/`
+- `README.md`: `pnpm lint` in the Development commands
+
+### How to verify
+
+1. `pnpm lint` passes with no output.
+2. Break a boundary on purpose. Create `src/sdk/probe.ts` containing `import App from '../app/App'` and `export default App`, then run `pnpm lint`. It should fail with `There is no policy allowing dependencies from elements of type "sdk" to elements of type "app"`. Delete the file.
+3. Check the general rules: put `export const y: any = 1` in any `.ts` file under `src/`; `pnpm lint` should report `Unexpected any`. Remove it.
+
+We ran a fuller check while building this step: temporary files importing in every direction produced exactly the six expected errors (app → game, game → other game, game → app, sdk → game, sdk → app, ui → sdk) and none for the allowed imports (same game, game → sdk/ui from a deep subfolder, app → registry → game, React).
+
+The standard says "no `any` without a comment explaining why". The way to allow one is an inline disable with a reason after `--`:
+
+```ts
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- third-party callback is untyped
+```

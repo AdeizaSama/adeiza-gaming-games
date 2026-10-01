@@ -50,6 +50,7 @@ You need [Node.js](https://nodejs.org/) 20.19+ or 22.12+ and pnpm 10.
 pnpm install    # install dependencies
 pnpm dev        # start the dev server
 pnpm test       # run the tests once (pnpm test:watch re-runs on save)
+pnpm lint       # check code style and folder boundaries
 pnpm build      # type-check and build to dist/
 pnpm preview    # serve the production build locally
 ```

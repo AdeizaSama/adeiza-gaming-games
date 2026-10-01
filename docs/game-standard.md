@@ -217,7 +217,8 @@ Out of scope for v1: multiplayer or multi-device play; accounts, backends or any
 
 ```
 src/
-  app/                 app shell: routing, library page, setup flow, persistence, registry
+  app/                 app shell: routing, library page, setup flow, persistence
+    registry/          the list of games; the only part of app/ that imports games
   sdk/                 defineGame, machine runner (machine/), Rng, formats (formats/)
     interactions/      shared phase primitives (§6)
   ui/                  low-level components (button, dialog, …). Only what's used.
@@ -238,11 +239,17 @@ docs/decisions/        decision records
 .github/               CI, PR template, issue templates, CODEOWNERS
 ```
 
-**Boundaries** (enforced by lint):
+**Boundaries** (enforced by `pnpm lint`; anything not listed is an error):
 
-- `games/*` may import from `sdk/` and `ui/` only. A game never imports another game.
-- `sdk/` never imports from `games/` or `app/`.
-- `app/` only touches games through the registry.
+| Folder | May import from |
+|---|---|
+| `games/<id>/` | its own folder, `sdk/`, `ui/`. A game never imports another game. |
+| `sdk/` | `sdk/`, `ui/`. Never `games/` or `app/`. |
+| `ui/` | `ui/` only. |
+| `app/` | `app/`, `app/registry/`, `sdk/`, `ui/`. Never a game directly. |
+| `app/registry/` | `games/`, `sdk/`. |
+
+Packages from npm (React, zod, …) are allowed everywhere.
 
 ## 10. Content packs
 
