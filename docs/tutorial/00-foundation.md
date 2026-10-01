@@ -416,3 +416,60 @@ The standard says `main` is protected. GitHub enforces that through a setting, w
 - Block force pushes.
 
 Note: GitHub doesn't let you approve your own PR. While you're the only maintainer, either leave the required approvals at 0 (CI still has to pass), or add yourself to the ruleset's bypass list.
+
+---
+
+## Step 10: Deploy to Vercel
+
+**What:** publish the app at `https://www.kuzowasa.com`, rebuilt automatically on every change to `main`, with a preview link for every pull request.
+
+**Why:** Phase 0 is done when the empty app deploys and CI is green. Deploying now, while the app is one heading, means every later problem is a code problem, not a hosting one.
+
+This step happens in the Vercel and DNS dashboards, not in code. The only repo change is the live link in the README.
+
+### Why Vercel's GitHub connection, not a deploy workflow
+
+We could deploy from GitHub Actions, but that needs a Vercel access token stored as a GitHub secret. Vercel's own GitHub connection needs no secrets in the repo, and it adds a preview deployment (with a link commented on the PR) for every pull request. It can deploy before CI finishes, but that doesn't matter: `main` only accepts changes that passed CI.
+
+### Steps
+
+1. **Vercel → Add New → Project → Import** the GitHub repo. When the Vercel GitHub app asks for access, give it **only this repository**.
+2. **Build settings:** leave them as detected. Vercel recognises Vite, sees `pnpm-lock.yaml` and uses pnpm, runs `pnpm run build`, and serves the `dist` folder. No environment variables.
+3. **Deploy.** Vercel gives the project a `*.vercel.app` address.
+4. **Domains:** Project → **Settings → Domains**, add `kuzowasa.com` and `www.kuzowasa.com`. Vercel makes `www` the main address and redirects the bare domain to it (HTTP 308, a permanent redirect).
+5. **DNS** at the registrar (Porkbun here). Vercel shows the exact records to add:
+   - `www`: a `CNAME` to the project-specific target Vercel shows (e.g. `xxxxxxxx.vercel-dns-016.com`).
+   - The bare domain: an `A` record to the IP Vercel shows.
+
+### Problem: the registrar's parking records
+
+Porkbun creates two records on every new domain to show its "parked" page: an `ALIAS` on the bare domain and a wildcard `CNAME` (`*.`), both pointing to `uixie.porkbun.com`. The `ALIAS` can't be edited, and a bare domain can't have an `ALIAS` and an `A` record at once, so Vercel's `A` record clashes with it.
+
+**Fix:** delete both parking records (or turn off the domain's URL forwarding/parking, which removes them), then add the `A` record. Leave the `MX` and `SPF` (`TXT`) records alone: they run the registrar's email forwarding.
+
+### Files changed
+
+- `README.md`: a link to the live site under the subtitle.
+
+### How to verify
+
+1. `https://www.kuzowasa.com` shows "Ku Zo Wasa" and "Party games for one phone." with a valid HTTPS padlock.
+2. `https://kuzowasa.com` redirects to `https://www.kuzowasa.com`.
+3. Open a PR: a Vercel comment appears with a preview link for that PR.
+4. From a terminal, the redirect is visible as a `308` with a `location` header:
+
+   ```bash
+   curl -sI https://kuzowasa.com
+   ```
+
+New DNS records can take from minutes to a few hours to be seen everywhere ("propagation"). If one network can't load the site but another can, wait before changing anything.
+
+### Not yet needed: `vercel.json`
+
+There's one page and no routes, so Vercel needs no config file. When the app gets routes (e.g. `/charades`), refreshing on such a URL would return a 404: the host looks for a file at that path and there isn't one. That needs a one-line rewrite rule in `vercel.json`, added in the chapter that adds routing, where it can be tested.
+
+---
+
+## Chapter 00 done
+
+The app builds, deploys, and every PR is checked for types, lint (including folder boundaries), tests and build. Next: chapter 01, the SDK and Charades.

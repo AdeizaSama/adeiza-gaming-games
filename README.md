@@ -1,6 +1,6 @@
 # Ku Zo Wasa
 
-**Party games for one phone.**
+**Party games for one phone.** Play at **[kuzowasa.com](https://www.kuzowasa.com)**.
 
 An open-source library of **single-device party games**: charades, name ten, trivia, mafia and more. Pass one phone around the room, or let one person host. No accounts, no app install, no setup beyond picking teams.
 
