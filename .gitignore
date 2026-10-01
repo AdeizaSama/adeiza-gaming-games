@@ -1,2 +1,9 @@
-*.env
+# Dependencies and build output
+node_modules/
+dist/
+
+# Environment files. The site needs none; never commit them.
+.env*
+
+# Private maintainer and agent notes
 AGENTS.md
