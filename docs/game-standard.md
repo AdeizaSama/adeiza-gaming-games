@@ -287,7 +287,7 @@ One file per pack: `src/games/<id>/content/<pack-id>.json`.
 
 **Checks on every pull request (all required):** typecheck · lint · test · validate-content · build.
 
-- `main` is protected. All changes via pull request, squash-merged.
+- `main` is protected. All changes via pull request. Pull requests are squash-merged by default; they are rebase-merged only when every commit is meaningful on its own and follows Conventional Commits.
 - [Conventional Commits](https://www.conventionalcommits.org/) (`feat(charades): …`, `content(charades): …`, `fix(sdk): …`).
 - TypeScript `strict`. No `any` without a comment explaining why.
 - Every machine has a test that plays a full game from the initial phase to a final phase with a seeded `Rng`, plus tests for each guard and action.

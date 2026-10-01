@@ -56,6 +56,7 @@ Themes are JSON files of design tokens (colors for light and dark mode, fonts, c
 
 - Every pull request must pass: type checking, linting, tests, content validation and a production build.
 - Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/): `feat(charades): …`, `content(name-ten): …`, `fix(sdk): …`.
+- Pull requests are usually squash-merged into one commit, so your branch commits don't need to be tidy. The PR title becomes the commit message, so make the title follow Conventional Commits.
 - Changes to the shared SDK or the content pack format affect every game, so they need a short decision record in `docs/decisions/`.
 - A new runtime dependency must be justified in the pull request description.
 
