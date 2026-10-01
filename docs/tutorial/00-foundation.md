@@ -123,3 +123,48 @@ pnpm build
 
 - `pnpm build` runs `tsc -b` first, so a type error fails the build. CI gets type checking for free, though step 9 will also add a separate `typecheck` script so the failure is labelled clearly.
 - TypeScript 7 (the native rewrite) is out, but the template pins TypeScript 6. We stay on 6 until the Vite tooling supports 7.
+
+---
+
+## Step 3: Add Tailwind CSS v4
+
+**What:** install Tailwind and use a few of its classes on the page, to prove it works.
+
+**Why:** decision D6 (stack). Tailwind v4 keeps its design values (colors, spacing, font sizes) in CSS variables, the same approach our themes will use (standard §11): a theme JSON file becomes a set of CSS variables, and components read the variables.
+
+**What changed from Tailwind v3:** if you've used Tailwind before, v4 has no `tailwind.config.js` and no PostCSS setup. You add a Vite plugin and one line of CSS. Tailwind scans the source files itself to find which classes you used.
+
+**Commands:**
+
+```bash
+pnpm add -D tailwindcss @tailwindcss/vite
+```
+
+Both are dev dependencies: Tailwind runs at build time and outputs plain CSS. Nothing from it ships to the browser except that CSS.
+
+**Files changed:**
+
+| File | Change |
+|---|---|
+| `vite.config.ts` | Added the `tailwindcss()` plugin next to `react()`. |
+| `src/app/index.css` (new) | One line: `@import "tailwindcss";`. This brings in Tailwind's reset (called Preflight), its default design values and its utility classes. It lives in `src/app/` because global styles belong to the app shell. |
+| `src/main.tsx` | Imports `./app/index.css` once, so the styles apply to the whole app. |
+| `src/app/App.tsx` | Centers the heading and subtitle with Tailwind classes. |
+| `package.json`, `pnpm-lock.yaml` | The two new packages. |
+
+**About the classes on the page:**
+
+- `min-h-dvh`: at least the full screen height. `dvh` ("dynamic viewport height") follows the visible area as a phone's address bar shows and hides; `vh` doesn't, which causes content to jump or be cut off on mobile.
+- `flex flex-col items-center justify-center gap-2`: stack the children and center them.
+- `p-4`: 16px padding, so text never touches the screen edge on a 360px phone.
+- We deliberately used **no color classes**. Colors will come from theme variables (standard §11: "components use variables, never raw colors"). That's Phase 2, so this page stays black on white until then.
+
+**How to verify:**
+
+1. `pnpm build` now produces a `dist/assets/index-*.css` file (about 6 kB).
+2. `pnpm dev`, then open the page: "Ku Zo Wasa" is large and bold, and both lines are centered in the middle of the screen. The browser's default margin around the page is gone (that's Preflight).
+3. In the browser's dev tools, turn on a phone-sized view (360px wide). The text should stay centered with space on both sides.
+
+**Learned / decided:**
+
+- No shadcn/Radix components yet. D6 says "a minimal subset", so each component is added when a screen first needs it, not up front.
