@@ -168,3 +168,44 @@ Both are dev dependencies: Tailwind runs at build time and outputs plain CSS. No
 **Learned / decided:**
 
 - No shadcn/Radix components yet. D6 says "a minimal subset", so each component is added when a screen first needs it, not up front.
+
+---
+
+## Step 4: Add Vitest
+
+**What:** install Vitest, add `test` scripts, and add one throwaway test that proves the runner works.
+
+**Why:** decision D6 (Vitest), and standard §12: every machine needs a full-playthrough test plus a test for each guard and action. Tests are one of the five CI checks, so the runner has to exist before CI (step 9).
+
+**Why Vitest:** it reuses `vite.config.ts`, so tests see the same TypeScript and import setup as the app with no separate config. It runs in Node by default, which is all our machine tests need: guards and actions are pure functions with no DOM (standard §4).
+
+**Commands:**
+
+```bash
+pnpm add -D vitest
+```
+
+**Files changed:**
+
+| File | Change |
+|---|---|
+| `package.json` | `"test": "vitest run"` runs every test once and exits (for CI and before committing). `"test:watch": "vitest"` re-runs tests as you save (for working locally). Plus the new dev dependency. |
+| `src/app/smoke.test.ts` (new) | One test: `1 + 1` is `2`. It only proves the runner works. Delete it when the first real test lands (the Rng tests in chapter 1). |
+| `pnpm-lock.yaml` | The new package. |
+| `README.md` | Added `pnpm test` to the Development commands. |
+
+**Conventions this sets:**
+
+- Test files sit next to the code they test and end in `.test.ts` (e.g. `machine.ts` → `machine.test.ts`, standard §9). Vitest finds them on its own.
+- Tests import `describe`, `it` and `expect` from `vitest` explicitly rather than using globals. That way each file shows where those names come from, and TypeScript needs no extra setup.
+- No DOM testing setup (jsdom, Testing Library) yet. We add it when a view first needs a test, not before.
+
+**How to verify:**
+
+1. `pnpm test` reports `1 passed`.
+2. Change `toBe(2)` to `toBe(3)` and run `pnpm test` again. It should fail with `expected 2 to be 3`. Change it back. (A test runner you've never seen fail hasn't been proven to work.)
+3. `pnpm build` still passes, and `dist/` has no test code in it: tests are never imported by `main.tsx`, so Vite leaves them out.
+
+**Learned / decided:**
+
+- `tsc -b` type-checks test files too, because `tsconfig.app.json` includes all of `src/`. A type error in a test fails the build, the same as one in game code.
