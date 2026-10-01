@@ -44,7 +44,14 @@ You can add content, add a theme, or add a game. Only adding a game needs code. 
 
 Built with Vite, React, TypeScript, Tailwind CSS and Vitest. Uses [pnpm](https://pnpm.io/).
 
-*Setup and run instructions will be added once the project is scaffolded.*
+You need [Node.js](https://nodejs.org/) 20.19+ or 22.12+ and pnpm 10.
+
+```bash
+pnpm install    # install dependencies
+pnpm dev        # start the dev server
+pnpm build      # type-check and build to dist/
+pnpm preview    # serve the production build locally
+```
 
 ## License
 

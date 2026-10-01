@@ -52,3 +52,74 @@ We also trimmed `README.md` and fixed `.gitignore`.
 - Added contributor credit to the game definition: `meta.contributors` (the game) and `presets[].contributors` (each variant), both lists of GitHub handles. A preset example now shows the full variant shape: `id`, `name`, `contributors`, `config` overrides and `packs`.
 - Content packs credit their writers with `contributors` too (renamed from `authors`), so there is one word for credit at every level.
 - Added `schemas/` (generated JSON Schemas) to the repo layout. The content pack example already pointed there, but the layout didn't list it.
+
+---
+
+## Step 2: Scaffold the app with Vite
+
+**What:** the smallest app that builds: Vite + React + TypeScript (strict), installed with pnpm. It renders the name and subtitle, nothing else. No styling, linting or tests yet; each of those gets its own step.
+
+**Why:** decisions D6 (stack) and D7 (pnpm). Every later step needs a project that installs and builds.
+
+**How we did it:** rather than running the generator in the repo and deleting half its output, we generated the official template somewhere else and copied in only what we need, so every file in the repo is one we chose:
+
+```bash
+npx create-vite@9.2.1 vite-ref --template react-ts
+```
+
+That gave Vite 8, React 19 and TypeScript 6.
+
+**Kept from the template:**
+
+| File | What it's for |
+|---|---|
+| `vite.config.ts` | Vite's config. For now it only adds the React plugin (JSX, fast refresh). Unchanged. |
+| `tsconfig.json` | The root TypeScript config. It holds no settings itself; it points to the two below, so `tsc -b` checks both. Unchanged. |
+| `tsconfig.app.json` | Settings for the code that runs in the browser (`src/`). We added `"strict": true`. |
+| `tsconfig.node.json` | Settings for code that runs in Node (here just `vite.config.ts`). We added `"strict": true`. |
+| `index.html` | The page Vite serves. It loads `src/main.tsx`. Title set to "Ku Zo Wasa"; the favicon link removed (no icon yet). |
+| `src/main.tsx` | Entry point: mounts React into `<div id="root">`. Imports `App` from `src/app/` instead of `src/`, to match our repo layout. |
+| `src/app/App.tsx` | The app shell (standard §9). Replaced the template's demo page with a heading and subtitle. |
+| `package.json` | Renamed to `adeiza-gaming-games`. Added `"packageManager": "pnpm@10.20.0"` so tools (and Corepack) know which pnpm this repo uses (D7). |
+
+**Why `strict` is set explicitly:** TypeScript 6 turns `strict` on by default (we checked: a bare config with no `strict` still rejects an implicit `any`), so the template leaves it out. We set it anyway so the rule (standard §12) is visible in the file, and doesn't depend on a default that someone reading the config has to know.
+
+**Dropped from the template:**
+
+| File | Why |
+|---|---|
+| `README.md` | We have our own. |
+| `.oxlintrc.json` and the `oxlint` dependency | Linting is step 5, and it has to enforce our folder boundaries. We'll choose the linter there. |
+| `src/App.css`, `src/index.css` | Styling comes with Tailwind in step 3. |
+| `src/assets/*`, `public/*` | Vite and React logos, a demo image, an icon sprite. None of it is ours. |
+| Template `.gitignore` | We merged its useful lines into ours (`*.log`, editor folders, `.DS_Store`). |
+
+**Commands:**
+
+```bash
+pnpm install
+```
+
+```bash
+pnpm build
+```
+
+`pnpm install` also creates `pnpm-lock.yaml`: the exact version of every package installed. It's committed so every machine and CI installs the same thing (D7: single lockfile).
+
+**Files changed:**
+
+- `package.json`, `pnpm-lock.yaml`, `index.html`, `vite.config.ts`, `tsconfig.json`, `tsconfig.app.json`, `tsconfig.node.json` (new)
+- `src/main.tsx`, `src/app/App.tsx` (new)
+- `.gitignore`
+- `README.md` (the Development section now has the real setup commands)
+
+**How to verify:**
+
+1. `pnpm build` finishes with no errors and creates `dist/index.html` and a `dist/assets/index-*.js` file.
+2. `pnpm dev`, then open the URL it prints. You should see "Ku Zo Wasa" and "Party games for one phone." on a plain white page.
+3. Strict mode check: in `src/app/App.tsx`, add `function f(x) { return x }` and run `pnpm build`. It should fail with `TS7006: Parameter 'x' implicitly has an 'any' type` (plus an unused-function error). Remove the line afterwards.
+
+**Learned / decided:**
+
+- `pnpm build` runs `tsc -b` first, so a type error fails the build. CI gets type checking for free, though step 9 will also add a separate `typecheck` script so the failure is labelled clearly.
+- TypeScript 7 (the native rewrite) is out, but the template pins TypeScript 6. We stay on 6 until the Vite tooling supports 7.
