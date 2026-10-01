@@ -1,0 +1,51 @@
+name: Game proposal
+description: Propose a new game. Start here before writing code.
+labels: ["game proposal"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Every game must fit an existing format (see [Game Standard §7](https://github.com/AdeizaSama/adeiza-gaming-games/blob/main/docs/game-standard.md#7-formats)). A game that fits none is welcome as a proposal: it becomes the evidence for a new format, but it waits until that format exists.
+  - type: input
+    id: name
+    attributes:
+      label: Game name
+    validations:
+      required: true
+  - type: textarea
+    id: rules
+    attributes:
+      label: Rules
+      description: How is it played on one phone? Who holds the phone, what happens in a turn, how are points scored, how does it end?
+    validations:
+      required: true
+  - type: dropdown
+    id: format
+    attributes:
+      label: Format
+      options:
+        - team-turns
+        - host-led
+        - None fits
+    validations:
+      required: true
+  - type: textarea
+    id: content-item
+    attributes:
+      label: Content item
+      description: What does one item of content look like?
+      render: json
+      placeholder: '{ "category": "Things in a kitchen", "tags": ["home"] }'
+    validations:
+      required: true
+  - type: textarea
+    id: interaction
+    attributes:
+      label: Screens
+      description: Which shared interaction primitives would the turn use (FlashCard, PromptCard, MultipleChoice, …)? Does it need anything new?
+  - type: checkboxes
+    id: building
+    attributes:
+      label: Building it
+      options:
+        - label: I'd like to build this game myself.

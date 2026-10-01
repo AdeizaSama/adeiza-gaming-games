@@ -1,0 +1,6 @@
+# pnpm settings for this repo (not a monorepo: there are no workspace packages).
+
+# Packages whose install scripts we choose not to run. pnpm blocks them by default and warns until each one is listed here or approved.
+# unrs-resolver (used by the ESLint import resolver) ships prebuilt binaries; its script is only a fallback. Lint works without it.
+ignoredBuiltDependencies:
+  - unrs-resolver

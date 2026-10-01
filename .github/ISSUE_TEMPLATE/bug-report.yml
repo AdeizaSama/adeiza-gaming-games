@@ -1,0 +1,32 @@
+name: Bug report
+description: Something doesn't work as expected.
+labels: ["bug"]
+body:
+  - type: input
+    id: game
+    attributes:
+      label: Game
+      description: Which game, or "library" if it's outside a game.
+      placeholder: Charades
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Start Charades with 2 teams
+        2. Tap "Got it" during the turn
+        3. ...
+  - type: input
+    id: device
+    attributes:
+      label: Device and browser
+      placeholder: Pixel 8, Chrome 130
