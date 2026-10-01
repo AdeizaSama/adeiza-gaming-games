@@ -1,0 +1,45 @@
+name: Content suggestion
+description: Suggest words, categories or questions for a game, without editing files.
+labels: ["content"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Comfortable editing a JSON file? You can open a pull request directly instead. See [CONTRIBUTING.md](https://github.com/AdeizaSama/adeiza-gaming-games/blob/main/CONTRIBUTING.md). Suggestions here are licensed under CC BY 4.0, like the rest of the content.
+  - type: input
+    id: game
+    attributes:
+      label: Game
+      placeholder: Charades
+    validations:
+      required: true
+  - type: input
+    id: pack
+    attributes:
+      label: Pack
+      description: An existing pack to add to, or a name for a new one.
+      placeholder: Anime
+    validations:
+      required: true
+  - type: dropdown
+    id: maturity
+    attributes:
+      label: Maturity
+      options:
+        - everyone
+        - teen
+        - adult
+    validations:
+      required: true
+  - type: textarea
+    id: items
+    attributes:
+      label: Items
+      description: One per line. No private individuals, nothing hateful, text only.
+    validations:
+      required: true
+  - type: input
+    id: credit
+    attributes:
+      label: How should we credit you?
+      description: Your GitHub handle, added to the pack's contributors.

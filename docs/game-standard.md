@@ -4,7 +4,7 @@ The contract every game, content pack and theme in Ku Zo Wasa follows. If you're
 
 > **Status:** the standard is settled; the code that implements it is being built now. The tooling that enforces it (CI, lint rules, content validation) is part of that work. Where this document and the code disagree, open an issue.
 
-Changes to this standard, the SDK (`src/sdk/`) or the content pack format need a decision record in `docs/decisions/NNNN-title.md` (context, decision, consequences). These are the contracts every contributor builds on.
+Changes to this standard, the SDK (`src/sdk/`) or the content pack format need a decision record in [`docs/decisions/`](decisions/README.md) (context, decision, consequences). These are the contracts every contributor builds on.
 
 ---
 

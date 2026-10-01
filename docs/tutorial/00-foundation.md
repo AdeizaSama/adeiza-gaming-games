@@ -296,3 +296,61 @@ The standard says "no `any` without a comment explaining why". The way to allow 
 ```ts
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- third-party callback is untyped
 ```
+
+---
+
+## Steps 6–8: Licenses, templates and the first decision record
+
+Three writing-only steps, done together.
+
+### Step 6: License files
+
+**What:** `LICENSE` (MIT, for code) and `LICENSE-CONTENT.md` (CC BY 4.0, for content packs).
+
+**Why:** decision D8. A public repo with no license file is "all rights reserved" by default: nobody may legally reuse or contribute to it, whatever the README says.
+
+- `LICENSE` is the standard MIT text, unchanged except the copyright line: `Copyright (c) 2026 Ku Zo Wasa contributors`. GitHub reads this file to show "MIT" on the repo page. We kept it as the exact MIT text, with nothing appended, so GitHub recognises it.
+- `LICENSE-CONTENT.md` says which files are CC BY 4.0 (`src/games/*/content/*.json`), links to the official legal text, and shows how to credit a pack using its `contributors` field.
+- The README's License section now links to both files.
+
+### Step 7: Pull request and issue templates
+
+**What:** a PR template and three issue forms in `.github/`.
+
+**Why:** standard §12 and the Definition of Done are long. A checklist in every PR puts the relevant parts in front of the contributor at the moment it matters.
+
+| File | Purpose |
+|---|---|
+| `.github/pull_request_template.md` | Pre-fills every PR: what and why, type of change, and checklists for content, games and SDK changes. Contributors delete the sections that don't apply. |
+| `.github/ISSUE_TEMPLATE/bug-report.yml` | Game, what happened, steps, device. |
+| `.github/ISSUE_TEMPLATE/game-proposal.yml` | Rules, format (with "None fits" as an option), a content item example, which primitives the turn uses. The standard says to open this before writing a game. |
+| `.github/ISSUE_TEMPLATE/content-suggestion.yml` | For people who'd rather not edit JSON: game, pack, maturity, items, and how to credit them. |
+| `.github/ISSUE_TEMPLATE/config.yml` | Keeps blank issues allowed, for anything that fits no form. |
+
+The issue templates are **issue forms** (YAML): GitHub shows them as real form fields (inputs, dropdowns, checkboxes) rather than a block of Markdown to edit. That's friendlier for non-coders.
+
+Links in the templates are absolute GitHub URLs: a relative link in a PR or issue body is resolved against the PR's page, not the repo, so it breaks.
+
+### Step 8: ADR 0001, the Game Standard
+
+**What:** `docs/decisions/0001-game-standard.md` and `docs/decisions/README.md`.
+
+**Why:** standard §12 says changes to the SDK or the content pack format need a decision record. The standard itself is the first one, and it records the decisions made in this chapter: the contributor fields, the boundary rules, ESLint over oxlint, and the rename to Ku Zo Wasa.
+
+- **The record** has four parts: status, context (the problem), decision (what we chose, including what we rejected and why), consequences (what gets easier and harder).
+- **`docs/decisions/README.md`** lists the records and explains how to write the next one. Records aren't edited once accepted; a new record supersedes an old one.
+- The standard's intro now links to the decisions folder.
+
+### Files changed (steps 6–8)
+
+- `LICENSE`, `LICENSE-CONTENT.md` (new)
+- `.github/pull_request_template.md`, `.github/ISSUE_TEMPLATE/*.yml` (new)
+- `docs/decisions/0001-game-standard.md`, `docs/decisions/README.md` (new)
+- `README.md` (License links), `docs/game-standard.md` (link to decisions)
+
+### How to verify
+
+1. After pushing, the GitHub repo page shows "MIT license" in the sidebar.
+2. On GitHub, **Issues → New issue** shows three forms (Bug report, Game proposal, Content suggestion) plus a blank issue.
+3. Opening a PR pre-fills the description with the template.
+4. The issue forms add labels (`bug`, `game proposal`, `content`). GitHub only applies labels that already exist, so create `game proposal` and `content` under **Issues → Labels** (`bug` exists by default).
