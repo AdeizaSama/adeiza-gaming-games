@@ -354,3 +354,65 @@ Links in the templates are absolute GitHub URLs: a relative link in a PR or issu
 2. On GitHub, **Issues → New issue** shows three forms (Bug report, Game proposal, Content suggestion) plus a blank issue.
 3. Opening a PR pre-fills the description with the template.
 4. The issue forms add labels (`bug`, `game proposal`, `content`). GitHub only applies labels that already exist, so create `game proposal` and `content` under **Issues → Labels** (`bug` exists by default).
+
+---
+
+## Step 9: Continuous integration (CI) and CODEOWNERS
+
+**What:** a GitHub Actions workflow that runs the checks on every pull request and every push to `main`, plus a `CODEOWNERS` file.
+
+**Why:** standard §12 lists the checks every PR must pass. Until now they were a promise; CI makes GitHub run them on a clean machine for every change, so "it works on my machine" isn't enough to merge.
+
+### The workflow: `.github/workflows/ci.yml`
+
+| Part | What it does |
+|---|---|
+| `on: pull_request` and `push: branches: [main]` | Runs on every PR, and again on `main` after a merge. |
+| `permissions: contents: read` | CI can read the code but never write to the repo. Least privilege. |
+| `concurrency` with `cancel-in-progress` | If you push twice to a PR quickly, the run for the older commit is cancelled. |
+| `actions/checkout@v7` | Downloads the repo onto the runner. |
+| `pnpm/action-setup@v6` | Installs pnpm. With no version given, it reads `"packageManager": "pnpm@10.20.0"` from `package.json`, so CI and your machine use the same pnpm. |
+| `actions/setup-node@v7` with `cache: pnpm` | Installs Node 22 and caches pnpm's package store between runs, so installs get faster. |
+| `pnpm install --frozen-lockfile` | Installs exactly what's in `pnpm-lock.yaml`. If `package.json` was changed without updating the lockfile, this fails instead of quietly fixing it. |
+| Typecheck → Lint → Test → Build | The checks, as separate named steps, so a failure shows which check failed. |
+
+It's one job with several steps rather than one job per check: the install happens once, and on GitHub the run still shows each step's result.
+
+We added `"typecheck": "tsc -b"` to `package.json`. `pnpm build` already runs `tsc -b`, but a separate step labels a type error as a type error instead of as a build failure.
+
+The action versions (`@v7`, `@v6`) are the current major versions, checked against each action's latest GitHub release while writing this step.
+
+### Not yet in CI: validate-content
+
+Standard §12 lists five checks; CI runs four. `validate-content` checks content packs against their schema, and there are no packs or schemas yet. It's added in chapter 1, with the first Charades pack. The status note at the top of the standard already says the tooling is being built.
+
+### CODEOWNERS: `.github/CODEOWNERS`
+
+One line: `* @AdeizaSama`. Every PR, whatever it touches, automatically requests a review from the maintainer. Later the file can be more specific (e.g. different reviewers for `src/games/*/content/`). It's also what lets branch protection require an owner's approval (below).
+
+### Files changed
+
+- `.github/workflows/ci.yml`, `.github/CODEOWNERS` (new)
+- `package.json`: the `typecheck` script
+- `README.md`: `pnpm typecheck` in the Development commands
+
+### How to verify
+
+1. Locally, run the same steps CI runs:
+
+   ```bash
+   pnpm install --frozen-lockfile && pnpm typecheck && pnpm lint && pnpm test && pnpm build
+   ```
+
+2. Push the branch and open the PR. Under the PR's checks you should see **CI / Checks** running, then passing. Click it to see the four steps.
+3. To see CI fail, push a commit with a type error (e.g. `const n: number = "x"` in `App.tsx`). The Typecheck step should go red and the PR should show the check failing. Then revert the commit.
+
+### After merging: protect `main` (on GitHub)
+
+The standard says `main` is protected. GitHub enforces that through a setting, which the maintainer turns on in **Settings → Rules → Rulesets → New branch ruleset** (or the older **Settings → Branches → Add rule**), targeting `main`:
+
+- Require a pull request before merging, with **Require review from Code Owners**.
+- Require status checks to pass, and add **Checks** (the job's name). The check only shows up in the list after CI has run at least once.
+- Block force pushes.
+
+Note: GitHub doesn't let you approve your own PR. While you're the only maintainer, either leave the required approvals at 0 (CI still has to pass), or add yourself to the ruleset's bypass list.
