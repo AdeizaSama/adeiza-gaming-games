@@ -190,7 +190,7 @@ pnpm add -D vitest
 | File | Change |
 |---|---|
 | `package.json` | `"test": "vitest run"` runs every test once and exits (for CI and before committing). `"test:watch": "vitest"` re-runs tests as you save (for working locally). Plus the new dev dependency. |
-| `src/app/smoke.test.ts` (new) | One test: `1 + 1` is `2`. It only proves the runner works. Delete it when the first real test lands (the Rng tests in chapter 1). |
+| `src/app/smoke.test.ts` (new) | One test: `1 + 1` is `2`. It only proves the runner works. Delete it when the first real test lands (the Rng tests in chapter 01). |
 | `pnpm-lock.yaml` | The new package. |
 | `README.md` | Added `pnpm test` to the Development commands. |
 
@@ -384,7 +384,7 @@ The action versions (`@v7`, `@v6`) are the current major versions, checked again
 
 ### Not yet in CI: validate-content
 
-Standard §12 lists five checks; CI runs four. `validate-content` checks content packs against their schema, and there are no packs or schemas yet. It's added in chapter 1, with the first Charades pack. The status note at the top of the standard already says the tooling is being built.
+Standard §12 lists five checks; CI runs four. `validate-content` checks content packs against their schema, and there are no packs or schemas yet. It's added in chapter 02 (content packs), together with the pack schema. The status note at the top of the standard already says the tooling is being built.
 
 ### CODEOWNERS: `.github/CODEOWNERS`
 
@@ -472,4 +472,4 @@ There's one page and no routes, so Vercel needs no config file. When the app get
 
 ## Chapter 00 done
 
-The app builds, deploys, and every PR is checked for types, lint (including folder boundaries), tests and build. Next: chapter 01, the SDK and Charades.
+The app builds, deploys, and every PR is checked for types, lint (including folder boundaries), tests and build. Next: [chapter 01, the machine runner](01-machine-runner.md).

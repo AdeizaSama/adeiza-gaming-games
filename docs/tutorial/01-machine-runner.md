@@ -1,8 +1,19 @@
-# 01 — SDK and Charades
+# 01 — Machine runner
 
-**Goal of this chapter:** build the game SDK (random numbers, the machine runner, `defineGame`, the team-turns format and the interaction primitives it needs) and the first game on top of it, Charades, until Charades meets the Definition of Done (standard §13).
+**Goal of this chapter:** build the core of the game SDK: a seeded random number generator, the machine types, `defineMachine` and the runner that plays a machine. The chapter ends when a small test machine plays a full game from start to finish in tests. No screens yet.
 
-**Branch:** `chapter/01-sdk-charades`
+**Branch:** `chapter/01-machine-runner`
+
+**Where this fits.** Phase 1 of the roadmap (the SDK and Charades) is split into four chapters, so each one ends in something that works, is reviewed and is merged before the next builds on it:
+
+| Chapter | Scope | Ends with |
+|---|---|---|
+| **01: Machine runner** (this one) | Rng, machine types, `defineMachine`, the runner, a decision record for the runner API | A test machine plays a full game in tests |
+| 02: Content packs | zod, the pack schema, loading packs, JSON Schema generation, `validate-content` in CI | All five CI checks are real |
+| 03: team-turns format | The format's phases, guards and actions, `defineGame`, the shared interaction primitives, the app shell (library, setup, save and resume) | A placeholder game is playable on a phone |
+| 04: Charades | Item schema, machine, views, first content pack, rules | Charades meets the Definition of Done |
+
+One big chapter would have meant one huge pull request, with the runner's design only tested by Charades at the very end. Split, the runner is merged and used before anything large depends on it.
 
 ---
 
@@ -36,6 +47,6 @@ So:
 
 - `docs/game-standard.md` §12: the merge rule.
 - `CONTRIBUTING.md`: PRs are usually squashed, so branch commits don't need to be tidy, but the PR title must follow Conventional Commits.
-- `docs/tutorial/01-sdk-charades.md` (new, this file).
+- `docs/tutorial/01-machine-runner.md` (new, this file).
 
 **How to verify:** open any PR. The merge button's dropdown offers **Squash and merge** and **Rebase and merge**, and nothing else.
