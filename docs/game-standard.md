@@ -129,8 +129,11 @@ export const machine = defineMachine<CharadesContext, CharadesEvent, CharadesCon
 
 Rules:
 
-- **Guards and actions are pure.** No React, DOM, `Math.random`, `Date.now`, `localStorage`, or I/O. Randomness (`rng`) and time (`now`) are passed in by the runner. This makes every game deterministic and testable. The `Rng` (`src/sdk/rng.ts`) offers `next()` (0 to 1), `int(min, max)` (inclusive) and `shuffle(items)` (returns a shuffled copy); it is seeded, so the same seed always gives the same draws.
-- **Context is serializable** (plain JSON). The app saves `{ phase, context }` so a refresh or accidental back-swipe resumes the game.
+- **Guards and actions are deterministic.** Given the same context, event, `rng` state and `now`, they always give the same result. No React, DOM, `Math.random`, `Date.now`, `localStorage`, or I/O. Randomness (`rng`) and time (`now`) are passed in by the runner. This makes every game repeatable and testable.
+  - **Guards** only read. They never draw from `rng`.
+  - **Actions** return a new context and never change the one they're given. Drawing from `rng` is the one allowed side effect: it moves the random sequence forward, and the runner saves where it is.
+  - The `Rng` (`src/sdk/rng.ts`) offers `next()` (0 to 1), `int(min, max)` (inclusive) and `shuffle(items)` (returns a shuffled copy); it is seeded, so the same seed always gives the same draws.
+- **Context is serializable** (plain JSON). The app saves `{ phase, context, rngState }` so a refresh or accidental back-swipe resumes the game, with the same random draws it would have had.
 - **Events are a discriminated union** (`{ type: "got" } | { type: "skip" } | …`). Views send events; they never change context directly.
 - **Guarded transitions are checked in order;** the first match wins, and a transition with no `when` is the fallback.
 - **Guard and action names are type-checked** against the `guards` and `actions` objects. A typo is a compile error, not a runtime surprise.
