@@ -133,3 +133,77 @@ The line `;[result[i], result[j]] = [result[j], result[i]]` swaps two items. The
 1. `pnpm test` reports `13 passed`.
 2. See the pinning test do its job: in `rng.ts`, change `0x6d2b79f5` to `0x6d2b79f6` and run `pnpm test`. The "known mulberry32 values" test fails. Change it back.
 3. `pnpm lint` and `pnpm typecheck` pass.
+
+---
+
+## Step 3: Machine types
+
+**What:** the TypeScript types that describe a machine (a game's rulebook), in `src/sdk/machine/types.ts`. Types only: nothing runs yet.
+
+**Why:** standard §4 promises that "a typo is a compile error, not a runtime surprise". Writing the types first fixes the shape of a rulebook, and lets us prove that promise before any runner code exists.
+
+### The types, from small to large
+
+| Type | What it is | Charades example |
+|---|---|---|
+| `MachineEvent` | Anything with a `type`. A game lists its events as a union. | `{ type: 'got' } \| { type: 'skip' }` |
+| `Guard` | A function: `({ context, event }) => boolean` | `roundsRemaining` |
+| `Action` | A function: `({ context, event, rng, now }) => Context`. Returns a **new** context. | `scorePoint` |
+| `Transition` | `{ when?, to?, actions? }`: check a guard, run actions, maybe move phase | `{ to: 'turn_summary' }` |
+| `Transitions` | One transition, or a list tried in order (first passing `when` wins) | the `next` event in `turn_summary` |
+| `PhaseDefinition` | `{ interaction, on?, final? }`: one step of the game | `turn` |
+| `MachineDefinition` | The whole rulebook: `initial`, `context`, `phases`, `guards`, `actions` | Charades' machine |
+| `MachineState` | A game in progress: `{ phase, context, rngState }` | what gets saved on refresh |
+
+### How names get checked
+
+`MachineDefinition` takes the names as type parameters:
+
+```ts
+MachineDefinition<Context, Event, Input, Phase, GuardName, ActionName>
+```
+
+`Phase`, `GuardName` and `ActionName` are unions of strings, like `'playing' | 'done'`. Everywhere a rulebook refers to something by name, the type only accepts those strings:
+
+- `initial` and every `to` must be a `Phase`;
+- every `when` must be a `GuardName`;
+- every name in `actions: [...]` must be an `ActionName`;
+- the keys of `on` must be event types;
+- `guards` and `actions` are `Record<Name, …>`, so every name used must also be implemented.
+
+Writing those unions out by hand is tedious. Step 4's `defineMachine` will work them out from the rulebook itself, so game authors never list them.
+
+### Decisions in this step
+
+- **`Input` instead of `config, items, teams`.** The standard's example passes `{ config, items, teams, rng }` to `context`. Those come from the format and content packs (chapters 02 and 03), which don't exist yet. The machine only knows "some input, plus an Rng"; the format decides what the input is.
+- **Guards don't get `rng` or `now`.** A guard is a question about the current state. Letting it draw a random number would make the same question give different answers. The type doesn't offer them, so the rule can't be broken by accident.
+- **Every phase names an `interaction`.** The runner never reads it; the app (chapter 03) uses it to pick the view. It's required because the standard says one phase = one view.
+- **"Pure" became "deterministic".** The Rng changes itself every time it's drawn from, so an action that calls `rng.int()` isn't strictly pure. It is fully repeatable, because the runner creates the Rng from the saved state and saves it again afterwards. Standard §4 now says exactly that: guards only read; actions return new context and may draw from `rng`, nothing else. The alternative, an Rng that returns `[value, nextState]` for every draw, would make every game author pass state around by hand.
+- **Rejected for now: forcing context to be JSON in the type.** A `Context extends Json` constraint sounds right, but TypeScript treats `interface`s as incompatible with such types, which would confuse contributors with errors on correct code. Serializability will be checked by a test instead, once the runner exists.
+
+### Tests: `src/sdk/machine/types.test.ts`
+
+- A tiny dice game ("roll until the score reaches the target") written against the types, with one runtime test that its context, guard and action work together.
+- Seven deliberate mistakes, each marked `// @ts-expect-error`: an unknown initial phase, an unknown event, `to: 'finished'` (no such phase), `actions: ['rolDie']`, `when: 'reachTarget'`, a missing guard, and an action that returns half a context.
+
+**How `@ts-expect-error` works:** it tells TypeScript "the next line must be an error". If it is, the error is silenced. If it isn't (say someone loosens the types), `pnpm typecheck` fails with `Unused '@ts-expect-error' directive`. So these lines are tests for the types themselves. We also checked, with the markers removed, that each line fails for the intended reason and not something else.
+
+**Reading the errors.** A typo inside a transition gives a long message naming the whole type, e.g.:
+
+```
+Type '{ actions: "rolDie"[]; }' is not assignable to type 'Transitions<"playing" | "done", "reachedTarget", "rollDie" | "resetScore"> | undefined'.
+```
+
+Look for your typo (`"rolDie"`) and the list of valid names (`"rollDie" | "resetScore"`). Editors show the same error as a red underline on the typo.
+
+### Files changed
+
+- `src/sdk/machine/types.ts`, `src/sdk/machine/types.test.ts` (new)
+- `docs/game-standard.md` §4: "pure" → "deterministic", guards vs actions, and `rngState` in what the app saves
+
+### How to verify
+
+1. `pnpm typecheck` passes.
+2. Delete one `// @ts-expect-error` line in `types.test.ts` and run `pnpm typecheck`: it fails with the error that line was expecting. Put it back.
+3. In your editor, change `'rollDie'` to `'rollDice'` in the dice machine's `roll` transition: it's underlined red.
+4. `pnpm test` reports `14 passed`.
