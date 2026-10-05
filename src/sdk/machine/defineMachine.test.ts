@@ -109,4 +109,12 @@ export const mistakes = [
       resetScore: () => ({ score: 0 }),
     },
   }),
+  defineDice({
+    ...dice,
+    phases: {
+      ...dice.phases,
+      // @ts-expect-error: a final phase ends the game, so it can't respond to events
+      done: { interaction: 'leaderboard', final: true, on: { reset: { to: 'playing' } } },
+    },
+  }),
 ]

@@ -137,10 +137,12 @@ Rules:
   - The `Rng` (`src/sdk/rng.ts`) offers `next()` (0 to 1), `int(min, max)` (inclusive) and `shuffle(items)` (returns a shuffled copy); it is seeded, so the same seed always gives the same draws.
 - **Context is serializable** (plain JSON). The app saves `{ phase, context, rngState }` so a refresh or accidental back-swipe resumes the game, with the same random draws it would have had.
 - **Events are a discriminated union** (`{ type: "got" } | { type: "skip" } | …`). Views send events; they never change context directly.
-- **Guarded transitions are checked in order;** the first match wins, and a transition with no `when` is the fallback.
+- **Guarded transitions are checked in order;** the first match wins, and a transition with no `when` is the fallback. A transition's actions run in the order listed, each getting the context the previous one returned.
+- **Events a phase doesn't list are ignored.** So is an event whose transitions all have failing guards. The state stays exactly as it was.
 - **Guard and action names are type-checked** against the `guards` and `actions` objects. A typo is a compile error, not a runtime surprise.
 - **Timers:** an action stores `turnEndsAt` in context; the view shows the countdown and sends `time_up`. The machine decides what that means.
-- **Final phases** (`final: true`) end the game; the app reads the result from context.
+- **Final phases** (`final: true`) end the game; the app reads the result from context. A final phase can't list events (it's a type error), and every event after the game ends is ignored.
+- **Running a machine:** `start(machine, { input, seed })` gives the starting state; `send(machine, state, event, { now })` returns the next state without changing the one passed in; `isFinal(machine, state)` says whether the game has ended. All three are in `src/sdk/machine/runner.ts`.
 - Each guard and action stays small and does one thing. Complex rules (e.g. Mafia night resolution) are a composition of small named actions, not one big function.
 
 ## 5. Phases

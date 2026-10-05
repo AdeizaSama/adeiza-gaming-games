@@ -301,3 +301,96 @@ The dice game again, written with `defineMachine` and no name lists.
 1. `pnpm typecheck` passes; `pnpm test` reports `16 passed`.
 2. See `NoInfer` matter: remove `NoInfer<…>` around `ActionName` in `types.ts` (leave `readonly ActionName[]`), then in `defineMachine.test.ts` change the dice game's `'rollDie'` in the `roll` transition to `'rolDie'`. Hover the error: TypeScript now suggests renaming the correct action. Undo both changes.
 3. In your editor, hover `dice` in `defineMachine.test.ts`: the phase, guard and action names appear in its type without anyone having written them.
+
+---
+
+## Step 5: The runner
+
+**What:** the code that plays a machine: `start`, `send` and `isFinal`, in `src/sdk/machine/runner.ts`. Plus a type change so a final phase can't list events.
+
+**Why:** steps 3 and 4 describe a rulebook. The runner is the referee: every time something happens, it reads the rulebook and works out what comes next. Every game uses this same runner (standard §2).
+
+### First: final phases can't list events
+
+`PhaseDefinition` is now one of two shapes:
+
+```ts
+| { interaction: string; on?: { … }; final?: false }   // a playing phase
+| { interaction: string; final: true; on?: never }     // a final phase
+```
+
+A type that is "one of several shapes" is a **union**. `on?: never` means "this property must not be there": `never` is the type with no possible values, so nothing can be assigned to it. Writing `done: { final: true, on: { … } }` is now a red underline, because those events could never run (the game has ended). A new deliberate-mistake test in `defineMachine.test.ts` checks it.
+
+This is the "types" half of the split we chose; the "guard after the fallback" check comes in step 6 as `validateMachine`.
+
+### The three functions
+
+```ts
+start(machine, { input, seed })        // → the starting state
+send(machine, state, event, { now })   // → the next state
+isFinal(machine, state)                // → has the game ended?
+```
+
+State is `{ phase, context, rngState }`: plain data, which is what the app will save. The runner itself keeps nothing between calls. That's why these are plain functions instead of a class with methods: there's no hidden state to lose on refresh.
+
+**`start`** creates an Rng from the seed, asks the machine to build its starting context from the input, and returns the initial phase, that context, and the Rng's position.
+
+**`send`** does four things:
+
+1. **Find the transitions** for this event in the current phase. None, or the phase is final? Return the state unchanged.
+2. **Pick one:** the first transition whose `when` guard passes. A transition with no `when` always passes. None pass? Return the state unchanged.
+3. **Run its actions in order.** Each action gets the context the previous one returned. This is a `reduce`: start with the current context and fold each action over it:
+   ```ts
+   const context = (chosen.actions ?? []).reduce(
+     (current, name) => machine.actions[name]({ context: current, event, rng, now }),
+     state.context,
+   )
+   ```
+4. **Return the new state:** the transition's `to` phase (or the same phase), the new context, and the Rng's new position.
+
+The Rng is recreated from `state.rngState` at the start of every `send`, and its position is saved at the end. Between events, the random sequence exists only as that one number in the state.
+
+**"Unchanged" means the same object.** An ignored event returns the exact state object it was given, not a copy. The app can then tell "nothing happened" with a simple `===` check, and React skips re-rendering.
+
+### Decisions in this step
+
+- **Ignored events are silent.** A view might send an event the current phase doesn't expect: a double tap, a timer firing just as the phase changed. Throwing an error there would crash the game over something harmless. Standard §4 now states the rule.
+- **`now` is passed in, not read by the runner.** The runner never calls `Date.now()` itself; the app passes the time with each event. That keeps the runner deterministic too: tests pass whatever time they like.
+- **`isFinal` takes a loose type** (`{ phases: Record<Phase, { final?: boolean }> }`) instead of the full machine type, because it only needs to look at phases. The app will call it with any game's machine.
+
+### Tests: `src/sdk/machine/runner.test.ts`
+
+A small test machine (not a real game) with events chosen to exercise each part of the runner: adding, two actions in both orders, rolling a die, recording the time, and a three-way guarded `next`.
+
+| Area | Tests |
+|---|---|
+| `start` | Initial phase and context from the input; the Rng position is stored |
+| Transitions | Actions run; no `to` stays in phase; **actions run in listed order** (1 → +1 → ×2 = 4, but 1 → ×2 → +1 = 3); first passing guard wins; the fallback is used when no guard passes |
+| Ignoring | An unlisted event returns **the same object**; every event after the game ends is ignored |
+| Purity | `now` reaches actions; the state passed in is never changed (compared against a deep copy taken before) |
+| Randomness | The Rng position moves when an action draws; draws across events equal one Rng's sequence for that seed; same seed and events give the same results; **saving the state as JSON and loading it continues exactly as without the refresh** |
+| `isFinal` | False while playing, true after reaching `done` |
+
+### Testing the tests
+
+A test that never fails proves nothing, so we broke the runner on purpose and checked which tests caught it:
+
+| Broken on purpose | Caught by |
+|---|---|
+| Last matching transition wins instead of first | "picks the first transition whose guard passes" |
+| Forget to save the Rng's position after an event | At first, only "moves the random sequence forward". |
+
+The second one exposed a weak test. With the position never saved, every roll gives the same number, and "same seed gives same results" still passed, because both runs repeat that number. We added "draws across events equal one Rng's sequence for that seed", which compares the runner's rolls with `createRng(99)`'s own draws. Now two tests catch it.
+
+### Files changed
+
+- `src/sdk/machine/runner.ts`, `src/sdk/machine/runner.test.ts` (new)
+- `src/sdk/machine/types.ts`: `PhaseDefinition` is a union; final phases can't have `on`
+- `src/sdk/machine/defineMachine.test.ts`: a deliberate mistake for a final phase with events
+- `docs/game-standard.md` §4: actions run in order; ignored events; final phases can't list events; the runner's three functions
+
+### How to verify
+
+1. `pnpm test` reports `32 passed`; `pnpm typecheck` and `pnpm lint` pass.
+2. In `runner.ts`, change `candidates.find(` to `candidates.findLast(` and run `pnpm test`: "picks the first transition whose guard passes" fails. Undo it.
+3. In `runner.test.ts`, add `on: { next: { to: 'counting' } }` to the `done` phase: it's underlined red. Undo it.
