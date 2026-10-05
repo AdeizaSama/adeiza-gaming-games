@@ -51,20 +51,31 @@ export type Transitions<Phase extends string, GuardName extends string, ActionNa
   | Transition<Phase, GuardName, ActionName>
   | readonly Transition<Phase, GuardName, ActionName>[]
 
-/** One step of the game. Each phase is shown by one view, chosen by `interaction`. */
-export interface PhaseDefinition<
+/**
+ * One step of the game. Each phase is shown by one view, chosen by `interaction`.
+ *
+ * Either a playing phase, which responds to events, or a final phase, which ends the game.
+ * A final phase can't list events: they would never run, so writing `on` there is a type error.
+ */
+export type PhaseDefinition<
   Event extends MachineEvent,
   Phase extends string,
   GuardName extends string,
   ActionName extends string,
-> {
-  /** Which interaction primitive shows this phase (standard §6), e.g. `'handoff'` or `'flash_card'`. */
-  interaction: string
-  /** The events this phase responds to. Events not listed here are ignored in this phase. */
-  on?: { [Type in Event['type']]?: Transitions<Phase, GuardName, ActionName> }
-  /** A final phase ends the game. */
-  final?: boolean
-}
+> =
+  | {
+      /** Which interaction primitive shows this phase (standard §6), e.g. `'handoff'` or `'flash_card'`. */
+      interaction: string
+      /** The events this phase responds to. Events not listed here are ignored in this phase. */
+      on?: { [Type in Event['type']]?: Transitions<Phase, GuardName, ActionName> }
+      final?: false
+    }
+  | {
+      interaction: string
+      /** This phase ends the game. */
+      final: true
+      on?: never
+    }
 
 /**
  * A game's rulebook: its phases, and the guards and actions they refer to by name.
