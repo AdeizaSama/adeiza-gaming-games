@@ -32,11 +32,15 @@ export type Action<Context, Event extends MachineEvent> = (args: ActionArgs<Cont
 /**
  * What an event does in a phase: optionally check a guard, run actions in order, optionally move to another phase.
  * With no `to`, the game stays in the same phase.
+ *
+ * `NoInfer` marks places that only *use* a name. Names are *defined* by the keys of `phases`, `guards` and
+ * `actions`; without `NoInfer`, `defineMachine` would also learn names from here, so a typo would become a
+ * "real" name and the correct code would be reported as the mistake.
  */
 export interface Transition<Phase extends string, GuardName extends string, ActionName extends string> {
-  when?: GuardName
-  to?: Phase
-  actions?: readonly ActionName[]
+  when?: NoInfer<GuardName>
+  to?: NoInfer<Phase>
+  actions?: readonly NoInfer<ActionName>[]
 }
 
 /**
@@ -76,7 +80,7 @@ export interface MachineDefinition<
   GuardName extends string,
   ActionName extends string,
 > {
-  initial: Phase
+  initial: NoInfer<Phase>
   context: (args: { input: Input; rng: Rng }) => Context
   phases: Record<Phase, PhaseDefinition<Event, Phase, GuardName, ActionName>>
   guards: Record<GuardName, Guard<Context, Event>>

@@ -92,12 +92,12 @@ Vocabulary:
 | **Guard** | A named yes/no question about context, used to pick a transition | `roundsRemaining`, `mafiaOutnumberTown` |
 | **Action** | A named function that returns updated context | `scorePoint`, `advanceTeam` |
 
-Shape (illustrative; the exact API is fixed when the runner is built and recorded in a decision record):
+Shape (`defineMachine` is in `src/sdk/machine/`; what `input` contains is set by the game's format):
 
 ```ts
-export const machine = defineMachine<CharadesContext, CharadesEvent, CharadesConfig, CharadesItem>({
+export const machine = defineMachine<CharadesContext, CharadesEvent, CharadesInput>()({
   initial: "handoff",
-  context: ({ config, items, teams, rng }) => ({ /* starting context */ }),
+  context: ({ input, rng }) => ({ /* starting context */ }),
   phases: {
     handoff: {
       interaction: "handoff",
@@ -126,6 +126,8 @@ export const machine = defineMachine<CharadesContext, CharadesEvent, CharadesCon
   actions: { scorePoint: ({ context }) => ({ ...context, /* … */ }) },
 });
 ```
+
+You write the context, event and input types. The phase, guard and action names are worked out from the keys of `phases`, `guards` and `actions`, so they're never listed twice. (The two sets of brackets, `defineMachine<…>()({ … })`, are how TypeScript lets you give some types and have it work out the rest.)
 
 Rules:
 
