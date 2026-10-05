@@ -129,7 +129,7 @@ export const machine = defineMachine<CharadesContext, CharadesEvent, CharadesCon
 
 Rules:
 
-- **Guards and actions are pure.** No React, DOM, `Math.random`, `Date.now`, `localStorage`, or I/O. Randomness (`rng`) and time (`now`) are passed in by the runner. This makes every game deterministic and testable.
+- **Guards and actions are pure.** No React, DOM, `Math.random`, `Date.now`, `localStorage`, or I/O. Randomness (`rng`) and time (`now`) are passed in by the runner. This makes every game deterministic and testable. The `Rng` (`src/sdk/rng.ts`) offers `next()` (0 to 1), `int(min, max)` (inclusive) and `shuffle(items)` (returns a shuffled copy); it is seeded, so the same seed always gives the same draws.
 - **Context is serializable** (plain JSON). The app saves `{ phase, context }` so a refresh or accidental back-swipe resumes the game.
 - **Events are a discriminated union** (`{ type: "got" } | { type: "skip" } | …`). Views send events; they never change context directly.
 - **Guarded transitions are checked in order;** the first match wins, and a transition with no `when` is the fallback.
