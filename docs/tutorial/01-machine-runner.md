@@ -207,3 +207,97 @@ Look for your typo (`"rolDie"`) and the list of valid names (`"rollDie" | "reset
 2. Delete one `// @ts-expect-error` line in `types.test.ts` and run `pnpm typecheck`: it fails with the error that line was expecting. Put it back.
 3. In your editor, change `'rollDie'` to `'rollDice'` in the dice machine's `roll` transition: it's underlined red.
 4. `pnpm test` reports `14 passed`.
+
+---
+
+## Step 4: `defineMachine`
+
+**What:** a function that game authors wrap their machine in, so TypeScript works out the phase, guard and action names on its own. In `src/sdk/machine/defineMachine.ts`.
+
+**Why:** with only the step 3 types, every name is written twice: once in a list of type parameters, once in the machine itself. Adding an action means updating both, and forgetting the list produces an error that blames the machine. `defineMachine` removes the lists.
+
+### Before and after
+
+Before (step 3), the author lists every name:
+
+```ts
+type DiceMachine = MachineDefinition<
+  DiceContext, DiceEvent, { target: number },
+  'playing' | 'done',          // phases
+  'reachedTarget',             // guards
+  'rollDie' | 'resetScore'     // actions
+>
+const dice: DiceMachine = { … }
+```
+
+After:
+
+```ts
+const dice = defineMachine<DiceContext, DiceEvent, { target: number }>()({ … })
+```
+
+### The code
+
+```ts
+export function defineMachine<Context, Event extends MachineEvent, Input = void>() {
+  return <Phase extends string, GuardName extends string = never, ActionName extends string = never>(
+    definition: MachineDefinition<Context, Event, Input, Phase, GuardName, ActionName>,
+  ) => definition
+}
+```
+
+At runtime it does nothing: it returns what it's given. All its value is in the types.
+
+**Why two calls, `defineMachine<…>()({ … })`?** TypeScript has a rule: when you call a function, you either give *all* its type parameters or *none* (and it infers them all). We need a mix. Context, event and input can't be guessed from the machine, so the author writes them; the names should be inferred. Splitting into two functions solves it: the first call takes the three written types, and returns a second function whose type parameters (the names) are inferred from the machine passed to it.
+
+The `= never` defaults cover machines with no guards or no actions: `guards: {}` means "no guard names".
+
+### The problem we hit, and `NoInfer`
+
+The first version had no `NoInfer`. We tested it with a typo, `actions: ['rolDie']`, next to a correctly written `rollDie` action. TypeScript reported:
+
+```
+'rollDie' does not exist in type 'Record<"rolDie", Action<…>>'. Did you mean to write 'rolDie'?
+```
+
+It blamed the **correct** code and suggested changing it to match the typo. Why: TypeScript infers a type parameter from every place it appears. `ActionName` appears in the keys of `actions` *and* in every `actions: [...]` list, so the typo `'rolDie'` became one of the "real" action names.
+
+The fix is to tell TypeScript which places **define** names and which only **use** them:
+
+| Defines names (inferred from) | Uses names (checked against) |
+|---|---|
+| keys of `phases` | `initial`, every `to` |
+| keys of `guards` | every `when` |
+| keys of `actions` | every `actions: [...]` |
+
+TypeScript's built-in `NoInfer<T>` marks a "use" place: "check against `T`, but don't learn `T` from here". In `types.ts`, `initial`, `to`, `when` and `actions` are now wrapped in `NoInfer`. After that, the same typo is reported on the line with the typo, and the correct code compiles.
+
+`NoInfer` changes nothing when type parameters are written out by hand (as in `types.test.ts`), so the step 3 tests still pass.
+
+### A trap to remember for chapter 03
+
+One test first reported in the wrong place: a machine built by spreading another machine's phases (`phases: { ...dice.phases, … }`). The spread brought `dice`'s guard name along, and TypeScript learned from it. Written as one block, the error lands where it should. That matters later: the team-turns format will provide shared phases that each game combines with its own, and combining them will need care so errors still point at the right line.
+
+### Tests: `src/sdk/machine/defineMachine.test.ts`
+
+The dice game again, written with `defineMachine` and no name lists.
+
+| Test | Checked by | Expected |
+|---|---|---|
+| Returns the definition unchanged | `pnpm test` | The same object comes back |
+| Works out the names | `pnpm typecheck` (`expectTypeOf`) | Phases `'playing' \| 'done'`, guards `'reachedTarget'`, actions `'rollDie' \| 'resetScore'` |
+| Six mistakes marked `@ts-expect-error` | `pnpm typecheck` | Unknown initial phase, `to: 'finished'`, `actions: ['rolDie']`, a guard used but never written, an unknown event, an action returning half a context. Each is an error **on the line with the mistake**. |
+
+`expectTypeOf(...).toEqualTypeOf<...>()` is Vitest's way of testing types: it compiles only if the two types are exactly equal. At runtime it does nothing, so a wrong type shows up in `pnpm typecheck`, not `pnpm test`.
+
+### Files changed
+
+- `src/sdk/machine/defineMachine.ts`, `src/sdk/machine/defineMachine.test.ts` (new)
+- `src/sdk/machine/types.ts`: `NoInfer` on `initial`, `to`, `when` and `actions`
+- `docs/game-standard.md` §4: the example now uses the real API, `defineMachine<Context, Event, Input>()({ … })` with `context: ({ input, rng })`
+
+### How to verify
+
+1. `pnpm typecheck` passes; `pnpm test` reports `16 passed`.
+2. See `NoInfer` matter: remove `NoInfer<…>` around `ActionName` in `types.ts` (leave `readonly ActionName[]`), then in `defineMachine.test.ts` change the dice game's `'rollDie'` in the `roll` transition to `'rolDie'`. Hover the error: TypeScript now suggests renaming the correct action. Undo both changes.
+3. In your editor, hover `dice` in `defineMachine.test.ts`: the phase, guard and action names appear in its type without anyone having written them.
