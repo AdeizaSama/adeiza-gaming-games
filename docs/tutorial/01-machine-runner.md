@@ -51,6 +51,8 @@ So:
 
 **How to verify:** open any PR. The merge button's dropdown offers **Squash and merge** and **Rebase and merge**, and nothing else.
 
+> **Changed in [chapter 02, step 1](02-content-packs.md#step-1-merge-chapters-with-a-merge-commit):** chapters are now merged with a merge commit instead of rebased. This chapter was the only one rebase-merged.
+
 ---
 
 ## Step 2: A seeded random number generator (Rng)
