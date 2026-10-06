@@ -487,3 +487,46 @@ ADR 0001 still says "pure". Accepted decision records aren't edited, so the chan
 
 1. `pnpm test` reports `42 passed`.
 2. In `fullGame.test.ts`, swap the two transitions in Dice Duel's `next` list and run `pnpm test`. Three tests fail, and the `validateMachine` one prints the message above. Swap them back.
+
+---
+
+## Step 7: ADR 0002, the runner's API
+
+**What:** `docs/decisions/0002-machine-runner.md`, the decision record for everything this chapter built.
+
+**Why:** ADR 0001 chose "our own small runner" but left its API open until it was built. Every game will be written against this API, and standard §12 says changes to `src/sdk/` need a decision record.
+
+### What it records
+
+| Decision | Rejected alternative |
+|---|---|
+| A seeded Rng (mulberry32) whose state is one number | `Math.random`; a larger generator |
+| Game state is plain data: `{ phase, context, rngState }` | — |
+| The runner is three plain functions: `start`, `send`, `isFinal` | A class holding the current state |
+| Events a phase doesn't expect are ignored, returning the same state object | Throwing an error |
+| `defineMachine` infers names; `NoInfer` keeps typos from becoming names | Listing names by hand |
+| Mistakes caught in types, plus `validateMachine` in tests | Checking when the game loads |
+| "Pure" becomes "deterministic" | A fully pure Rng returning `[value, nextState]` |
+
+Its **Consequences** section also records the trap from step 4: combining machines by spreading phases can make errors appear on the wrong line. Chapter 03's format has to be designed around it.
+
+### Amending ADR 0001
+
+ADR 0001 said guards and actions are "pure". Accepted records aren't edited, so ADR 0002 says it **amends** 0001 on that one point. The decisions README only allowed "Superseded" (replaced entirely), so we added **Amended by NNNN** for a record changed on one point, and the index now shows 0001 as "Accepted; amended by 0002".
+
+### Files changed
+
+- `docs/decisions/0002-machine-runner.md` (new)
+- `docs/decisions/README.md`: 0002 in the index, and the "Amended" status
+
+### How to verify
+
+Read the ADR and check it against the code: every function and rule it names exists in `src/sdk/rng.ts` or `src/sdk/machine/`, and every rejected alternative is one we actually discussed in steps 2–6.
+
+---
+
+## Chapter 01 done
+
+The SDK has a seeded Rng, machine types, `defineMachine`, a runner, `validateMachine`, and a toy game played start to finish in tests, including save and reload. 42 tests, no screens yet.
+
+Next: chapter 02, content packs: the pack schema, loading packs, generated JSON Schemas, and the `validate-content` check in CI.
