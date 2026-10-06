@@ -138,3 +138,96 @@ The tests check *where* each error is (the path), not the wording of the message
 1. `pnpm install`, then `pnpm test` reports `54 passed` (42 from chapter 01, 12 new).
 2. See strictness at work: in `pack.ts`, change `z.strictObject` to `z.object` and run `pnpm test`. The "rejects an unknown field" test fails. Change it back.
 3. `pnpm typecheck` and `pnpm lint` pass.
+
+---
+
+## Step 3: Finding duplicate items
+
+**What:** two functions in `src/sdk/content/duplicates.ts`, with tests:
+
+- `findDuplicates(items, itemKey)`: lists every item that repeats an earlier one. The content check (step 8) will use it to fail a pack that lists the same item twice.
+- `uniqueBy(items, itemKey)`: the items with repeats removed, keeping the first copy. The team-turns format (chapter 03) will use it when players pick several packs that share items.
+
+**Why:** standard §10 says CI rejects packs with duplicate items. "Duplicate" turned out to need a definition.
+
+### What counts as the same item: the item key
+
+Comparing whole items doesn't work. These two are the same word to players, but they aren't equal objects:
+
+```json
+{ "text": "Goku", "modes": ["act"] }
+{ "text": "Goku", "modes": ["describe"] }
+```
+
+Only the game knows which field identifies an item: `text` for Charades, `category` for Name Ten, `question` for Trivia. So each game gives the SDK an **item key**, a function from an item to its identifying text:
+
+```ts
+export type ItemKey<Item> = (item: Item) => string
+
+// in src/games/charades/schema.ts (step 6):
+export const itemKey: ItemKey<CharadesItem> = (item) => item.text
+```
+
+**Who writes it:** the game's developer, once, when the game is created. Players and content contributors never see it. It's **required**, because every default guess is wrong for some game: comparing whole items misses the Goku case above, and guessing a field name breaks silently for the next game.
+
+### Small differences that still count as the same
+
+Before comparing, keys are put in one standard form:
+
+| Step | Example | Why |
+|---|---|---|
+| Unicode normalization (NFC) | `é` stored as one character, or as `e` plus a separate accent mark, become identical | They look the same on screen, but are different bytes. Different keyboards and editors produce different forms, so without this a duplicate could hide. |
+| Collapse and trim spaces | `" Goku "` and `"Monkey  D. Luffy"` become `"Goku"` and `"Monkey D. Luffy"` | Stray spaces are invisible in most editors. |
+| Lowercase | `"GOKU"` becomes `"goku"` | The same word in different case is the same item to players. |
+
+**Accents are kept.** `ọkọ` (husband) and `oko` (farm) are different Yoruba words. Many "ignore accents" comparisons strip them, and would wrongly treat these as the same item and remove one. Normalization only makes the *same* accented letter compare equal, whichever way it was typed.
+
+### Within a pack: an error. Across packs: handled during play.
+
+| Where | What happens | Why |
+|---|---|---|
+| The same item twice **in one pack** | The content check fails (step 8) and says which positions clash | Always a mistake, and the fix is obvious. |
+| The same item **in two packs** | Not checked | Both packs are fine on their own: "Goku" belongs in both "Anime" and "Dragon Ball". |
+| Players pick **both packs** | `uniqueBy` keeps the first copy, so Goku is drawn once | Nobody has to do anything. If the copies differ (one tagged `act`, one `describe`), the copy from the pack listed first wins. Merging them would add complexity we don't need yet. |
+
+### How it works
+
+`findDuplicates` walks the list once, remembering each normalized key and where it first appeared. When a key it has already seen comes up again, it records that position and the position of the first copy:
+
+```ts
+{ index: 2, firstIndex: 0, key: 'Goku' }   // items.2 repeats items.0
+```
+
+It returns data, not a message. Turning it into a message for contributors ("items.2 is a duplicate of items.0") is the content check's job in step 8. Positions start at 0 to match error paths like `items.2.text` from step 2.
+
+`uniqueBy` reuses `findDuplicates` and drops every position it reports, so the two can never disagree about what a duplicate is.
+
+### Tests: `src/sdk/content/duplicates.test.ts`
+
+10 tests, using Charades-shaped items `{ text, modes }` with `text` as the key:
+
+| Test | Why it matters |
+|---|---|
+| No duplicates, or an empty list, gives no results | No false alarms |
+| Reports the extra copy's position and the first copy's | Lets the content check point at exact lines |
+| Every extra copy is reported, each pointing at the first | All repeats in one CI run |
+| Case and extra spaces are ignored | Typing differences don't hide repeats |
+| `é` written two ways counts as one | Unicode normalization works |
+| `ọkọ` and `oko` stay separate | Accents are kept |
+| Items differing only in `modes` are duplicates | Only the key is compared |
+| `uniqueBy` keeps the first copy, in order | The two-pack case during play |
+| `uniqueBy` returns a new list and leaves the original alone | Data is never changed in place |
+| `uniqueBy` handles an empty list | Edge case |
+
+The full table is in [docs/tests.md](../tests.md#duplicate-items).
+
+### Files changed
+
+- `src/sdk/content/duplicates.ts`, `src/sdk/content/duplicates.test.ts` (new).
+- `docs/tests.md`: the new tests, and counts updated to 64.
+
+### How to verify
+
+1. `pnpm test` reports `64 passed` (54 before, 10 new).
+2. See the accent rule at work: in `duplicates.ts`, add `.normalize('NFD').replace(/\p{M}/gu, '')` after `.toLowerCase()` (this strips accents) and run `pnpm test`. The `ọkọ`/`oko` test fails. Remove it again.
+3. `pnpm typecheck` and `pnpm lint` pass.

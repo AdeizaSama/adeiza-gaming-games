@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 54 runtime tests (`pnpm test`) and 14 compile-time checks (`pnpm typecheck`).
+**Counts:** 64 runtime tests (`pnpm test`) and 14 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -15,6 +15,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [validateMachine](#validatemachine) | `src/sdk/machine/validateMachine.test.ts` | 4 | |
 | [Full game](#full-game-dice-duel) | `src/sdk/machine/fullGame.test.ts` | 6 | |
 | [Content packs](#content-packs) | `src/sdk/content/pack.test.ts` | 12 | |
+| [Duplicate items](#duplicate-items) | `src/sdk/content/duplicates.test.ts` | 10 | |
 
 **Two kinds of test:**
 
@@ -28,7 +29,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | Dice (roll to target) | types, defineMachine | Two phases (`playing`, `done`). Roll a die until the score reaches a target. |
 | Counter | runner | Not a game. One phase that adds, doubles and rolls numbers, and three end phases, so every part of the runner gets exercised. |
 | Dice Duel | full game | Shaped like the team-turns format: teams take timed turns rolling dice over several rounds. |
-| `{ text }` items | content packs | A one-field item schema standing in for a real game's. |
+| `{ text }` items | content packs, duplicates | Items standing in for a real game's. In the duplicate tests they may also have `modes`, like Charades items, and the key is `text`. |
 
 ---
 
@@ -164,3 +165,20 @@ Each row is a mistake TypeScript must reject.
 | 52 | checks each item against the game's item schema | Items | Second item with empty text; an item with an extra field | Rejected at `items.1.text`; at `items.0` | Errors point contributors at the exact item to fix. |
 | 53 | needs at least one item | Items | `items: []` | Rejected at `items` | An empty pack is almost always a mistake. |
 | 54 | gives packs the Pack<Item> type | Types | The schema's inferred type | Exactly `Pack<{ text: string }>` | The type code uses and the check CI runs can't drift apart. Checked by `pnpm typecheck`. |
+
+## Duplicate items
+
+`src/sdk/content/duplicates.test.ts`, testing `src/sdk/content/duplicates.ts`. Items are `{ text, modes? }` and the key is `text`, as it will be for Charades. Positions start at 0.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 55 | finds nothing in a list without duplicates, or an empty list | `findDuplicates` | Goku, Naruto, Luffy; and an empty list | No duplicates for either | Packs without repeats must not get false alarms. |
+| 56 | reports where the extra copy is and where the first copy is | `findDuplicates` | Goku, Naruto, Goku | One duplicate: position 2, first copy at 0, key `Goku` | The content check uses the positions to tell contributors exactly which lines clash. |
+| 57 | reports every extra copy, each pointing at the first | `findDuplicates` | a, b, a, a | Positions 2 and 3, both pointing at 0 | All repeats are reported at once, not one per CI run. |
+| 58 | ignores case and extra spaces | Key comparison | `Monkey D. Luffy`, ` monkey d. luffy `, `MONKEY  D.  LUFFY` | Positions 1 and 2 are duplicates | Small typing differences mustn't hide a repeat. |
+| 59 | treats the two ways of storing an accented letter as the same | Key comparison | `Pokémon` with é as one character, and with e plus a separate accent mark | One duplicate | The two look identical on screen, so they must count as the same word. Different keyboards and editors produce different forms. |
+| 60 | keeps words that differ only by accents apart | Key comparison | `ọkọ` and `oko` | No duplicates | In languages like Yoruba, accents change the word (husband vs farm). Stripping them would wrongly remove real items. |
+| 61 | compares only the key, not the other fields | Key comparison | Goku (act) and Goku (describe) | One duplicate | It's the same word to players, whatever mode it's tagged with. |
+| 62 | keeps the first copy of each item, in the original order | `uniqueBy` | Goku (act), Naruto, goku (describe) | Goku (act), Naruto | When players pick two packs that share a word, it appears once, taken from the first pack picked. |
+| 63 | returns every item when there are no duplicates, without changing the original | `uniqueBy` | Goku, Naruto | A new list with both; the original unchanged | Game data is never changed in place (the same rule as actions). |
+| 64 | handles an empty list | `uniqueBy` | An empty list | An empty list | Edge case that must not crash. |
