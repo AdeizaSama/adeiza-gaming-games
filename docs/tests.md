@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 76 runtime tests (`pnpm test`) and 14 compile-time checks (`pnpm typecheck`).
+**Counts:** 82 runtime tests (`pnpm test`) and 14 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -17,6 +17,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Content packs](#content-packs) | `src/sdk/content/pack.test.ts` | 12 | |
 | [Duplicate items](#duplicate-items) | `src/sdk/content/duplicates.test.ts` | 10 | |
 | [Loading packs](#loading-packs) | `src/sdk/content/loadPacks.test.ts` | 12 | |
+| [Finding games (scripts)](#finding-games-scripts) | `scripts/lib/games.test.ts` | 6 | |
 
 **Two kinds of test:**
 
@@ -202,3 +203,16 @@ Each row is a mistake TypeScript must reject.
 | 74 | returns no packs for no files | `loadPacks` | No files | An empty list | A game without packs yet must not crash. |
 | 75 | throws one error listing every problem in every file | `loadPacks` | `anime.json` with Goku twice, `movies.json` with id `films`, and a valid `ok.json` | One error naming both files, each with where and what | A developer sees every broken pack at once, with file names. |
 | 76 | gives packs the item type from the item schema | Types | The result of `loadPacks` | Exactly `Pack<{ text: string }>[]` | Code using the packs knows their item shape. Checked by `pnpm typecheck`. |
+
+## Finding games (scripts)
+
+`scripts/lib/games.test.ts`, testing `scripts/lib/games.ts`. Each test creates a throwaway games folder in the system's temp directory and deletes it afterwards, so no test files are committed and the real `src/games` is never touched.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 77 | finds each game with its schema file and pack files, sorted | `findGames` | `trivia` (schema, 1 pack) and `charades` (schema, `movies.json`, `anime.json`) | Charades then Trivia, each with its `schema.ts` path and its packs in name order | The content scripts need every game and pack, in the same order on every computer. |
+| 78 | reports a missing schema file as null | `findGames` | A game with a pack but no `schema.ts` | `schemaFile` is null | The content check can then say "this game has packs but no schema" instead of crashing. |
+| 79 | gives no pack files for a game without a content folder | `findGames` | A game with only `schema.ts` | No pack files | A game being built may not have packs yet. |
+| 80 | only counts .json files directly in the content folder as packs | `findGames` | `anime.json`, `notes.md`, and `drafts/old.json` | Only `anime.json` | Notes and drafts beside the packs aren't checked or loaded, matching the app's `content/*.json` pattern. |
+| 81 | ignores files that are not game folders | `findGames` | A `README.md` in the games folder | No games | Only folders are games. |
+| 82 | returns no games when the games folder does not exist yet | `findGames` | A folder path that doesn't exist | No games | The script must work before the first game exists. |

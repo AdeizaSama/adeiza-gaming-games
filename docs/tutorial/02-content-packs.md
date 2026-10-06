@@ -335,3 +335,85 @@ The full table is in [docs/tests.md](../tests.md#loading-packs).
 1. `pnpm test` reports `76 passed` (64 before, 12 new).
 2. See the error a developer would get: in `loadPacks.test.ts`, change `'films'` to `'movies'` in the "throws one error" test and run `pnpm test`. The test fails, and the output shows the error now lists only the anime problem. Change it back.
 3. `pnpm typecheck` and `pnpm lint` pass.
+
+---
+
+## Step 5: Running TypeScript scripts
+
+**What:** set up `scripts/`, the folder for the tools that run outside the app (standard §9): the content check (step 8) and JSON Schema generation (step 7). This step adds:
+
+- [tsx](https://tsx.is), a dev dependency that runs TypeScript files directly in Node.
+- `tsconfig.scripts.json`, so `pnpm typecheck` checks scripts too.
+- `scripts/lib/games.ts`: `findGames()`, which lists each game folder, its `schema.ts` and its pack files. Both later scripts need it.
+- `scripts/validate-content.ts` and `pnpm validate-content`. For now the script only lists what it finds; step 8 adds the checks.
+
+**Why:** the content check can't live inside the app. CI needs a command that reads the pack files, checks them and fails with a clear list of problems.
+
+### Why the script can't use `loadPacks` or a game's `index.ts`
+
+A game's `index.ts` loads its packs with `import.meta.glob`, which only exists inside Vite, and will also import React views. A plain Node script can't load it. So scripts use two things that don't depend on Vite:
+
+- **`findGames()`** reads the folders directly with Node's `fs` instead of `import.meta.glob`.
+- **`schema.ts`** in each game exports `itemSchema` and `itemKey`, and imports only zod and `src/sdk/content/`. Scripts load that file and nothing else from a game. This becomes a rule in the standard in step 9.
+
+Both the app and the script end up calling the same `checkPack` from step 4.
+
+### Why tsx
+
+Node can't run our TypeScript as it is:
+
+- Node 22 can strip types from `.ts` files, but it requires full file names in imports (`'../rng.ts'`), and our code imports without extensions (`'../rng'`), as Vite allows.
+- tsx runs TypeScript the way Vite resolves it, so scripts can import `src/sdk/` files unchanged.
+
+The alternative was running the checks as Vitest tests. That needs no new package, but contributors would get test-runner errors ("expected false to be true") instead of messages written for them.
+
+tsx is a **dev dependency**: it's used to build and check the project, and never ships to players.
+
+### `tsconfig.scripts.json`
+
+The project already had two TypeScript configs: `tsconfig.app.json` for `src/` (browser code) and `tsconfig.node.json` for `vite.config.ts`. `tsconfig.json` lists them as references, and `pnpm typecheck` (`tsc -b`) checks each one. Before this step, nothing covered `scripts/`, so a type error there would have passed CI.
+
+The new config is like `tsconfig.node.json`, with two differences:
+
+| Setting | Value | Why |
+|---|---|---|
+| `include` | `["scripts"]` | Its own folder. Files scripts import from `src/sdk/` are checked as well. |
+| `module` / `moduleResolution` | `esnext` / `bundler` | Matches how tsx resolves imports, so extensionless imports are allowed. `tsconfig.node.json` uses `nodenext`, which would reject them. |
+
+It has `node` types (for `fs`, `path`) and no `DOM` types: scripts don't run in a browser.
+
+### `findGames()`
+
+```ts
+findGames('src/games')
+// → [{ id: 'charades', schemaFile: '…/charades/schema.ts', packFiles: ['…/charades/content/anime.json'] }]
+```
+
+- **Sorted** game ids and file names, so the output is the same on every computer (folder listing order differs between operating systems).
+- **`schemaFile: null`** when a game has no `schema.ts`. The content check reports it as a problem instead of crashing.
+- **Only `content/*.json`** counts as a pack: the same pattern the app uses. Notes or drafts in subfolders are ignored by both.
+- **A missing `src/games` gives an empty list.** It doesn't exist yet; step 6 creates it.
+
+`validate-content.ts` finds `src/games` from its own location (`new URL('../src/games', import.meta.url)`), not from the folder you run it in, so it works from anywhere.
+
+### Tests: `scripts/lib/games.test.ts`
+
+6 tests. Each one builds a throwaway games folder in the system's temp directory and deletes it afterwards, so no sample folders are committed. Vitest finds test files anywhere in the project, so tests in `scripts/` run with `pnpm test` like the others. The full table is in [docs/tests.md](../tests.md#finding-games-scripts).
+
+### Not yet in the README
+
+`pnpm validate-content` exists but doesn't check anything yet, so it isn't listed in the README's commands or added to CI until step 8, when it does.
+
+### Files changed
+
+- `package.json`, `pnpm-lock.yaml`: tsx, and the `validate-content` script.
+- `tsconfig.scripts.json` (new), `tsconfig.json`: the new config is listed as a reference.
+- `scripts/lib/games.ts`, `scripts/lib/games.test.ts`, `scripts/validate-content.ts` (new).
+- `docs/tests.md`: the new tests, and counts updated to 82.
+
+### How to verify
+
+1. `pnpm install`, then `pnpm test` reports `82 passed` (76 before, 6 new).
+2. `pnpm validate-content` prints `No games found in …\src\games`.
+3. Check scripts are type-checked: in `scripts/validate-content.ts`, change `games.length` to `games.size` and run `pnpm typecheck`. It reports an error in that file. Change it back.
+4. `pnpm lint` passes.
