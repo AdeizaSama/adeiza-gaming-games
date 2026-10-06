@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 64 runtime tests (`pnpm test`) and 14 compile-time checks (`pnpm typecheck`).
+**Counts:** 76 runtime tests (`pnpm test`) and 14 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -16,6 +16,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Full game](#full-game-dice-duel) | `src/sdk/machine/fullGame.test.ts` | 6 | |
 | [Content packs](#content-packs) | `src/sdk/content/pack.test.ts` | 12 | |
 | [Duplicate items](#duplicate-items) | `src/sdk/content/duplicates.test.ts` | 10 | |
+| [Loading packs](#loading-packs) | `src/sdk/content/loadPacks.test.ts` | 12 | |
 
 **Two kinds of test:**
 
@@ -29,7 +30,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | Dice (roll to target) | types, defineMachine | Two phases (`playing`, `done`). Roll a die until the score reaches a target. |
 | Counter | runner | Not a game. One phase that adds, doubles and rolls numbers, and three end phases, so every part of the runner gets exercised. |
 | Dice Duel | full game | Shaped like the team-turns format: teams take timed turns rolling dice over several rounds. |
-| `{ text }` items | content packs, duplicates | Items standing in for a real game's. In the duplicate tests they may also have `modes`, like Charades items, and the key is `text`. |
+| `{ text }` items | content packs, duplicates, loading packs | Items standing in for a real game's. In the duplicate tests they may also have `modes`, like Charades items, and the key is `text`. |
 
 ---
 
@@ -182,3 +183,22 @@ Each row is a mistake TypeScript must reject.
 | 62 | keeps the first copy of each item, in the original order | `uniqueBy` | Goku (act), Naruto, goku (describe) | Goku (act), Naruto | When players pick two packs that share a word, it appears once, taken from the first pack picked. |
 | 63 | returns every item when there are no duplicates, without changing the original | `uniqueBy` | Goku, Naruto | A new list with both; the original unchanged | Game data is never changed in place (the same rule as actions). |
 | 64 | handles an empty list | `uniqueBy` | An empty list | An empty list | Edge case that must not crash. |
+
+## Loading packs
+
+`src/sdk/content/loadPacks.test.ts`, testing `src/sdk/content/loadPacks.ts`. Items are `{ text }` and the key is `text`. Packs are built from an id and item texts; unless noted, the file is `./content/anime.json`.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 65 | returns the pack when everything is right | `checkPack` | Pack `anime` with Goku and Naruto | OK, with the pack | Valid packs pass. |
+| 66 | lists every schema problem, each with where it is | `checkPack` | Maturity `kids` and an empty second item | Two problems: at `maturity` and `items.1.text` | Contributors see everything wrong in one go. |
+| 67 | reports a file that is not a pack at all as a problem with the whole file | `checkPack` | The text `"not a pack"` | One problem with an empty path (the whole file) | A badly broken file still gets a clear report instead of a crash. |
+| 68 | rejects an id that does not match the file name | Id = file name | Pack `manga` in `anime.json` | One problem at `id`: must be `"anime"` | Keeps ids unique (file names in a folder are) and makes packs easy to find. |
+| 69 | reads the file name from any kind of path | Id = file name | `./content/anime.json`, a Linux path, a Windows path with `\`, and just `anime.json` | All OK | The app (Vite paths) and the CI script (full paths, on any OS) must agree. |
+| 70 | rejects an item listed twice, pointing at both copies | Duplicates | Goku, Naruto, goku | One problem at `items.2`: already in the pack at `items.0` | Uses the item key, so case differences still count as repeats. |
+| 71 | reports the id and duplicates together | Reporting | Pack `manga` in `anime.json`, with Goku twice | Problems at `id` and `items.1` | All problems after the shape check come in one report. |
+| 72 | skips the id and duplicate checks while the shape is wrong | Reporting | Wrong id, Goku twice, and maturity `kids` | Only the `maturity` problem | The id and duplicate checks need a pack whose shape is known; they run once the shape is fixed. |
+| 73 | returns every pack, sorted by id | `loadPacks` | `movies.json`, then `anime.json` | `anime`, `movies` | Same order on every device, whatever order the files come in. |
+| 74 | returns no packs for no files | `loadPacks` | No files | An empty list | A game without packs yet must not crash. |
+| 75 | throws one error listing every problem in every file | `loadPacks` | `anime.json` with Goku twice, `movies.json` with id `films`, and a valid `ok.json` | One error naming both files, each with where and what | A developer sees every broken pack at once, with file names. |
+| 76 | gives packs the item type from the item schema | Types | The result of `loadPacks` | Exactly `Pack<{ text: string }>[]` | Code using the packs knows their item shape. Checked by `pnpm typecheck`. |

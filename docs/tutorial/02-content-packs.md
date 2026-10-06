@@ -231,3 +231,107 @@ The full table is in [docs/tests.md](../tests.md#duplicate-items).
 1. `pnpm test` reports `64 passed` (54 before, 10 new).
 2. See the accent rule at work: in `duplicates.ts`, add `.normalize('NFD').replace(/\p{M}/gu, '')` after `.toLowerCase()` (this strips accents) and run `pnpm test`. The `ọkọ`/`oko` test fails. Remove it again.
 3. `pnpm typecheck` and `pnpm lint` pass.
+
+---
+
+## Step 4: Loading and checking packs
+
+**What:** two functions in `src/sdk/content/loadPacks.ts`, with tests:
+
+- `checkPack(file, data, itemSchema, itemKey)`: checks one pack file and returns either the pack or a list of problems.
+- `loadPacks(files, itemSchema, itemKey)`: checks all of a game's pack files and returns the packs, or throws one error listing every problem.
+
+**Why:** steps 2 and 3 built the rules. This step applies them to real files, in the one place both the app and CI will use.
+
+### One function decides what "valid" means
+
+There are two places that read packs:
+
+1. **The app**, which loads a game's packs when it starts (through `loadPacks`).
+2. **The content check in CI** (step 8), which reads every pack file and reports problems to contributors.
+
+If each had its own checks, they would drift apart: CI could pass a pack that crashes the app, or reject one the app would accept. So both call `checkPack`, and it's the only code that decides whether a pack is valid.
+
+`checkPack` runs three checks in order:
+
+| Check | Problem reported at | Example message |
+|---|---|---|
+| 1. The pack schema, with the game's item schema (step 2) | Wherever zod finds it, e.g. `items.1.text` | zod's own message |
+| 2. The `id` matches the file name: `anime.json` must have `"id": "anime"` | `id` | `The id must match the file name: "anime" (found "manga")` |
+| 3. No item is listed twice, by the game's item key (step 3) | The extra copy, e.g. `items.2` | `"goku" is already in this pack at items.0` |
+
+**If check 1 fails, checks 2 and 3 don't run.** They need a pack whose shape is known (an `id` that is text, `items` that are a list). The contributor fixes the shape, and any id or duplicate problems show up on the next run.
+
+**Why the id must match the file name.** Two files in one folder can't have the same name, so this one rule also guarantees no two packs of a game share an id, with no separate check. It also means the pack a preset names (`packs: ["anime"]`) is always in `anime.json`.
+
+The result is a **discriminated union**, a type with a field that says which case you have:
+
+```ts
+type PackCheck<Item> = { ok: true; pack: Pack<Item> } | { ok: false; problems: PackProblem[] }
+```
+
+After checking `result.ok`, TypeScript knows whether `result.pack` or `result.problems` exists. It's the same idea as the machine's events (`{ type: 'got' } | { type: 'skip' }`).
+
+### How the app gets the files: `import.meta.glob`
+
+The app runs in a browser, which can't list files in a folder. Vite solves this at build time:
+
+```ts
+import.meta.glob('./content/*.json', { eager: true, import: 'default' })
+// → { './content/anime.json': { id: 'anime', … }, './content/movies.json': { … } }
+```
+
+- **`import.meta.glob`** finds every file matching the pattern when the app is built, and turns them into imports. Adding a pack file is enough; no list to update.
+- **`eager: true`** includes the files in the app's code instead of loading each one later when it's needed. Packs are small text files, and games need them all at setup.
+- **`import: 'default'`** gives each file's JSON directly. Without it, each value would be wrapped as `{ default: { … } }`.
+
+`loadPacks` doesn't call `import.meta.glob` itself. It takes the result as a plain object, so the tests can pass in made-up files, and the SDK doesn't depend on Vite. `import.meta.glob` only works inside Vite, which is why the CI script (step 8) will read files a different way and call `checkPack` directly.
+
+### Why `loadPacks` throws
+
+An invalid pack can't reach players: CI rejects it before it's merged. So the only time `loadPacks` finds a problem is while someone is editing a pack on their own machine. Then it should be loud and complete: one error, every problem in every file, each with its file and position:
+
+```
+Content packs have problems:
+  ./content/anime.json, items.1: "Goku" is already in this pack at items.0
+  ./content/movies.json, id: The id must match the file name: "movies" (found "films")
+```
+
+Packs come back **sorted by id**, so the order is the same on every device whatever order the files are found in. The sort uses a plain comparison rather than `localeCompare`, which can order text differently depending on the device's language settings.
+
+### The standard's example, updated
+
+Standard §3 showed `loadPacks(import.meta.glob("./content/*.json", { eager: true }))`. The real function also needs the item schema and item key, and uses `import: "default"`, so the example now matches it.
+
+### Tests: `src/sdk/content/loadPacks.test.ts`
+
+12 tests:
+
+| Test | Why it matters |
+|---|---|
+| A valid pack comes back as `ok` | The happy path |
+| Every schema problem is listed with its position | All problems at once |
+| A file that isn't a pack at all is reported, not crashed on | Even a badly broken file gets a clear message |
+| An id that doesn't match the file name is rejected | The id rule |
+| The file name is read from Vite paths, Linux paths, Windows paths and bare names | The app and the CI script, on any computer, agree |
+| A repeated item is reported at the extra copy, naming the first | The duplicate rule, with the item key |
+| Id and duplicate problems are reported together | One report |
+| While the shape is wrong, only shape problems are reported | Check order |
+| `loadPacks` returns packs sorted by id | Same order everywhere |
+| No files gives no packs | Edge case |
+| One error lists every problem in every file | What a developer sees |
+| The packs have the item schema's type | Types follow the schema |
+
+The full table is in [docs/tests.md](../tests.md#loading-packs).
+
+### Files changed
+
+- `src/sdk/content/loadPacks.ts`, `src/sdk/content/loadPacks.test.ts` (new).
+- `docs/game-standard.md` §3: the `loadPacks` example matches the real function.
+- `docs/tests.md`: the new tests, and counts updated to 76.
+
+### How to verify
+
+1. `pnpm test` reports `76 passed` (64 before, 12 new).
+2. See the error a developer would get: in `loadPacks.test.ts`, change `'films'` to `'movies'` in the "throws one error" test and run `pnpm test`. The test fails, and the output shows the error now lists only the anime problem. Change it back.
+3. `pnpm typecheck` and `pnpm lint` pass.
