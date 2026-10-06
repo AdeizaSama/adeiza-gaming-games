@@ -143,6 +143,7 @@ Rules:
 - **Timers:** an action stores `turnEndsAt` in context; the view shows the countdown and sends `time_up`. The machine decides what that means.
 - **Final phases** (`final: true`) end the game; the app reads the result from context. A final phase can't list events (it's a type error), and every event after the game ends is ignored.
 - **Running a machine:** `start(machine, { input, seed })` gives the starting state; `send(machine, state, event, { now })` returns the next state without changing the one passed in; `isFinal(machine, state)` says whether the game has ended. All three are in `src/sdk/machine/runner.ts`.
+- **`validateMachine(machine)`** (`src/sdk/machine/validateMachine.ts`) finds mistakes TypeScript can't, such as a transition placed after the fallback, where it can never run. It returns a list of problems; every game's tests check that the list is empty.
 - Each guard and action stays small and does one thing. Complex rules (e.g. Mafia night resolution) are a composition of small named actions, not one big function.
 
 ## 5. Phases
@@ -297,7 +298,7 @@ One file per pack: `src/games/<id>/content/<pack-id>.json`.
 - `main` is protected. All changes via pull request. Pull requests are squash-merged by default; they are rebase-merged only when every commit is meaningful on its own and follows Conventional Commits.
 - [Conventional Commits](https://www.conventionalcommits.org/) (`feat(charades): …`, `content(charades): …`, `fix(sdk): …`).
 - TypeScript `strict`. No `any` without a comment explaining why.
-- Every machine has a test that plays a full game from the initial phase to a final phase with a seeded `Rng`, plus tests for each guard and action.
+- Every machine has a test that plays a full game from the initial phase to a final phase with a fixed seed, a test that `validateMachine(machine)` returns no problems, and tests for each guard and action.
 - A new runtime dependency must be justified in the pull request description. Prefer none.
 - Changes to `sdk/` or the content pack format need a decision record in `docs/decisions/`.
 - Mobile-first: works one-handed on a 360px-wide phone, tap targets ≥ 44px, respects `prefers-reduced-motion`, readable at arm's length.
@@ -308,7 +309,7 @@ One file per pack: `src/games/<id>/content/<pack-id>.json`.
 
 - [ ] Fits an existing format, or is explicitly deferred
 - [ ] `defineGame` export with meta, schemas, defaults, rules, machine, views
-- [ ] Guards and actions are pure; full-playthrough test plus per-guard and per-action tests
+- [ ] Guards and actions are deterministic; full-playthrough test, `validateMachine` test, and per-guard and per-action tests
 - [ ] At least one content pack passing validation
 - [ ] Views use interaction primitives (custom UI justified)
 - [ ] Works through setup → turns → results on a phone, including resume after refresh

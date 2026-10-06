@@ -394,3 +394,96 @@ The second one exposed a weak test. With the position never saved, every roll gi
 1. `pnpm test` reports `32 passed`; `pnpm typecheck` and `pnpm lint` pass.
 2. In `runner.ts`, change `candidates.find(` to `candidates.findLast(` and run `pnpm test`: "picks the first transition whose guard passes" fails. Undo it.
 3. In `runner.test.ts`, add `on: { next: { to: 'counting' } }` to the `done` phase: it's underlined red. Undo it.
+
+---
+
+## Step 6: A full game, and `validateMachine`
+
+**What:** two things that check machines from the outside:
+
+- `validateMachine` (`src/sdk/machine/validateMachine.ts`): finds a mistake TypeScript can't.
+- A full-game test (`src/sdk/machine/fullGame.test.ts`): a toy game played from the first screen to the results, the way standard §12 requires for every game.
+
+**Why:** step 5 tested the runner piece by piece. This step tests it the way a game will use it: a whole game, many events in a row, saved and reloaded halfway.
+
+### `validateMachine`
+
+The mistake it finds compiles fine and fails quietly:
+
+```ts
+next: [
+  { to: 'results' },                               // no `when`: always matches
+  { when: 'roundsRemaining', to: 'handoff' },      // can never run
+]
+```
+
+The first match wins, so the game always goes to the results after the first turn. In play, that looks like a rules bug ("the game ends too early"), not a code bug.
+
+`validateMachine(machine)` walks every phase and every event. Wherever a list of transitions has one without `when`, every transition after it is reported:
+
+```
+Phase "turn_summary", event "next": transition 2 (when "roundsRemaining") can never run,
+because transition 1 has no `when` and always matches. Move the transition without `when` last.
+```
+
+**It returns problems instead of throwing**, and it's meant for tests, not for when a game loads. That way a mistake is caught in CI, before merging, and never shows a player an error screen. A test uses it like this:
+
+```ts
+expect(validateMachine(machine)).toEqual([])
+```
+
+If there are problems, Vitest prints the whole list in its diff.
+
+It takes a loose type (`{ phases: Record<string, { on?: Record<string, unknown> }> }`) instead of the full machine type: it only reads phase and transition structure, and its own tests can then use small hand-written objects.
+
+### Dice Duel, a toy game
+
+A game made up for this test, deliberately shaped like the team-turns format (standard §7) that Charades will use:
+
+```
+handoff ──start──▶ turn ──time_up──▶ turn_summary ──next──▶ handoff   (if turns remain)
+                    │ roll                         └─next──▶ results  (otherwise)
+                    └──▶ (stays in turn)
+```
+
+Teams take timed turns over two rounds. During a turn the team rolls as often as it likes; when time is up, the rolls are added to its score. The starting context shuffles the team order with `rng.shuffle`, so randomness is used both at the start and during play.
+
+That makes it an early check of the runner against chapter 03's design: a handoff, a timed turn with `turnEndsAt` set from `now`, an end-of-turn summary, and a guarded loop back to the next team.
+
+### The tests
+
+| Test | Expected |
+|---|---|
+| `validateMachine(diceDuel)` | No problems |
+| Plays to the end | 4 turns (2 teams × 2 rounds), back to `handoff` after each of the first three, then `results` |
+| Same seed, same result | Seed 2026 gives turn order Blue, Red and scores `[18, 16]` |
+| Every state is plain JSON | Each state survives `JSON.stringify` then `JSON.parse` unchanged. This is the serializability check we deferred in step 3. |
+| Save and reload halfway | Reloading the state after two turns finishes with exactly the same final state as never reloading |
+| Timer | Starting a turn at `now = 5000` with 30-second turns sets `turnEndsAt` to 35000 |
+
+**The pinned scores were checked by hand**, not just copied from the first run. Separately from the runner, one `createRng(2026)` shuffled `['Red', 'Blue']` and then made 12 rolls; Blue's score is turns 1 and 3, Red's is turns 2 and 4. Both gave `[18, 16]`. A pinned number copied from the code it tests would only prove the code agrees with itself.
+
+### What catches the mistake
+
+We swapped Dice Duel's `next` list so the fallback came first, then ran the tests. Three failed:
+
+- "plays to the end" and "same seed, same result": the game ended after one turn. True, but they don't say why.
+- `validateMachine`: names the phase, the event, the transition, and the fix.
+
+### Docs updated
+
+- Standard §4: `validateMachine` added to the machine rules.
+- Standard §12 and the Definition of Done (§13): every game's tests include `validateMachine(machine)` returning no problems. "Guards and actions are pure" became "deterministic" in the Definition of Done, matching §4 since step 3.
+- `.github/pull_request_template.md`: the same checklist change.
+
+ADR 0001 still says "pure". Accepted decision records aren't edited, so the change will be recorded in ADR 0002 (step 7).
+
+### Files changed
+
+- `src/sdk/machine/validateMachine.ts`, `src/sdk/machine/validateMachine.test.ts`, `src/sdk/machine/fullGame.test.ts` (new)
+- `docs/game-standard.md`, `.github/pull_request_template.md`
+
+### How to verify
+
+1. `pnpm test` reports `42 passed`.
+2. In `fullGame.test.ts`, swap the two transitions in Dice Duel's `next` list and run `pnpm test`. Three tests fail, and the `validateMachine` one prints the message above. Swap them back.

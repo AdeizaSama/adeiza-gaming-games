@@ -30,7 +30,7 @@ Delete the sections that don't apply.
 **Games** (see the [Definition of Done](https://github.com/AdeizaSama/adeiza-gaming-games/blob/main/docs/game-standard.md#13-definition-of-done-per-game))
 
 - [ ] Fits an existing format
-- [ ] Guards and actions are pure; full-playthrough test plus per-guard and per-action tests
+- [ ] Guards and actions are deterministic; full-playthrough test, `validateMachine` test, and per-guard and per-action tests
 - [ ] Works on a 360px-wide phone, including resume after refresh
 - [ ] Custom UI (if any) is explained below
 
