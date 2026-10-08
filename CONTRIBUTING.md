@@ -14,6 +14,7 @@ Each game's content lives in `src/games/<game>/content/`, one JSON file per pack
 
 ```json
 {
+  "$schema": "../../../../schemas/charades.pack.schema.json",
   "id": "anime",
   "name": "Anime",
   "description": "Characters, places and moves from popular anime.",
@@ -21,14 +22,17 @@ Each game's content lives in `src/games/<game>/content/`, one JSON file per pack
   "maturity": "everyone",
   "contributors": ["your-github-handle"],
   "items": [
-    { "text": "Goku", "tags": ["character"], "modes": ["describe"] }
+    { "text": "Goku", "tags": ["character"] },
+    { "text": "Kamehameha", "tags": ["move"], "modes": ["describe", "act"] }
   ]
 }
 ```
 
-- Add items to an existing pack, or create a new pack file.
+- Add items to an existing pack, or create a new pack file. The easiest way to start a new pack is to copy an existing one in the same folder.
+- The file name is the pack's `id`: the pack above is `anime.json`.
 - `maturity` is `everyone`, `teen` or `adult`.
-- Every pack is checked against the game's schema. Your editor will autocomplete and flag mistakes as you type.
+- Keep the `$schema` line, with the game's name in it. With it, editors such as VS Code suggest fields, explain each one when you hover over it, and underline mistakes as you type.
+- Every pack is also checked automatically when you open a pull request.
 - Text only: no images or media.
 - No content about private individuals, and no hateful content.
 

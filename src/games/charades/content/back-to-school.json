@@ -1,4 +1,5 @@
 {
+  "$schema": "../../../../schemas/charades.pack.schema.json",
   "id": "back-to-school",
   "name": "Back to School",
   "description": "Nigerian school days from the 1990s to the 2010s: subjects, rituals, snacks, playground games and the things teachers always said.",

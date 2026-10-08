@@ -52,6 +52,7 @@ pnpm dev        # start the dev server
 pnpm test       # run the tests once (pnpm test:watch re-runs on save)
 pnpm typecheck  # check types without building
 pnpm lint       # check code style and folder boundaries
+pnpm generate-schemas  # rebuild schemas/ after changing a game's schema.ts
 pnpm build      # type-check and build to dist/
 pnpm preview    # serve the production build locally
 ```

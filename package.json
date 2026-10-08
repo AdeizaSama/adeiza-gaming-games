@@ -12,6 +12,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "generate-schemas": "tsx scripts/generate-schemas.ts",
     "validate-content": "tsx scripts/validate-content.ts"
   },
   "dependencies": {

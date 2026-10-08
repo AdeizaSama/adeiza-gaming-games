@@ -520,3 +520,121 @@ Standard §9 says each game folder has an `index.ts` with `defineGame`, a machin
 2. `pnpm validate-content` prints `charades: schema.ts, 1 pack file(s)`.
 3. Break the pack: in `back-to-school.json`, change `"Gala"` to `"Pure water"` (a duplicate) and run `pnpm test`. `schema.test.ts` fails with `items.18: "Pure water" is already in this pack at items.17`. Change it back.
 4. `pnpm typecheck` and `pnpm lint` pass.
+
+---
+
+## Step 7: JSON Schemas for editors
+
+**What:** generate a [JSON Schema](https://json-schema.org) for each game's packs from its zod schema, write it to `schemas/<game>.pack.schema.json`, and point packs at it with `$schema`. Added:
+
+- `scripts/lib/gameSchema.ts`: loads a game's `schema.ts` and checks it exports `itemSchema` and `itemKey`.
+- `scripts/lib/jsonSchema.ts`: turns a game's pack schema into a JSON Schema.
+- `scripts/generate-schemas.ts` and `pnpm generate-schemas`: writes the files.
+- `schemas/charades.pack.schema.json` (generated) and a `$schema` line in `back-to-school.json`.
+- Descriptions on every pack and Charades item field, shown in editors.
+- Tests, including one that fails if the committed schemas are out of date.
+
+**Why:** standard §10 promises that editors autocomplete and check packs while you type. That's what makes content contributions work for people who don't code: mistakes are underlined before they ever open a pull request.
+
+### What a JSON Schema is
+
+zod schemas are TypeScript, which only our code can run. A JSON Schema describes the same rules as plain JSON, a format many tools understand. Editors like VS Code read the `$schema` line at the top of a JSON file, load that schema, and then:
+
+- suggest field names and allowed values (`maturity` → `everyone`, `teen`, `adult`);
+- show a description when you hover over a field;
+- underline mistakes: a missing field, an unknown one, a value that isn't allowed.
+
+A future content editor (roadmap phase 4) can also build forms from the same files.
+
+### Generated, never written by hand
+
+zod stays the single source of the rules. `z.toJSONSchema()`, built into zod 4, converts it. Two options matter:
+
+| Option | Why |
+|---|---|
+| `io: 'input'` | Describes what a contributor *writes*. Fields with a default (Charades' `tags` and `modes`) are optional. The default would describe what the game *receives* after defaults are filled in, where every field is required, so editors would demand `modes` on every item. |
+| `target: 'draft-7'` | JSON Schema has several versions. Draft 7 is the one editors support most widely. |
+
+The pack schema comes from `packSchema(itemSchema)`, the same function the app and CI use (step 2), so the editor's rules can't drift from the real ones. A `title` is added so editors can show which schema a file uses.
+
+### What JSON Schema can't express
+
+zod's `.refine()` runs a custom function, like "no repeated tags". JSON Schema has no way to carry a function, so `z.toJSONSchema()` silently leaves it out. For the two that matter, `tags` and `modes`, JSON Schema has a built-in equivalent, `uniqueItems`, added by hand with `.meta({ uniqueItems: true })`.
+
+A few rules still only run in CI, not in the editor:
+
+| Rule | Why the editor can't check it |
+|---|---|
+| Text that is only spaces counts as blank | The schema says "at least 1 character"; `.trim()` runs before that check in zod, which JSON Schema can't do. |
+| `id` matches the file name | A schema describes one file's contents and can't see its name. |
+| No duplicate items | Duplicates are compared by the game's item key, after normalization (step 3). |
+
+The editor catches most mistakes as you type, and CI catches everything before merging.
+
+### Descriptions for contributors
+
+`.meta({ description: '…' })` on a zod field ends up in the JSON Schema, and editors show it on hover. Every pack field and every Charades item field now has one, written for someone who has never seen the code:
+
+```ts
+maturity: Maturity.meta({ description: 'Who the pack suits: "everyone", "teen" or "adult".' }),
+```
+
+The code comments that said the same things moved into these descriptions, so there's one copy.
+
+### Loading a game's `schema.ts` from a script
+
+`loadGameSchema(file)` imports the file with `import()` and checks its exports with `readGameSchema`:
+
+- `itemSchema` must be a zod schema, and `itemKey` must be a function. If not, the error says exactly what to export. That's a mistake by a game's developer, and a clear message beats a crash deep inside zod.
+- `import()` needs a URL, not a Windows path like `C:\…`, so the path is converted with `pathToFileURL` first.
+
+The check is split out from the import so it can be tested with plain objects, without writing broken `.ts` files to disk.
+
+### Committed, and checked by a test
+
+The generated files are **committed**, not built on the fly:
+
+- Contributors who never run a command still get autocomplete. The file is just there.
+- Editors read it straight from the repository, including when browsing on GitHub.
+
+The risk with committed generated files is that they go stale: someone changes `schema.ts` and forgets to regenerate. So a test (`scripts/lib/jsonSchema.test.ts`) generates every schema in memory and compares it with the committed file. If they differ, it fails, and its name says what to do: `matches the zod schemas (run pnpm generate-schemas if not)`. A second test fails if `schemas/` has a file for a game that no longer exists.
+
+Because it's a test, CI already runs it. No extra CI step is needed.
+
+**Line endings.** On Windows, Git can turn line endings into `\r\n` when files are checked out, while the generator writes `\n`. The test converts `\r\n` to `\n` before comparing, so it gives the same answer on every OS.
+
+### `$schema` in packs
+
+```json
+{
+  "$schema": "../../../../schemas/charades.pack.schema.json",
+  "id": "back-to-school",
+```
+
+The path is relative to the pack file: four folders up (`content` → `charades` → `games` → `src` → the repo root), then into `schemas/`. It's optional, so a pack without it still passes, but contributors are asked to keep it.
+
+### Public docs updated
+
+- **README**: `pnpm generate-schemas` in the command list.
+- **CONTRIBUTING**: the example pack has the `$schema` line and a describe-only item without `modes`. It also says the file name is the id, and that the easiest start is copying an existing pack. "Your editor will autocomplete" was a promise before this step; now it's true.
+- **Standard §10**: where schemas are generated, the command, and the up-to-date test.
+
+### Files changed
+
+- `src/sdk/content/pack.ts`, `src/games/charades/schema.ts`: descriptions, and `uniqueItems` on tags and modes.
+- `scripts/lib/gameSchema.ts`, `scripts/lib/jsonSchema.ts`, `scripts/generate-schemas.ts` and their tests (new).
+- `schemas/charades.pack.schema.json` (new, generated).
+- `src/games/charades/content/back-to-school.json`: the `$schema` line.
+- `package.json`: the `generate-schemas` script.
+- `README.md`, `CONTRIBUTING.md`, `docs/game-standard.md` §10.
+- `docs/tests.md`: the new tests, and counts updated to 102.
+
+### How to verify
+
+1. `pnpm test` reports `102 passed` (90 before, 12 new).
+2. Open `src/games/charades/content/back-to-school.json` in VS Code:
+   - hover over `"maturity"` to see its description;
+   - change `"everyone"` to `"kids"`; it's underlined, and the suggestions list the three allowed values. Change it back;
+   - start a new item with `{ "` and the editor suggests `text`, `tags` and `modes`.
+3. See the up-to-date test work: in `src/games/charades/schema.ts`, change any `description` text, then run `pnpm test`. "matches the zod schemas" fails. Run `pnpm generate-schemas` and `pnpm test` passes again; `git diff schemas/` shows the new text. Undo both changes.
+4. `pnpm typecheck` and `pnpm lint` pass.

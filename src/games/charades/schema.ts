@@ -18,17 +18,31 @@ const noRepeats = (list: readonly string[]) => new Set(list).size === list.lengt
  *   { "text": "Puff puff" }                                     → tags [], modes ["describe"]
  *   { "text": "National Anthem", "tags": ["ritual"], "modes": ["describe", "act", "sing"] }
  */
+//
+// `.meta({ description })` is shown when hovering over a field in an editor. `uniqueItems: true` tells editors what
+// `noRepeats` checks: JSON Schema can't carry a zod `.refine()` function, so it's dropped from the generated schema.
 export const itemSchema = z.strictObject({
-  /** What the team has to guess. At most 50 characters, so it stays readable on a phone at arm's length. */
-  text: z.string().trim().min(1).max(50),
-  /** What kind of thing it is, e.g. `snack` or `game`. Players can filter by tag. */
-  tags: z.array(Tag).refine(noRepeats, 'Remove the repeated tag').default([]),
-  /** How it can be clued. Leave it out for describe only. */
+  // At most 50 characters, so it stays readable on a phone at arm's length.
+  text: z
+    .string()
+    .trim()
+    .min(1)
+    .max(50)
+    .meta({ description: 'What the team has to guess. At most 50 characters.' }),
+  tags: z
+    .array(Tag)
+    .refine(noRepeats, 'Remove the repeated tag')
+    .default([])
+    .meta({ description: 'What kind of thing it is, e.g. "snack" or "game". Players can filter by tag.', uniqueItems: true }),
   modes: z
     .array(CharadesMode)
     .min(1, 'List at least one mode, or leave "modes" out for describe only')
     .refine(noRepeats, 'Remove the repeated mode')
-    .default(['describe']),
+    .default(['describe'])
+    .meta({
+      description: 'How it can be clued: "describe", "act" (silently) or "sing" (or hum). Leave it out for describe only.',
+      uniqueItems: true,
+    }),
 })
 
 export type CharadesItem = z.infer<typeof itemSchema>

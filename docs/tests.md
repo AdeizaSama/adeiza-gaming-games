@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 90 runtime tests (`pnpm test`) and 14 compile-time checks (`pnpm typecheck`).
+**Counts:** 102 runtime tests (`pnpm test`) and 14 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -19,6 +19,8 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Loading packs](#loading-packs) | `src/sdk/content/loadPacks.test.ts` | 12 | |
 | [Finding games (scripts)](#finding-games-scripts) | `scripts/lib/games.test.ts` | 6 | |
 | [Charades content](#charades-content) | `src/games/charades/schema.test.ts` | 8 | |
+| [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 8 | |
+| [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
 
 **Two kinds of test:**
 
@@ -232,3 +234,29 @@ Each row is a mistake TypeScript must reject.
 | 88 | rejects an unknown field, such as the old available_types | Strict fields | An item with `available_types` | Rejected as an unknown field | Catches typos and field names from older formats instead of silently ignoring them. |
 | 89 | identifies an item by its text | `itemKey` | Gala, with a tag and a mode | `"Gala"` | Duplicates are found by text only (step 3). |
 | 90 | all pass the pack checks | Real packs | Every file in `content/`, loaded with `import.meta.glob` exactly as the app will | Loads without error and includes `back-to-school` | Checks the real content, the same way the app loads it. A broken pack makes this test file fail. |
+
+## JSON Schemas (scripts)
+
+`scripts/lib/jsonSchema.test.ts`, testing `scripts/lib/jsonSchema.ts` and the committed `schemas/` folder. The first four use a stand-in item schema with a required `text` and a `modes` field that has a default, like Charades.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 91 | requires the shared pack fields, but not $schema | `packJsonSchema` | The stand-in item schema | Required: id, name, description, language, maturity, contributors, items | Editors flag a missing field, but not a missing `$schema` line. |
+| 92 | rejects unknown fields in packs and items, as the zod schema does | `packJsonSchema` | The stand-in item schema | `additionalProperties: false` on the pack and on items | Editors underline typos like `maturty`, matching what CI rejects. |
+| 93 | makes item fields with a default optional, since contributors can leave them out | `packJsonSchema` | An item with `text` and a defaulted `modes` | Only `text` required | Editors must not demand `modes`, which contributors are told they can leave out. |
+| 94 | names the game in its title | `packJsonSchema` | Game id `test` | Title `Ku Zo Wasa content pack: test` | Editors show which schema a file is using. |
+| 95 | are named after the game | `schemaFileName` | `charades` | `charades.pack.schema.json` | Packs point at this exact name in `$schema`. |
+| 96 | are written with 2-space indents and a final newline | `schemaFileText` | `{ a: 1 }` | Two-space indented JSON ending in a newline | Readable files whose changes show cleanly in pull requests. |
+| 97 | matches the zod schemas (run `pnpm generate-schemas` if not) | Up-to-date check | Every game's `schema.ts`, and its file in `schemas/` | Each committed file equals a freshly generated one | If someone changes a schema without regenerating, editors would show old rules. This failing test names the fix. |
+| 98 | has no schemas for games that no longer exist | Up-to-date check | The files in `schemas/` | Exactly one per game that has a `schema.ts` | Stops leftover files from a renamed or removed game. |
+
+## Loading game schemas (scripts)
+
+`scripts/lib/gameSchema.test.ts`, testing `scripts/lib/gameSchema.ts`.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 99 | returns itemSchema and itemKey when both are exported | `readGameSchema` | Exports with a zod schema, a key function and something else | The schema and the key | The two exports every game's `schema.ts` must have. |
+| 100 | says when itemSchema is missing or is not a zod schema | `readGameSchema` | No `itemSchema`; an `itemSchema` that is a plain object | An error saying `schema.ts must export itemSchema` | A game developer's mistake gets a message saying what to add, not a crash deep inside zod. |
+| 101 | says when itemKey is missing | `readGameSchema` | No `itemKey` | An error saying `schema.ts must export itemKey` | Same: a clear message for the developer. |
+| 102 | loads a real game's schema.ts from a file path | `loadGameSchema` | The path of `src/games/charades/schema.ts` | A working schema (`{ text: "Gala" }` gets its defaults) and key | Proves scripts can load a game's `schema.ts` on its own, from a full path on any OS. |

@@ -283,7 +283,7 @@ One file per pack: `src/games/<id>/content/<pack-id>.json`.
 ```
 
 - Pack-level fields are shared across games. `items` follow the game's `itemSchema`.
-- JSON Schemas are **generated** from the zod schemas (`scripts/`) so editors autocomplete and validate while you type, and so a future content editor can render forms from them.
+- JSON Schemas are **generated** from the zod schemas into `schemas/<game>.pack.schema.json` with `pnpm generate-schemas`, so editors autocomplete and validate while you type, and so a future content editor can render forms from them. They are committed; a test fails if they are out of date. Each pack points at its game's schema with `$schema`.
 - CI rejects packs that fail the schema or contain duplicate items.
 - `maturity`: `everyone` | `teen` | `adult`. The library filters by it.
 - Content policy: no private individuals, no hate content. Text only in v1, no images or media.
