@@ -1,0 +1,108 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "description": "Lets your editor check this file and suggest fields. Leave it as it is.",
+      "type": "string"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Must match the file name: \"movies-90s\" for movies-90s.json."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The pack name players see, e.g. \"Back to School\"."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "One or two sentences telling players what is in the pack."
+    },
+    "language": {
+      "type": "string",
+      "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$",
+      "description": "The language players read the pack in, as a code: \"en\", \"en-NG\", \"fr\", \"yo\"…"
+    },
+    "maturity": {
+      "type": "string",
+      "enum": [
+        "everyone",
+        "teen",
+        "adult"
+      ],
+      "description": "Who the pack suits: \"everyone\", \"teen\" or \"adult\"."
+    },
+    "contributors": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 39,
+        "pattern": "^[A-Za-z0-9]+(-[A-Za-z0-9]+)*$"
+      },
+      "description": "GitHub usernames of the people who wrote the pack, without \"@\". Add yours."
+    },
+    "items": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "description": "What the team has to guess. At most 50 characters."
+          },
+          "tags": {
+            "default": [],
+            "description": "What kind of thing it is, e.g. \"snack\" or \"game\". Players can filter by tag.",
+            "uniqueItems": true,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+              "description": "Lowercase words joined by hyphens, e.g. \"snack\" or \"tv-show\"."
+            }
+          },
+          "modes": {
+            "default": [
+              "describe"
+            ],
+            "description": "How it can be clued: \"describe\", \"act\" (silently) or \"sing\" (or hum). Leave it out for describe only.",
+            "uniqueItems": true,
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "describe",
+                "act",
+                "sing"
+              ]
+            }
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "description": "The items in the pack."
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "description",
+    "language",
+    "maturity",
+    "contributors",
+    "items"
+  ],
+  "additionalProperties": false,
+  "title": "Ku Zo Wasa content pack: charades"
+}

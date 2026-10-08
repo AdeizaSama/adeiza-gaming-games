@@ -1,0 +1,839 @@
+# 02 — Content packs
+
+**Goal of this chapter:** define what a content pack is and check every pack automatically: the pack schema, loading packs, JSON Schemas generated for editors, and the `validate-content` check in CI. At the end, all five CI checks from standard §12 are real.
+
+**Branch:** `chapter/02-content-packs`
+
+**Charades content comes early.** Packs belong to a game, and their items are checked against that game's item schema. The first game, Charades, is built in chapter 04, so a content check written now would have nothing to check. This chapter therefore brings two pieces of Charades forward: its item schema and one starter pack. The rest of the game (machine, views, rules) stays in chapter 04. Until then `src/games/charades/` is incomplete on purpose.
+
+---
+
+## Step 1: Merge chapters with a merge commit
+
+**What:** change how chapter pull requests are merged, from **rebase** to **merge commit**. Other pull requests are still squashed.
+
+**Why:** chapter 01 was the first chapter merged with **Rebase and merge**, and it showed two problems.
+
+1. **Rebase rewrites every commit.** GitHub doesn't move the branch's commits onto `main`; it creates copies with new IDs (hashes). The original commits stay on the branch, so a Git client shows every step twice, once on `main` and once on the branch, until the branch is deleted. Deleting it needs `git branch -D` (force), because Git compares commits by ID and the originals' IDs aren't on `main`.
+2. **Chapter boundaries disappear.** With a straight line of commits, nothing in `git log` says where chapter 01 ends and chapter 02 begins.
+
+The goal in chapter 01, step 1 was "don't squash chapters", so each step stays its own commit. A merge commit does that too:
+
+| | Rebase and merge | Merge commit |
+|---|---|---|
+| Each step a separate commit on `main` | Yes | Yes |
+| Commit IDs | New copies | Kept: the commits you made are the ones on `main` |
+| Where a chapter starts and ends | Invisible | One "Merge pull request" commit per chapter |
+| One line per chapter | Not possible | `git log --first-parent` |
+| History | One straight line | Branches and rejoins once per chapter |
+
+A straight line matters most when many small pull requests land every day, and those are still squashed. For a history organised by chapter, the merge commit is a "chapter ends here" marker, which is what we want.
+
+Chapter 01 stays rebased. Rewriting `main` to change it would be worse than one inconsistent chapter.
+
+**The rule now:**
+
+- **Squash by default.** The PR title becomes the commit message.
+- **Merge commit** when every commit stands on its own and follows Conventional Commits, as tutorial chapters do.
+- **No rebase merging.**
+
+### Settings (on GitHub)
+
+Two places, because a branch ruleset overrides the repo-wide setting for that branch. In chapter 01 the repo allowed rebase, but the `main` ruleset only allowed squash, so the PR only offered squash.
+
+1. **Settings → General → Pull Requests**: tick **Allow merge commits** and **Allow squash merging** (default message: **Default to pull request title**); untick **Allow rebase merging**.
+2. **Settings → Rules → Rulesets → Main Protection → Require a pull request before merging → Allowed merge methods**: **Merge** and **Squash**.
+
+### Files changed
+
+- `docs/game-standard.md` §12: the merge rule.
+- `docs/tutorial/01-machine-runner.md`: a note under step 1 pointing here.
+- `docs/tutorial/02-content-packs.md` (new, this file).
+
+### How to verify
+
+1. Open this chapter's PR. The merge button's dropdown offers **Create a merge commit** and **Squash and merge**, and not rebase.
+2. After merging, `git log --oneline --first-parent origin/main -3` shows a "Merge pull request" commit for this chapter, and `git log --oneline origin/main` shows each step underneath it with the same IDs as on your branch.
+
+---
+
+## Step 2: The pack schema
+
+**What:** add [zod](https://zod.dev) and write the schema every content pack follows, in `src/sdk/content/pack.ts`, with tests.
+
+**Why:** standard §10 describes a pack in words. A schema turns those words into a check a computer can run: in the app, in CI, and (from step 7) in your editor while you type. Content contributors don't write code, so this check is how they find their mistakes, and its error messages are written for them.
+
+### Why zod
+
+zod describes the shape of data once and gives us three things from that one description:
+
+1. **A check at runtime:** `schema.safeParse(json)` says whether a pack is valid, and if not, exactly where (`items.3.text`).
+2. **A TypeScript type:** `z.infer<typeof schema>`, so the code that uses a pack can't drift from the check.
+3. **A JSON Schema:** `z.toJSONSchema(schema)`, built into zod 4, which editors use to autocomplete and flag mistakes (step 7). No second library needed.
+
+It's a **runtime dependency** (in `dependencies`, not `devDependencies`) because the app will check packs and game settings in the browser too. The standard says new runtime dependencies must be justified; this is the justification, and it goes in the PR description too.
+
+### Two halves: shared fields and the game's items
+
+Every pack has the same outer fields, whatever the game. Only `items` differs: a Charades item is `{ text, tags, modes }`, a Trivia item is `{ question, options, answer, difficulty }`. So the schema comes in two parts:
+
+```ts
+export const PackInfo = z.strictObject({ $schema, id, name, description, language, maturity, contributors })
+
+export function packSchema(itemSchema) {
+  return PackInfo.extend({ items: z.array(itemSchema).min(1) })
+}
+```
+
+A game calls `packSchema(CharadesItem)` and gets the full schema for its packs. The SDK never needs to know what a Charades item looks like, which keeps the folder rule "the SDK never imports a game" (standard §9).
+
+### The rules, field by field
+
+| Field | Rule | Why |
+|---|---|---|
+| `$schema` | Optional text | Points editors at the generated JSON Schema (step 7). Ignored by the game. Must be allowed, or the strict check below would reject it. |
+| `id` | kebab-case: `animals`, `movies-90s` | Ids appear in presets (`packs: ["anime"]`) and will be matched to filenames (step 4). One spelling style avoids `Anime` vs `anime` mix-ups. |
+| `name`, `description` | Not blank | Shown in the library. `trim()` first, so `"   "` counts as blank. |
+| `language` | A language code: `en`, `en-GB`, `pt-BR`, `yo`, `zh-Hans` | A simplified [BCP 47](https://www.rfc-editor.org/info/bcp47) tag, the standard browsers use. The full standard has more rules than we need; this pattern accepts everything we'd realistically use and rejects `English` and `en_GB`. |
+| `maturity` | `everyone`, `teen` or `adult` | From standard §10. Exported as `Maturity` so the library's filter (later) uses the same list. |
+| `contributors` | At least one GitHub username | Credit is required (standard §3). The pattern follows GitHub's own rules (letters, digits, single hyphens, at most 39 characters), so `@AdeizaSama` (with the `@`) is caught. |
+| `items` | At least one, each checked by the game's item schema | An empty pack is almost certainly a mistake. |
+
+**Strict means unknown fields are errors.** `z.strictObject` rejects fields it doesn't know. Without it, a typo like `"maturty": "teen"` would be silently dropped, and the error would say `maturity` is missing instead of pointing at the typo. A typo in an optional field would be worse: the pack would pass, and the setting would be quietly ignored. `.extend()` keeps the strictness. Whether *items* are strict is up to each game's item schema.
+
+### `Pack<Item>`
+
+```ts
+export interface Pack<Item> extends PackInfo {
+  items: Item[]
+}
+```
+
+The type code uses for a loaded pack. A test checks it's exactly what zod infers from `packSchema`, so the type and the check can't drift apart.
+
+### Tests: `src/sdk/content/pack.test.ts`
+
+12 tests, using a tiny stand-in item schema `{ text }` instead of a real game's:
+
+| Test | Why it matters |
+|---|---|
+| A valid pack passes unchanged; `$schema` is allowed | The happy path, and the editor line doesn't break it |
+| An unknown field (`maturty`) is rejected | The strictness promise |
+| A missing field is rejected | Required fields are required |
+| `id`, `language`, `maturity`, `contributors`: valid and invalid examples of each | Each rule in the table above, including the edge cases (`movies--90s`, `en_GB`, `@AdeizaSama`, a 40-character name) |
+| A bad item is reported at its path (`items.1.text`) | Errors point contributors at the exact item |
+| An empty `items` list is rejected | |
+| `z.infer` of the schema equals `Pack<Item>` | Type and check agree |
+
+The tests check *where* each error is (the path), not the wording of the message. Wording will change as we improve it; the path shouldn't.
+
+### Files changed
+
+- `package.json`, `pnpm-lock.yaml`: zod 4.
+- `src/sdk/content/pack.ts`, `src/sdk/content/pack.test.ts` (new).
+- `docs/tests.md` (new): a catalog of every test (what it checks, its input, the expected result and why), so the tests can be understood without reading the code. Any step that changes a test updates it in the same commit.
+
+### How to verify
+
+1. `pnpm install`, then `pnpm test` reports `54 passed` (42 from chapter 01, 12 new).
+2. See strictness at work: in `pack.ts`, change `z.strictObject` to `z.object` and run `pnpm test`. The "rejects an unknown field" test fails. Change it back.
+3. `pnpm typecheck` and `pnpm lint` pass.
+
+---
+
+## Step 3: Finding duplicate items
+
+**What:** two functions in `src/sdk/content/duplicates.ts`, with tests:
+
+- `findDuplicates(items, itemKey)`: lists every item that repeats an earlier one. The content check (step 8) will use it to fail a pack that lists the same item twice.
+- `uniqueBy(items, itemKey)`: the items with repeats removed, keeping the first copy. The team-turns format (chapter 03) will use it when players pick several packs that share items.
+
+**Why:** standard §10 says CI rejects packs with duplicate items. "Duplicate" turned out to need a definition.
+
+### What counts as the same item: the item key
+
+Comparing whole items doesn't work. These two are the same word to players, but they aren't equal objects:
+
+```json
+{ "text": "Goku", "modes": ["act"] }
+{ "text": "Goku", "modes": ["describe"] }
+```
+
+Only the game knows which field identifies an item: `text` for Charades, `category` for Name Ten, `question` for Trivia. So each game gives the SDK an **item key**, a function from an item to its identifying text:
+
+```ts
+export type ItemKey<Item> = (item: Item) => string
+
+// in src/games/charades/schema.ts (step 6):
+export const itemKey: ItemKey<CharadesItem> = (item) => item.text
+```
+
+**Who writes it:** the game's developer, once, when the game is created. Players and content contributors never see it. It's **required**, because every default guess is wrong for some game: comparing whole items misses the Goku case above, and guessing a field name breaks silently for the next game.
+
+### Small differences that still count as the same
+
+Before comparing, keys are put in one standard form:
+
+| Step | Example | Why |
+|---|---|---|
+| Unicode normalization (NFC) | `é` stored as one character, or as `e` plus a separate accent mark, become identical | They look the same on screen, but are different bytes. Different keyboards and editors produce different forms, so without this a duplicate could hide. |
+| Collapse and trim spaces | `" Goku "` and `"Monkey  D. Luffy"` become `"Goku"` and `"Monkey D. Luffy"` | Stray spaces are invisible in most editors. |
+| Lowercase | `"GOKU"` becomes `"goku"` | The same word in different case is the same item to players. |
+
+**Accents are kept.** `ọkọ` (husband) and `oko` (farm) are different Yoruba words. Many "ignore accents" comparisons strip them, and would wrongly treat these as the same item and remove one. Normalization only makes the *same* accented letter compare equal, whichever way it was typed.
+
+### Within a pack: an error. Across packs: handled during play.
+
+| Where | What happens | Why |
+|---|---|---|
+| The same item twice **in one pack** | The content check fails (step 8) and says which positions clash | Always a mistake, and the fix is obvious. |
+| The same item **in two packs** | Not checked | Both packs are fine on their own: "Goku" belongs in both "Anime" and "Dragon Ball". |
+| Players pick **both packs** | `uniqueBy` keeps the first copy, so Goku is drawn once | Nobody has to do anything. If the copies differ (one tagged `act`, one `describe`), the copy from the pack listed first wins. Merging them would add complexity we don't need yet. |
+
+### How it works
+
+`findDuplicates` walks the list once, remembering each normalized key and where it first appeared. When a key it has already seen comes up again, it records that position and the position of the first copy:
+
+```ts
+{ index: 2, firstIndex: 0, key: 'Goku' }   // items.2 repeats items.0
+```
+
+It returns data, not a message. Turning it into a message for contributors ("items.2 is a duplicate of items.0") is the content check's job in step 8. Positions start at 0 to match error paths like `items.2.text` from step 2.
+
+`uniqueBy` reuses `findDuplicates` and drops every position it reports, so the two can never disagree about what a duplicate is.
+
+### Tests: `src/sdk/content/duplicates.test.ts`
+
+10 tests, using Charades-shaped items `{ text, modes }` with `text` as the key:
+
+| Test | Why it matters |
+|---|---|
+| No duplicates, or an empty list, gives no results | No false alarms |
+| Reports the extra copy's position and the first copy's | Lets the content check point at exact lines |
+| Every extra copy is reported, each pointing at the first | All repeats in one CI run |
+| Case and extra spaces are ignored | Typing differences don't hide repeats |
+| `é` written two ways counts as one | Unicode normalization works |
+| `ọkọ` and `oko` stay separate | Accents are kept |
+| Items differing only in `modes` are duplicates | Only the key is compared |
+| `uniqueBy` keeps the first copy, in order | The two-pack case during play |
+| `uniqueBy` returns a new list and leaves the original alone | Data is never changed in place |
+| `uniqueBy` handles an empty list | Edge case |
+
+The full table is in [docs/tests.md](../tests.md#duplicate-items).
+
+### Files changed
+
+- `src/sdk/content/duplicates.ts`, `src/sdk/content/duplicates.test.ts` (new).
+- `docs/tests.md`: the new tests, and counts updated to 64.
+
+### How to verify
+
+1. `pnpm test` reports `64 passed` (54 before, 10 new).
+2. See the accent rule at work: in `duplicates.ts`, add `.normalize('NFD').replace(/\p{M}/gu, '')` after `.toLowerCase()` (this strips accents) and run `pnpm test`. The `ọkọ`/`oko` test fails. Remove it again.
+3. `pnpm typecheck` and `pnpm lint` pass.
+
+---
+
+## Step 4: Loading and checking packs
+
+**What:** two functions in `src/sdk/content/loadPacks.ts`, with tests:
+
+- `checkPack(file, data, itemSchema, itemKey)`: checks one pack file and returns either the pack or a list of problems.
+- `loadPacks(files, itemSchema, itemKey)`: checks all of a game's pack files and returns the packs, or throws one error listing every problem.
+
+**Why:** steps 2 and 3 built the rules. This step applies them to real files, in the one place both the app and CI will use.
+
+### One function decides what "valid" means
+
+There are two places that read packs:
+
+1. **The app**, which loads a game's packs when it starts (through `loadPacks`).
+2. **The content check in CI** (step 8), which reads every pack file and reports problems to contributors.
+
+If each had its own checks, they would drift apart: CI could pass a pack that crashes the app, or reject one the app would accept. So both call `checkPack`, and it's the only code that decides whether a pack is valid.
+
+`checkPack` runs three checks in order:
+
+| Check | Problem reported at | Example message |
+|---|---|---|
+| 1. The pack schema, with the game's item schema (step 2) | Wherever zod finds it, e.g. `items.1.text` | zod's own message |
+| 2. The `id` matches the file name: `anime.json` must have `"id": "anime"` | `id` | `The id must match the file name: "anime" (found "manga")` |
+| 3. No item is listed twice, by the game's item key (step 3) | The extra copy, e.g. `items.2` | `"goku" is already in this pack at items.0` |
+
+**If check 1 fails, checks 2 and 3 don't run.** They need a pack whose shape is known (an `id` that is text, `items` that are a list). The contributor fixes the shape, and any id or duplicate problems show up on the next run.
+
+**Why the id must match the file name.** Two files in one folder can't have the same name, so this one rule also guarantees no two packs of a game share an id, with no separate check. It also means the pack a preset names (`packs: ["anime"]`) is always in `anime.json`.
+
+The result is a **discriminated union**, a type with a field that says which case you have:
+
+```ts
+type PackCheck<Item> = { ok: true; pack: Pack<Item> } | { ok: false; problems: PackProblem[] }
+```
+
+After checking `result.ok`, TypeScript knows whether `result.pack` or `result.problems` exists. It's the same idea as the machine's events (`{ type: 'got' } | { type: 'skip' }`).
+
+### How the app gets the files: `import.meta.glob`
+
+The app runs in a browser, which can't list files in a folder. Vite solves this at build time:
+
+```ts
+import.meta.glob('./content/*.json', { eager: true, import: 'default' })
+// → { './content/anime.json': { id: 'anime', … }, './content/movies.json': { … } }
+```
+
+- **`import.meta.glob`** finds every file matching the pattern when the app is built, and turns them into imports. Adding a pack file is enough; no list to update.
+- **`eager: true`** includes the files in the app's code instead of loading each one later when it's needed. Packs are small text files, and games need them all at setup.
+- **`import: 'default'`** gives each file's JSON directly. Without it, each value would be wrapped as `{ default: { … } }`.
+
+`loadPacks` doesn't call `import.meta.glob` itself. It takes the result as a plain object, so the tests can pass in made-up files, and the SDK doesn't depend on Vite. `import.meta.glob` only works inside Vite, which is why the CI script (step 8) will read files a different way and call `checkPack` directly.
+
+### Why `loadPacks` throws
+
+An invalid pack can't reach players: CI rejects it before it's merged. So the only time `loadPacks` finds a problem is while someone is editing a pack on their own machine. Then it should be loud and complete: one error, every problem in every file, each with its file and position:
+
+```
+Content packs have problems:
+  ./content/anime.json, items.1: "Goku" is already in this pack at items.0
+  ./content/movies.json, id: The id must match the file name: "movies" (found "films")
+```
+
+Packs come back **sorted by id**, so the order is the same on every device whatever order the files are found in. The sort uses a plain comparison rather than `localeCompare`, which can order text differently depending on the device's language settings.
+
+### The standard's example, updated
+
+Standard §3 showed `loadPacks(import.meta.glob("./content/*.json", { eager: true }))`. The real function also needs the item schema and item key, and uses `import: "default"`, so the example now matches it.
+
+### Tests: `src/sdk/content/loadPacks.test.ts`
+
+12 tests:
+
+| Test | Why it matters |
+|---|---|
+| A valid pack comes back as `ok` | The happy path |
+| Every schema problem is listed with its position | All problems at once |
+| A file that isn't a pack at all is reported, not crashed on | Even a badly broken file gets a clear message |
+| An id that doesn't match the file name is rejected | The id rule |
+| The file name is read from Vite paths, Linux paths, Windows paths and bare names | The app and the CI script, on any computer, agree |
+| A repeated item is reported at the extra copy, naming the first | The duplicate rule, with the item key |
+| Id and duplicate problems are reported together | One report |
+| While the shape is wrong, only shape problems are reported | Check order |
+| `loadPacks` returns packs sorted by id | Same order everywhere |
+| No files gives no packs | Edge case |
+| One error lists every problem in every file | What a developer sees |
+| The packs have the item schema's type | Types follow the schema |
+
+The full table is in [docs/tests.md](../tests.md#loading-packs).
+
+### Files changed
+
+- `src/sdk/content/loadPacks.ts`, `src/sdk/content/loadPacks.test.ts` (new).
+- `docs/game-standard.md` §3: the `loadPacks` example matches the real function.
+- `docs/tests.md`: the new tests, and counts updated to 76.
+
+### How to verify
+
+1. `pnpm test` reports `76 passed` (64 before, 12 new).
+2. See the error a developer would get: in `loadPacks.test.ts`, change `'films'` to `'movies'` in the "throws one error" test and run `pnpm test`. The test fails, and the output shows the error now lists only the anime problem. Change it back.
+3. `pnpm typecheck` and `pnpm lint` pass.
+
+---
+
+## Step 5: Running TypeScript scripts
+
+**What:** set up `scripts/`, the folder for the tools that run outside the app (standard §9): the content check (step 8) and JSON Schema generation (step 7). This step adds:
+
+- [tsx](https://tsx.is), a dev dependency that runs TypeScript files directly in Node.
+- `tsconfig.scripts.json`, so `pnpm typecheck` checks scripts too.
+- `scripts/lib/games.ts`: `findGames()`, which lists each game folder, its `schema.ts` and its pack files. Both later scripts need it.
+- `scripts/validate-content.ts` and `pnpm validate-content`. For now the script only lists what it finds; step 8 adds the checks.
+
+**Why:** the content check can't live inside the app. CI needs a command that reads the pack files, checks them and fails with a clear list of problems.
+
+### Why the script can't use `loadPacks` or a game's `index.ts`
+
+A game's `index.ts` loads its packs with `import.meta.glob`, which only exists inside Vite, and will also import React views. A plain Node script can't load it. So scripts use two things that don't depend on Vite:
+
+- **`findGames()`** reads the folders directly with Node's `fs` instead of `import.meta.glob`.
+- **`schema.ts`** in each game exports `itemSchema` and `itemKey`, and imports only zod and `src/sdk/content/`. Scripts load that file and nothing else from a game. This becomes a rule in the standard in step 9.
+
+Both the app and the script end up calling the same `checkPack` from step 4.
+
+### Why tsx
+
+Node can't run our TypeScript as it is:
+
+- Node 22 can strip types from `.ts` files, but it requires full file names in imports (`'../rng.ts'`), and our code imports without extensions (`'../rng'`), as Vite allows.
+- tsx runs TypeScript the way Vite resolves it, so scripts can import `src/sdk/` files unchanged.
+
+The alternative was running the checks as Vitest tests. That needs no new package, but contributors would get test-runner errors ("expected false to be true") instead of messages written for them.
+
+tsx is a **dev dependency**: it's used to build and check the project, and never ships to players.
+
+### `tsconfig.scripts.json`
+
+The project already had two TypeScript configs: `tsconfig.app.json` for `src/` (browser code) and `tsconfig.node.json` for `vite.config.ts`. `tsconfig.json` lists them as references, and `pnpm typecheck` (`tsc -b`) checks each one. Before this step, nothing covered `scripts/`, so a type error there would have passed CI.
+
+The new config is like `tsconfig.node.json`, with two differences:
+
+| Setting | Value | Why |
+|---|---|---|
+| `include` | `["scripts"]` | Its own folder. Files scripts import from `src/sdk/` are checked as well. |
+| `module` / `moduleResolution` | `esnext` / `bundler` | Matches how tsx resolves imports, so extensionless imports are allowed. `tsconfig.node.json` uses `nodenext`, which would reject them. |
+
+It has `node` types (for `fs`, `path`) and no `DOM` types: scripts don't run in a browser.
+
+### `findGames()`
+
+```ts
+findGames('src/games')
+// → [{ id: 'charades', schemaFile: '…/charades/schema.ts', packFiles: ['…/charades/content/anime.json'] }]
+```
+
+- **Sorted** game ids and file names, so the output is the same on every computer (folder listing order differs between operating systems).
+- **`schemaFile: null`** when a game has no `schema.ts`. The content check reports it as a problem instead of crashing.
+- **Only `content/*.json`** counts as a pack: the same pattern the app uses. Notes or drafts in subfolders are ignored by both.
+- **A missing `src/games` gives an empty list.** It doesn't exist yet; step 6 creates it.
+
+`validate-content.ts` finds `src/games` from its own location (`new URL('../src/games', import.meta.url)`), not from the folder you run it in, so it works from anywhere.
+
+### Tests: `scripts/lib/games.test.ts`
+
+6 tests. Each one builds a throwaway games folder in the system's temp directory and deletes it afterwards, so no sample folders are committed. Vitest finds test files anywhere in the project, so tests in `scripts/` run with `pnpm test` like the others. The full table is in [docs/tests.md](../tests.md#finding-games-scripts).
+
+### Not yet in the README
+
+`pnpm validate-content` exists but doesn't check anything yet, so it isn't listed in the README's commands or added to CI until step 8, when it does.
+
+### Files changed
+
+- `package.json`, `pnpm-lock.yaml`: tsx, and the `validate-content` script.
+- `tsconfig.scripts.json` (new), `tsconfig.json`: the new config is listed as a reference.
+- `scripts/lib/games.ts`, `scripts/lib/games.test.ts`, `scripts/validate-content.ts` (new).
+- `docs/tests.md`: the new tests, and counts updated to 82.
+
+### How to verify
+
+1. `pnpm install`, then `pnpm test` reports `82 passed` (76 before, 6 new).
+2. `pnpm validate-content` prints `No games found in …\src\games`.
+3. Check scripts are type-checked: in `scripts/validate-content.ts`, change `games.length` to `games.size` and run `pnpm typecheck`. It reports an error in that file. Change it back.
+4. `pnpm lint` passes.
+
+---
+
+## Step 6: The Charades item schema and a starter pack
+
+**What:** the first files in `src/games/charades/`:
+
+- `schema.ts`: what a Charades item is (`itemSchema`) and what makes two items the same (`itemKey`).
+- `content/back-to-school.json`: a starter pack of 34 items.
+- `schema.test.ts`: tests for both.
+
+Plus a shared `Tag` schema in `src/sdk/content/pack.ts`.
+
+**Why:** the content check needs real content to check (see the note at the top of this chapter). This is the first time the pack schema meets a real game.
+
+### The item
+
+Standard §8 says a Charades item is `{ text, tags[], modes[] }`. In detail:
+
+| Field | Rule | If left out |
+|---|---|---|
+| `text` | 1 to 50 characters after trimming spaces | Required |
+| `tags` | Each one kebab-case (`snack`, `tv-show`), none repeated | `[]` |
+| `modes` | Any of `describe`, `act`, `sing`, at least one, none repeated | `["describe"]` |
+
+So the smallest valid item is just:
+
+```json
+{ "text": "Puff puff" }
+```
+
+**Why `modes` is optional.** Every item can be described. Only some can be acted out or sung. Making `modes` optional with `["describe"]` as the default means contributors only write it when an item can do more:
+
+```json
+{ "text": "National Anthem", "tags": ["ritual"], "modes": ["describe", "act", "sing"] }
+```
+
+zod's `.default()` fills in missing values when a pack is checked, so the game always gets an item with all three fields. The pack file stays short.
+
+**Why at most 50 characters.** Standard §12 says the game must be readable at arm's length on a phone. Long text either shrinks or wraps onto many lines. 50 leaves room for real titles ("Wait till your father comes" is 27) while stopping full sentences.
+
+**Strict, like packs.** An unknown field is an error. That includes `available_types`, the name an older version of this data used for modes. Silently ignoring it would make every item describe-only without warning.
+
+**Modes are `describe`, `act` and `sing`**, the names in standard §7. Short and readable in JSON.
+
+### The shared `Tag` schema
+
+Every v1 game's items have tags (standard §8), and the library will let players filter by them. If each game wrote its own tag rule, one game might allow `TV Show` and another `tv_show`. So the rule lives in the SDK, beside the pack id rule, which uses the same kebab-case pattern:
+
+```ts
+export const Tag = z.string().regex(kebabCase, 'Use lowercase words joined by hyphens, e.g. "tv-show"')
+```
+
+### `schema.ts` stands alone
+
+Scripts (steps 7 and 8) load `schema.ts` directly in Node. So it imports only zod and `src/sdk/content/`, never React, views or other game files. A comment at the top of the file says so. The standard gets this rule in step 9.
+
+It exports, under the names scripts will look for:
+
+| Export | What it is |
+|---|---|
+| `itemSchema` | The zod schema for one item |
+| `itemKey` | `(item) => item.text`: two items with the same text are the same item |
+| `CharadesItem` | The TypeScript type of an item, for the game's own code |
+| `CharadesMode` | The three modes, for the game's own code (chapter 04) |
+
+Standard §3's example now uses `itemSchema` too.
+
+### The starter pack: Back to School
+
+34 items of Nigerian school nostalgia, picked from existing material and reviewed one by one:
+
+- **Spread across kinds:** subjects, rituals, items, playground games, snacks, chores, things teachers said, songs, sports, a place and slang. Each item has one tag saying which.
+- **Modes vary**, so the pack exercises every rule: 2 items are describe-only, 31 can be acted, 3 can be sung (one, "Arise O Compatriots", can be sung but not acted).
+- **No people.** The original material includes musicians and actors; they're left out of the starter pack, which keeps clear of the content policy's questions about real individuals.
+- **`language: "en-NG"`** (Nigerian English), because terms like *Ajebutter* and *Olodo* are Nigerian English.
+- **Credited to `AdeizaSama`.**
+
+There's no `$schema` line yet: the file it points to is generated in step 7.
+
+### Tests: `src/games/charades/schema.test.ts`
+
+8 tests: seven for the item rules, and one that loads every real pack in `content/` with the same `loadPacks(import.meta.glob(…))` call the game will use. Vitest runs on Vite, so `import.meta.glob` works in tests too. If any pack is broken, `loadPacks` throws and this test file fails, so CI already catches bad Charades packs. Step 8 adds the friendlier check for contributors.
+
+The full table is in [docs/tests.md](../tests.md#charades-content).
+
+### `src/games/charades/` is incomplete on purpose
+
+Standard §9 says each game folder has an `index.ts` with `defineGame`, a machine, views and rules. Those come in chapters 03 and 04. Nothing imports this folder yet: the app's game list (`src/app/registry/`) doesn't exist, so players won't see Charades until it's finished.
+
+### Files changed
+
+- `src/sdk/content/pack.ts`: exports `Tag`.
+- `src/games/charades/schema.ts`, `src/games/charades/schema.test.ts`, `src/games/charades/content/back-to-school.json` (new).
+- `docs/game-standard.md` §3: the example uses `itemSchema`.
+- `docs/tests.md`: the new tests, and counts updated to 90.
+
+### How to verify
+
+1. `pnpm test` reports `90 passed` (82 before, 8 new).
+2. `pnpm validate-content` prints `charades: schema.ts, 1 pack file(s)`.
+3. Break the pack: in `back-to-school.json`, change `"Gala"` to `"Pure water"` (a duplicate) and run `pnpm test`. `schema.test.ts` fails with `items.18: "Pure water" is already in this pack at items.17`. Change it back.
+4. `pnpm typecheck` and `pnpm lint` pass.
+
+---
+
+## Step 7: JSON Schemas for editors
+
+**What:** generate a [JSON Schema](https://json-schema.org) for each game's packs from its zod schema, write it to `schemas/<game>.pack.schema.json`, and point packs at it with `$schema`. Added:
+
+- `scripts/lib/gameSchema.ts`: loads a game's `schema.ts` and checks it exports `itemSchema` and `itemKey`.
+- `scripts/lib/jsonSchema.ts`: turns a game's pack schema into a JSON Schema.
+- `scripts/generate-schemas.ts` and `pnpm generate-schemas`: writes the files.
+- `schemas/charades.pack.schema.json` (generated) and a `$schema` line in `back-to-school.json`.
+- Descriptions on every pack and Charades item field, shown in editors.
+- Tests, including one that fails if the committed schemas are out of date.
+
+**Why:** standard §10 promises that editors autocomplete and check packs while you type. That's what makes content contributions work for people who don't code: mistakes are underlined before they ever open a pull request.
+
+### What a JSON Schema is
+
+zod schemas are TypeScript, which only our code can run. A JSON Schema describes the same rules as plain JSON, a format many tools understand. Editors like VS Code read the `$schema` line at the top of a JSON file, load that schema, and then:
+
+- suggest field names and allowed values (`maturity` → `everyone`, `teen`, `adult`);
+- show a description when you hover over a field;
+- underline mistakes: a missing field, an unknown one, a value that isn't allowed.
+
+A future content editor (roadmap phase 4) can also build forms from the same files.
+
+### Generated, never written by hand
+
+zod stays the single source of the rules. `z.toJSONSchema()`, built into zod 4, converts it. Two options matter:
+
+| Option | Why |
+|---|---|
+| `io: 'input'` | Describes what a contributor *writes*. Fields with a default (Charades' `tags` and `modes`) are optional. The default would describe what the game *receives* after defaults are filled in, where every field is required, so editors would demand `modes` on every item. |
+| `target: 'draft-7'` | JSON Schema has several versions. Draft 7 is the one editors support most widely. |
+
+The pack schema comes from `packSchema(itemSchema)`, the same function the app and CI use (step 2), so the editor's rules can't drift from the real ones. A `title` is added so editors can show which schema a file uses.
+
+### What JSON Schema can't express
+
+zod's `.refine()` runs a custom function, like "no repeated tags". JSON Schema has no way to carry a function, so `z.toJSONSchema()` silently leaves it out. For the two that matter, `tags` and `modes`, JSON Schema has a built-in equivalent, `uniqueItems`, added by hand with `.meta({ uniqueItems: true })`.
+
+A few rules still only run in CI, not in the editor:
+
+| Rule | Why the editor can't check it |
+|---|---|
+| Text that is only spaces counts as blank | The schema says "at least 1 character"; `.trim()` runs before that check in zod, which JSON Schema can't do. |
+| `id` matches the file name | A schema describes one file's contents and can't see its name. |
+| No duplicate items | Duplicates are compared by the game's item key, after normalization (step 3). |
+
+The editor catches most mistakes as you type, and CI catches everything before merging.
+
+### Descriptions for contributors
+
+`.meta({ description: '…' })` on a zod field ends up in the JSON Schema, and editors show it on hover. Every pack field and every Charades item field now has one, written for someone who has never seen the code:
+
+```ts
+maturity: Maturity.meta({ description: 'Who the pack suits: "everyone", "teen" or "adult".' }),
+```
+
+The code comments that said the same things moved into these descriptions, so there's one copy.
+
+### Loading a game's `schema.ts` from a script
+
+`loadGameSchema(file)` imports the file with `import()` and checks its exports with `readGameSchema`:
+
+- `itemSchema` must be a zod schema, and `itemKey` must be a function. If not, the error says exactly what to export. That's a mistake by a game's developer, and a clear message beats a crash deep inside zod.
+- `import()` needs a URL, not a Windows path like `C:\…`, so the path is converted with `pathToFileURL` first.
+
+The check is split out from the import so it can be tested with plain objects, without writing broken `.ts` files to disk.
+
+### Committed, and checked by a test
+
+The generated files are **committed**, not built on the fly:
+
+- Contributors who never run a command still get autocomplete. The file is just there.
+- Editors read it straight from the repository, including when browsing on GitHub.
+
+The risk with committed generated files is that they go stale: someone changes `schema.ts` and forgets to regenerate. So a test (`scripts/lib/jsonSchema.test.ts`) generates every schema in memory and compares it with the committed file. If they differ, it fails, and its name says what to do: `matches the zod schemas (run pnpm generate-schemas if not)`. A second test fails if `schemas/` has a file for a game that no longer exists.
+
+Because it's a test, CI already runs it. No extra CI step is needed.
+
+**Line endings.** On Windows, Git can turn line endings into `\r\n` when files are checked out, while the generator writes `\n`. The test converts `\r\n` to `\n` before comparing, so it gives the same answer on every OS.
+
+### `$schema` in packs
+
+```json
+{
+  "$schema": "../../../../schemas/charades.pack.schema.json",
+  "id": "back-to-school",
+```
+
+The path is relative to the pack file: four folders up (`content` → `charades` → `games` → `src` → the repo root), then into `schemas/`. It's optional, so a pack without it still passes, but contributors are asked to keep it.
+
+### Public docs updated
+
+- **README**: `pnpm generate-schemas` in the command list.
+- **CONTRIBUTING**: the example pack has the `$schema` line and a describe-only item without `modes`. It also says the file name is the id, and that the easiest start is copying an existing pack. "Your editor will autocomplete" was a promise before this step; now it's true.
+- **Standard §10**: where schemas are generated, the command, and the up-to-date test.
+
+### Files changed
+
+- `src/sdk/content/pack.ts`, `src/games/charades/schema.ts`: descriptions, and `uniqueItems` on tags and modes.
+- `scripts/lib/gameSchema.ts`, `scripts/lib/jsonSchema.ts`, `scripts/generate-schemas.ts` and their tests (new).
+- `schemas/charades.pack.schema.json` (new, generated).
+- `src/games/charades/content/back-to-school.json`: the `$schema` line.
+- `package.json`: the `generate-schemas` script.
+- `README.md`, `CONTRIBUTING.md`, `docs/game-standard.md` §10.
+- `docs/tests.md`: the new tests, and counts updated to 102.
+
+### How to verify
+
+1. `pnpm test` reports `102 passed` (90 before, 12 new).
+2. Open `src/games/charades/content/back-to-school.json` in VS Code:
+   - hover over `"maturity"` to see its description;
+   - change `"everyone"` to `"kids"`; it's underlined, and the suggestions list the three allowed values. Change it back;
+   - start a new item with `{ "` and the editor suggests `text`, `tags` and `modes`.
+3. See the up-to-date test work: in `src/games/charades/schema.ts`, change any `description` text, then run `pnpm test`. "matches the zod schemas" fails. Run `pnpm generate-schemas` and `pnpm test` passes again; `git diff schemas/` shows the new text. Undo both changes.
+4. `pnpm typecheck` and `pnpm lint` pass.
+
+---
+
+## Step 8: The content check in CI
+
+**What:** `pnpm validate-content` now checks every pack and runs in CI. Added:
+
+- `src/sdk/content/messages.ts`: rewrites zod's messages in plain words, for both the app and CI.
+- `scripts/lib/validate.ts`: checks one pack file: valid JSON, the `$schema` path, then `checkPack`.
+- `scripts/validate-content.ts`: runs the check over every game and pack, prints the results, and fails if anything is wrong.
+- A **Validate content** step in CI.
+- Lint rules for what `scripts/` and a game's `schema.ts` may import.
+
+**Why:** standard §12 lists five required checks; this is the fifth. It's also what content contributors see when their pack has a mistake, so its messages matter as much as its checks.
+
+### What contributors see
+
+A valid run:
+
+```
+Checking content packs
+
+charades
+  ✓ src/games/charades/content/back-to-school.json (34 items)
+
+All packs are valid.
+```
+
+A pack with mistakes:
+
+```
+charades
+  ✗ src/games/charades/content/back-to-school.json
+      maturity: "maturity" is missing
+      items.33 ("Olodo").tags.0: Use lowercase words joined by hyphens, e.g. "tv-show"
+      items.33 ("Olodo").modes.0: Each entry in "modes" must be one of "describe", "act", "sing"
+      Unknown field "maturty": check the spelling, or remove it
+
+4 problems in 1 file.
+The rules for packs are in CONTRIBUTING.md, under "Add or improve content".
+```
+
+It exits with code 1, which makes the CI check fail.
+
+### Plain-language messages
+
+zod's built-in messages are written for developers:
+
+| zod says | We say |
+|---|---|
+| `Invalid input: expected string, received undefined` | `"text" is missing` |
+| `Too small: expected string to have >=1 characters` | `"name" can't be empty` |
+| `Invalid option: expected one of "everyone"\|"teen"\|"adult"` | `"maturity" must be one of "everyone", "teen", "adult"` |
+| `Unrecognized key: "maturty"` | `Unknown field "maturty": check the spelling, or remove it` |
+| `Invalid input: expected number, received string` | `"count" should be a number, found "seven"` |
+
+zod lets you replace its messages with a function, passed when checking: `safeParse(data, { error: friendlyError })`. The function gets each problem (its code, where it is, what was found) and returns a message, or `undefined` to keep zod's.
+
+**Messages written on the schema still win.** `.min(1, 'List at least one contributor')` is more helpful than any general message, and zod uses it before calling our function. So `friendlyError` only fills the gaps.
+
+**Two cases found by trying it:**
+
+- A misspelled field name (`maturty`) leaves the real field missing. For a field with a fixed list of values, zod reports that as a *wrong value*, which would send a contributor looking for a value they never wrote. The function checks for a missing value first, so it says `"maturity" is missing`.
+- A problem in a list entry (`modes.0`) has no field name. The message names the list instead: `Each entry in "modes" must be…`.
+
+It lives in the SDK and is used by `checkPack`, so the app's error (step 4) gets the same messages.
+
+### Checking one file: `checkPackFile`
+
+The script reads each file as text and runs three checks:
+
+1. **Valid JSON.** A stray comma or missing quote stops everything else. Node's own message says where: `Not valid JSON: Expected double-quoted property name in JSON at position 19 (line 2 column 1)`.
+2. **`$schema` points at the game's JSON Schema**, if it's there: `../../../../schemas/charades.pack.schema.json`. A wrong path doesn't break the pack; it silently turns off editor help, which is worse because nobody notices. Leaving the line out is allowed.
+3. **`checkPack`**, the same function the app uses (step 4), so CI and the app can't disagree.
+
+**Item names in paths.** `items.33.tags.0` makes a contributor count to 33, starting from 0. The script adds the item's text, using the game's item key: `items.33 ("Olodo").tags.0`. Now they can search for the word. If the item is too broken to have usable text, the plain position stays.
+
+The JSON and `$schema` checks are here rather than in `checkPack` because they're about files in the repository. The app gets packs already parsed by Vite, and doesn't care where the JSON Schema is.
+
+### The script
+
+`validate-content.ts` (started in step 5) now, for each game:
+
+- reports a game that has packs but no `schema.ts`;
+- loads `schema.ts` with `loadGameSchema` (step 7), reporting a missing `itemSchema` or `itemKey`;
+- checks every pack file and prints ✓ with its item count, or ✗ with its problems;
+- prints a total, points to CONTRIBUTING.md, and sets exit code 1 if there were problems.
+
+Paths are shown relative to the repository with `/`, on every OS, so they match what contributors see on GitHub.
+
+### In CI
+
+```yaml
+- name: Validate content
+  run: pnpm validate-content
+```
+
+It runs after the tests, in the order standard §12 lists the checks: typecheck, lint, test, validate-content, build. All five are now real.
+
+Bad Charades packs already failed the tests (step 6). That still happens; this step adds a check whose name says what failed and whose output is written for contributors, and that covers every game automatically, including ones without tests yet.
+
+### Import rules for scripts and `schema.ts`
+
+The "scripts load only `schema.ts`" contract from step 5 was a convention. Now `pnpm lint` enforces it:
+
+| File | May import | Enforced by |
+|---|---|---|
+| `scripts/` | `scripts/`, `src/sdk/`, and `src/games/<id>/schema.ts` | The folder-boundary plugin. `schema.ts` is picked out with a *file category* (`boundaries/files`), since the plugin's elements are folders. |
+| `src/games/<id>/schema.ts` | zod and `src/sdk/` only: not its own game's other files (`./…`), not React | ESLint's built-in `no-restricted-imports`, limited to `schema.ts` files |
+
+**Why two mechanisms.** The boundary plugin can allow `schema.ts` as a *target* using the file category, but a `disallow` rule using the same category as the *source* didn't take effect: tested with a deliberate bad import, it passed. `no-restricted-imports` with a file pattern does the job in a few readable lines, and its message says why: `schema.ts may only import zod and src/sdk/: scripts load it without the rest of the game.`
+
+Both were tested with deliberate bad imports (a script importing the app or a game's other files; `schema.ts` importing a sibling file, a pack and React), which were reported, while the allowed imports passed.
+
+Standard §9's boundaries table has two new rows for these.
+
+### Public docs updated
+
+- **README**: `pnpm validate-content` in the command list.
+- **CONTRIBUTING**: what the "Validate content" check shows when a pack has a mistake, and how to run it locally.
+- **Standard §9**: the boundaries table covers `schema.ts` and `scripts/`.
+
+### Files changed
+
+- `src/sdk/content/messages.ts`, `src/sdk/content/messages.test.ts` (new); `src/sdk/content/loadPacks.ts` uses the messages.
+- `scripts/lib/validate.ts`, `scripts/lib/validate.test.ts` (new); `scripts/validate-content.ts` does the checks.
+- `.github/workflows/ci.yml`: the Validate content step.
+- `eslint.config.js`: `scripts/` in the boundary rules, the `game-schema` file category, and the `schema.ts` import rule.
+- `README.md`, `CONTRIBUTING.md`, `docs/game-standard.md` §9.
+- `docs/tests.md`: the new tests, and counts updated to 118.
+
+### How to verify
+
+1. `pnpm test` reports `118 passed` (102 before, 16 new).
+2. `pnpm validate-content` prints `✓ … back-to-school.json (34 items)` and `All packs are valid.`
+3. Break the pack: in `back-to-school.json`, rename `"maturity"` to `"maturty"`, then run `pnpm validate-content`. It shows two problems (`"maturity" is missing` and `Unknown field "maturty"`) and `echo $?` (bash) or `$LASTEXITCODE` (PowerShell) shows `1`. Change it back.
+4. Break an import rule: add `import './content/back-to-school.json'` to the end of `src/games/charades/schema.ts` and run `pnpm lint`. It reports `schema.ts may only import zod and src/sdk/`. Remove the line.
+5. After pushing, the PR's CI run shows a **Validate content** step.
+
+---
+
+## Step 9: ADR 0003 and the standard
+
+**What:** record the content pack decisions in a decision record, and bring the Game Standard and CONTRIBUTING up to date with them.
+
+**Why:** standard §12 says changes to the content pack format need a decision record. Steps 2 to 8 made many such decisions, each explained in its step. The ADR gathers them in one place, with the options we rejected, so later contributors can see why the format is the way it is without reading the whole chapter.
+
+### ADR 0003: the content pack format
+
+[docs/decisions/0003-content-packs.md](../decisions/0003-content-packs.md) records:
+
+| Decision | Made in | Rejected |
+|---|---|---|
+| Strict pack fields with the rules in the table; `id` equals the file name; a shared `Tag` format | Steps 2, 4, 6 | Ignoring unknown fields; free-form language names |
+| Each game's standalone `schema.ts` exports `itemSchema` and `itemKey` | Steps 5, 6, 8 | Loading a game's `index.ts` from scripts |
+| Duplicates compared by the item key, normalized, accents kept; an error within a pack, handled during play across packs | Step 3 | Comparing whole items; an optional key; ignoring accents; failing on cross-pack repeats |
+| `checkPack` is the one definition of valid, used by `loadPacks` (throws) and `validate-content` (lists problems); plain-language messages | Steps 4, 8 | Separate app and CI checks; skipping bad packs |
+| JSON Schemas generated with `io: 'input'` and draft 7, committed, kept current by a test | Step 7 | Generating at build time only; writing them by hand |
+| Scripts run with tsx | Step 5 | Running the checks as tests |
+
+Its Consequences section includes one for chapter 03: the team-turns format must call `uniqueBy` when it builds the item pool, so an item in two picked packs is drawn once.
+
+ADR 0003 doesn't amend 0001. 0001 chose "flat JSON packs validated by a schema generated from zod", and 0003 fills in the details without changing that.
+
+### The standard
+
+- **§9:** the layout says what `schema.ts` holds and that it imports only zod and `sdk/`.
+- **§10** is rewritten around what now exists: a table of pack fields and their rules, what each game provides (`itemSchema`, `itemKey`), how duplicates are compared, the checks (`checkPack`, `loadPacks`, `pnpm validate-content`), the generated JSON Schemas, and which rules only run in CI. It links to ADR 0003 for the reasons.
+
+Before this chapter, §10 said "CI rejects packs that fail the schema or contain duplicate items" before any of that existed. Now every sentence in it describes working code, except the cross-pack rule, which is a requirement on the format chapter 03 builds.
+
+### CONTRIBUTING
+
+One addition for content contributors: don't list the same item twice in one pack, while the same item in two packs is fine. It doesn't mention `itemKey`, which only game developers write.
+
+### Files changed
+
+- `docs/decisions/0003-content-packs.md` (new), `docs/decisions/README.md`: 0003 in the index.
+- `docs/game-standard.md` §9 and §10.
+- `CONTRIBUTING.md`: the duplicates rule.
+
+### How to verify
+
+Read ADR 0003 and check it against the code: every function and rule it names exists in `src/sdk/content/`, `scripts/` or `src/games/charades/schema.ts`, and every rejected option is one discussed in steps 2 to 8. Then read standard §10 and check each rule has a test in [docs/tests.md](../tests.md).
+
+---
+
+## Chapter 02 done
+
+Content packs are real:
+
+- `src/sdk/content/`: the pack schema, duplicate detection, `checkPack` and `loadPacks`, and plain-language messages.
+- `scripts/`: `pnpm validate-content` and `pnpm generate-schemas`, type-checked and linted, with import rules.
+- `src/games/charades/`: the item schema and the Back to School pack, the first real content.
+- `schemas/`: the generated JSON Schema that gives editors autocomplete and hover help.
+
+All five CI checks from standard §12 run on every pull request: typecheck, lint, test, validate-content and build. 118 tests.
+
+Next: chapter 03, the team-turns format: `defineGame`, the format's phases, guards and actions, the shared interaction primitives, and the app shell with save and resume. A placeholder game becomes playable on a phone.

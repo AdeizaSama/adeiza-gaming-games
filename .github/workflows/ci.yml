@@ -41,5 +41,9 @@ jobs:
       - name: Test
         run: pnpm test
 
+      # Checks every content pack and lists problems in plain words for contributors.
+      - name: Validate content
+        run: pnpm validate-content
+
       - name: Build
         run: pnpm build

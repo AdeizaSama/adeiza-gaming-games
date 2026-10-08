@@ -50,8 +50,12 @@ export default defineGame({
     contributors: ["AdeizaSama"],    // GitHub handles of the game's creators
   },
   content: {
-    itemSchema: CharadesItem,        // zod schema for ONE content item
-    packs: loadPacks(import.meta.glob("./content/*.json", { eager: true })),
+    itemSchema,                      // zod schema for ONE content item, from ./schema.ts
+    packs: loadPacks(                // checks every pack (§10) and returns them sorted by id
+      import.meta.glob("./content/*.json", { eager: true, import: "default" }),
+      itemSchema,
+      itemKey,                       // (item) => item.text, from ./schema.ts: what makes two items the same
+    ),
   },
   config: {
     schema: CharadesConfig,          // zod schema for setup options
@@ -235,7 +239,7 @@ src/
       index.ts         the single defineGame export
       machine.ts       phase graph + guards + actions
       machine.test.ts  required
-      schema.ts        item + config zod schemas
+      schema.ts        itemSchema + itemKey (§10), config schema; imports zod and sdk/ only
       views/           phase views
       content/*.json   content packs
       rules.md         player-facing rules
@@ -252,12 +256,14 @@ docs/decisions/        decision records
 | Folder | May import from |
 |---|---|
 | `games/<id>/` | its own folder, `sdk/`, `ui/`. A game never imports another game. |
+| `games/<id>/schema.ts` | `sdk/` and zod only. Scripts load it on its own, so it never imports the rest of its game or React. |
 | `sdk/` | `sdk/`, `ui/`. Never `games/` or `app/`. |
 | `ui/` | `ui/` only. |
 | `app/` | `app/`, `app/registry/`, `sdk/`, `ui/`. Never a game directly. |
 | `app/registry/` | `games/`, `sdk/`. |
+| `scripts/` (outside `src/`) | `scripts/`, `sdk/`, and `games/<id>/schema.ts`. Never a game's other files or `app/`. |
 
-Packages from npm (React, zod, …) are allowed everywhere.
+Packages from npm (React, zod, …) are allowed everywhere, except React in `schema.ts`.
 
 ## 10. Content packs
 
@@ -278,10 +284,37 @@ One file per pack: `src/games/<id>/content/<pack-id>.json`.
 }
 ```
 
-- Pack-level fields are shared across games. `items` follow the game's `itemSchema`.
-- JSON Schemas are **generated** from the zod schemas (`scripts/`) so editors autocomplete and validate while you type, and so a future content editor can render forms from them.
-- CI rejects packs that fail the schema or contain duplicate items.
-- `maturity`: `everyone` | `teen` | `adult`. The library filters by it.
+**Pack fields** are the same for every game; `items` follow the game's `itemSchema`. Decided in [ADR 0003](decisions/0003-content-packs.md).
+
+| Field | Rule |
+|---|---|
+| `$schema` | Optional. If present, `../../../../schemas/<game>.pack.schema.json`, so editors can help (see below). |
+| `id` | kebab-case, and equal to the file name: `anime.json` has `"id": "anime"`. This also keeps ids unique within a game. |
+| `name`, `description` | Not blank. Shown to players. |
+| `language` | The language players read the pack in, as a code: `en`, `en-NG`, `pt-BR`, `yo`, `zh-Hans`. |
+| `maturity` | `everyone`, `teen` or `adult`. The library filters by it. |
+| `contributors` | At least one GitHub username, without `@`. |
+| `items` | At least one. |
+
+- **Unknown fields are errors**, in packs and (for v1 games) in items, so a misspelled field name is reported instead of ignored. This is about field names only; item text can be in any language or script.
+- **Item tags** use the SDK's `Tag` format (kebab-case: `snack`, `tv-show`), the same in every game.
+
+**What each game provides.** A game's `schema.ts` exports `itemSchema` (the zod schema for one item) and `itemKey`, a function from an item to the text that identifies it (`(item) => item.text` for Charades). It imports only zod and `sdk/`, because scripts load it on its own (§9).
+
+**Duplicates.** Two items are the same when their keys match, ignoring case and extra spaces, and treating the two ways of typing an accented letter as one. Accents themselves count: `ọkọ` and `oko` are different items.
+
+- The same item twice **in one pack** is an error.
+- The same item **in two packs** is fine. If players pick both, the game uses it once, from the pack listed first.
+
+**Checks.** `checkPack` in `sdk/content/` is the one definition of a valid pack: the schema, then `id` against the file name, then duplicates.
+
+- The app loads a game's packs with `loadPacks`, which uses `checkPack` and throws if any pack has problems.
+- `pnpm validate-content` (a required CI check, §12) also checks each file is valid JSON and that its `$schema` path is right, then uses `checkPack`. It lists every problem in plain words with the item it's in, e.g. `items.3 ("Goku"): "text" is missing`.
+
+**JSON Schemas for editors** are **generated** from the zod schemas into `schemas/<game>.pack.schema.json` with `pnpm generate-schemas`, so editors autocomplete, explain fields on hover and underline mistakes while you type, and so a future content editor can render forms from them. They are committed; a test fails if they are out of date. A few rules only run in CI because JSON Schema can't express them: text made only of spaces, `id` matching the file name, and duplicates.
+
+**Policy and licence.**
+
 - Content policy: no private individuals, no hate content. Text only in v1, no images or media.
 - Content packs are licensed CC BY 4.0.
 
@@ -295,7 +328,7 @@ One file per pack: `src/games/<id>/content/<pack-id>.json`.
 
 **Checks on every pull request (all required):** typecheck · lint · test · validate-content · build.
 
-- `main` is protected. All changes via pull request. Pull requests are squash-merged by default; they are rebase-merged only when every commit is meaningful on its own and follows Conventional Commits.
+- `main` is protected. All changes via pull request. Pull requests are squash-merged by default. A pull request whose commits are each meaningful on their own and follow Conventional Commits (such as a tutorial chapter, one commit per step) is merged with a merge commit instead, which keeps its commits and their IDs and marks where the pull request begins and ends. Rebase merging is not used: it rewrites every commit with a new ID.
 - [Conventional Commits](https://www.conventionalcommits.org/) (`feat(charades): …`, `content(charades): …`, `fix(sdk): …`).
 - TypeScript `strict`. No `any` without a comment explaining why.
 - Every machine has a test that plays a full game from the initial phase to a final phase with a fixed seed, a test that `validateMachine(machine)` returns no problems, and tests for each guard and action.
