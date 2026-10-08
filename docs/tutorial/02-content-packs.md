@@ -638,3 +638,141 @@ The path is relative to the pack file: four folders up (`content` → `charades`
    - start a new item with `{ "` and the editor suggests `text`, `tags` and `modes`.
 3. See the up-to-date test work: in `src/games/charades/schema.ts`, change any `description` text, then run `pnpm test`. "matches the zod schemas" fails. Run `pnpm generate-schemas` and `pnpm test` passes again; `git diff schemas/` shows the new text. Undo both changes.
 4. `pnpm typecheck` and `pnpm lint` pass.
+
+---
+
+## Step 8: The content check in CI
+
+**What:** `pnpm validate-content` now checks every pack and runs in CI. Added:
+
+- `src/sdk/content/messages.ts`: rewrites zod's messages in plain words, for both the app and CI.
+- `scripts/lib/validate.ts`: checks one pack file: valid JSON, the `$schema` path, then `checkPack`.
+- `scripts/validate-content.ts`: runs the check over every game and pack, prints the results, and fails if anything is wrong.
+- A **Validate content** step in CI.
+- Lint rules for what `scripts/` and a game's `schema.ts` may import.
+
+**Why:** standard §12 lists five required checks; this is the fifth. It's also what content contributors see when their pack has a mistake, so its messages matter as much as its checks.
+
+### What contributors see
+
+A valid run:
+
+```
+Checking content packs
+
+charades
+  ✓ src/games/charades/content/back-to-school.json (34 items)
+
+All packs are valid.
+```
+
+A pack with mistakes:
+
+```
+charades
+  ✗ src/games/charades/content/back-to-school.json
+      maturity: "maturity" is missing
+      items.33 ("Olodo").tags.0: Use lowercase words joined by hyphens, e.g. "tv-show"
+      items.33 ("Olodo").modes.0: Each entry in "modes" must be one of "describe", "act", "sing"
+      Unknown field "maturty": check the spelling, or remove it
+
+4 problems in 1 file.
+The rules for packs are in CONTRIBUTING.md, under "Add or improve content".
+```
+
+It exits with code 1, which makes the CI check fail.
+
+### Plain-language messages
+
+zod's built-in messages are written for developers:
+
+| zod says | We say |
+|---|---|
+| `Invalid input: expected string, received undefined` | `"text" is missing` |
+| `Too small: expected string to have >=1 characters` | `"name" can't be empty` |
+| `Invalid option: expected one of "everyone"\|"teen"\|"adult"` | `"maturity" must be one of "everyone", "teen", "adult"` |
+| `Unrecognized key: "maturty"` | `Unknown field "maturty": check the spelling, or remove it` |
+| `Invalid input: expected number, received string` | `"count" should be a number, found "seven"` |
+
+zod lets you replace its messages with a function, passed when checking: `safeParse(data, { error: friendlyError })`. The function gets each problem (its code, where it is, what was found) and returns a message, or `undefined` to keep zod's.
+
+**Messages written on the schema still win.** `.min(1, 'List at least one contributor')` is more helpful than any general message, and zod uses it before calling our function. So `friendlyError` only fills the gaps.
+
+**Two cases found by trying it:**
+
+- A misspelled field name (`maturty`) leaves the real field missing. For a field with a fixed list of values, zod reports that as a *wrong value*, which would send a contributor looking for a value they never wrote. The function checks for a missing value first, so it says `"maturity" is missing`.
+- A problem in a list entry (`modes.0`) has no field name. The message names the list instead: `Each entry in "modes" must be…`.
+
+It lives in the SDK and is used by `checkPack`, so the app's error (step 4) gets the same messages.
+
+### Checking one file: `checkPackFile`
+
+The script reads each file as text and runs three checks:
+
+1. **Valid JSON.** A stray comma or missing quote stops everything else. Node's own message says where: `Not valid JSON: Expected double-quoted property name in JSON at position 19 (line 2 column 1)`.
+2. **`$schema` points at the game's JSON Schema**, if it's there: `../../../../schemas/charades.pack.schema.json`. A wrong path doesn't break the pack; it silently turns off editor help, which is worse because nobody notices. Leaving the line out is allowed.
+3. **`checkPack`**, the same function the app uses (step 4), so CI and the app can't disagree.
+
+**Item names in paths.** `items.33.tags.0` makes a contributor count to 33, starting from 0. The script adds the item's text, using the game's item key: `items.33 ("Olodo").tags.0`. Now they can search for the word. If the item is too broken to have usable text, the plain position stays.
+
+The JSON and `$schema` checks are here rather than in `checkPack` because they're about files in the repository. The app gets packs already parsed by Vite, and doesn't care where the JSON Schema is.
+
+### The script
+
+`validate-content.ts` (started in step 5) now, for each game:
+
+- reports a game that has packs but no `schema.ts`;
+- loads `schema.ts` with `loadGameSchema` (step 7), reporting a missing `itemSchema` or `itemKey`;
+- checks every pack file and prints ✓ with its item count, or ✗ with its problems;
+- prints a total, points to CONTRIBUTING.md, and sets exit code 1 if there were problems.
+
+Paths are shown relative to the repository with `/`, on every OS, so they match what contributors see on GitHub.
+
+### In CI
+
+```yaml
+- name: Validate content
+  run: pnpm validate-content
+```
+
+It runs after the tests, in the order standard §12 lists the checks: typecheck, lint, test, validate-content, build. All five are now real.
+
+Bad Charades packs already failed the tests (step 6). That still happens; this step adds a check whose name says what failed and whose output is written for contributors, and that covers every game automatically, including ones without tests yet.
+
+### Import rules for scripts and `schema.ts`
+
+The "scripts load only `schema.ts`" contract from step 5 was a convention. Now `pnpm lint` enforces it:
+
+| File | May import | Enforced by |
+|---|---|---|
+| `scripts/` | `scripts/`, `src/sdk/`, and `src/games/<id>/schema.ts` | The folder-boundary plugin. `schema.ts` is picked out with a *file category* (`boundaries/files`), since the plugin's elements are folders. |
+| `src/games/<id>/schema.ts` | zod and `src/sdk/` only: not its own game's other files (`./…`), not React | ESLint's built-in `no-restricted-imports`, limited to `schema.ts` files |
+
+**Why two mechanisms.** The boundary plugin can allow `schema.ts` as a *target* using the file category, but a `disallow` rule using the same category as the *source* didn't take effect: tested with a deliberate bad import, it passed. `no-restricted-imports` with a file pattern does the job in a few readable lines, and its message says why: `schema.ts may only import zod and src/sdk/: scripts load it without the rest of the game.`
+
+Both were tested with deliberate bad imports (a script importing the app or a game's other files; `schema.ts` importing a sibling file, a pack and React), which were reported, while the allowed imports passed.
+
+Standard §9's boundaries table has two new rows for these.
+
+### Public docs updated
+
+- **README**: `pnpm validate-content` in the command list.
+- **CONTRIBUTING**: what the "Validate content" check shows when a pack has a mistake, and how to run it locally.
+- **Standard §9**: the boundaries table covers `schema.ts` and `scripts/`.
+
+### Files changed
+
+- `src/sdk/content/messages.ts`, `src/sdk/content/messages.test.ts` (new); `src/sdk/content/loadPacks.ts` uses the messages.
+- `scripts/lib/validate.ts`, `scripts/lib/validate.test.ts` (new); `scripts/validate-content.ts` does the checks.
+- `.github/workflows/ci.yml`: the Validate content step.
+- `eslint.config.js`: `scripts/` in the boundary rules, the `game-schema` file category, and the `schema.ts` import rule.
+- `README.md`, `CONTRIBUTING.md`, `docs/game-standard.md` §9.
+- `docs/tests.md`: the new tests, and counts updated to 118.
+
+### How to verify
+
+1. `pnpm test` reports `118 passed` (102 before, 16 new).
+2. `pnpm validate-content` prints `✓ … back-to-school.json (34 items)` and `All packs are valid.`
+3. Break the pack: in `back-to-school.json`, rename `"maturity"` to `"maturty"`, then run `pnpm validate-content`. It shows two problems (`"maturity" is missing` and `Unknown field "maturty"`) and `echo $?` (bash) or `$LASTEXITCODE` (PowerShell) shows `1`. Change it back.
+4. Break an import rule: add `import './content/back-to-school.json'` to the end of `src/games/charades/schema.ts` and run `pnpm lint`. It reports `schema.ts may only import zod and src/sdk/`. Remove the line.
+5. After pushing, the PR's CI run shows a **Validate content** step.

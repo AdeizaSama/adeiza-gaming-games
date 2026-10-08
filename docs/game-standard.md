@@ -256,12 +256,14 @@ docs/decisions/        decision records
 | Folder | May import from |
 |---|---|
 | `games/<id>/` | its own folder, `sdk/`, `ui/`. A game never imports another game. |
+| `games/<id>/schema.ts` | `sdk/` and zod only. Scripts load it on its own, so it never imports the rest of its game or React. |
 | `sdk/` | `sdk/`, `ui/`. Never `games/` or `app/`. |
 | `ui/` | `ui/` only. |
 | `app/` | `app/`, `app/registry/`, `sdk/`, `ui/`. Never a game directly. |
 | `app/registry/` | `games/`, `sdk/`. |
+| `scripts/` (outside `src/`) | `scripts/`, `sdk/`, and `games/<id>/schema.ts`. Never a game's other files or `app/`. |
 
-Packages from npm (React, zod, …) are allowed everywhere.
+Packages from npm (React, zod, …) are allowed everywhere, except React in `schema.ts`.
 
 ## 10. Content packs
 

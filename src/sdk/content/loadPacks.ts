@@ -1,5 +1,6 @@
 import type { z } from 'zod'
 import { findDuplicates, type ItemKey } from './duplicates'
+import { friendlyError } from './messages'
 import { packSchema, type Pack } from './pack'
 
 /** One thing wrong with a pack. `path` says where, e.g. `"items.2.text"`; empty means the whole file. */
@@ -32,7 +33,7 @@ export function checkPack<ItemSchema extends z.ZodType>(
   itemSchema: ItemSchema,
   itemKey: ItemKey<z.output<ItemSchema>>,
 ): PackCheck<z.output<ItemSchema>> {
-  const parsed = packSchema(itemSchema).safeParse(data)
+  const parsed = packSchema(itemSchema).safeParse(data, { error: friendlyError })
   if (!parsed.success) {
     return {
       ok: false,

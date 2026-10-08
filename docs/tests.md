@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 102 runtime tests (`pnpm test`) and 14 compile-time checks (`pnpm typecheck`).
+**Counts:** 118 runtime tests (`pnpm test`) and 14 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -15,12 +15,14 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [validateMachine](#validatemachine) | `src/sdk/machine/validateMachine.test.ts` | 4 | |
 | [Full game](#full-game-dice-duel) | `src/sdk/machine/fullGame.test.ts` | 6 | |
 | [Content packs](#content-packs) | `src/sdk/content/pack.test.ts` | 12 | |
+| [Friendly messages](#friendly-messages) | `src/sdk/content/messages.test.ts` | 10 | |
 | [Duplicate items](#duplicate-items) | `src/sdk/content/duplicates.test.ts` | 10 | |
 | [Loading packs](#loading-packs) | `src/sdk/content/loadPacks.test.ts` | 12 | |
 | [Finding games (scripts)](#finding-games-scripts) | `scripts/lib/games.test.ts` | 6 | |
 | [Charades content](#charades-content) | `src/games/charades/schema.test.ts` | 8 | |
 | [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 8 | |
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
+| [Content check (scripts)](#content-check-scripts) | `scripts/lib/validate.test.ts` | 6 | |
 
 **Two kinds of test:**
 
@@ -260,3 +262,33 @@ Each row is a mistake TypeScript must reject.
 | 100 | says when itemSchema is missing or is not a zod schema | `readGameSchema` | No `itemSchema`; an `itemSchema` that is a plain object | An error saying `schema.ts must export itemSchema` | A game developer's mistake gets a message saying what to add, not a crash deep inside zod. |
 | 101 | says when itemKey is missing | `readGameSchema` | No `itemKey` | An error saying `schema.ts must export itemKey` | Same: a clear message for the developer. |
 | 102 | loads a real game's schema.ts from a file path | `loadGameSchema` | The path of `src/games/charades/schema.ts` | A working schema (`{ text: "Gala" }` gets its defaults) and key | Proves scripts can load a game's `schema.ts` on its own, from a full path on any OS. |
+
+## Friendly messages
+
+`src/sdk/content/messages.test.ts`, testing `src/sdk/content/messages.ts`. Uses a stand-in schema with one field of each kind; each test changes one field of a valid object and checks the message.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 103 | says a field is missing | Missing fields | `name` left out | `"name" is missing` | zod's own message is `Invalid input: expected string, received undefined`. |
+| 104 | names the expected kind of value and what was found | Wrong type | `count: "seven"`; `name: 7`; `tags: "x"` | `should be a number, found "seven"`; `should be text in quotes, found 7`; `should be a list in [ ], found "x"` | Says what to write, in words a non-coder knows. |
+| 105 | names unknown fields and suggests a fix | Unknown fields | `maturty: "teen"` | `Unknown field "maturty": check the spelling, or remove it` | Points at the typo and says what to do. |
+| 106 | lists the allowed values | Fixed values | `level: "kids"` | `"level" must be one of "everyone", "teen", "adult"` | The fix is in the message. |
+| 107 | says a field with a fixed list of values is missing, rather than wrong | Missing fields | `level` left out | `"level" is missing` | zod reports this as a wrong value, which would send contributors looking for a value they never wrote. Happens whenever the field's name is misspelled. |
+| 108 | names the list when an entry in it is wrong | List entries | `modes: ["act", "mime"]` | `Each entry in "modes" must be one of "describe", "act"` | A list entry has no name of its own; naming the list says where to look. |
+| 109 | says text is empty, too short or too long | Text length | `""`; `"ab"` with a 3-character minimum; `"too long"` with a 5-character maximum | `can't be empty`; `needs at least 3 characters`; `is too long: at most 5 characters` | Replaces messages like `expected string to have >=1 characters`. |
+| 110 | says how many entries a list needs | List length | An empty list needing 1; one entry where 2 are needed | `needs at least 1 entry`; `needs at least 2 entries` | Correct singular and plural. |
+| 111 | keeps a message the schema wrote itself | Priority | An empty list whose schema says `Written by the schema` | `Written by the schema` | Messages written for a specific field (like "List at least one contributor") are better than general ones, so they win. |
+| 112 | names the item, not its position, for a problem inside a list | Nested fields | An item missing `text`, inside `items` | `"text" is missing` | The message names the field; the path (`items.1.text`) says where. |
+
+## Content check (scripts)
+
+`scripts/lib/validate.test.ts`, testing `scripts/lib/validate.ts`, the per-file check behind `pnpm validate-content`. Uses a stand-in game with `{ text }` items keyed by text, and a pack file at `src/games/test/content/animals.json`.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 113 | reports the number of items in a valid pack | Valid packs | A valid pack with 2 items | 2 items, no problems | The script prints the count next to each valid pack. |
+| 114 | reports a file that is not valid JSON, with where the mistake is | JSON syntax | `{ "id": "animals", }` (trailing comma) | One problem: `Not valid JSON: …` with the position | A stray comma is the most common JSON mistake; nothing else can be checked until it's fixed. |
+| 115 | checks $schema points at the game's JSON Schema, and allows leaving it out | `$schema` | A wrong path; no `$schema` at all | A problem at `$schema` giving the right path; no problem | A wrong path silently turns off editor help, so it's caught. Leaving it out is allowed. |
+| 116 | names the item in a problem, using the game's item key | Item names | Second item `Penguin` with an extra field | Problem at `items.1 ("Penguin")` | Contributors can search for the word instead of counting items from 0. |
+| 117 | keeps the plain position when the item has no usable text | Item names | Second item with empty text | Problem at `items.1.text` | An item too broken to name still gets a clear position. |
+| 118 | runs the same checks as the app, such as the id matching the file name | Same as the app | id `zoo` in `animals.json` | Problem at `id` | CI and the app use the same `checkPack`, so they agree. |

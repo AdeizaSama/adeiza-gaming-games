@@ -16,7 +16,7 @@ export default defineConfig([
 
   // Folder boundaries (Game Standard §9).
   {
-    files: ['src/**/*.{ts,tsx}'],
+    files: ['src/**/*.{ts,tsx}', 'scripts/**/*.ts'],
     plugins: { boundaries },
     settings: {
       // Lets the plugin follow TypeScript imports to the real file, so rules see where an import actually points.
@@ -29,7 +29,11 @@ export default defineConfig([
         { type: 'ui', pattern: 'src/ui' },
         // capture: remembers which game a file belongs to, so a rule can say "same game only".
         { type: 'game', pattern: 'src/games/*', capture: ['gameId'] },
+        { type: 'scripts', pattern: 'scripts' },
       ],
+      // Single files that need their own rules. Elements (above) are folders; a file can also have a category.
+      // A game's schema.ts is still part of its game, but scripts may load it on its own.
+      'boundaries/files': [{ category: 'game-schema', pattern: 'src/games/*/schema.ts' }],
     },
     rules: {
       'boundaries/dependencies': [
@@ -68,6 +72,34 @@ export default defineConfig([
               allow: {
                 to: { element: { type: 'game', captured: { gameId: '{{from.element.captured.gameId}}' } } },
               },
+            },
+            // Scripts use the SDK and games' schema.ts files, never a game's other files or the app.
+            {
+              from: { element: { type: 'scripts' } },
+              allow: { to: { element: { types: { anyOf: ['scripts', 'sdk'] } } } },
+            },
+            {
+              from: { element: { type: 'scripts' } },
+              allow: { to: { element: { type: 'game' }, file: { categories: 'game-schema' } } },
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // A game's schema.ts stands alone, so scripts can load it without the rest of the game (standard §9).
+  // It may import zod and src/sdk/ (`../../sdk/…`); not its own game's other files (`./…`) or React.
+  {
+    files: ['src/games/*/schema.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['./*', 'react', 'react/*', 'react-dom', 'react-dom/*'],
+              message: 'schema.ts may only import zod and src/sdk/: scripts load it without the rest of the game.',
             },
           ],
         },
