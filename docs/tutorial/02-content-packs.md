@@ -776,3 +776,64 @@ Standard §9's boundaries table has two new rows for these.
 3. Break the pack: in `back-to-school.json`, rename `"maturity"` to `"maturty"`, then run `pnpm validate-content`. It shows two problems (`"maturity" is missing` and `Unknown field "maturty"`) and `echo $?` (bash) or `$LASTEXITCODE` (PowerShell) shows `1`. Change it back.
 4. Break an import rule: add `import './content/back-to-school.json'` to the end of `src/games/charades/schema.ts` and run `pnpm lint`. It reports `schema.ts may only import zod and src/sdk/`. Remove the line.
 5. After pushing, the PR's CI run shows a **Validate content** step.
+
+---
+
+## Step 9: ADR 0003 and the standard
+
+**What:** record the content pack decisions in a decision record, and bring the Game Standard and CONTRIBUTING up to date with them.
+
+**Why:** standard §12 says changes to the content pack format need a decision record. Steps 2 to 8 made many such decisions, each explained in its step. The ADR gathers them in one place, with the options we rejected, so later contributors can see why the format is the way it is without reading the whole chapter.
+
+### ADR 0003: the content pack format
+
+[docs/decisions/0003-content-packs.md](../decisions/0003-content-packs.md) records:
+
+| Decision | Made in | Rejected |
+|---|---|---|
+| Strict pack fields with the rules in the table; `id` equals the file name; a shared `Tag` format | Steps 2, 4, 6 | Ignoring unknown fields; free-form language names |
+| Each game's standalone `schema.ts` exports `itemSchema` and `itemKey` | Steps 5, 6, 8 | Loading a game's `index.ts` from scripts |
+| Duplicates compared by the item key, normalized, accents kept; an error within a pack, handled during play across packs | Step 3 | Comparing whole items; an optional key; ignoring accents; failing on cross-pack repeats |
+| `checkPack` is the one definition of valid, used by `loadPacks` (throws) and `validate-content` (lists problems); plain-language messages | Steps 4, 8 | Separate app and CI checks; skipping bad packs |
+| JSON Schemas generated with `io: 'input'` and draft 7, committed, kept current by a test | Step 7 | Generating at build time only; writing them by hand |
+| Scripts run with tsx | Step 5 | Running the checks as tests |
+
+Its Consequences section includes one for chapter 03: the team-turns format must call `uniqueBy` when it builds the item pool, so an item in two picked packs is drawn once.
+
+ADR 0003 doesn't amend 0001. 0001 chose "flat JSON packs validated by a schema generated from zod", and 0003 fills in the details without changing that.
+
+### The standard
+
+- **§9:** the layout says what `schema.ts` holds and that it imports only zod and `sdk/`.
+- **§10** is rewritten around what now exists: a table of pack fields and their rules, what each game provides (`itemSchema`, `itemKey`), how duplicates are compared, the checks (`checkPack`, `loadPacks`, `pnpm validate-content`), the generated JSON Schemas, and which rules only run in CI. It links to ADR 0003 for the reasons.
+
+Before this chapter, §10 said "CI rejects packs that fail the schema or contain duplicate items" before any of that existed. Now every sentence in it describes working code, except the cross-pack rule, which is a requirement on the format chapter 03 builds.
+
+### CONTRIBUTING
+
+One addition for content contributors: don't list the same item twice in one pack, while the same item in two packs is fine. It doesn't mention `itemKey`, which only game developers write.
+
+### Files changed
+
+- `docs/decisions/0003-content-packs.md` (new), `docs/decisions/README.md`: 0003 in the index.
+- `docs/game-standard.md` §9 and §10.
+- `CONTRIBUTING.md`: the duplicates rule.
+
+### How to verify
+
+Read ADR 0003 and check it against the code: every function and rule it names exists in `src/sdk/content/`, `scripts/` or `src/games/charades/schema.ts`, and every rejected option is one discussed in steps 2 to 8. Then read standard §10 and check each rule has a test in [docs/tests.md](../tests.md).
+
+---
+
+## Chapter 02 done
+
+Content packs are real:
+
+- `src/sdk/content/`: the pack schema, duplicate detection, `checkPack` and `loadPacks`, and plain-language messages.
+- `scripts/`: `pnpm validate-content` and `pnpm generate-schemas`, type-checked and linted, with import rules.
+- `src/games/charades/`: the item schema and the Back to School pack, the first real content.
+- `schemas/`: the generated JSON Schema that gives editors autocomplete and hover help.
+
+All five CI checks from standard §12 run on every pull request: typecheck, lint, test, validate-content and build. 118 tests.
+
+Next: chapter 03, the team-turns format: `defineGame`, the format's phases, guards and actions, the shared interaction primitives, and the app shell with save and resume. A placeholder game becomes playable on a phone.
