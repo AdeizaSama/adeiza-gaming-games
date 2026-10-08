@@ -417,3 +417,106 @@ findGames('src/games')
 2. `pnpm validate-content` prints `No games found in …\src\games`.
 3. Check scripts are type-checked: in `scripts/validate-content.ts`, change `games.length` to `games.size` and run `pnpm typecheck`. It reports an error in that file. Change it back.
 4. `pnpm lint` passes.
+
+---
+
+## Step 6: The Charades item schema and a starter pack
+
+**What:** the first files in `src/games/charades/`:
+
+- `schema.ts`: what a Charades item is (`itemSchema`) and what makes two items the same (`itemKey`).
+- `content/back-to-school.json`: a starter pack of 34 items.
+- `schema.test.ts`: tests for both.
+
+Plus a shared `Tag` schema in `src/sdk/content/pack.ts`.
+
+**Why:** the content check needs real content to check (see the note at the top of this chapter). This is the first time the pack schema meets a real game.
+
+### The item
+
+Standard §8 says a Charades item is `{ text, tags[], modes[] }`. In detail:
+
+| Field | Rule | If left out |
+|---|---|---|
+| `text` | 1 to 50 characters after trimming spaces | Required |
+| `tags` | Each one kebab-case (`snack`, `tv-show`), none repeated | `[]` |
+| `modes` | Any of `describe`, `act`, `sing`, at least one, none repeated | `["describe"]` |
+
+So the smallest valid item is just:
+
+```json
+{ "text": "Puff puff" }
+```
+
+**Why `modes` is optional.** Every item can be described. Only some can be acted out or sung. Making `modes` optional with `["describe"]` as the default means contributors only write it when an item can do more:
+
+```json
+{ "text": "National Anthem", "tags": ["ritual"], "modes": ["describe", "act", "sing"] }
+```
+
+zod's `.default()` fills in missing values when a pack is checked, so the game always gets an item with all three fields. The pack file stays short.
+
+**Why at most 50 characters.** Standard §12 says the game must be readable at arm's length on a phone. Long text either shrinks or wraps onto many lines. 50 leaves room for real titles ("Wait till your father comes" is 27) while stopping full sentences.
+
+**Strict, like packs.** An unknown field is an error. That includes `available_types`, the name an older version of this data used for modes. Silently ignoring it would make every item describe-only without warning.
+
+**Modes are `describe`, `act` and `sing`**, the names in standard §7. Short and readable in JSON.
+
+### The shared `Tag` schema
+
+Every v1 game's items have tags (standard §8), and the library will let players filter by them. If each game wrote its own tag rule, one game might allow `TV Show` and another `tv_show`. So the rule lives in the SDK, beside the pack id rule, which uses the same kebab-case pattern:
+
+```ts
+export const Tag = z.string().regex(kebabCase, 'Use lowercase words joined by hyphens, e.g. "tv-show"')
+```
+
+### `schema.ts` stands alone
+
+Scripts (steps 7 and 8) load `schema.ts` directly in Node. So it imports only zod and `src/sdk/content/`, never React, views or other game files. A comment at the top of the file says so. The standard gets this rule in step 9.
+
+It exports, under the names scripts will look for:
+
+| Export | What it is |
+|---|---|
+| `itemSchema` | The zod schema for one item |
+| `itemKey` | `(item) => item.text`: two items with the same text are the same item |
+| `CharadesItem` | The TypeScript type of an item, for the game's own code |
+| `CharadesMode` | The three modes, for the game's own code (chapter 04) |
+
+Standard §3's example now uses `itemSchema` too.
+
+### The starter pack: Back to School
+
+34 items of Nigerian school nostalgia, picked from existing material and reviewed one by one:
+
+- **Spread across kinds:** subjects, rituals, items, playground games, snacks, chores, things teachers said, songs, sports, a place and slang. Each item has one tag saying which.
+- **Modes vary**, so the pack exercises every rule: 2 items are describe-only, 31 can be acted, 3 can be sung (one, "Arise O Compatriots", can be sung but not acted).
+- **No people.** The original material includes musicians and actors; they're left out of the starter pack, which keeps clear of the content policy's questions about real individuals.
+- **`language: "en-NG"`** (Nigerian English), because terms like *Ajebutter* and *Olodo* are Nigerian English.
+- **Credited to `AdeizaSama`.**
+
+There's no `$schema` line yet: the file it points to is generated in step 7.
+
+### Tests: `src/games/charades/schema.test.ts`
+
+8 tests: seven for the item rules, and one that loads every real pack in `content/` with the same `loadPacks(import.meta.glob(…))` call the game will use. Vitest runs on Vite, so `import.meta.glob` works in tests too. If any pack is broken, `loadPacks` throws and this test file fails, so CI already catches bad Charades packs. Step 8 adds the friendlier check for contributors.
+
+The full table is in [docs/tests.md](../tests.md#charades-content).
+
+### `src/games/charades/` is incomplete on purpose
+
+Standard §9 says each game folder has an `index.ts` with `defineGame`, a machine, views and rules. Those come in chapters 03 and 04. Nothing imports this folder yet: the app's game list (`src/app/registry/`) doesn't exist, so players won't see Charades until it's finished.
+
+### Files changed
+
+- `src/sdk/content/pack.ts`: exports `Tag`.
+- `src/games/charades/schema.ts`, `src/games/charades/schema.test.ts`, `src/games/charades/content/back-to-school.json` (new).
+- `docs/game-standard.md` §3: the example uses `itemSchema`.
+- `docs/tests.md`: the new tests, and counts updated to 90.
+
+### How to verify
+
+1. `pnpm test` reports `90 passed` (82 before, 8 new).
+2. `pnpm validate-content` prints `charades: schema.ts, 1 pack file(s)`.
+3. Break the pack: in `back-to-school.json`, change `"Gala"` to `"Pure water"` (a duplicate) and run `pnpm test`. `schema.test.ts` fails with `items.18: "Pure water" is already in this pack at items.17`. Change it back.
+4. `pnpm typecheck` and `pnpm lint` pass.

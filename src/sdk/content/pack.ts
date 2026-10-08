@@ -3,8 +3,11 @@ import { z } from 'zod'
 /** Who a pack is suitable for. The library filters packs by it. */
 export const Maturity = z.enum(['everyone', 'teen', 'adult'])
 
-/** Lowercase words joined by single hyphens, e.g. `anime` or `movies-90s`. Used for pack ids. */
+/** Lowercase words joined by single hyphens, e.g. `anime` or `movies-90s`. Used for pack ids and tags. */
 const kebabCase = /^[a-z0-9]+(-[a-z0-9]+)*$/
+
+/** A tag on an item, e.g. `snack` or `tv-show`. Games use it in their item schemas, so every game's tags look alike. */
+export const Tag = z.string().regex(kebabCase, 'Use lowercase words joined by hyphens, e.g. "tv-show"')
 
 /** A GitHub username: letters, digits and single hyphens, not starting or ending with a hyphen, at most 39 characters. */
 const githubHandle = /^[A-Za-z0-9]+(-[A-Za-z0-9]+)*$/

@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 82 runtime tests (`pnpm test`) and 14 compile-time checks (`pnpm typecheck`).
+**Counts:** 90 runtime tests (`pnpm test`) and 14 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -18,6 +18,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Duplicate items](#duplicate-items) | `src/sdk/content/duplicates.test.ts` | 10 | |
 | [Loading packs](#loading-packs) | `src/sdk/content/loadPacks.test.ts` | 12 | |
 | [Finding games (scripts)](#finding-games-scripts) | `scripts/lib/games.test.ts` | 6 | |
+| [Charades content](#charades-content) | `src/games/charades/schema.test.ts` | 8 | |
 
 **Two kinds of test:**
 
@@ -216,3 +217,18 @@ Each row is a mistake TypeScript must reject.
 | 80 | only counts .json files directly in the content folder as packs | `findGames` | `anime.json`, `notes.md`, and `drafts/old.json` | Only `anime.json` | Notes and drafts beside the packs aren't checked or loaded, matching the app's `content/*.json` pattern. |
 | 81 | ignores files that are not game folders | `findGames` | A `README.md` in the games folder | No games | Only folders are games. |
 | 82 | returns no games when the games folder does not exist yet | `findGames` | A folder path that doesn't exist | No games | The script must work before the first game exists. |
+
+## Charades content
+
+`src/games/charades/schema.test.ts`, testing `src/games/charades/schema.ts` and the real pack files in `src/games/charades/content/`. These are the first tests that belong to a game instead of the SDK.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 83 | needs only text, filling in no tags and describe-only | Defaults | `{ "text": "Puff puff" }` | Tags `[]`, modes `["describe"]` | Most items need nothing more, so contributors type as little as possible. |
+| 84 | keeps tags and modes when they are given | Item schema | National Anthem with tag `ritual` and all three modes | The item unchanged | Defaults never overwrite what a contributor wrote. |
+| 85 | rejects blank text and text longer than 50 characters | `text` | Spaces only; exactly 50 characters; 51 characters | Rejected; accepted; rejected | Every card needs words, and they must fit on a phone screen at arm's length. |
+| 86 | checks tags are kebab-case and not repeated | `tags` | `street-game`; `Street Game`; `game` twice | Accepted; rejected at `tags.0`; rejected at `tags` | Consistent tags make filtering reliable; a repeated tag is a typo. |
+| 87 | accepts only describe, act and sing as modes, at least one, not repeated | `modes` | `act`; `mime`; an empty list; `act` twice | Accepted; rejected at `modes.0`; rejected at `modes`; rejected at `modes` | The game only knows these three ways to clue. An empty list would make the item unplayable. |
+| 88 | rejects an unknown field, such as the old available_types | Strict fields | An item with `available_types` | Rejected as an unknown field | Catches typos and field names from older formats instead of silently ignoring them. |
+| 89 | identifies an item by its text | `itemKey` | Gala, with a tag and a mode | `"Gala"` | Duplicates are found by text only (step 3). |
+| 90 | all pass the pack checks | Real packs | Every file in `content/`, loaded with `import.meta.glob` exactly as the app will | Loads without error and includes `back-to-school` | Checks the real content, the same way the app loads it. A broken pack makes this test file fail. |

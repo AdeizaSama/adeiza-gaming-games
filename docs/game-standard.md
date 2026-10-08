@@ -50,10 +50,10 @@ export default defineGame({
     contributors: ["AdeizaSama"],    // GitHub handles of the game's creators
   },
   content: {
-    itemSchema: CharadesItem,        // zod schema for ONE content item (./schema.ts)
+    itemSchema,                      // zod schema for ONE content item, from ./schema.ts
     packs: loadPacks(                // checks every pack (§10) and returns them sorted by id
       import.meta.glob("./content/*.json", { eager: true, import: "default" }),
-      CharadesItem,
+      itemSchema,
       itemKey,                       // (item) => item.text, from ./schema.ts: what makes two items the same
     ),
   },
