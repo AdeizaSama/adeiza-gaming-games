@@ -344,3 +344,118 @@ The format's functions accept any event (`MachineEvent`), because they never rea
 1. `pnpm test` reports `150 passed` (142 before, 8 new).
 2. Make the game end a turn late: in `rules.ts`, change `context.config.teams.length - 1` to `context.config.teams.length` and run `pnpm test`. "is false once the last team has played in the last round" fails. Change it back.
 3. `pnpm typecheck` and `pnpm lint` pass.
+
+---
+
+## Step 6: `teamTurns`, the builder
+
+**What:** `src/sdk/formats/team-turns/teamTurns.ts`, the function ADR 0004 chose. A game passes it its turn; it returns the whole machine. Tested with **Word Duel**, a small game that exists only in the format's tests.
+
+**Why:** this is where steps 3 to 5 come together. After this step, a team-turns game can be written in a few dozen lines and played start to finish.
+
+### Word Duel: why a test game
+
+The format lives in `src/sdk/`, and lint forbids `sdk/` from importing `games/` (standard §9): the SDK must never depend on a particular game. So the format can't be tested with Charades. Word Duel is the stand-in: a team sees a word and guesses it (`got`, one point) or passes (`skip`) until time runs out. It's written exactly as a real game would be, never registered, and lives only in `teamTurns.test.ts`.
+
+```ts
+const wordDuel = teamTurns<string, WordTurn, WordEvent>()({
+  newTurn: () => ({ got: [], skipped: [] }),
+  points: (turn) => turn.got.length,
+  phases: {
+    turn: {
+      interaction: 'flash_card',
+      on: {
+        got:     { actions: ['markGot', 'drawItem'] },
+        skip:    { actions: ['markSkipped', 'drawItem'] },
+        time_up: { to: 'turn_summary' },
+      },
+    },
+  },
+  guards: {},
+  actions: { markGot: …, markSkipped: … },
+})
+```
+
+That's the whole game. Compare it with Dice Duel in chapter 01, where every phase of the loop was written by hand.
+
+### The format's loop
+
+```ts
+const formatPhases = {
+  handoff: {
+    interaction: 'handoff',
+    on: { start: { to: 'turn', actions: ['startTurn', 'drawItem'] } },
+  },
+  turn_summary: {
+    interaction: 'summary',
+    on: {
+      next: [
+        { when: 'turnsRemaining', to: 'handoff', actions: ['bankPoints', 'advanceTeam'] },
+        { to: 'results', actions: ['bankPoints'] },
+      ],
+    },
+  },
+  results: { interaction: 'leaderboard', final: true },
+} as const
+```
+
+The step 5 pieces, in order. `start` begins a turn (fresh record and timer, then the first card). `next` on the summary banks the points, then either passes to the next team or, after the last turn, goes to the results. Both branches bank the points, so the last turn counts too.
+
+`as const` keeps the exact strings (`'turn'`, not just `string`), so they can be checked against the machine's names.
+
+### Building the machine
+
+```ts
+phases:  { ...game.phases, ...formatPhases },
+guards:  { ...game.guards, ...teamTurnsGuards },
+actions: { ...game.actions, ...teamTurnsActions<Item, Turn, Config>(game) },
+```
+
+This uses `...`, the thing ADR 0004 rejected. The difference: the trap was in letting TypeScript *work out names* from the combined object. Here the names are already fixed by the game's own object (the second call's `game` parameter) before anything is combined. The format's parts go last, so even code without types can't replace them.
+
+`context` builds the starting context: the settings, scores at zero, the first team, round 1, and the items shuffled into a pool. It throws if there are no items: a game with nothing to draw can't be played, and failing at the start is clearer than failing on the first card.
+
+### The types
+
+`TeamTurnsGame` is what a game can pass. Each part does one job:
+
+```ts
+phases: Record<Phase, GamePhase<…>> & { turn: unknown } & Taken<TeamTurnsPhase>
+guards: Record<GuardName, Guard<…>> & Taken<FormatGuardName>
+actions: Record<ActionName, Action<…>> & Taken<FormatActionName>
+```
+
+- **`Record<Phase, GamePhase<…>>`**: as in `defineMachine`, the phase names are worked out from the keys.
+- **`GamePhase`** is a game's phase: like a machine phase, but it can't be `final`, and its transitions can go only to the game's phases or `turn_summary`. That's what makes `to: 'results'` an error.
+- **`{ turn: unknown }`**: there must be a key called `turn`. Its shape is already checked by the `Record`.
+- **`Taken<…>`** is `{ handoff?: never, turn_summary?: never, … }`. `never` is the type with no values, so writing any of those keys is an error. It's how the format reserves its names.
+
+The result type, `TeamTurnsMachine`, is a plain `MachineDefinition` whose names are the game's plus the format's. That's why `start`, `send`, `isFinal` and `validateMachine` needed no changes.
+
+### The one unchecked line
+
+```ts
+return machine as unknown as TeamTurnsMachine<…>
+```
+
+`as` tells TypeScript "trust me" about a type. Inside `teamTurns`, the game's events are still a type parameter (`Event`): TypeScript doesn't yet know which events a particular game has, so it can't confirm that `start` and `next` fit the combined event list. We know they do, because the builder adds them. Rather than bend the types until TypeScript agrees, the result is declared once, with a comment saying why. Both halves are still checked: the game's by `TeamTurnsGame`, the format's by the tests below.
+
+### Tests: `src/sdk/formats/team-turns/teamTurns.test.ts`
+
+12 runtime tests: Word Duel played start to finish, `validateMachine`, the turn record and when its points are banked, reshuffling in a long game, determinism, and save and reload halfway through.
+
+9 compile-time checks: each of ADR 0004's mistakes is a type error on the game's own line. Before writing them down, each was checked to fail for the reason in its comment, not by accident.
+
+The full tables are in [docs/tests.md](../tests.md#teamturns-word-duel).
+
+### Files changed
+
+- `src/sdk/formats/team-turns/teamTurns.ts`, `src/sdk/formats/team-turns/teamTurns.test.ts` (new).
+- `docs/tests.md`: the new tests and Word Duel; counts updated to 162 runtime tests and 23 compile-time checks.
+
+### How to verify
+
+1. `pnpm test` reports `162 passed` (150 before, 12 new).
+2. `pnpm typecheck` passes, which proves the 9 mistakes are still type errors. To see one: in `teamTurns.test.ts`, delete the `// @ts-expect-error` line above `'turn_sumary'`, run `pnpm typecheck`, and read the error on that line. Put the comment back.
+3. Make the last turn not count: in `teamTurns.ts`, change `{ to: 'results', actions: ['bankPoints'] }` to `{ to: 'results' }` and run `pnpm test`. "plays from the first handoff to the results" fails with scores 4 and 2 instead of 4 and 4. Change it back.
+4. `pnpm lint` passes.

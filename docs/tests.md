@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 150 runtime tests (`pnpm test`) and 14 compile-time checks (`pnpm typecheck`).
+**Counts:** 162 runtime tests (`pnpm test`) and 23 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -26,6 +26,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Team-turns config](#team-turns-config) | `src/sdk/formats/team-turns/config.test.ts` | 11 | |
 | [Item pool](#item-pool) | `src/sdk/formats/team-turns/pool.test.ts` | 13 | |
 | [Team-turns guards and actions](#team-turns-guards-and-actions) | `src/sdk/formats/team-turns/rules.test.ts` | 8 | |
+| [teamTurns (Word Duel)](#teamturns-word-duel) | `src/sdk/formats/team-turns/teamTurns.test.ts` | 12 | 9 |
 
 **Two kinds of test:**
 
@@ -39,6 +40,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | Dice (roll to target) | types, defineMachine | Two phases (`playing`, `done`). Roll a die until the score reaches a target. |
 | Counter | runner | Not a game. One phase that adds, doubles and rolls numbers, and three end phases, so every part of the runner gets exercised. |
 | Dice Duel | full game | Shaped like the team-turns format: teams take timed turns rolling dice over several rounds. |
+| Word Duel | teamTurns | Built with the real team-turns format: a team sees a word and guesses it (`got`, one point) or passes (`skip`) until time runs out. Never registered as a game. |
 | `{ text }` items | content packs, duplicates, loading packs | Items standing in for a real game's. In the duplicate tests they may also have `modes`, like Charades items, and the key is `text`. |
 
 ---
@@ -348,3 +350,40 @@ Each row is a mistake TypeScript must reject.
 | 148 | leaves scores as they are for a turn worth nothing | `bankPoints` | Nothing guessed, scores 3, 1, 0 | Unchanged | A bad turn scores zero, not an error. |
 | 149 | passes play to the next team in the same round | `advanceTeam` | Team 0, round 1 | Team 1, round 1 | Playing order is the order teams were entered. |
 | 150 | after the last team, goes back to the first team in the next round | `advanceTeam` | Team 2, round 1 | Team 0, round 2; the original unchanged | A round is one turn for every team. |
+
+## teamTurns (Word Duel)
+
+`src/sdk/formats/team-turns/teamTurns.test.ts`, testing `src/sdk/formats/team-turns/teamTurns.ts`. Word Duel is built with `teamTurns`: two teams (Lions, Eagles), 2 rounds, 30-second turns, five words (sun, moon, star, rain, wind). Unless noted, each turn is: start, got, skip, got, time up, next.
+
+### Runtime tests
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 151 | has no mistakes validateMachine can find | `validateMachine` | Word Duel | No problems | Every machine's tests must include this (standard §12), and the format's phases are part of every team-turns machine. |
+| 152 | adds the format's phases, guards and actions to the game's | `teamTurns` | Word Duel | Phases handoff, turn, turn_summary, results; guard `turnsRemaining`; the game's two actions plus the format's four; starts at `handoff` | The game wrote only `turn`; everything else must come from the format. |
+| 153 | starts at the first team's handoff with scores at zero and the items shuffled | Starting context | Seed 1 | `handoff`, scores 0 and 0, team 0, round 1, nothing on screen, all five words in the pool | The format builds the starting context from the settings and items. |
+| 154 | refuses to start with no items | Starting context | No items | Error | A game with nothing to draw can't be played; failing at the start is clearer than failing on the first draw. |
+| 155 | starts a turn with the timer set and the first item on screen | `start` event | `start` at 5000 ms | Phase `turn`, `turnEndsAt` 35000, the first drawn word on screen | The handoff's `start` runs `startTurn` then `drawItem`. |
+| 156 | records the turn as it goes and banks its points only when leaving the summary | Points (ADR 0004) | start, got, skip, time up, then next | In the summary: the turn record lists the word got and the word skipped, scores still 0 and 0. After next: scores 1 and 0, Eagles to play | Points are worked out from the turn record when players leave the summary, so a correction there (chapter 04) changes the score. |
+| 157 | plays from the first handoff to the results | Full playthrough | Seed 2026, play until the game ends | 4 turns (2 teams × 2 rounds), back at the handoff between turns, ends in `results` with scores 4 and 4 | Proves the whole format loop works with a game plugged in. |
+| 158 | reshuffles once every word has been drawn, so a long game never runs out | Item pool in play | 16 draws from 5 words | The pool still holds exactly the five words | The step 4 rule, working inside a real machine. |
+| 159 | ignores events once the game has ended | Final phase | `start` after the results | The same state back | Late taps can't restart a finished game. |
+| 160 | gives the same draws every time for the same seed | Determinism | Seed 2026, `start`, twice | Identical states; the first word is `sun` | Pins the draws. If the format, pool, runner or Rng changes, this changes, and someone has to decide whether that was intended. |
+| 161 | finishes the same way after a save and reload halfway through | Saving | Two turns, saved to JSON and loaded back, then played to the end | The same end as without the save, and as a game played straight through | A refresh mid-game must not change anything. |
+| 162 | works out the names from the game and adds the format's | Types | Word Duel's phase, guard and action names | Exactly the game's names plus the format's | Code using the machine (views, the app) knows every name. Checked by `pnpm typecheck`. |
+
+### Compile-time checks
+
+Each is a game passed to `teamTurns` with one mistake, and must be a type error on the game's own line (ADR 0004).
+
+| # | Mistake | Example | Why |
+|---|---|---|---|
+| C15 | Moving to a phase that doesn't exist | `to: 'turn_sumary'` | The error must land on the game's line, the trap ADR 0002 warned about. |
+| C16 | Unknown action name | `actions: ['markGott']` | As C15, for actions. |
+| C17 | An action is used but never written | `actions: ['markGot']` with `actions: {}` | The game would crash the first time it ran. |
+| C18 | Jumping straight to the results | `to: 'results'` | Only the format ends the game; a game can't skip its loop (standard §7). |
+| C19 | No `turn` phase | `phases: { play: … }` | The format's handoff starts `turn`, so it must exist. |
+| C20 | Writing one of the format's phases | `handoff: { … }` | A game can add phases but not replace the format's. |
+| C21 | Writing one of the format's actions | `actions: { drawItem: … }` | Same, for actions: two `drawItem`s would silently replace one. |
+| C22 | A final game phase | `final: true` | Only the format's `results` ends the game. |
+| C23 | An event the game doesn't have | `on: { jump: … }` | As C12, inside a format game. |
