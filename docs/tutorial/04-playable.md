@@ -100,3 +100,77 @@ One test: the current page shows "Ku Zo Wasa" as a heading and the subtitle. The
 1. `pnpm test` reports `180 passed`.
 2. Delete the first line of `App.test.tsx` and run `pnpm test`. The test fails with `ReferenceError: document is not defined`: without the comment it runs in plain Node. Put the line back.
 3. `pnpm typecheck` and `pnpm lint` pass.
+
+---
+
+## Step 3: Theme tokens
+
+**What:** the default theme as CSS variables in `src/app/index.css`, light and dark, wired into Tailwind so classes like `bg-primary` use them. Tailwind's built-in colors are switched off, and a test fails if any file uses one.
+
+**Why:** standard §11 promises that a theme is a JSON file and no code. That only works if every color on every screen comes from a token. Setting the rule before the first component is built is cheap; retrofitting it after twenty components isn't.
+
+### Tokens, as variables
+
+A CSS variable is a named value that other CSS can use: `--primary: oklch(0.64 0.19 42)` defines it, `var(--primary)` uses it. Change the definition and everything that uses it changes. That's what a theme is: a different set of definitions.
+
+The names follow the ones shadcn/ui uses (step 4), so its components fit without renaming:
+
+| Token | Used for |
+|---|---|
+| `background`, `foreground` | The page, and text on it |
+| `card`, `card-foreground` | Raised surfaces such as the item card |
+| `primary`, `primary-foreground` | The main action on a screen |
+| `secondary`, `secondary-foreground` | Other actions |
+| `muted`, `muted-foreground` | Quiet backgrounds, secondary text |
+| `success`, `warning`, `destructive` (+ `-foreground`) | Got it, time running out, skip or quit |
+| `border`, `input`, `ring` | Borders, form fields, the keyboard focus outline |
+| `radius`, `font-body`, `duration` | Corner rounding, the font, animation speed |
+
+Colors come in pairs, a background and the `-foreground` color for text on it, so a theme can't put dark text on a dark button by accident: whoever picks one picks both.
+
+Colors are written as `oklch(lightness chroma hue)`. Unlike hex codes, its numbers mean something you can reason about: lightness 0 to 1, chroma (how colorful), and hue (the angle on the color wheel). The dark theme mostly flips lightness and keeps hues, so the two modes feel like the same app.
+
+### Dark mode
+
+```css
+@media (prefers-color-scheme: dark) {
+  :root { --background: oklch(0.18 0.012 50); … }
+}
+```
+
+The phone's own light/dark setting decides. Only colors change; radius, font and speed stay the same. `color-scheme: light dark` on `<html>` also tells the browser to draw its own parts (scrollbars, form controls) to match.
+
+### Wiring tokens into Tailwind
+
+```css
+@theme inline {
+  --color-*: initial;
+  --color-primary: var(--primary);
+  …
+}
+```
+
+Tailwind v4 makes a class for every `--color-<name>` it's told about: `--color-primary` gives `bg-primary`, `text-primary`, `border-primary` and so on. `inline` makes each class use `var(--primary)` itself instead of a copy of today's value, so switching to dark mode (or, later, another theme) changes every class.
+
+`--color-*: initial` first deletes Tailwind's built-in palette. After it, `bg-red-500` produces no CSS at all. That's the enforcement: there's simply no raw color to reach for.
+
+### A test that makes the silent failure loud
+
+A deleted class doesn't cause an error; it just does nothing, which is easy to miss. `src/app/theme.test.ts` reads every `.ts`/`.tsx` file in `src/` as text and fails if any uses a built-in color name like `bg-red-500` or `text-white`, naming the file. Two more tests check that every color has a dark value and is wired into Tailwind.
+
+The test reads files with Vite's `?raw` (give me this file's text) instead of Node's `fs`, because files in `src/` are type-checked for the browser, where `fs` doesn't exist. Vitest normally replaces CSS files with an empty string, so `vite.config.ts` tells it to load `index.css` for real.
+
+### Files changed
+
+- `src/app/index.css`: the tokens, dark mode, the Tailwind mapping and base styles.
+- `src/app/App.tsx`: the subtitle uses `text-muted-foreground`.
+- `src/app/theme.test.ts` (new).
+- `vite.config.ts`: Vitest loads `index.css`.
+- `docs/game-standard.md` §11: the token names.
+- `docs/tests.md`: the new tests; counts updated to 183.
+
+### How to verify
+
+1. `pnpm test` reports `183 passed`.
+2. In `App.tsx`, add `bg-blue-600` to the heading's `className` and run `pnpm test`. The theme test fails naming `/src/app/App.tsx: bg-blue-600`. Remove it.
+3. Run `pnpm dev` and open the page. Switch the phone (or the computer) between light and dark mode: the background and text change. (`pnpm build` also passes.)

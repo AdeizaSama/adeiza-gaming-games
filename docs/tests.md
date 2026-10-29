@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 180 runtime tests (`pnpm test`) and 26 compile-time checks (`pnpm typecheck`).
+**Counts:** 183 runtime tests (`pnpm test`) and 26 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -30,6 +30,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [defineGame](#definegame) | `src/sdk/game/defineGame.test.ts` | 8 | 3 |
 | [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 9 | |
 | [App](#app) | `src/app/App.test.tsx` | 1 | |
+| [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 3 | |
 
 **Two kinds of test:**
 
@@ -441,3 +442,13 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 180 | shows the name and subtitle | App | Render the app | A heading "Ku Zo Wasa" and the text "Party games for one phone." | Proves screen tests work. The page it checks is replaced by the game library in step 10. |
+
+## Theme tokens
+
+`src/app/theme.test.ts`, testing the theme tokens in `src/app/index.css`. Reads the CSS file and every `.ts`/`.tsx` file in `src/` as text.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 181 | gives every color a value in both light and dark mode | Light and dark | The light and dark token lists | Every dark color is also set in light; light adds only `--radius`, `--font-body` and `--duration` | A color missing from dark mode would show the light value on a dark background. |
+| 182 | makes every color token available to Tailwind classes | `@theme` | Each color token | A matching `--color-<name>: var(--<name>);` line | A token Tailwind doesn't know can't be used as a class. |
+| 183 | is the only source of colors: no file uses a built-in Tailwind color | No raw colors | Every source file | No class like `bg-red-500` or `text-white` | Tailwind's palette is switched off, so such a class would silently do nothing; and themes (phase 2) can only change colors that come from tokens. |

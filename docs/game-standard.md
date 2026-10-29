@@ -346,7 +346,24 @@ One file per pack: `src/games/<id>/content/<pack-id>.json`.
 
 ## 11. Themes
 
-`src/themes/<id>.json` holds design tokens only (colors for light/dark, fonts, radius, motion). The app maps them to CSS variables; components use variables, never raw colors. A theme pull request touches one JSON file plus an optional font import. Game-specific skins (e.g. Mafia's werewolf names) are **content**, not themes.
+`src/themes/<id>.json` holds design tokens only (colors for light/dark, fonts, radius, motion). The app maps them to CSS variables; components use variables, never raw colors.
+
+**The tokens** (one default theme, in `src/app/index.css`, until theme files land):
+
+| Token | Used for |
+|---|---|
+| `background`, `foreground` | The page, and text on it |
+| `card`, `card-foreground` | Raised surfaces such as the item card |
+| `primary`, `primary-foreground` | The main action on a screen |
+| `secondary`, `secondary-foreground` | Other actions |
+| `muted`, `muted-foreground` | Quiet backgrounds, secondary text |
+| `success`, `warning`, `destructive` (each with `-foreground`) | Got it, time running out, skip or quit |
+| `border`, `input`, `ring` | Borders, form fields, the keyboard focus outline |
+| `radius` | Corner rounding (`rounded-sm` to `rounded-xl` scale from it) |
+| `font-body` | The font |
+| `duration` | How long transitions take |
+
+Every color has a light and a dark value; dark mode follows the phone's setting. Tailwind's built-in palette is switched off, so classes like `bg-red-500` produce nothing; a test fails if any file uses one. A theme pull request touches one JSON file plus an optional font import. Game-specific skins (e.g. Mafia's werewolf names) are **content**, not themes.
 
 ## 12. Engineering rules
 
