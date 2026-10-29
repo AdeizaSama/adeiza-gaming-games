@@ -195,7 +195,8 @@ A format is the outer loop shared by several games: setup, turn order, rounds, s
 |---|---|
 | Setup | Team names (2+), rounds, turn timer, pack/tag selection: one shared setup screen |
 | Phases | `handoff → turn → turn_summary → (round_summary) → results`, including the loop and the end |
-| Context | teams, scores, current team, round, item pool (drawn without repeats), `turnEndsAt` |
+| Context | teams, scores, current team, round, item pool, `turnEndsAt` |
+| Item pool | The chosen packs' items, each item once (an item in two packs is kept from the first pack chosen), filtered to the chosen tags if any. Drawn in a shuffled order without repeats. When every item has been drawn, they're shuffled back in and drawing continues, with the item just shown placed last. |
 | Guards/actions | `roundsRemaining`, `advanceTeam`, `drawItem`, `startTimer`, `addPoints` |
 | Views | Handoff, editable turn summary, leaderboard, results |
 

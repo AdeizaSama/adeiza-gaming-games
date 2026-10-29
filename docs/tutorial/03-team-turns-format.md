@@ -200,3 +200,72 @@ const CharadesConfig = TeamTurnsConfig.extend({ punishSkips: z.boolean().default
 1. `pnpm test` reports `129 passed` (118 before, 11 new).
 2. Break a limit: in `config.ts`, change `.max(20, ` to `.max(21, ` and run `pnpm test`. "trims team names and rejects blank or long ones" fails, because a 21-character name is now accepted. Change it back.
 3. `pnpm typecheck` and `pnpm lint` pass.
+
+---
+
+## Step 4: The item pool
+
+**What:** `src/sdk/formats/team-turns/pool.ts`: three small functions that turn the chosen packs into cards to draw, and draw them one at a time.
+
+| Function | When it runs | What it does |
+|---|---|---|
+| `choosePoolItems(packs, { packs, tags }, itemKey)` | Once, when the game starts | The chosen packs' items in the order the packs were chosen, filtered by tag, each item once |
+| `newPool(items, rng)` | Once, when the game starts | Shuffles the items into a pool |
+| `drawFrom(pool, rng)` | Every time a card is needed | Takes the next item; reshuffles when every item has been drawn |
+
+**Why:** standard §7 says the format provides an "item pool (drawn without repeats)". Three questions it left open are answered here:
+
+1. **An item in two chosen packs?** Kept once, from the first pack chosen. That's ADR 0003's rule, using `uniqueBy` from chapter 02.
+2. **Tags?** With tags chosen, only items with at least one of them are kept. No tags keeps every item.
+3. **What happens when every item has been drawn?** The drawn items are shuffled back in and the game continues. Ending the game, or the turn, because the deck ran out would be unfair to whoever was playing. Repeats are better, and they only start once every item has been seen.
+
+### Why three functions, not one
+
+`choosePoolItems` needs the packs, which live in the game (`defineGame`'s `content.packs`). The machine shouldn't hold every pack: a saved game only needs the items it can draw. So the app picks the items once at the start (chapter 04), and the machine receives just those items as input. `newPool` and `drawFrom` run inside the machine, using the runner's `rng`, so drawing is repeatable and resumes correctly after a refresh.
+
+### The pool is two lists
+
+```ts
+interface ItemPool<Item> {
+  remaining: Item[]   // still to draw, in the order they'll come out
+  drawn: Item[]       // already drawn since the last shuffle
+}
+```
+
+Plain data, so it's saved with the game. `drawFrom` returns a new pool and never changes the one it's given, the same rule actions follow.
+
+### The card just shown never comes straight back
+
+When `remaining` is empty, `drawFrom` shuffles `drawn` back in. Done naively, the card that was just on screen could come out first again, and two of the same card in a row looks like a bug. So the last item drawn is left out of the shuffle and put at the end of the new order:
+
+```ts
+remaining = [...rng.shuffle(drawn.slice(0, -1)), drawn[drawn.length - 1]]
+```
+
+`drawn.slice(0, -1)` is every drawn item except the last, and `drawn[drawn.length - 1]` is the last one, now last again. The test for this tries 50 seeds, since one seed could pass by luck.
+
+### Errors
+
+- `choosePoolItems` **returns an empty list** when no item matches the tags. That's a player's choice, so the setup screen (chapter 04) will say "no items match" instead of starting.
+- It **throws** for a pack id that doesn't exist. The setup screen only offers real packs, so that's a bug.
+- `drawFrom` **throws** for a pool with no items at all. Step 6 makes the machine refuse to start with no items, so this never happens in play.
+
+### The standard
+
+§7 gets a new "Item pool" row in "what the format provides", with all three rules.
+
+### Tests: `src/sdk/formats/team-turns/pool.test.ts`
+
+13 tests. The full table is in [docs/tests.md](../tests.md#item-pool).
+
+### Files changed
+
+- `src/sdk/formats/team-turns/pool.ts`, `src/sdk/formats/team-turns/pool.test.ts` (new).
+- `docs/game-standard.md` §7: the item pool rules.
+- `docs/tests.md`: the new tests, and counts updated to 142.
+
+### How to verify
+
+1. `pnpm test` reports `142 passed` (129 before, 13 new).
+2. Break the "just shown" rule: in `pool.ts`, replace the reshuffle line with `remaining = rng.shuffle(drawn)` and run `pnpm test`. "never draws the item just shown first after shuffling back in" fails. Change it back.
+3. `pnpm typecheck` and `pnpm lint` pass.

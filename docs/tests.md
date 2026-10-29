@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 129 runtime tests (`pnpm test`) and 14 compile-time checks (`pnpm typecheck`).
+**Counts:** 142 runtime tests (`pnpm test`) and 14 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -24,6 +24,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
 | [Content check (scripts)](#content-check-scripts) | `scripts/lib/validate.test.ts` | 6 | |
 | [Team-turns config](#team-turns-config) | `src/sdk/formats/team-turns/config.test.ts` | 11 | |
+| [Item pool](#item-pool) | `src/sdk/formats/team-turns/pool.test.ts` | 13 | |
 
 **Two kinds of test:**
 
@@ -311,3 +312,23 @@ Each row is a mistake TypeScript must reject.
 | 127 | rejects an unknown setting, such as a typo | Strict settings | `second: 90` | Rejected as an unknown setting | Catches typos, and settings left over from an older saved game. |
 | 128 | can be extended with a game's own settings and stays strict | `extend` | A Charades-like config with `punishSkips` | Default `false` filled in; `punishSkip` (typo) rejected | Games add their own settings on top (chapter 05) without losing the checks. |
 | 129 | types settings with defaults filled in, and the setup input with them optional | Types | `TeamTurnsConfig` and `TeamTurnsSetup` | Settings have every field; the setup input accepts only teams and packs | The machine never has to handle a missing setting. Checked by `pnpm typecheck`. |
+
+## Item pool
+
+`src/sdk/formats/team-turns/pool.test.ts`, testing `src/sdk/formats/team-turns/pool.ts`. Two packs: `food` (Jollof tagged `dish`, Puff puff tagged `snack`, Zobo) and `school` (Assembly, jollof tagged `party`). Items are keyed by text, so Jollof and jollof are the same item. The drawing tests use letters as items.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 130 | takes the chosen packs' items in the order the packs were chosen | `choosePoolItems` | Packs chosen as school, then food | Assembly, jollof, Puff puff, Zobo | The first pack chosen wins when items repeat, so the order must be the players'. |
+| 131 | leaves out packs that were not chosen | `choosePoolItems` | Only school | Assembly, jollof | Players only get the packs they picked. |
+| 132 | keeps an item in two chosen packs once, from the first pack chosen | `choosePoolItems` | food, then school | Jollof (tagged `dish`), Puff puff, Zobo, Assembly | ADR 0003: an item in two packs is drawn once, using the first pack's copy. |
+| 133 | with tags chosen, keeps only items with at least one of them | Tag filter | Both packs, tags `snack` and `party` | Puff puff, jollof | Filtering happens before removing repeats, so the `party` copy of jollof survives when only it matches. |
+| 134 | returns no items when nothing matches the tags | Tag filter | food, tag `sport` | An empty list | The setup screen can tell players nothing matches instead of starting an empty game. |
+| 135 | throws for a pack that does not exist | `choosePoolItems` | Pack `anime` | Error naming `"anime"` | The setup screen only offers real packs, so this is a bug to surface, not hide. |
+| 136 | shuffles every item into the pool, the same way for the same seed, without changing the list | `newPool` | a–e, seed 7, twice | Every item once, nothing drawn yet; same order both times; original list unchanged | Games are repeatable in tests and after a refresh. |
+| 137 | draws in pool order, moving each item to drawn, without changing the pool passed in | `drawFrom` | Remaining a, b | Draws a; pool now b remaining, a drawn; the original unchanged | The pool is game data: never changed in place, like any action's context. |
+| 138 | draws every item once before any repeats | `drawFrom` | 4 items, 4 draws | Each item exactly once | "Drawn without repeats" (standard §7). |
+| 139 | when every item is drawn, shuffles them back in and keeps going | `drawFrom` | 3 items, 6 draws | First 3 draws are all three items; so are the next 3 | A long game never runs out of cards; repeats only start once everything has been seen. |
+| 140 | never draws the item just shown first after shuffling back in | `drawFrom` | All of a–d drawn, d last; seeds 0–49 | Never d; d is last in the new order | Seeing the same card twice in a row would feel like a bug. |
+| 141 | repeats the only item when the pool has one | `drawFrom` | One item, already drawn | Draws it again | Edge case that must not crash. |
+| 142 | throws for a pool with no items at all | `drawFrom` | Nothing remaining or drawn | Error | A game with no items is a bug; the machine refuses to start one (step 6). |
