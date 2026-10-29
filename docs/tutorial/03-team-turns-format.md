@@ -269,3 +269,78 @@ remaining = [...rng.shuffle(drawn.slice(0, -1)), drawn[drawn.length - 1]]
 1. `pnpm test` reports `142 passed` (129 before, 13 new).
 2. Break the "just shown" rule: in `pool.ts`, replace the reshuffle line with `remaining = rng.shuffle(drawn)` and run `pnpm test`. "never draws the item just shown first after shuffling back in" fails. Change it back.
 3. `pnpm typecheck` and `pnpm lint` pass.
+
+---
+
+## Step 5: The format's guards and actions
+
+**What:** `src/sdk/formats/team-turns/rules.ts`: the context every team-turns game shares (`TeamTurnsContext`), the format's guard and its four actions, and a test for each (standard §12).
+
+**Why:** these are the pieces the format's loop (step 6) is made of. Writing and testing them on their own first means that when step 6 joins them into a machine, each piece is already known to work.
+
+### The context
+
+```ts
+interface TeamTurnsContext<Item, Turn, Config> {
+  config: Config        // the settings from step 3
+  scores: number[]      // one per team, same order as config.teams
+  current: number       // whose turn: a position in config.teams
+  round: number         // starting at 1
+  turnEndsAt: number | null
+  pool: ItemPool<Item>  // from step 4
+  item: Item | null     // the card on screen
+  turn: Turn            // the game's record of this turn
+}
+```
+
+The format doesn't know what's inside `turn`. Charades will record items got and skipped; Name Ten a count. The format only stores it, starts a fresh one each turn, and asks the game what it's worth.
+
+### The guard
+
+| Guard | True when |
+|---|---|
+| `turnsRemaining` | Any team still has a turn to play: not yet the last team, or not yet the last round |
+
+The standard called it `roundsRemaining`, but "are there rounds left?" is the wrong question: in the last round, the other teams still have to play. Dice Duel in chapter 01 used the same check under the same name. Step 9 updates the standard.
+
+### The actions
+
+| Action | What it does |
+|---|---|
+| `startTurn` | A fresh turn record (the game's `newTurn()`), and `turnEndsAt` set to `now` plus the turn's seconds |
+| `drawItem` | Puts the next item from the pool on screen (`drawFrom`, step 4) |
+| `bankPoints` | Adds what the turn record is worth (the game's `points(turn)`) to the current team's score |
+| `advanceTeam` | Passes play to the next team, or back to the first team in the next round |
+
+Each does one thing. The standard's list had `addPoints`; ADR 0004 replaced it with points worked out from the turn record, so it's `bankPoints` here.
+
+### Actions built for a game
+
+`startTurn` needs the game's `newTurn`, and `bankPoints` needs its `points`. So the actions aren't a fixed object. They're built by a function that takes those two from the game:
+
+```ts
+const actions = teamTurnsActions<Item, Turn, Config>({ newTurn, points })
+```
+
+The guard needs nothing from the game, so `teamTurnsGuards` is a plain object.
+
+### `satisfies`
+
+Both end with `satisfies Record<string, Guard<…>>` (or `Action<…>`). `satisfies` checks that every entry has the right shape, so each function's `context` and `rng` get their types, but it keeps the exact keys (`startTurn`, `drawItem`, …) instead of widening them to "any string". Step 6 needs those exact names.
+
+The format's functions accept any event (`MachineEvent`), because they never read it. That lets them sit in a machine together with any game's events.
+
+### Tests: `src/sdk/formats/team-turns/rules.test.ts`
+
+8 tests, using a made-up game whose turn record is a list of guessed words worth a point each. Every action test also checks the context passed in is unchanged. The full table is in [docs/tests.md](../tests.md#team-turns-guards-and-actions).
+
+### Files changed
+
+- `src/sdk/formats/team-turns/rules.ts`, `src/sdk/formats/team-turns/rules.test.ts` (new).
+- `docs/tests.md`: the new tests, and counts updated to 150.
+
+### How to verify
+
+1. `pnpm test` reports `150 passed` (142 before, 8 new).
+2. Make the game end a turn late: in `rules.ts`, change `context.config.teams.length - 1` to `context.config.teams.length` and run `pnpm test`. "is false once the last team has played in the last round" fails. Change it back.
+3. `pnpm typecheck` and `pnpm lint` pass.

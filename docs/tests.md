@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 142 runtime tests (`pnpm test`) and 14 compile-time checks (`pnpm typecheck`).
+**Counts:** 150 runtime tests (`pnpm test`) and 14 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -25,6 +25,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Content check (scripts)](#content-check-scripts) | `scripts/lib/validate.test.ts` | 6 | |
 | [Team-turns config](#team-turns-config) | `src/sdk/formats/team-turns/config.test.ts` | 11 | |
 | [Item pool](#item-pool) | `src/sdk/formats/team-turns/pool.test.ts` | 13 | |
+| [Team-turns guards and actions](#team-turns-guards-and-actions) | `src/sdk/formats/team-turns/rules.test.ts` | 8 | |
 
 **Two kinds of test:**
 
@@ -332,3 +333,18 @@ Each row is a mistake TypeScript must reject.
 | 140 | never draws the item just shown first after shuffling back in | `drawFrom` | All of a–d drawn, d last; seeds 0–49 | Never d; d is last in the new order | Seeing the same card twice in a row would feel like a bug. |
 | 141 | repeats the only item when the pool has one | `drawFrom` | One item, already drawn | Draws it again | Edge case that must not crash. |
 | 142 | throws for a pool with no items at all | `drawFrom` | Nothing remaining or drawn | Error | A game with no items is a bug; the machine refuses to start one (step 6). |
+
+## Team-turns guards and actions
+
+`src/sdk/formats/team-turns/rules.test.ts`, testing `src/sdk/formats/team-turns/rules.ts`. A made-up game whose turn record is the list of words guessed, one point each. Three teams (Lions, Eagles, Sharks), two rounds, 60-second turns, a pool of `a` and `b`. Unless noted, Lions are playing in round 1. Team positions start at 0.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 143 | is true while teams are still to play this round, or rounds are left | `turnsRemaining` | Team 0 in round 1; team 2 in round 1; team 1 in round 2 | True for all three | The game goes on until every team has had every turn. |
+| 144 | is false once the last team has played in the last round | `turnsRemaining` | Team 2 in round 2 | False | This is what sends the game to results. Off by one here would end a game a turn early or late. |
+| 145 | starts a fresh turn record and sets the timer from now | `startTurn` | Last turn's record `['old']`, now = 1000 ms | Record empty; `turnEndsAt` 61000; the original unchanged | Each turn starts clean; the timer comes from the runner's `now`, never the clock. |
+| 146 | puts the next item from the pool on screen | `drawItem` | Pool `a`, `b` | Item `a`; pool `b` remaining, `a` drawn; the original unchanged | The card on screen and the pool move together. |
+| 147 | adds the turn's points to the current team only | `bankPoints` | Eagles (team 1) playing, scores 4, 2, 7, three words guessed | Scores 4, 5, 7; the original unchanged | Points go to the team that earned them. |
+| 148 | leaves scores as they are for a turn worth nothing | `bankPoints` | Nothing guessed, scores 3, 1, 0 | Unchanged | A bad turn scores zero, not an error. |
+| 149 | passes play to the next team in the same round | `advanceTeam` | Team 0, round 1 | Team 1, round 1 | Playing order is the order teams were entered. |
+| 150 | after the last team, goes back to the first team in the next round | `advanceTeam` | Team 2, round 1 | Team 0, round 2; the original unchanged | A round is one turn for every team. |
