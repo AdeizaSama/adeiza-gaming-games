@@ -581,3 +581,33 @@ Its clock is fake, so 30-second turns take no time. Only `Date` and `setInterval
    - **Reduced motion:** with "reduce motion" on, buttons don't shrink when pressed and the timer doesn't pulse.
 
    Known gaps, coming in steps 10 to 12: no way to pick teams or settings, nothing after the results, and a refresh restarts the demo (chapter 05).
+
+---
+
+## Step 9b: Long words shrink the card
+
+**What:** `FlashCard` picks its text size from the item's longest word.
+
+**Why:** from the step 9 phone check. Long *phrases* are fine: they wrap between words. A long *word* can't wrap, so at 48px a word like "Supercalifragilistic" is wider than a small phone's card and gets broken mid-word. Shrinking only that word would mix sizes inside one item, which looks like a bug, so the whole text shrinks.
+
+| Longest word | Size |
+|---|---|
+| up to 10 letters | `text-5xl` (48px, as before) |
+| 11 to 13 | `text-4xl` (36px) |
+| 14 to 16 | `text-3xl` (30px) |
+| 17 or more | `text-2xl` (24px) |
+
+The limits are worked out for a card about 320px wide, the narrowest common phone: a bold letter is a little over half its font size wide. Letters aren't all the same width ("WWW" is wider than "iii"), so this is a good guess, not a measurement; `break-words` stays as the last resort. Measuring the real text after drawing it would be exact but needs a second draw on every card, which isn't worth it yet.
+
+`textSize` is exported and tested as a plain function, like `rank` in step 8.
+
+### Files changed
+
+- `src/sdk/interactions/FlashCard.tsx`: `textSize`, used for the card text.
+- `src/sdk/interactions/interactions.test.tsx`: one test.
+- `docs/tests.md`: the new test; counts updated to 213.
+
+### How to verify
+
+1. `pnpm test` reports `213 passed`.
+2. In `FlashCard.tsx`, make `textSize` always return `'text-5xl'` and run `pnpm test`. "shrinks the whole text when its longest word is long" fails. Change it back.

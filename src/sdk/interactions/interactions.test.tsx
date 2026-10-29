@@ -3,7 +3,7 @@ import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Countdown } from './Countdown'
-import { FlashCard } from './FlashCard'
+import { FlashCard, textSize } from './FlashCard'
 import { Handoff } from './Handoff'
 
 describe('Handoff', () => {
@@ -33,6 +33,14 @@ describe('FlashCard', () => {
     await user.click(screen.getByRole('button', { name: 'Skip' }))
     expect(onGot).toHaveBeenCalledTimes(1)
     expect(onSkip).toHaveBeenCalledTimes(2)
+  })
+
+  it('shrinks the whole text when its longest word is long', () => {
+    expect(textSize('Rewinding cassette with biro')).toBe('text-5xl')
+    expect(textSize('Photosynthesis')).toBe('text-3xl')
+    expect(textSize('Supercalifragilistic')).toBe('text-2xl')
+    render(<FlashCard text="Counterrevolution day" onGot={() => {}} onSkip={() => {}} />)
+    expect(screen.getByText('Counterrevolution day').className).toContain('text-2xl')
   })
 })
 
