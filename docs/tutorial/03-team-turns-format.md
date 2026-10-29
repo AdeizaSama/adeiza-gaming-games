@@ -46,3 +46,96 @@ The PR template is a separate problem. Its checklist said "`pnpm lint`, `pnpm te
 1. Open `.github/pull_request_template.md`. The first checklist line names `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm validate-content` and `pnpm build`. Compare it with the `run:` lines in `.github/workflows/ci.yml`: same five commands.
 2. Open chapters 01 and 02. Each has a "Changed in chapter 03" note that links here.
 3. No code changed: `pnpm test` still reports 118 passed.
+
+---
+
+## Step 2: How a game plugs its turn into the format (ADR 0004)
+
+**What:** decide, before writing any format code, how a game's turn and the format's loop become one machine. The decision is [ADR 0004](../decisions/0004-team-turns-builder.md). No code is committed in this step.
+
+**Why:** this is the API every team-turns game is written against: Charades now, Name Ten and Trivia Night later. Changing it after three games use it means rewriting all three.
+
+### The problem
+
+Look at Dice Duel, the toy game in `src/sdk/machine/fullGame.test.ts` from chapter 01. Its phases are `handoff → turn → turn_summary → handoff …→ results`, all written by hand. Charades has the same loop. So do Name Ten and Trivia. Only the `turn` phase is different:
+
+| | Inside the turn |
+|---|---|
+| Dice Duel | `roll` |
+| Charades | `got` scores and shows the next item; `skip` shows the next item |
+| Trivia Night | `answer` checks the answer; a wrong one can lead to a `steal` phase |
+
+We want each game to write only its turn, and get the rest from the format.
+
+### Three ways to do it
+
+**(a) Copy the format's parts in.** The format exports its phases, guards and actions as objects, and each game copies them into its own `defineMachine` call with `...`. It looks simple, but chapter 01, step 4 found the trap: `defineMachine` learns the phase names from every key in `phases`, including the copied ones, so a typo can be reported inside the format's code instead of on the game's line. And nothing stops a game from writing its own `handoff` and quietly changing the loop.
+
+**(b) A builder function.** The format exports a function, `teamTurns`. The game passes it only its turn, and the function builds the whole machine. This is what we chose.
+
+**(c) A machine inside a machine.** The turn would be a small machine of its own, run by the format's machine. The runner would have to handle two layers of state, to save and to resume. That's a big change to the smallest, most important piece of the SDK.
+
+### What a game writes with (b)
+
+```ts
+export const machine = teamTurns<CharadesItem, CharadesTurn, CharadesEvent>()({
+  newTurn: () => ({ got: [], skipped: [] }),
+  points: (turn) => turn.got.length,
+  phases: {
+    turn: {
+      interaction: 'flash_card',
+      on: {
+        got:     { actions: ['markGot', 'drawItem'] },
+        skip:    { actions: ['markSkipped', 'drawItem'] },
+        time_up: { to: 'turn_summary' },
+      },
+    },
+  },
+  guards:  {},
+  actions: { markGot: …, markSkipped: … },
+})
+```
+
+Line by line:
+
+- **`teamTurns<…>()({ … })`**: two calls, like `defineMachine`. The first fixes the types the game writes: what an item is, what the game records during a turn, and the game's own events. The second works out the names from the keys.
+- **`newTurn`**: the game's record of one turn, empty at the start of each turn. Charades records which items were got and which were skipped, so the turn summary can show them.
+- **`points`**: what a turn record is worth. Charades: one point per item got.
+- **`phases.turn`**: the game's turn. `drawItem` is one of the format's actions; the game can use it because the format puts its actions and the game's together. `time_up` is the game's to handle, because what running out of time means depends on the game.
+
+Everything else (handoff, timer, item pool, scores, turn summary, the move to the next team, results) comes from `teamTurns`.
+
+### Points come from the turn record
+
+Instead of adding to a score each time someone guesses, the game keeps a record of the turn, and `points` works out what it's worth. The format adds that to the team's score when the players tap "next" on the turn summary.
+
+Why: the turn summary will let players fix a mis-tap (standard §7 calls it "editable"). If the score were added as the turn went, a fix would have to undo it. Worked out from the record, the score follows the fix automatically.
+
+### What the types catch
+
+Before writing the ADR, a throwaway prototype of `teamTurns` was checked against a set of deliberate mistakes. Each one is a type error on the game's own line:
+
+| Mistake | Why it's caught |
+|---|---|
+| `to: 'turn_sumary'` | Not a phase |
+| `actions: ['markGott']` | Not an action |
+| Using `markGot` without writing it | Same: names come from the `actions` object's keys |
+| `to: 'results'` from the turn | A game may only go to its own phases or `turn_summary` |
+| No `turn` phase | `handoff` starts `turn`, so it must exist |
+| A phase called `handoff`, or an action called `drawItem` | Those names belong to the format |
+
+The prototype also showed Trivia's extra `steal` phase compiling (it's in the ADR), so the design leaves room for it. The prototype isn't committed; the real code is built in steps 3 to 6.
+
+### Files changed
+
+- `docs/decisions/0004-team-turns-builder.md` (new).
+- `docs/decisions/README.md`: lists 0004.
+- `docs/tutorial/03-team-turns-format.md`: this section.
+
+### How to verify
+
+Read ADR 0004 and check that:
+
+1. The Charades example uses only names the format provides (`drawItem`, `turn_summary`, `time_up`) or the game defines (`markGot`, `markSkipped`).
+2. Each rejected option says why, and (a)'s reason matches the trap recorded in ADR 0002's Consequences.
+3. No code changed: `pnpm test` still reports 118 passed.
