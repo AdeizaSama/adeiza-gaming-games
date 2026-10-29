@@ -174,3 +174,72 @@ The test reads files with Vite's `?raw` (give me this file's text) instead of No
 1. `pnpm test` reports `183 passed`.
 2. In `App.tsx`, add `bg-blue-600` to the heading's `className` and run `pnpm test`. The theme test fails naming `/src/app/App.tsx: bg-blue-600`. Remove it.
 3. Run `pnpm dev` and open the page. Switch the phone (or the computer) between light and dark mode: the background and text change. (`pnpm build` also passes.)
+
+---
+
+## Step 4: Button and Input
+
+**What:** the first two UI components, in `src/ui/`: `Button` and `Input`, based on [shadcn/ui](https://ui.shadcn.com) and restyled onto the theme tokens, plus a small `cn` helper for combining class names.
+
+**Why:** every screen from step 7 on needs buttons, and the setup screen needs text fields. Standard §9 says `src/ui/` holds only what's used, so it starts with exactly these two. ("Quit game?" needs a Dialog; it arrives with that feature in chapter 05.)
+
+### What shadcn/ui is, and why it isn't installed
+
+shadcn/ui isn't a package you install and import. It's a collection of component source files you copy into your project and then own: read, change, delete. That suits this repo: the code is ours, every line is visible, and nothing updates underneath us.
+
+shadcn has a command-line tool that does the copying. We didn't use it, for two reasons:
+
+1. **It rewrites `src/app/index.css`** with its own color variables, replacing the tokens from step 3.
+2. **Its files import through path aliases** (`@/lib/utils`), which this repo doesn't use. Every import here is a relative path you can follow.
+
+So the two components were copied by hand and trimmed to what we use. Without the tool there's no `components.json` (its settings file). Adding a component later is the same small job: copy it from the shadcn site, swap its color names for our tokens, and list it in the tutorial.
+
+### Dependencies
+
+shadcn's Button normally brings four packages. We kept one:
+
+| Package | Kept? | Why |
+|---|---|---|
+| `tailwind-merge` | **Yes** (runtime, ~8 KB gzipped) | Resolves clashing classes so a caller's `className` wins over the component's (`bg-secondary` replaces `bg-primary` instead of both being applied, where whichever comes later in the CSS file wins, not whichever you wrote last). Hard to do correctly by hand. |
+| `clsx` | No | Joins class names and drops empty ones. `tailwind-merge` already does both. |
+| `class-variance-authority` | No | Builds variant classes. Two plain objects (`variants`, `sizes`) do the same here and are easier to read. |
+| `@radix-ui/react-slot` | No | Lets a Button render as another element (`asChild`). Nothing needs it yet. |
+
+lucide-react, the icon set chosen for this chapter, is added when the first icon is used (the library page, step 10), not before.
+
+### `cn`
+
+```ts
+cn('bg-primary px-4', false, 'bg-secondary') // 'px-4 bg-secondary'
+```
+
+Components list their own classes first and the caller's `className` last, so a screen can make a button full-width (`className="w-full"`) without copying it.
+
+### `Button`
+
+- **Variants:** `primary`, `secondary`, `success`, `destructive`, `outline`, `ghost`. Each is token classes only, so step 3's test checks them like any other file.
+- **Sizes:** `md` (48px tall), `lg` (64px), `icon` (48px square). Even the smallest beats standard §12's 44px minimum for thumbs.
+- **`type="button"` by default.** A plain `<button>` inside a `<form>` submits the form when tapped. The setup screen is a form, and a "remove team" button that submits it would be a confusing bug.
+- **Feedback:** it shrinks slightly while pressed (`active:scale-95`), unless the phone asks for reduced motion (`motion-reduce:`), as standard §12 requires.
+- **Focus outline** in the `ring` color, shown only for keyboard focus (`focus-visible`), not on tap.
+
+### `Input`
+
+- **16px text** (`text-base`). Phones zoom the whole page into a text field with smaller text when it's tapped, which is disorienting mid-setup.
+- `aria-invalid` turns its border `destructive`, so the setup screen (step 11) can mark a bad team name by setting one attribute.
+
+### Tests: `src/ui/ui.test.tsx`
+
+5 screen tests. They tap and type with `user-event` and find elements by role and label, the way step 2 described. The full table is in [docs/tests.md](../tests.md#ui-components).
+
+### Files changed
+
+- `package.json`, `pnpm-lock.yaml`: `tailwind-merge`.
+- `src/ui/cn.ts`, `src/ui/button.tsx`, `src/ui/input.tsx`, `src/ui/ui.test.tsx` (new).
+- `docs/tests.md`: the new tests; counts updated to 188.
+
+### How to verify
+
+1. `pnpm test` reports `188 passed`.
+2. In `button.tsx`, change `type = 'button', className` to `type, className` and run `pnpm test`. "is a button that does not submit forms unless asked to" fails. Change it back.
+3. `pnpm typecheck`, `pnpm lint` and `pnpm build` pass.

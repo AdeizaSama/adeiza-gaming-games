@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 183 runtime tests (`pnpm test`) and 26 compile-time checks (`pnpm typecheck`).
+**Counts:** 188 runtime tests (`pnpm test`) and 26 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -31,6 +31,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 9 | |
 | [App](#app) | `src/app/App.test.tsx` | 1 | |
 | [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 3 | |
+| [UI components](#ui-components) | `src/ui/ui.test.tsx` | 5 | |
 
 **Two kinds of test:**
 
@@ -452,3 +453,15 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 181 | gives every color a value in both light and dark mode | Light and dark | The light and dark token lists | Every dark color is also set in light; light adds only `--radius`, `--font-body` and `--duration` | A color missing from dark mode would show the light value on a dark background. |
 | 182 | makes every color token available to Tailwind classes | `@theme` | Each color token | A matching `--color-<name>: var(--<name>);` line | A token Tailwind doesn't know can't be used as a class. |
 | 183 | is the only source of colors: no file uses a built-in Tailwind color | No raw colors | Every source file | No class like `bg-red-500` or `text-white` | Tailwind's palette is switched off, so such a class would silently do nothing; and themes (phase 2) can only change colors that come from tokens. |
+
+## UI components
+
+`src/ui/ui.test.tsx`, testing `src/ui/cn.ts`, `button.tsx` and `input.tsx`. Screen tests (happy-dom); taps and typing go through `user-event`, which acts like a player.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 184 | drops empty values and lets a later class win over an earlier one that sets the same thing | `cn` | `'bg-primary px-4'`, `false`, `undefined`, `'bg-secondary'` | `'px-4 bg-secondary'` | A caller's `className` can adjust a component without both colors fighting. |
+| 185 | is a button that does not submit forms unless asked to | Button | `<Button>Start</Button>` | A button named Start with `type="button"` | A plain `<button>` inside a form submits it; the setup screen has a form. |
+| 186 | calls onClick when tapped, and not when disabled | Button | Tap; then tap while disabled | Called once in total | Start must do nothing while setup is invalid. |
+| 187 | uses theme colors for its variant, and lets the caller adjust it | Button | `variant="success"`, `className="w-full"` | Classes include `bg-success` and `w-full` | Variants come from tokens; screens can still size buttons. |
+| 188 | is a text field that can be found by its label and typed into | Input | Labelled "Team 1", type `Lions` | Found by its label; value `Lions` | Team names are typed here; a field without a usable label is invisible to screen readers. |
