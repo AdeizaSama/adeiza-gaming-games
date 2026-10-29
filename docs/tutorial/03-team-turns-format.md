@@ -530,3 +530,82 @@ Because a game's tests import its `index.ts`, a broken game fails CI, never a pl
 2. `pnpm typecheck` passes, so the 3 mistakes are still type errors.
 3. Break a check: in `defineGame.ts`, change `complexity: z.int().min(1).max(5)` to `.max(6)` and run `pnpm test`. "reports problems in meta, with where each is" fails. Change it back.
 4. `pnpm lint` passes.
+
+---
+
+## Step 8: Core Charades
+
+**What:** Charades becomes a real game on the format:
+
+- `src/games/charades/machine.ts`: the turn, written with `teamTurns`.
+- `src/games/charades/index.ts`: the game's single `defineGame` export.
+- `src/games/charades/machine.test.ts`: a full game with real content, `validateMachine`, and a test per action.
+
+**Why:** this is what the chapter was for. Everything in steps 3 to 7 exists so that a game looks like this.
+
+### The machine
+
+```ts
+export const machine = teamTurns<CharadesItem, CharadesTurn, CharadesEvent>()({
+  newTurn: () => ({ got: [], skipped: [] }),
+  points: (turn) => turn.got.length,
+  phases: {
+    turn: {
+      interaction: 'flash_card',
+      on: {
+        got:     { actions: ['markGot', 'drawItem'] },
+        skip:    { actions: ['markSkipped', 'drawItem'] },
+        time_up: { to: 'turn_summary' },
+      },
+    },
+  },
+  guards: {},
+  actions: { markGot: …, markSkipped: … },
+})
+```
+
+It's Word Duel from step 6, with real Charades items instead of strings. That's the point of the format: the difference between games is the turn.
+
+The rules, as decided for this chapter:
+
+| Event | What happens |
+|---|---|
+| `got` | The item on screen goes into the turn's `got` list (worth 1 point), and the next item comes up |
+| `skip` | The item goes into `skipped` (worth nothing, no penalty), and the next item comes up |
+| `time_up` | The turn ends. The item on screen isn't recorded: it wasn't guessed or passed |
+
+`context.item!`: the `!` tells TypeScript that `item` isn't null here. It can only be null before the first draw, and `got` and `skip` only exist in `turn`, which the handoff enters after drawing.
+
+**Left for chapter 05:** modes (every item is played as "describe" for now), double points for acting or singing, the skip penalty, Charades' own settings and presets, `rules.md` and the game's README.
+
+### `index.ts`
+
+```ts
+export default defineGame({
+  meta: { id: 'charades', name: 'Charades', tagline: 'Act it out. Beat the clock.', … },
+  content: { itemSchema, itemKey, packs: loadPacks(import.meta.glob('./content/*.json', …), itemSchema, itemKey) },
+  config: { schema: TeamTurnsConfig },
+  machine,
+})
+```
+
+Charades has no settings of its own yet, so it uses the format's. Nothing imports `index.ts` except its tests: the game list in `src/app/registry/` comes in chapter 04, so players still won't see Charades until it has screens.
+
+### Testing with real content
+
+The SDK's tests use made-up games, because the SDK can't import a game. A game's own tests use its real content. `machine.test.ts` picks items from the real Back to School pack with `choosePoolItems`, exactly as the app will in chapter 04, and plays a whole game: 2 teams, 3 rounds, each turn got, got, skip, got, time up. That's 30 draws from 34 items, so the test also checks no item came up twice.
+
+### Tests: `src/games/charades/machine.test.ts`
+
+9 tests: the game definition, `validateMachine`, each event, a full game, and one for each of Charades' two actions (standard §12). The full table is in [docs/tests.md](../tests.md#charades-machine).
+
+### Files changed
+
+- `src/games/charades/machine.ts`, `src/games/charades/index.ts`, `src/games/charades/machine.test.ts` (new).
+- `docs/tests.md`: the new tests, and counts updated to 179.
+
+### How to verify
+
+1. `pnpm test` reports `179 passed` (170 before, 9 new).
+2. Add a skip penalty by mistake: in `machine.ts`, change `points: (turn) => turn.got.length` to `turn.got.length - turn.skipped.length` and run `pnpm test`. "skip: … with no penalty" and the full game fail. Change it back.
+3. `pnpm typecheck`, `pnpm lint`, `pnpm validate-content` and `pnpm build` pass.

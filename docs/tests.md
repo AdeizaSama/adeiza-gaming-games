@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 170 runtime tests (`pnpm test`) and 26 compile-time checks (`pnpm typecheck`).
+**Counts:** 179 runtime tests (`pnpm test`) and 26 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -28,6 +28,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Team-turns guards and actions](#team-turns-guards-and-actions) | `src/sdk/formats/team-turns/rules.test.ts` | 8 | |
 | [teamTurns (Word Duel)](#teamturns-word-duel) | `src/sdk/formats/team-turns/teamTurns.test.ts` | 12 | 9 |
 | [defineGame](#definegame) | `src/sdk/game/defineGame.test.ts` | 8 | 3 |
+| [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 9 | |
 
 **Two kinds of test:**
 
@@ -413,3 +414,19 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | C24 | The machine plays different items from the packs | A machine for `{ word }` items with `{ text }` packs | The item schema, the packs and the machine must agree on what an item is. |
 | C25 | A preset sets the teams | `config: { teams: ['A', 'B'] }` | Players always name their own teams. |
 | C26 | A format that doesn't exist yet | `format: 'host-led'` | Only `team-turns` is built. |
+
+## Charades machine
+
+`src/games/charades/machine.test.ts`, testing `src/games/charades/machine.ts` and `index.ts`: core Charades on the team-turns format. Uses the real game: two teams (Lions, Eagles), 3 rounds, 60-second turns, and the items of the real Back to School pack, picked with `choosePoolItems` as the app will.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 171 | is a valid game with the Back to School pack | `index.ts` | The game's default export | Id `charades`, includes `back-to-school`, uses the Charades machine | Importing `index.ts` runs `defineGame`'s checks; a broken game fails here. |
+| 172 | has no mistakes validateMachine can find | `validateMachine` | The Charades machine | No problems | Required for every game (standard §12). |
+| 173 | got: records the item, shows the next one, and is worth a point | `got` | `got` on the first card, then time up and next | The card is in the turn's `got` list; a new card is on screen; Lions score 1 | The core rule: a correct guess scores. |
+| 174 | skip: records the item and shows the next one, with no penalty | `skip` | `skip` on the first card, then time up and next | The card is in `skipped`; a new card is on screen; scores stay 0 and 0 | Core Charades has no skip penalty (that's an option in chapter 05). |
+| 175 | time_up: ends the turn without counting the item on screen | `time_up` | `got`, then time up | Turn summary, one item got, none skipped | The card on screen when time runs out wasn't guessed or passed, so it isn't recorded. |
+| 176 | ignores got and skip outside a turn | Ignored events | `got` at the handoff; `skip` on the summary | The same state back | A stray tap between turns can't score. |
+| 177 | plays a full game from the first handoff to the results | Full playthrough | Seed 2026; each turn: start, got, got, skip, got, time up, next | 6 turns; ends in `results`; scores 9 and 9; 30 different items drawn | The whole game plays end to end with real content (standard §12). |
+| 178 | markGot adds the item on screen to the items got, without changing the context passed in | `markGot` | Gala on screen, empty turn | Gala in `got`; the original unchanged | A test per action (standard §12). |
+| 179 | markSkipped adds the item on screen to the items skipped, without changing the context passed in | `markSkipped` | Gala on screen, empty turn | Gala in `skipped`; the original unchanged | As above. |
