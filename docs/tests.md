@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 188 runtime tests (`pnpm test`) and 26 compile-time checks (`pnpm typecheck`).
+**Counts:** 194 runtime tests (`pnpm test`) and 26 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -32,6 +32,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [App](#app) | `src/app/App.test.tsx` | 1 | |
 | [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 3 | |
 | [UI components](#ui-components) | `src/ui/ui.test.tsx` | 5 | |
+| [Game session](#game-session) | `src/sdk/game/useGameSession.test.ts` | 6 | |
 
 **Two kinds of test:**
 
@@ -465,3 +466,16 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 186 | calls onClick when tapped, and not when disabled | Button | Tap; then tap while disabled | Called once in total | Start must do nothing while setup is invalid. |
 | 187 | uses theme colors for its variant, and lets the caller adjust it | Button | `variant="success"`, `className="w-full"` | Classes include `bg-success` and `w-full` | Variants come from tokens; screens can still size buttons. |
 | 188 | is a text field that can be found by its label and typed into | Input | Labelled "Team 1", type `Lions` | Found by its label; value `Lions` | Team names are typed here; a field without a usable label is invisible to screen readers. |
+
+## Game session
+
+`src/sdk/game/useGameSession.test.ts`, testing `src/sdk/game/useGameSession.ts`. Runs the hook in a fake browser with Testing Library's `renderHook`. A tiny machine: `go` starts a clock from `now` and moves to `playing`, `roll` adds a die roll, `stop` ends the game; the input is the starting total.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 189 | starts the game from the input | Starting | Input 10, seed 1 | Phase `ready`, total 10, not ended | The session starts the machine the way `start` does. |
+| 190 | sends events with the current time and re-renders with the new state | `send` | `go` with a clock reading 5000 | Phase `playing`, clock started at 5000 | The time comes from the session, never from game logic. |
+| 191 | plays the same way for the same seed | Determinism | Seed 7 twice: go, roll | The same total | Tests can pin a seed and get repeatable games. |
+| 192 | keeps the same state when an event is ignored | Ignored events | `roll` in `ready` | The exact same state object | Nothing re-renders for a tap the phase doesn't handle. |
+| 193 | says when the game has ended | `ended` | go, stop | `ended` is true | The play screen knows when to offer "Play again". |
+| 194 | picks a random seed for each new game, and restart starts over with a new one | Random seed, `restart` | `Math.random` returning 0.25 then 0.5; go, then restart | Seeds 2^30, then 2^31; restart is back at `ready` with the same input | Every game is different in real play, and "Play again" doesn't replay the same deck. |

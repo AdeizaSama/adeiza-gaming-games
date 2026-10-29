@@ -141,7 +141,7 @@ Rules:
 - **Guard and action names are type-checked** against the `guards` and `actions` objects. A typo is a compile error, not a runtime surprise.
 - **Timers:** an action stores `turnEndsAt` in context; the view shows the countdown and sends `time_up`. The machine decides what that means.
 - **Final phases** (`final: true`) end the game; the app reads the result from context. A final phase can't list events (it's a type error), and every event after the game ends is ignored.
-- **Running a machine:** `start(machine, { input, seed })` gives the starting state; `send(machine, state, event, { now })` returns the next state without changing the one passed in; `isFinal(machine, state)` says whether the game has ended. All three are in `src/sdk/machine/runner.ts`.
+- **Running a machine:** `start(machine, { input, seed })` gives the starting state; `send(machine, state, event, { now })` returns the next state without changing the one passed in; `isFinal(machine, state)` says whether the game has ended. All three are in `src/sdk/machine/runner.ts`. In the app, `useGameSession(machine, input)` (`src/sdk/game/`) wraps them for React: it picks a random seed for each new game and passes `Date.now()` with each event, the only place either is read.
 - **`validateMachine(machine)`** (`src/sdk/machine/validateMachine.ts`) finds mistakes TypeScript can't, such as a transition placed after the fallback, where it can never run. It returns a list of problems; every game's tests check that the list is empty.
 - Each guard and action stays small and does one thing. Complex rules (e.g. Mafia night resolution) are a composition of small named actions, not one big function.
 

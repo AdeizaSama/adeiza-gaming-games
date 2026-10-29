@@ -317,3 +317,59 @@ Each of these was a type error on the line with the mistake:
 ### How to verify
 
 Read ADR 0005 and check that the four views in the table above follow its rules: Charades must write `turn`, may replace `turn_summary`, and gets `handoff` and `results` from the format. No code changed: `pnpm test` still reports 188 passed.
+
+---
+
+## Step 6: The game session
+
+**What:** `src/sdk/game/useGameSession.ts`, a React hook that plays a machine: it holds the game's state, sends events, and re-renders the screen when the state changes.
+
+```ts
+const { state, send, restart, ended } = useGameSession(game.machine, { config, items })
+```
+
+**Why:** the runner (chapter 01) is plain functions: `start` gives a state, `send` gives the next one. React needs that state *held* somewhere so the screen updates when it changes. The hook is that somewhere, and it's also where the two impure things a game needs, a random seed and the current time, enter. Nowhere else in the app reads them.
+
+### What a hook is
+
+A React component is a function that runs every time the screen needs redrawing. A **hook** is a function, named `use…`, that a component calls to keep something between those runs. `useState` keeps a value: when it changes, React redraws the component with the new value. `useGameSession` builds on it: the value it keeps is the game's state.
+
+### The pieces
+
+| Returns | What it does |
+|---|---|
+| `state` | `{ phase, context, rngState }`: what the play screen draws |
+| `send(event)` | Reads the clock, calls the runner's `send`, keeps the result |
+| `restart(input?)` | A new game with a new random seed: "Play again" |
+| `ended` | Whether the game reached a final phase (`isFinal`) |
+
+**The seed.** `Math.floor(Math.random() * 2 ** 32)`: a random whole number covering every state the Rng can start from. One per game, so every game in real play is different, and "Play again" doesn't deal the same cards.
+
+**The time.** `send` reads `Date.now()` and hands it to the runner. Note *where* it's read:
+
+```ts
+const time = now()
+setState((current) => sendEvent(machine, current, event, { now: time }))
+```
+
+`setState` with a function means "compute the new state from the current one". In development, React runs such functions twice to catch side effects. Reading the clock inside would give the two runs different times. Reading it once, outside, keeps the update a pure calculation.
+
+**Ignored events.** When a phase doesn't handle an event, the runner returns the exact same state object (ADR 0002). React sees nothing changed and doesn't redraw. A double tap costs nothing.
+
+**Tests can fix both.** An optional third argument, `{ seed, now }`, replaces the random seed and the clock, so tests are repeatable. The app passes nothing.
+
+### Tests: `src/sdk/game/useGameSession.test.ts`
+
+6 tests, using Testing Library's `renderHook`, which runs a hook inside a tiny test component. A tiny machine stands in for a game. The random-seed test replaces `Math.random` with fixed values (`vi.spyOn`) to check the seed comes from it. The full table is in [docs/tests.md](../tests.md#game-session).
+
+### Files changed
+
+- `src/sdk/game/useGameSession.ts`, `src/sdk/game/useGameSession.test.ts` (new).
+- `docs/game-standard.md` §4: running a machine in the app.
+- `docs/tests.md`: the new tests; counts updated to 194.
+
+### How to verify
+
+1. `pnpm test` reports `194 passed`.
+2. In `useGameSession.ts`, make `randomSeed` return `0` and run `pnpm test`. "picks a random seed for each new game…" fails. Change it back.
+3. `pnpm typecheck` and `pnpm lint` pass.
