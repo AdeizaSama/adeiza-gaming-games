@@ -326,7 +326,7 @@ One file per pack: `src/games/<id>/content/<pack-id>.json`.
 
 ## 12. Engineering rules
 
-**Checks on every pull request (all required):** typecheck · lint · test · validate-content · build.
+**Checks on every pull request (all required):** typecheck · lint · test · validate-content · build. The pull request template's checklist names the same checks; a pull request that adds or changes a check updates the template too.
 
 - `main` is protected. All changes via pull request. Pull requests are squash-merged by default. A pull request whose commits are each meaningful on their own and follow Conventional Commits (such as a tutorial chapter, one commit per step) is merged with a merge commit instead, which keeps its commits and their IDs and marks where the pull request begins and ends. Rebase merging is not used: it rewrites every commit with a new ID.
 - [Conventional Commits](https://www.conventionalcommits.org/) (`feat(charades): …`, `content(charades): …`, `fix(sdk): …`).

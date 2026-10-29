@@ -18,7 +18,7 @@ Delete the sections that don't apply.
 
 ## Checklist
 
-- [ ] `pnpm lint`, `pnpm test` and `pnpm build` pass locally
+- [ ] `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm validate-content` and `pnpm build` pass locally (the same checks CI runs)
 - [ ] I added my GitHub handle to `contributors` where I created or substantially changed a game, variant or pack
 
 **Content**
