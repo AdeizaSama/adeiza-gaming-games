@@ -97,43 +97,34 @@ Vocabulary:
 | **Phase** | Which step the game is in; one phase = one view | `handoff`, `turn`, `turn_summary` |
 | **Event** | Something that happened, sent by a view | `got`, `skip`, `time_up`, `next` |
 | **Transition** | What an event does in a given phase: run actions, maybe move to another phase | `time_up` in `turn` → `turn_summary` |
-| **Guard** | A named yes/no question about context, used to pick a transition | `roundsRemaining`, `mafiaOutnumberTown` |
-| **Action** | A named function that returns updated context | `scorePoint`, `advanceTeam` |
+| **Guard** | A named yes/no question about context, used to pick a transition | `turnsRemaining`, `mafiaOutnumberTown` |
+| **Action** | A named function that returns updated context | `markGot`, `advanceTeam` |
 
-Shape (`defineMachine` is in `src/sdk/machine/`; what `input` contains is set by the game's format):
+Shape (`defineMachine` is in `src/sdk/machine/`; what `input` contains is set by the game's format). A small dice game, played until the score reaches a target:
 
 ```ts
-export const machine = defineMachine<CharadesContext, CharadesEvent, CharadesInput>()({
-  initial: "handoff",
-  context: ({ input, rng }) => ({ /* starting context */ }),
+export const machine = defineMachine<DiceContext, DiceEvent, { target: number }>()({
+  initial: "playing",
+  context: ({ input }) => ({ score: 0, target: input.target }),
   phases: {
-    handoff: {
-      interaction: "handoff",
-      on: { start: { to: "turn", actions: ["drawItem", "startTimer"] } },
-    },
-    turn: {
-      interaction: "flash_card",
+    playing: {
+      interaction: "prompt_card",
       on: {
-        got:     { actions: ["scorePoint", "drawItem"] },
-        skip:    { actions: ["applySkipPenalty", "drawItem"] },
-        time_up: { to: "turn_summary" },
+        roll:  [{ when: "reachedTarget", to: "done" }, { actions: ["rollDie"] }],
+        reset: { actions: ["resetScore"] },
       },
     },
-    turn_summary: {
-      interaction: "summary",
-      on: {
-        next: [
-          { when: "roundsRemaining", to: "handoff", actions: ["advanceTeam"] },
-          { to: "results" },
-        ],
-      },
-    },
-    results: { interaction: "leaderboard", final: true },
+    done: { interaction: "leaderboard", final: true },
   },
-  guards:  { roundsRemaining: ({ context }) => context.round < context.config.rounds },
-  actions: { scorePoint: ({ context }) => ({ ...context, /* … */ }) },
+  guards:  { reachedTarget: ({ context }) => context.score >= context.target },
+  actions: {
+    rollDie:    ({ context, rng }) => ({ ...context, score: context.score + rng.int(1, 6) }),
+    resetScore: ({ context }) => ({ ...context, score: 0 }),
+  },
 });
 ```
+
+**Games in a format don't write the whole machine.** A team-turns game passes only its turn to `teamTurns`, which adds the format's phases, guards and actions and returns a machine like this one ([§7](#7-formats)). Everything in this section applies to the result.
 
 You write the context, event and input types. The phase, guard and action names are worked out from the keys of `phases`, `guards` and `actions`, so they're never listed twice. (The two sets of brackets, `defineMachine<…>()({ … })`, are how TypeScript lets you give some types and have it work out the rest.)
 
@@ -197,12 +188,40 @@ A format is the outer loop shared by several games: setup, turn order, rounds, s
 
 | Area | Provided |
 |---|---|
-| Setup | Team names (2+), rounds, turn timer, pack/tag selection: one shared setup screen |
-| Phases | `handoff → turn → turn_summary → (round_summary) → results`, including the loop and the end |
-| Context | teams, scores, current team, round, item pool, `turnEndsAt` |
+| Setup | `TeamTurnsConfig` (`src/sdk/formats/team-turns/config.ts`): team names (2–10, in playing order), rounds (1–10, default 3), seconds per turn (10–300, default 60), packs, and tags (default: none, which plays every item). Games extend it with their own settings. Shown on one shared setup screen. |
+| Phases | `handoff → turn → turn_summary → results`, including the loop and the end. `turn` is the game's. An optional `round_summary` is added when a game needs it. |
+| Context | `TeamTurnsContext`: `config` (the settings), `scores`, `current` (whose turn), `round`, `turnEndsAt`, `pool`, `item` (the card on screen), and `turn` (the game's record of the current turn) |
 | Item pool | The chosen packs' items, each item once (an item in two packs is kept from the first pack chosen), filtered to the chosen tags if any. Drawn in a shuffled order without repeats. When every item has been drawn, they're shuffled back in and drawing continues, with the item just shown placed last. |
-| Guards/actions | `roundsRemaining`, `advanceTeam`, `drawItem`, `startTimer`, `addPoints` |
-| Views | Handoff, editable turn summary, leaderboard, results |
+| Guards/actions | `turnsRemaining`; `startTurn` (fresh turn record and timer), `drawItem`, `bankPoints` (adds the turn's points to the team's score), `advanceTeam`. A game's turn may use them, usually `drawItem`. |
+| Views | Handoff, editable turn summary, leaderboard, results (being built) |
+
+**team-turns: how a game plugs in** ([ADR 0004](decisions/0004-team-turns-builder.md)). A game passes its turn to `teamTurns` (`src/sdk/formats/team-turns/teamTurns.ts`), which returns the whole machine:
+
+```ts
+export const machine = teamTurns<CharadesItem, CharadesTurn, CharadesEvent>()({
+  newTurn: () => ({ got: [], skipped: [] }),   // the game's record of one turn, fresh each turn
+  points: (turn) => turn.got.length,           // what a turn's record is worth
+  phases: {
+    turn: {
+      interaction: "flash_card",
+      on: {
+        got:     { actions: ["markGot", "drawItem"] },
+        skip:    { actions: ["markSkipped", "drawItem"] },
+        time_up: { to: "turn_summary" },
+      },
+    },
+  },
+  guards:  {},
+  actions: { markGot: …, markSkipped: … },
+});
+```
+
+- The game lists only its own events; `teamTurns` adds `start`, `time_up` and `next`.
+- `phases` must include `turn`, which `handoff` starts. A game may add phases (Trivia's `steal`). Its transitions go only to its own phases or to `turn_summary`; a game phase can't be final.
+- The game handles `time_up` in its turn, because what running out of time means depends on the game.
+- **Points come from the turn record.** The format adds `points(turn)` to the team's score when players leave `turn_summary`, so a correction on the summary changes the score.
+- A phase, guard or action with the same name as one of the format's is a type error.
+- The game's items come from `choosePoolItems(packs, config, itemKey)` (`pool.ts`), run once when a game starts; the machine is started with `{ config, items }`, and refuses to start with no items.
 
 **team-turns: what each game fills in**
 
@@ -236,7 +255,7 @@ Out of scope for v1: multiplayer or multi-device play; accounts, backends or any
 src/
   app/                 app shell: routing, library page, setup flow, persistence
     registry/          the list of games; the only part of app/ that imports games
-  sdk/                 defineGame, machine runner (machine/), Rng, formats (formats/)
+  sdk/                 defineGame (game/), machine runner (machine/), Rng, content packs (content/), formats (formats/<format>/)
     interactions/      shared phase primitives (§6)
   ui/                  low-level components (button, dialog, …). Only what's used.
   games/

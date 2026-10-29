@@ -609,3 +609,44 @@ The SDK's tests use made-up games, because the SDK can't import a game. A game's
 1. `pnpm test` reports `179 passed` (170 before, 9 new).
 2. Add a skip penalty by mistake: in `machine.ts`, change `points: (turn) => turn.got.length` to `turn.got.length - turn.skipped.length` and run `pnpm test`. "skip: … with no penalty" and the full game fail. Change it back.
 3. `pnpm typecheck`, `pnpm lint`, `pnpm validate-content` and `pnpm build` pass.
+
+---
+
+## Step 9: The standard matches the code
+
+**What:** bring the Game Standard in line with what this chapter built. No code changes.
+
+**Why:** the standard is the contract contributors read. Before this step, parts of it described a design we'd since changed: guard and action names that don't exist (`roundsRemaining`, `addPoints`, `startTimer`), and a machine example that wrote all of Charades with `defineMachine`, which no team-turns game does any more. A contract that disagrees with the code is a bug (steps 4 and 7 already fixed §3 and the item pool rules as they went).
+
+### Changes
+
+- **§4 Machine contract:** the vocabulary uses real names (`turnsRemaining`, `markGot`). The example is now a small dice game written with `defineMachine`, the same one the SDK's tests use, followed by a note that games in a format don't write the whole machine: they pass their turn to the format, and everything in §4 applies to the result.
+- **§7 Formats, "what the format provides":** each row now names what exists. Setup is `TeamTurnsConfig` with its limits and defaults. The phases are `handoff → turn → turn_summary → results`, with `round_summary` added only when a game needs it. The context lists `TeamTurnsContext`'s fields. The guards and actions are `turnsRemaining`, `startTurn`, `drawItem`, `bankPoints` and `advanceTeam`. Views are marked as being built.
+- **§7, new "how a game plugs in":** the Charades example with `teamTurns`, and its rules, summarising ADR 0004.
+- **§9 Repo layout:** `sdk/` lists `game/`, `content/` and `formats/<format>/`.
+
+### Files changed
+
+- `docs/game-standard.md` §4, §7, §9.
+- `docs/tutorial/03-team-turns-format.md`: this section and the chapter summary.
+
+### How to verify
+
+1. Search `docs/game-standard.md` for `roundsRemaining`, `addPoints`, `startTimer` and `scorePoint`: none are left.
+2. Every name in §7's tables exists in `src/sdk/formats/team-turns/`.
+3. All five checks pass: `pnpm typecheck`, `pnpm lint`, `pnpm test` (179 passed), `pnpm validate-content`, `pnpm build`.
+
+---
+
+## Chapter 03 done
+
+The team-turns format is real, and Charades is built on it:
+
+- `src/sdk/formats/team-turns/`: the settings (`config.ts`), the item pool (`pool.ts`), the format's guards and actions (`rules.ts`), and `teamTurns` (`teamTurns.ts`), the builder from ADR 0004.
+- `src/sdk/game/`: `defineGame`, with checks for meta, packs and presets.
+- `src/games/charades/`: core Charades (`machine.ts`) and its `index.ts`, playing a full game with the real Back to School pack in tests.
+- Word Duel, a test-only game, proves the format works and that a game's mistakes are type errors on its own lines.
+
+179 tests and 26 compile-time checks. Still no screens.
+
+Next: chapter 04, the app shell: the game list, the setup screen (teams, rounds, timer, packs and tags), play and results screens, the interaction primitives, theme tokens, and save and resume. Core Charades becomes playable on a phone.
