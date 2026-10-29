@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 213 runtime tests (`pnpm test`) and 29 compile-time checks (`pnpm typecheck`).
+**Counts:** 216 runtime tests (`pnpm test`) and 29 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -29,7 +29,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [teamTurns (Word Duel)](#teamturns-word-duel) | `src/sdk/formats/team-turns/teamTurns.test.ts` | 13 | 9 |
 | [defineGame](#definegame) | `src/sdk/game/defineGame.test.ts` | 10 | 6 |
 | [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 9 | |
-| [App](#app) | `src/app/App.test.tsx` | 1 | |
+| [App](#app) | `src/app/App.test.tsx` | 4 | |
 | [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 3 | |
 | [UI components](#ui-components) | `src/ui/ui.test.tsx` | 5 | |
 | [Game session](#game-session) | `src/sdk/game/useGameSession.test.ts` | 6 | |
@@ -449,11 +449,13 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 ## App
 
-`src/app/App.test.tsx`, testing `src/app/App.tsx`. A screen test (happy-dom).
+`src/app/App.test.tsx`, testing the pages in `src/app/` and which address shows which. Screen tests (happy-dom), each starting the app at an address with a `MemoryRouter`.
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 180 | starts the demo game at the first team's handoff | App | Render the app | "Pass the phone to" and a heading Lions | The app shows a playable game. Until step 10 it's a fixed demo game; then the app starts at the game library. |
+| 180 | shows the library at /, and a game opens at its own address | Library, routing | Start at `/`; tap Charades | Heading Ku Zo Wasa; a Charades link to `/charades` showing "2–20 players"; after the tap, "Pass the phone to" | The library lists the registry's games, and each link reaches its game. |
+| 214, 215 | says "Page not found" at /chess and /charades/nope/extra, with a way back | Not-found page | A game that doesn't exist; an address with too many parts | "Page not found"; Back to games returns to the library | A mistyped or old link never shows a blank page. Runs once per address (`it.each`). |
+| 216 | has an icon for every game in the registry | `gameIcons` | Every registered game's `meta.icon` | Listed in `gameIcons` | An unlisted icon would quietly show the fallback controller. |
 
 ## Theme tokens
 

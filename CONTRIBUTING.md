@@ -47,7 +47,7 @@ Themes are JSON files of design tokens (colors for light and dark mode, fonts, c
 
 1. **Check that it fits a format.** If your game fits `team-turns` or `host-led`, it can be built on the shared SDK. If it fits neither, open an issue describing it instead. Games that don't fit an existing format wait for a new format rather than being forced into one. See [Game Standard §7](docs/game-standard.md#7-formats).
 2. **Open an issue** with the rules, the format it uses, and what a content item looks like.
-3. **Create the game folder** as described in [Game Standard §9](docs/game-standard.md#9-repo-layout).
+3. **Create the game folder** as described in [Game Standard §9](docs/game-standard.md#9-repo-layout), then add the game to the list in `src/app/registry/index.ts`. If its `meta.icon` isn't in `src/app/library/gameIcon.ts` yet, add it there.
 4. **Build on shared pieces.** Use the format's phases and helpers, and the shared interaction primitives ([§6](docs/game-standard.md#6-interaction-primitives)). Custom UI is fine when nothing shared fits; explain why in your pull request.
 5. **Credit yourself.** Add your GitHub handle to `meta.contributors`, and to `contributors` on any variant (preset) you create. See [Game Standard §3](docs/game-standard.md#3-game-definition).
 6. **Test it.** Include a test that plays a full game from start to finish, plus tests for each guard and action.

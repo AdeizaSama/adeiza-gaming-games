@@ -42,7 +42,7 @@ export default defineGame({
     id: "charades",                 // kebab-case, permanent
     name: "Charades",
     tagline: "Act it out. Beat the clock.",
-    icon: "drama",                   // icon name from the shared icon set
+    icon: "drama",                   // a lucide icon name (lucide.dev/icons), listed in src/app/library/gameIcon.ts
     format: "team-turns",            // §7
     players: { min: 2, max: 20 },
     complexity: 1,                   // 1–5
@@ -261,7 +261,7 @@ Out of scope for v1: multiplayer or multi-device play; accounts, backends or any
 
 ```
 src/
-  app/                 app shell: routing, library page, setup flow, persistence
+  app/                 app shell: routing (App.tsx), library page (library/), game screen (play/), setup flow, persistence
     registry/          the list of games; the only part of app/ that imports games
   sdk/                 defineGame and useGameSession (game/), machine runner (machine/), Rng, content packs (content/), formats with their default views (formats/<format>/)
     interactions/      shared phase primitives (§6)

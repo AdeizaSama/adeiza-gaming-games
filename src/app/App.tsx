@@ -1,13 +1,18 @@
-import { GameScreen } from './play/GameScreen'
-import { games } from './registry'
-import { TeamTurnsConfig } from '../sdk/formats/team-turns/config'
-import { choosePoolItems } from '../sdk/formats/team-turns/pool'
+import { Route, Routes } from 'react-router'
+import { GamePage } from './GamePage'
+import { LibraryPage } from './library/LibraryPage'
+import { NotFoundPage } from './NotFoundPage'
 
-// A fixed demo game, until the library, setup screen and routing arrive (steps 10 to 12).
-const charades = games[0]
-const config = TeamTurnsConfig.parse({ teams: ['Lions', 'Eagles'], rounds: 1, seconds: 30, packs: ['back-to-school'] })
-const items = choosePoolItems(charades.content.packs, config, charades.content.itemKey)
-
+/**
+ * The app's pages, by address. The router (in `main.tsx`, or a test's) reads the address and draws the first
+ * route that matches it. `:gameId` matches any one segment and hands it to the page; `*` matches anything left.
+ */
 export default function App() {
-  return <GameScreen game={charades} input={{ config, items }} />
+  return (
+    <Routes>
+      <Route path="/" element={<LibraryPage />} />
+      <Route path="/:gameId" element={<GamePage />} />
+      <Route path="*" element={<NotFoundPage />} />
+    </Routes>
+  )
 }

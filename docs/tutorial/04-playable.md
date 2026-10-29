@@ -611,3 +611,114 @@ The limits are worked out for a card about 320px wide, the narrowest common phon
 
 1. `pnpm test` reports `213 passed`.
 2. In `FlashCard.tsx`, make `textSize` always return `'text-5xl'` and run `pnpm test`. "shrinks the whole text when its longest word is long" fails. Change it back.
+
+---
+
+## Step 10: Routing and the game library
+
+**What:**
+
+- **React Router**: each page gets its own address.
+- **The library page** at `/`: every game in the registry.
+- **A not-found page.**
+- **`vercel.json`**: makes those addresses work when typed in or refreshed.
+- **lucide-react**: the game's icon.
+
+`/charades` still plays the demo game (now with every pack) until step 11 replaces it with the setup screen.
+
+**Why:** a player should start at a list of games and pick one, and a link like `kuzowasa.com/charades` should open Charades directly.
+
+### Routing, from scratch
+
+This app is a **single-page app**. The server has one page, `index.html`, and JavaScript draws everything on it. Without routing, the address bar would say `/` whatever was on screen, and there'd be no way to link to one game.
+
+A **router** connects the two:
+
+1. It reads the address and picks the page to draw.
+2. Its links change the address *without* asking the server for a new page: the router just draws a different page. That's why moving around feels instant.
+
+The address-to-page table is in `App.tsx`:
+
+```tsx
+<Routes>
+  <Route path="/" element={<LibraryPage />} />
+  <Route path="/:gameId" element={<GamePage />} />
+  <Route path="*" element={<NotFoundPage />} />
+</Routes>
+```
+
+| Address | Page | Why |
+|---|---|---|
+| `/` | Library | Exact match. |
+| `/charades` | Game page, with `gameId` = `charades` | `:gameId` matches any **one** part of the address and passes it to the page. |
+| `/chess` | Game page, which finds no such game and shows "Page not found" | Same route; the page checks the registry. |
+| `/charades/nope/extra` | Not found | Too many parts for `/:gameId`, so `*` (anything) catches it. |
+
+The game page reads its part with `useParams()` and looks it up with `findGame` (new in the registry). Two ideas from the plan are still to come: `/charades` becomes the setup screen in step 11, and the game moves to `/charades/play` in step 12.
+
+**Which router.** `main.tsx` wraps the app in a `BrowserRouter`, which uses the browser's real address bar. Tests use a `MemoryRouter` instead: the same routes, with the address kept in memory, so a test can start the app at any address. That's why `App` holds only the routes and not the router: whoever draws it picks the router.
+
+We use React Router's simplest setup ("declarative mode"): routes written as components. It also has modes that load data before drawing a page, or render on a server; this app needs neither.
+
+**Version 8.** Older guides import from `react-router-dom`. That package is gone in version 8: everything comes from `react-router`.
+
+### `vercel.json`: why a refresh needs it
+
+Tapping a link from `/` to `/charades` never asks the server for anything. Typing `kuzowasa.com/charades`, refreshing it, or opening a shared link *does*: the browser asks the server for `/charades`. The server has no such file and would answer 404.
+
+The fix is a **rewrite**: answer every address with `index.html`, and let the router draw the right page.
+
+```json
+{ "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }] }
+```
+
+Real files are still served as themselves: Vercel only applies a rewrite when no file matches the address, so `/assets/index-….js` isn't affected. (`pnpm dev` and `pnpm preview` already do this on your computer, which is why it only shows up once deployed.)
+
+### Icons
+
+`meta.icon` names a [lucide](https://lucide.dev/icons) icon: `drama` for Charades. lucide has over a thousand icons, and each one is a separate import. Importing one by a name chosen at runtime would mean shipping all of them. So `src/app/library/gameIcon.ts` lists the icons games use:
+
+```ts
+export const gameIcons: Record<string, LucideIcon> = { drama: Drama }
+```
+
+A game whose icon isn't listed shows a plain game controller. A test checks every game in the registry has its icon listed, so that never happens by accident. CONTRIBUTING now says to add the icon when adding a game.
+
+### The library page
+
+A card per game: icon, name, tagline, player count. The whole card is one link, so it's easy to hit. It's built from theme tokens like every other screen. Each card is a link (`<a>`), not a button: it goes somewhere, and links can be long-pressed and opened in a new tab.
+
+### The bundle, again
+
+123 KB gzipped, up from 108 KB: React Router is most of it, one lucide icon almost nothing.
+
+### Tests: `src/app/App.test.tsx`
+
+The old "starts the demo game" test is replaced by 4:
+
+- the library at `/`, and tapping Charades opens it;
+- "Page not found" at two kinds of wrong address (one test run twice with `it.each`), with a working way back;
+- every game's icon is listed.
+
+The full table is in [docs/tests.md](../tests.md#app).
+
+### Files changed
+
+- `package.json`, `pnpm-lock.yaml`: `react-router` and `lucide-react`.
+- `src/main.tsx`: `BrowserRouter`.
+- `src/app/App.tsx`: the routes. `src/app/GamePage.tsx`, `src/app/NotFoundPage.tsx` (new). `src/app/library/LibraryPage.tsx`, `gameIcon.ts` (new).
+- `src/app/registry/index.ts`: `findGame`.
+- `vercel.json` (new).
+- `src/app/App.test.tsx`: rewritten.
+- `docs/game-standard.md` §3 (`meta.icon`), §9 (`app/`). `CONTRIBUTING.md`: registry and icon when adding a game.
+- `docs/tests.md`: the App tests; counts updated to 216.
+
+### How to verify
+
+1. `pnpm test` reports `216 passed`. `pnpm typecheck`, `pnpm lint` and `pnpm build` pass.
+2. In `gameIcon.ts`, delete the `drama: Drama,` line and run `pnpm test`. "has an icon for every game in the registry" fails. Put it back.
+3. Run `pnpm dev --host` and open it on a phone:
+   - `/` shows the library; tap Charades and the demo game starts.
+   - The phone's back gesture returns to the library.
+   - Open `/chess`: Page not found, and Back to games works.
+4. **After deploying**, open `www.kuzowasa.com/charades` directly and refresh it: it should load, not show Vercel's 404. That's the rewrite, and the one thing `pnpm dev` can't show.
