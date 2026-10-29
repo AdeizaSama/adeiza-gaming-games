@@ -21,7 +21,7 @@ export default defineGame({
     itemKey,
     packs: loadPacks(import.meta.glob('./content/*.json', { eager: true, import: 'default' }), itemSchema, itemKey),
   },
-  // The format's settings for now. Charades' own (modes, skip penalty) and its presets come in chapter 05.
+  // The format's settings for now. Charades' own (modes, skip penalty) and its presets come in chapter 06.
   config: { schema: TeamTurnsConfig },
   machine,
 })

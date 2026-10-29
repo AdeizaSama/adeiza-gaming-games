@@ -50,7 +50,7 @@ const PresetInfo = z.object({
 
 /**
  * Everything about one game (standard §3). Built in stages: views are added in chapter 04 and rules in
- * chapter 05, each as a required field once it exists.
+ * chapter 06, each as a required field once it exists.
  */
 export interface GameDefinition<
   Item,
