@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 216 runtime tests (`pnpm test`) and 29 compile-time checks (`pnpm typecheck`).
+**Counts:** 223 runtime tests (`pnpm test`) and 29 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -37,6 +37,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Summary and Leaderboard](#summary-and-leaderboard) | `src/sdk/interactions/summary.test.tsx` | 4 | |
 | [Team-turns views](#team-turns-views) | `src/sdk/formats/team-turns/views/views.test.tsx` | 3 | |
 | [Game screen](#game-screen) | `src/app/play/GameScreen.test.tsx` | 1 | |
+| [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 7 | |
 
 **Two kinds of test:**
 
@@ -453,7 +454,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 180 | shows the library at /, and a game opens at its own address | Library, routing | Start at `/`; tap Charades | Heading Ku Zo Wasa; a Charades link to `/charades` showing "2–20 players"; after the tap, "Pass the phone to" | The library lists the registry's games, and each link reaches its game. |
+| 180 | shows the library at /, and a game opens at its own address | Library, routing | Start at `/`; tap Charades | Heading Ku Zo Wasa; a Charades link to `/charades` showing "2–20 players"; after the tap, Charades' setup screen | The library lists the registry's games, and each link reaches its game. |
 | 214, 215 | says "Page not found" at /chess and /charades/nope/extra, with a way back | Not-found page | A game that doesn't exist; an address with too many parts | "Page not found"; Back to games returns to the library | A mistyped or old link never shows a blank page. Runs once per address (`it.each`). |
 | 216 | has an icon for every game in the registry | `gameIcons` | Every registered game's `meta.icon` | Listed in `gameIcons` | An unlisted icon would quietly show the fallback controller. |
 
@@ -535,3 +536,17 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 212 | plays a whole game of Charades by tapping, from the first handoff to the results | Every view, end to end | Lions: Start, Got it ×2, Skip, 30 s pass, Next. Eagles: Start, Got it, 30 s pass, See results | Timer starts at 30; Lions' summary: 2 points, 2 got, 1 skipped; Eagles' summary: 1 point; "Lions won!", standings Lions 2, Eagles 1 | Proves the whole chain: buttons send the right events, the machine moves, and each phase's view appears. A view sending the wrong event fails here. |
+
+## Setup screen
+
+`src/app/setup/setup.test.tsx`, testing the setup screen in `src/app/setup/` and the play page's check for settings. Screen tests (happy-dom), each starting the app at an address with a `MemoryRouter`, with nothing saved on the device. Charades' one pack, Back to School, has 34 items.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 217 | starts with two teams and the default settings, and Start begins the game and remembers the teams | Setup, Start | Open `/charades`; rename Team 1 to Lions; tap Start | Team 1, Team 2; 3 rounds; 60 seconds; Back to School ticked; "34 items to play"; then "Pass the phone to" Lions; saved teams Lions, Team 2 | One tap from the library to a game with sensible defaults, and the next game starts with the same names. |
+| 218 | fills in the teams saved on this device, and ignores a save it can't read | `loadTeams` | Saved Lions, Eagles, Hawks; then broken JSON; then one team | Three fields with those names; then nothing loaded, twice | Saved data can be old or edited by hand: a bad save means the defaults, never a crash. |
+| 219 | adds and removes teams, from 2 up to 10 | Teams | Add a team; remove Team 1; add until 10 | Team 3 appears; Team 2 and Team 3 remain; no Remove at 2 teams, no Add team at 10 | The screen can't make a team count the schema rejects. |
+| 220 | shows what's wrong with a team name next to it, and Start is off until it's fixed | Teams, errors | Empty Team 1; then "team 2"; then "team 2s" | "Give every team a name", field marked invalid, Start off; "Two teams have this name", Start off; Start on | The schema's own messages, shown where the problem is. |
+| 221 | changes rounds and turn length with − and +, within their limits | `Stepper` | Turn length −; rounds − twice | 45 seconds; 1 round, its − button off | Values stay in range without typing. |
+| 222 | counts the items a tag leaves, and needs at least one pack | Packs, tags | Pick snack; add song; untick Back to School | "5 items to play"; "7 items to play"; "Pick at least one pack", no tags offered, Start off | Players see what a filter leaves before they start. |
+| 223 | sends an address with no settings, like a shared /charades/play link, back to setup | Play page | Open `/charades/play` | Charades' setup screen | Settings travel with Start, not in the address: without them there's nothing to play. |

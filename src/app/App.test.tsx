@@ -27,7 +27,8 @@ describe('App', () => {
     expect(charades.textContent).toContain('2–20 players')
 
     await user.click(charades)
-    expect(screen.getByText('Pass the phone to')).toBeDefined()
+    expect(screen.getByRole('heading', { level: 1, name: 'Charades' })).toBeDefined()
+    expect(screen.getByRole('button', { name: 'Start' })).toBeDefined()
   })
 
   it.each(['/chess', '/charades/nope/extra'])('says "Page not found" at %s, with a way back', async (address) => {

@@ -196,7 +196,7 @@ A format is the outer loop shared by several games: setup, turn order, rounds, s
 
 | Area | Provided |
 |---|---|
-| Setup | `TeamTurnsConfig` (`src/sdk/formats/team-turns/config.ts`): team names (2–10, in playing order), rounds (1–10, default 3), seconds per turn (10–300, default 60), packs, and tags (default: none, which plays every item). Games extend it with their own settings. Shown on one shared setup screen. |
+| Setup | `TeamTurnsConfig` (`src/sdk/formats/team-turns/config.ts`): team names (2–10, in playing order), rounds (1–10, default 3), seconds per turn (10–300, default 60), packs, and tags (default: none, which plays every item). Games extend it with their own settings. Shown on one shared setup screen (`src/app/setup/`), which offers turn lengths in 15-second steps and fills in the team names last used on the device. |
 | Phases | `handoff → turn → turn_summary → results`, including the loop and the end. `turn` is the game's. An optional `round_summary` is added when a game needs it. |
 | Context | `TeamTurnsContext`: `config` (the settings), `scores`, `current` (whose turn), `round`, `turnEndsAt`, `pool`, `item` (the card on screen), and `turn` (the game's record of the current turn) |
 | Item pool | The chosen packs' items, each item once (an item in two packs is kept from the first pack chosen), filtered to the chosen tags if any. Drawn in a shuffled order without repeats. When every item has been drawn, they're shuffled back in and drawing continues, with the item just shown placed last. |
@@ -261,7 +261,7 @@ Out of scope for v1: multiplayer or multi-device play; accounts, backends or any
 
 ```
 src/
-  app/                 app shell: routing (App.tsx), library page (library/), game screen (play/), setup flow, persistence
+  app/                 app shell: routing (App.tsx), library page (library/), setup screen (setup/), game screen (play/), persistence
     registry/          the list of games; the only part of app/ that imports games
   sdk/                 defineGame and useGameSession (game/), machine runner (machine/), Rng, content packs (content/), formats with their default views (formats/<format>/)
     interactions/      shared phase primitives (§6)

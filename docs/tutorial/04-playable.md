@@ -722,3 +722,78 @@ The full table is in [docs/tests.md](../tests.md#app).
    - The phone's back gesture returns to the library.
    - Open `/chess`: Page not found, and Back to games works.
 4. **After deploying**, open `www.kuzowasa.com/charades` directly and refresh it: it should load, not show Vercel's 404. That's the rewrite, and the one thing `pnpm dev` can't show.
+
+---
+
+## Step 11: The setup screen
+
+**What:**
+
+- `/charades` is now the **setup screen**: teams, rounds, turn length, packs, and an optional tag filter.
+- Start goes to **`/charades/play`**, which plays the game with those settings.
+- The demo game from step 9 is gone.
+
+**Why:** players choose their own teams and settings. It's built for any team-turns game: it reads the game's packs and checks against the game's config schema, so Name Ten and Trivia Night get it for free.
+
+### One schema, two jobs
+
+The setup screen doesn't have its own validation rules. On every change it runs the game's config schema (`TeamTurnsConfig` for Charades) on what's on screen:
+
+```ts
+const settings = game.config.schema.safeParse({ teams, rounds, seconds, packs: chosenPacks, tags: activeTags })
+```
+
+`safeParse` doesn't throw: it returns either the checked settings or a list of problems, each with a **path** saying what it's about. `['teams', 1]` is the second team's name, so "Two teams have this name" appears under that field. Start is off until there are no problems.
+
+So the rules live in one place. Change the limit on team names in `config.ts` and the screen follows. Even the defaults (3 rounds, 60 seconds) are read from the schema rather than written again.
+
+The screen also avoids most mistakes before the schema sees them:
+
+- **Steppers** (− and +) for rounds and turn length, which can't go out of range.
+- **No Remove** button at 2 teams, and **no Add team** at 10.
+
+The schema allows any turn length from 10 to 300 seconds; the screen offers 15-second steps, because nobody needs 37.
+
+### Packs and tags
+
+Every pack starts ticked, with its item count. The tags offered come from the ticked packs' items ("snack", "game", …): pick some to play only those, or none to play everything. The line above Start says how many items that leaves, using the same `choosePoolItems` the game will use, so the number is exact.
+
+Untick a pack and its tags disappear. A tag picked earlier stops counting, so a hidden choice never filters the game.
+
+### Remembering teams
+
+Start saves the team names in the browser's **localStorage**: a small store each website gets on the device. Next time, setup fills them in. They never leave the phone, which fits "no personal data" (standard §8).
+
+Reading it back is careful (\`savedTeams.ts\`). The saved value could be from an older version of the app, or edited by hand, so it's checked with a small zod schema. Anything unexpected is ignored and the defaults are used. Some private-browsing modes switch storage off and throw an error when it's used. That's caught too: remembering names is a nicety, never a reason to crash.
+
+### Getting the settings to the play page
+
+Start calls:
+
+```ts
+navigate('/charades/play', { state: { config } })
+```
+
+`navigate` changes the address the way a link does, and `state` sends data along that doesn't show in the address. The settings could have gone in the address instead (`/charades/play?teams=Lions,Eagles&rounds=3…`), but that's long, and anyone could edit it by hand.
+
+The play page **checks the settings again** with the schema before using them. They come from outside the page: browsers keep navigation state across a refresh, so it could even be from an older version of the app. If there are none (someone typed or shared `/charades/play`), it sends the player back to setup with `<Navigate replace>`. `replace` means the back button won't return to the empty play address.
+
+**Refreshing during a game** now restarts it with the same teams and settings: the browser kept the navigation state, but the game's progress was only in memory. Chapter 05 saves the progress.
+
+### Files changed
+
+- `src/app/setup/` (new): `SetupPage.tsx` (the route: find the game, save teams, go to play), `SetupScreen.tsx` (the form, for any team-turns game), `Stepper.tsx`, `savedTeams.ts`, `setup.test.tsx`.
+- `src/app/play/PlayPage.tsx` (new). `src/app/GamePage.tsx` (the demo) removed.
+- `src/app/App.tsx`: `/:gameId` is setup, `/:gameId/play` is play. `App.test.tsx`: the library test now lands on setup.
+- `docs/game-standard.md` §7 (the setup screen), §9 (`setup/`).
+- `docs/tests.md`: the setup tests; counts updated to 223.
+
+### How to verify
+
+1. `pnpm test` reports `223 passed`. `pnpm typecheck`, `pnpm lint` and `pnpm build` pass.
+2. In `SetupPage.tsx`, delete the `saveTeams(config.teams)` line and run `pnpm test`. The first setup test fails: nothing was saved. Put it back.
+3. Run `pnpm dev --host` and on a phone:
+   - Tap Charades. Rename the teams, add a third, change rounds and turn length, pick a tag or two, and Start. The game uses your teams and turn length.
+   - Clear a team name: the message appears under it and Start turns off.
+   - Go back to the library and open Charades again: your team names are filled in.
+   - Typing into a team name doesn't zoom the page (16px text, step 4).
