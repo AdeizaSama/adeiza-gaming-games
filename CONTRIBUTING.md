@@ -4,7 +4,7 @@ There are three ways to contribute. Only one of them needs code.
 
 The rules every game, pack and theme follows are in the [Game Standard](docs/game-standard.md). This file covers how to contribute; the standard covers what a contribution must look like.
 
-> **Status: early development.** The SDK, CI and content validation are being built now. Content and game contributions become practical once Charades is complete; until then, issues and feedback on the standard are the most useful contributions.
+> **Status: early development.** Charades is playable, so new Charades packs are welcome now. Game contributions become practical once Charades is complete and the SDK settles; until then, issues and feedback on the standard are the most useful contributions.
 
 ---
 
@@ -33,6 +33,7 @@ Each game's content lives in `src/games/<game>/content/`, one JSON file per pack
 - `maturity` is `everyone`, `teen` or `adult`.
 - Don't list the same item twice in one pack ("Goku" and "goku " count as the same). The same item in two different packs is fine.
 - Keep the `$schema` line, with the game's name in it. With it, editors such as VS Code suggest fields, explain each one when you hover over it, and underline mistakes as you type.
+- To try your pack, run `pnpm dev` and open Charades: every pack in the folder is listed on its setup screen.
 - Every pack is also checked automatically when you open a pull request. If something's wrong, the "Validate content" check lists each problem with the item it's in, e.g. `items.3 ("Goku"): "text" is missing`. If you have the project set up locally, `pnpm validate-content` runs the same check.
 - Text only: no images or media.
 - No content about private individuals, and no hateful content.

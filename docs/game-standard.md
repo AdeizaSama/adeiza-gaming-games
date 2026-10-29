@@ -2,7 +2,7 @@
 
 The contract every game, content pack and theme in Ku Zo Wasa follows. If you're adding a game, read all of it. If you're adding content or a theme, read [Content packs](#10-content-packs) or [Themes](#11-themes) and [CONTRIBUTING.md](../CONTRIBUTING.md).
 
-> **Status:** the standard is settled; the code that implements it is being built now. The tooling that enforces it (CI, lint rules, content validation) is part of that work. Where this document and the code disagree, open an issue.
+> **Status:** the standard is settled, and the tooling that enforces it (CI, lint rules, content validation) is in place. The SDK is built as far as the first game needs: the team-turns format, its views, and the primitives in §6 marked Built. Parts still being built are marked where they appear. Where this document and the code disagree, open an issue.
 
 Changes to this standard, the SDK (`src/sdk/`) or the content pack format need a decision record in [`docs/decisions/`](decisions/README.md) (context, decision, consequences). These are the contracts every contributor builds on.
 

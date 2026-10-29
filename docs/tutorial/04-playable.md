@@ -289,7 +289,7 @@ Why can Charades replace the summary? The format's default can say "Lions scored
 
 Ideally the turn view's `send` would accept only `got`, `skip` and `time_up`, the events `turn` handles. The prototype showed that needs the builder to keep each phase's event list as a type, which ADR 0004's declared return type drops. Making the builder keep them would make the hardest code in the SDK harder still.
 
-So a view's `send` accepts any event the game has. A typo (`send({ type: 'jump' })`) is still a type error. Sending a real event to the wrong phase does nothing, because the runner ignores events a phase doesn't handle (ADR 0002), and the click-through test in step 12 would notice a button that does nothing.
+So a view's `send` accepts any event the game has. A typo (`send({ type: 'jump' })`) is still a type error. Sending a real event to the wrong phase does nothing, because the runner ignores events a phase doesn't handle (ADR 0002), and the click-through test (step 9) would notice a button that does nothing.
 
 ### Primitives and views are different things
 
@@ -654,7 +654,7 @@ The address-to-page table is in `App.tsx`:
 | `/chess` | Game page, which finds no such game and shows "Page not found" | Same route; the page checks the registry. |
 | `/charades/nope/extra` | Not found | Too many parts for `/:gameId`, so `*` (anything) catches it. |
 
-The game page reads its part with `useParams()` and looks it up with `findGame` (new in the registry). Two ideas from the plan are still to come: `/charades` becomes the setup screen in step 11, and the game moves to `/charades/play` in step 12.
+The game page reads its part with `useParams()` and looks it up with `findGame` (new in the registry). Two ideas from the plan are still to come: `/charades` becomes the setup screen, and the game moves to `/charades/play` (both in step 11).
 
 **Which router.** `main.tsx` wraps the app in a `BrowserRouter`, which uses the browser's real address bar. Tests use a `MemoryRouter` instead: the same routes, with the address kept in memory, so a test can start the app at any address. That's why `App` holds only the routes and not the router: whoever draws it picks the router.
 
@@ -842,4 +842,64 @@ The plan put the play screen and the click-through test in this step. Both lande
 
 1. `pnpm test` reports `224 passed`. `pnpm typecheck` and `pnpm lint` pass.
 2. In `GameScreen.tsx`, change Play again's `onClick` to `() => {}` and run `pnpm test`. The new test fails: after the tap there's no Lions handoff. Change it back.
-3. On a phone (`pnpm dev --host`): play a game to the end. Play again starts a new game with the same teams and a different first card; Back to games returns to the library.
+3. On a phone (`pnpm dev --host`): play a game to the end. Play again starts a new game with the same teams, usually with a different first card; Back to games returns to the library.
+
+---
+
+## Step 13: Docs catch up
+
+**What:** the public docs now say what's real:
+
+- **README:** Charades is "Playable (core rules); in progress". The status note says what's still being built. React Router is in the stack list. `pnpm dev --host` is mentioned for phones. "Game progress is saved only on your device" became "anything it saves, like your team names, stays on your device": nothing saves game progress until chapter 05.
+- **CONTRIBUTING:** new Charades packs are welcome now, and show up on the setup screen with `pnpm dev`.
+- **Game Standard:** the status note says the tooling is in place and the SDK is built as far as the first game needs.
+- **This chapter:** two forecasts that turned out wrong (which step something would land in) are corrected.
+
+Most of the standard was already updated step by step, as each part became real: §3 and §7 (views), §6 (primitives), §9 (folders), §11 (theme tokens).
+
+**Why:** a doc that describes something that doesn't exist yet, as if it did, is a bug (and so is one that still says "planned" for something that exists).
+
+### How to verify
+
+Read the README's Games table and status note, and CONTRIBUTING's status note: each should match what you saw on the phone.
+
+---
+
+## Chapter summary
+
+Core Charades is playable on a phone:
+
+1. Open the site: the library.
+2. Pick Charades: the setup screen, with team names remembered from last time.
+3. Start: hand the phone over, act or describe against the clock, see each turn's summary.
+4. The results, then Play again or Back to games.
+
+**Built:**
+
+| Part | Where | Step |
+|---|---|---|
+| Screen tests (Testing Library + happy-dom) | `src/testSetup.ts`, `*.test.tsx` | 2 |
+| Theme tokens, light and dark | `src/app/index.css` | 3 |
+| Button, Input | `src/ui/` | 4 |
+| Views in `defineGame` | ADR 0005, `src/sdk/game/defineGame.ts` | 5, 9 |
+| `useGameSession` | `src/sdk/game/` | 6 |
+| Handoff, Countdown, FlashCard, Summary, Leaderboard | `src/sdk/interactions/` | 7, 8, 9b |
+| The format's views and Charades' | `src/sdk/formats/team-turns/views/`, `src/games/charades/views/` | 9 |
+| Routing, library, not-found page | `src/app/` | 10 |
+| Setup screen | `src/app/setup/` | 11 |
+| Play again, Back to games | `src/app/play/` | 12 |
+
+**Tests:** 224 runtime tests and 29 compile-time checks, up from 179 and 26.
+
+**New dependencies:**
+
+- Runtime: `tailwind-merge`, `react-router`, `lucide-react`.
+- Development: Testing Library (`react`, `dom`, `user-event`), `happy-dom`.
+
+**Bundle:** 125 KB gzipped, up from 69 KB. That's zod and the packs (step 9) plus React Router (step 10).
+
+**Known gaps, for chapter 05:**
+
+- A refresh mid-game starts the game over (same settings, new game).
+- The back gesture during a game leaves it without asking.
+- The screen can lock during a turn.

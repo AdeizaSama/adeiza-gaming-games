@@ -6,7 +6,7 @@ An open-source library of **single-device party games**: charades, name ten, tri
 
 The library is built to be extended. Developers can add games, designers can add themes, and anyone can add or improve the words, categories and questions the games use.
 
-> **Status: early development.** The game standard is settled; the code is being built now. Expect breaking changes until the first release.
+> **Status: early development.** Charades is playable with its core rules. Saving a game in progress, and the rest of Charades (acting and singing modes, presets, the rules screen), are being built now. Expect breaking changes until the first release.
 
 ---
 
@@ -14,7 +14,7 @@ The library is built to be extended. Developers can add games, designers can add
 
 | Game | Format | Status |
 |---|---|---|
-| Charades | team-turns | In progress |
+| Charades | team-turns | Playable (core rules); in progress |
 | Name Ten | team-turns | Planned |
 | Trivia Night | team-turns | Planned |
 | Mafia | host-led | Planned |
@@ -22,7 +22,7 @@ The library is built to be extended. Developers can add games, designers can add
 ## Principles
 
 - **One device.** Every game is playable with a single phone or tablet, passed around or held by a host.
-- **No accounts, no tracking.** The library is a static site. It collects no personal data, and game progress is saved only on your device.
+- **No accounts, no tracking.** The library is a static site. It collects no personal data, and anything it saves, like your team names, stays on your device.
 - **Content is data.** Words, categories, questions and themes are plain JSON. Contributing them never requires writing code.
 - **Games are isolated.** Each game lives in its own folder and only depends on the shared SDK, never on another game.
 
@@ -42,13 +42,13 @@ You can add content, add a theme, or add a game. Only adding a game needs code. 
 
 ## Development
 
-Built with Vite, React, TypeScript, Tailwind CSS and Vitest. Uses [pnpm](https://pnpm.io/).
+Built with Vite, React, React Router, TypeScript, Tailwind CSS and Vitest. Uses [pnpm](https://pnpm.io/).
 
 You need [Node.js](https://nodejs.org/) 20.19+ or 22.12+ and pnpm 10.
 
 ```bash
 pnpm install    # install dependencies
-pnpm dev        # start the dev server
+pnpm dev        # start the dev server (add --host to open it on a phone on the same Wi-Fi)
 pnpm test       # run the tests once (pnpm test:watch re-runs on save)
 pnpm typecheck  # check types without building
 pnpm lint       # check code style and folder boundaries
