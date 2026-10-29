@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 179 runtime tests (`pnpm test`) and 26 compile-time checks (`pnpm typecheck`).
+**Counts:** 180 runtime tests (`pnpm test`) and 26 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -29,11 +29,14 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [teamTurns (Word Duel)](#teamturns-word-duel) | `src/sdk/formats/team-turns/teamTurns.test.ts` | 12 | 9 |
 | [defineGame](#definegame) | `src/sdk/game/defineGame.test.ts` | 8 | 3 |
 | [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 9 | |
+| [App](#app) | `src/app/App.test.tsx` | 1 | |
 
 **Two kinds of test:**
 
 - **Runtime tests** run code and compare the result with what's expected. `pnpm test` runs them.
 - **Compile-time checks** are deliberate mistakes, each marked `@ts-expect-error`. They prove TypeScript rejects the mistake. If a change makes one of them stop being an error, `pnpm typecheck` fails with "Unused '@ts-expect-error' directive". Nothing runs; the check is that the code *doesn't* compile.
+
+**Screen tests** are runtime tests that draw React components into a fake browser page (happy-dom) and look at the result the way a player would: by text and by role ("the button called Start"). Files that need the fake page start with `// @vitest-environment happy-dom`; every other test runs in plain Node.
 
 **Toy games.** The SDK tests use small made-up games instead of real ones, so they don't depend on any game's code:
 
@@ -430,3 +433,11 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 177 | plays a full game from the first handoff to the results | Full playthrough | Seed 2026; each turn: start, got, got, skip, got, time up, next | 6 turns; ends in `results`; scores 9 and 9; 30 different items drawn | The whole game plays end to end with real content (standard §12). |
 | 178 | markGot adds the item on screen to the items got, without changing the context passed in | `markGot` | Gala on screen, empty turn | Gala in `got`; the original unchanged | A test per action (standard §12). |
 | 179 | markSkipped adds the item on screen to the items skipped, without changing the context passed in | `markSkipped` | Gala on screen, empty turn | Gala in `skipped`; the original unchanged | As above. |
+
+## App
+
+`src/app/App.test.tsx`, testing `src/app/App.tsx`. A screen test (happy-dom).
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 180 | shows the name and subtitle | App | Render the app | A heading "Ku Zo Wasa" and the text "Party games for one phone." | Proves screen tests work. The page it checks is replaced by the game library in step 10. |
