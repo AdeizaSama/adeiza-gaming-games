@@ -162,18 +162,20 @@ A phase is a named step that maps to one view. Shared vocabulary (use these name
 
 Views are composed from shared primitives in `src/sdk/interactions/`. A game may build custom UI only when no primitive fits, and must say why in its pull request.
 
-| Primitive | Used for |
-|---|---|
-| `Instruction` | Rules or a step explanation with a continue action |
-| `Handoff` | Pass-the-device screen; hides the previous turn's secret info |
-| `FlashCard` | Big term with got/skip (charades) |
-| `PromptCard` | Category or prompt with a counter (name ten) |
-| `MultipleChoice` | Question, options, reveal (trivia) |
-| `Countdown` | Shared timer display with warnings |
-| `Summary` | Turn/round recap with editable results |
-| `Leaderboard` | Team/player standings |
-| `SecretReveal` | One-player-at-a-time private reveal (future: Mafia roles) |
-| `Vote` | Pick a player or option (future: Mafia) |
+A primitive takes plain props (text, callbacks) and knows nothing about machines; a view connects it to a game ([ADR 0005](decisions/0005-views.md)). Primitives are built when the first game needs them.
+
+| Primitive | Used for | Status |
+|---|---|---|
+| `Instruction` | Rules or a step explanation with a continue action | Planned |
+| `Handoff` | Pass-the-device screen; hides the previous turn's secret info | Built |
+| `FlashCard` | Big term with got/skip (charades) | Built |
+| `PromptCard` | Category or prompt with a counter (name ten) | Planned |
+| `MultipleChoice` | Question, options, reveal (trivia) | Planned |
+| `Countdown` | Shared timer display with warnings; reports when time is up (it reads the clock only to show it) | Built |
+| `Summary` | Turn/round recap with editable results | Planned |
+| `Leaderboard` | Team/player standings | Planned |
+| `SecretReveal` | One-player-at-a-time private reveal (future: Mafia roles) | Planned |
+| `Vote` | Pick a player or option (future: Mafia) | Planned |
 
 ## 7. Formats
 

@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 194 runtime tests (`pnpm test`) and 26 compile-time checks (`pnpm typecheck`).
+**Counts:** 201 runtime tests (`pnpm test`) and 26 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -33,6 +33,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 3 | |
 | [UI components](#ui-components) | `src/ui/ui.test.tsx` | 5 | |
 | [Game session](#game-session) | `src/sdk/game/useGameSession.test.ts` | 6 | |
+| [Interaction primitives](#interaction-primitives) | `src/sdk/interactions/interactions.test.tsx` | 7 | |
 
 **Two kinds of test:**
 
@@ -479,3 +480,17 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 192 | keeps the same state when an event is ignored | Ignored events | `roll` in `ready` | The exact same state object | Nothing re-renders for a tap the phase doesn't handle. |
 | 193 | says when the game has ended | `ended` | go, stop | `ended` is true | The play screen knows when to offer "Play again". |
 | 194 | picks a random seed for each new game, and restart starts over with a new one | Random seed, `restart` | `Math.random` returning 0.25 then 0.5; go, then restart | Seeds 2^30, then 2^31; restart is back at `ready` with the same input | Every game is different in real play, and "Play again" doesn't replay the same deck. |
+
+## Interaction primitives
+
+`src/sdk/interactions/interactions.test.tsx`, testing the primitives in `src/sdk/interactions/`. Screen tests (happy-dom). The Countdown tests use fake timers: the test moves the clock forward by hand, starting at 0 ms.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 195 | names who gets the phone, and calls onReady when they tap Start | Handoff | To Lions, "Round 2 of 3"; tap Start | Heading Lions, the detail line, onReady called once | The gate between turns: right team, one tap to begin. |
+| 196 | shows the item and reports Got it and Skip | FlashCard | Puff puff, hint "Describe it"; tap Got it once, Skip twice | Text and hint shown; onGot once, onSkip twice | Each tap reports exactly one event. |
+| 197 | shows whole seconds left, rounded up, and counts down | Countdown | Ends at 60 s; after 1 s; after 59.5 s | 60, 59, 1 | Rounded up, it shows 0 only when time is really up. |
+| 198 | calls onTimeUp once, when time runs out | Countdown | Ends at 3 s; check at 2.9 s, then at 7.9 s | Not called, then called once; shows 0 | `time_up` must be sent once, not on every tick after the end. |
+| 199 | calls onTimeUp straight away if the time has already passed | Countdown | Ends at 5 s, shown at 10 s | Called once immediately | A turn whose time ran out while the phone was locked (or, from chapter 05, before a refresh) ends at once. |
+| 200 | turns to the warning color from warnAt seconds left | Countdown | Ends at 15 s, warn at 10; after 5 s | No warning class, then `text-warning` | Players see time running out without reading the number. |
+| 201 | vibrates when time runs out, on phones that can | Countdown | A phone with `vibrate`; ends at 1 s | `vibrate` called once | The team acting may not be looking at the screen. |

@@ -373,3 +373,59 @@ setState((current) => sendEvent(machine, current, event, { now: time }))
 1. `pnpm test` reports `194 passed`.
 2. In `useGameSession.ts`, make `randomSeed` return `0` and run `pnpm test`. "picks a random seed for each new game…" fails. Change it back.
 3. `pnpm typecheck` and `pnpm lint` pass.
+
+---
+
+## Step 7: Primitives, part 1: Handoff, Countdown, FlashCard
+
+**What:** the first three interaction primitives (standard §6), in `src/sdk/interactions/`:
+
+| Primitive | What it shows | Props |
+|---|---|---|
+| `Handoff` | "Pass the phone to **Lions**", a detail line, a big Start button | `to`, `detail?`, `actionLabel?`, `onReady` |
+| `Countdown` | The seconds left, in the warning color near the end | `endsAt`, `onTimeUp`, `warnAt?` |
+| `FlashCard` | The item on a big card, Skip and Got it underneath | `text`, `hint?`, `onGot`, `onSkip` |
+
+**Why:** these three are a Charades turn and the screen before it. Each is plain props in, callbacks out: no machine, no game (ADR 0005). Step 9's views connect them to Charades.
+
+### Handoff: a privacy gate
+
+On one shared phone, the next team must not see the cards the last team just played. The handoff screen shows only who's next, and nothing about the previous turn. The team taps Start once they have the phone, and only then does the card appear.
+
+### Countdown
+
+**Rounded up.** With 4.2 seconds left it shows 5. Rounded down, it would show 0 for the last second while time hadn't actually run out.
+
+**Checking four times a second.** A timer that ticks every 1000 ms drifts: phones delay timers, especially when busy. Instead it checks every 250 ms how far the clock is from `endsAt`, so the number is never more than a quarter of a second behind, however late a tick runs.
+
+**Once, and only once.** When it reaches 0 it stops checking and calls `onTimeUp`. The view will send `time_up` from there, and sending it twice would be a bug (harmless, since the runner ignores it outside a turn, but a bug).
+
+**Already over?** If `endsAt` has passed when the countdown appears, it calls `onTimeUp` immediately. That's what makes a locked phone safe: unlock it after the time ran out, and the turn ends at once. Chapter 05 relies on this for refresh.
+
+**Vibration.** `navigator.vibrate?.(300)`: a 300 ms buzz on phones that support it. The `?.` skips it where there's no such feature (iPhones, most computers).
+
+**Motion.** The number pulses in the warning color, but only when the phone allows motion (`motion-safe:`), as standard §12 asks.
+
+**Reading the clock.** The countdown reads the time to *show* it, which is fine for a view (ADR 0005). It decides nothing: the machine decides what `time_up` means.
+
+`useEffectEvent` (new in React 19.2) solves a small problem: the timer effect should restart when `endsAt` changes, not every time the parent passes a new `onTimeUp` function. An effect event always calls the latest `onTimeUp` without being a reason to restart.
+
+### FlashCard
+
+The card takes most of the screen; the text is 48px, readable at arm's length by the team guessing. **Skip is on the left and Got it on the right**, where a right thumb rests, so the more common, happier tap is the easier one. Got it uses the `success` color; Skip is an outline button, so it doesn't feel like a penalty (core Charades has none).
+
+### Tests: `src/sdk/interactions/interactions.test.tsx`
+
+7 screen tests. The countdown tests use **fake timers** (`vi.useFakeTimers()`): the test moves the clock forward by hand (`vi.advanceTimersByTime(1_000)`), so a 60-second countdown is tested in milliseconds. `act(…)` wraps each move so React finishes redrawing before the test looks. The full table is in [docs/tests.md](../tests.md#interaction-primitives).
+
+### Files changed
+
+- `src/sdk/interactions/Handoff.tsx`, `Countdown.tsx`, `FlashCard.tsx`, `interactions.test.tsx` (new).
+- `docs/game-standard.md` §6: a Status column (built or planned) and a line on what a primitive is.
+- `docs/tests.md`: the new tests; counts updated to 201.
+
+### How to verify
+
+1. `pnpm test` reports `201 passed`.
+2. In `Countdown.tsx`, delete the `clearInterval(id)` line inside the interval (just above `timeUp()`) and run `pnpm test`. "calls onTimeUp once, when time runs out" fails: it's now called on every tick after the end. Put it back.
+3. `pnpm typecheck` and `pnpm lint` pass. The primitives can't be seen in the app until step 9 connects them; that's the checkpoint.
