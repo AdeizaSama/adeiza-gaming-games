@@ -243,3 +243,77 @@ Components list their own classes first and the caller's `className` last, so a 
 1. `pnpm test` reports `188 passed`.
 2. In `button.tsx`, change `type = 'button', className` to `type, className` and run `pnpm test`. "is a button that does not submit forms unless asked to" fails. Change it back.
 3. `pnpm typecheck`, `pnpm lint` and `pnpm build` pass.
+
+---
+
+## Step 5: How each phase is shown (ADR 0005)
+
+**What:** decide how views plug into a game, before writing any. The decision is [ADR 0005](../decisions/0005-views.md). As in chapter 03, step 2, the types were tried in a throwaway prototype first; no code is committed in this step.
+
+**Why:** every screen in the rest of this chapter is a view, and every future game writes them. Like the builder in ADR 0004, it's an API that's expensive to change once games depend on it.
+
+### A view is a component for one phase
+
+The machine says which phase the game is in; the view for that phase draws it. Charades has four phases, so four views:
+
+| Phase | View | From |
+|---|---|---|
+| `handoff` | "Pass the phone to Lions", Start button | The format's default |
+| `turn` | The card, Got it / Skip, the countdown | Charades |
+| `turn_summary` | What Lions got and skipped, Next | Charades, replacing the format's default |
+| `results` | The leaderboard, Play again | The format's default |
+
+### The rules
+
+```ts
+views: { turn: TurnView, turn_summary: SummaryView }
+```
+
+- **The game's own phases must have a view.** Forgetting `turn` is a type error.
+- **The format's phases have defaults** for `handoff`, `turn_summary` and `results`, written once and shared by every team-turns game. A game lists one only to replace it.
+- Naming a phase the machine doesn't have is a type error too.
+
+Why can Charades replace the summary? The format's default can say "Lions scored 3", because `points` tells it what a turn is worth. It can't list *which* items were got, because only Charades knows its turn record holds `got` and `skipped` lists.
+
+### What a view gets
+
+```ts
+{ context, send, points }
+```
+
+- **`context`**: the game's data, to show (whose turn, the item on screen, scores).
+- **`send`**: to report what players did: `send({ type: 'got' })`. The view never changes the game itself (standard §4). The session (step 6) adds the time and calls the runner.
+- **`points`**: the game's scoring function, for summaries.
+
+### One thing we didn't get: `send` per phase
+
+Ideally the turn view's `send` would accept only `got`, `skip` and `time_up`, the events `turn` handles. The prototype showed that needs the builder to keep each phase's event list as a type, which ADR 0004's declared return type drops. Making the builder keep them would make the hardest code in the SDK harder still.
+
+So a view's `send` accepts any event the game has. A typo (`send({ type: 'jump' })`) is still a type error. Sending a real event to the wrong phase does nothing, because the runner ignores events a phase doesn't handle (ADR 0002), and the click-through test in step 12 would notice a button that does nothing.
+
+### Primitives and views are different things
+
+- A **primitive** (`src/sdk/interactions/`) is a reusable piece of screen with plain props: `<FlashCard text="Gala" onGot={…} onSkip={…} />`. It knows nothing about machines or games.
+- A **view** connects a primitive to a game: it reads `context`, and turns a tap into `send`.
+
+That split keeps the primitives testable on their own and reusable by any game or format.
+
+### What the prototype proved
+
+Each of these was a type error on the line with the mistake:
+
+| Mistake | Example |
+|---|---|
+| A game phase without a view | `views: {}` for Charades |
+| A view for a phase that doesn't exist | `views: { …, steal: … }` |
+| Sending an event the game doesn't have | `send({ type: 'jump' })` |
+| A view written for another game's items | A view reading `context.item.word` in a game whose items have `text` |
+
+### Files changed
+
+- `docs/decisions/0005-views.md` (new), `docs/decisions/README.md`.
+- `docs/tutorial/04-playable.md`: this section.
+
+### How to verify
+
+Read ADR 0005 and check that the four views in the table above follow its rules: Charades must write `turn`, may replace `turn_summary`, and gets `handoff` and `results` from the format. No code changed: `pnpm test` still reports 188 passed.
