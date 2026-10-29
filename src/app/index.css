@@ -1,1 +1,111 @@
 @import "tailwindcss";
+
+/*
+ * Theme tokens (standard §11). Every color, the corner radius, the font and the animation speed come from these
+ * variables, so a theme only has to change the values here. Phase 2 moves them into JSON theme files; the names
+ * stay the same.
+ *
+ * Colors come in pairs: a background and the `-foreground` color for text on it.
+ * Values use oklch(lightness chroma hue): lightness 0–1, chroma is how colorful, hue is the angle on the color wheel.
+ */
+:root {
+  --background: oklch(0.985 0.006 75);
+  --foreground: oklch(0.22 0.02 50);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.22 0.02 50);
+  --primary: oklch(0.64 0.19 42);
+  --primary-foreground: oklch(0.99 0.01 75);
+  --secondary: oklch(0.94 0.02 75);
+  --secondary-foreground: oklch(0.3 0.03 50);
+  --muted: oklch(0.95 0.01 75);
+  --muted-foreground: oklch(0.5 0.02 50);
+  --success: oklch(0.6 0.15 150);
+  --success-foreground: oklch(0.99 0.01 150);
+  --warning: oklch(0.78 0.16 80);
+  --warning-foreground: oklch(0.25 0.04 60);
+  --destructive: oklch(0.58 0.21 27);
+  --destructive-foreground: oklch(0.99 0.01 27);
+  --border: oklch(0.89 0.015 75);
+  --input: oklch(0.89 0.015 75);
+  --ring: oklch(0.64 0.19 42);
+
+  --radius: 1rem;
+  --font-body: ui-rounded, "SF Pro Rounded", system-ui, sans-serif;
+  /* How long transitions take. Components skip them entirely when the phone asks for reduced motion. */
+  --duration: 200ms;
+}
+
+/* Dark mode follows the phone's setting. Only colors change. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: oklch(0.18 0.012 50);
+    --foreground: oklch(0.96 0.01 75);
+    --card: oklch(0.23 0.014 50);
+    --card-foreground: oklch(0.96 0.01 75);
+    --primary: oklch(0.72 0.17 45);
+    --primary-foreground: oklch(0.18 0.02 50);
+    --secondary: oklch(0.29 0.015 50);
+    --secondary-foreground: oklch(0.93 0.01 75);
+    --muted: oklch(0.27 0.012 50);
+    --muted-foreground: oklch(0.72 0.02 70);
+    --success: oklch(0.7 0.15 150);
+    --success-foreground: oklch(0.18 0.03 150);
+    --warning: oklch(0.82 0.15 85);
+    --warning-foreground: oklch(0.2 0.04 60);
+    --destructive: oklch(0.66 0.2 27);
+    --destructive-foreground: oklch(0.18 0.03 27);
+    --border: oklch(0.32 0.015 50);
+    --input: oklch(0.32 0.015 50);
+    --ring: oklch(0.72 0.17 45);
+  }
+}
+
+/*
+ * Tells Tailwind about the tokens, so `bg-primary`, `text-muted-foreground`, `rounded-lg` and `font-sans` use them.
+ * `--color-*: initial` first removes Tailwind's built-in palette: `bg-red-500` then produces no CSS at all, so only
+ * theme colors can be used. (`inline` makes Tailwind write `var(--primary)` into each class instead of copying the
+ * value, so changing a token changes every class that uses it.)
+ */
+@theme inline {
+  --color-*: initial;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.75);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.5);
+  --font-sans: var(--font-body);
+  --default-transition-duration: var(--duration);
+}
+
+@layer base {
+  html {
+    color-scheme: light dark;
+  }
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+  }
+  * {
+    @apply border-border outline-ring;
+  }
+}

@@ -56,7 +56,10 @@ export interface TeamTurnsGame<
   actions: Record<ActionName, Action<TeamTurnsContext<Item, Turn, Config>, Event | TeamTurnsEvent>> & Taken<FormatActionName>
 }
 
-/** The machine `teamTurns` returns: an ordinary machine, so `start`, `send` and `validateMachine` work as usual. */
+/**
+ * The machine `teamTurns` returns: an ordinary machine, so `start`, `send` and `validateMachine` work as usual.
+ * It also keeps the game's `points`, so views can show what a turn is worth (ADR 0005). The runner ignores it.
+ */
 export type TeamTurnsMachine<
   Item,
   Turn,
@@ -72,7 +75,7 @@ export type TeamTurnsMachine<
   TeamTurnsPhase | Phase,
   FormatGuardName | GuardName,
   FormatActionName | ActionName
->
+> & { points: (turn: Turn) => number }
 
 /**
  * The format's loop. `start` begins a turn: a fresh turn record, the timer, the first item. `next` on the turn
@@ -116,6 +119,7 @@ export function teamTurns<Item, Turn, Event extends MachineEvent, Config extends
     game: TeamTurnsGame<Item, Turn, Event, Config, Phase, GuardName, ActionName>,
   ): TeamTurnsMachine<Item, Turn, Event, Config, Phase, GuardName, ActionName> => {
     const machine = {
+      points: game.points,
       initial: 'handoff',
       context: ({ input, rng }: { input: TeamTurnsInput<Item, Config>; rng: Rng }) => {
         if (input.items.length === 0) throw new Error('A team-turns game needs at least one item')

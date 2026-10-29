@@ -4,7 +4,7 @@ There are three ways to contribute. Only one of them needs code.
 
 The rules every game, pack and theme follows are in the [Game Standard](docs/game-standard.md). This file covers how to contribute; the standard covers what a contribution must look like.
 
-> **Status: early development.** The SDK, CI and content validation are being built now. Content and game contributions become practical once Charades is complete; until then, issues and feedback on the standard are the most useful contributions.
+> **Status: early development.** Charades is playable, so new Charades packs are welcome now. Game contributions become practical once Charades is complete and the SDK settles; until then, issues and feedback on the standard are the most useful contributions.
 
 ---
 
@@ -33,6 +33,7 @@ Each game's content lives in `src/games/<game>/content/`, one JSON file per pack
 - `maturity` is `everyone`, `teen` or `adult`.
 - Don't list the same item twice in one pack ("Goku" and "goku " count as the same). The same item in two different packs is fine.
 - Keep the `$schema` line, with the game's name in it. With it, editors such as VS Code suggest fields, explain each one when you hover over it, and underline mistakes as you type.
+- To try your pack, run `pnpm dev` and open Charades: every pack in the folder is listed on its setup screen.
 - Every pack is also checked automatically when you open a pull request. If something's wrong, the "Validate content" check lists each problem with the item it's in, e.g. `items.3 ("Goku"): "text" is missing`. If you have the project set up locally, `pnpm validate-content` runs the same check.
 - Text only: no images or media.
 - No content about private individuals, and no hateful content.
@@ -47,7 +48,7 @@ Themes are JSON files of design tokens (colors for light and dark mode, fonts, c
 
 1. **Check that it fits a format.** If your game fits `team-turns` or `host-led`, it can be built on the shared SDK. If it fits neither, open an issue describing it instead. Games that don't fit an existing format wait for a new format rather than being forced into one. See [Game Standard §7](docs/game-standard.md#7-formats).
 2. **Open an issue** with the rules, the format it uses, and what a content item looks like.
-3. **Create the game folder** as described in [Game Standard §9](docs/game-standard.md#9-repo-layout).
+3. **Create the game folder** as described in [Game Standard §9](docs/game-standard.md#9-repo-layout), then add the game to the list in `src/app/registry/index.ts`. If its `meta.icon` isn't in `src/app/library/gameIcon.ts` yet, add it there.
 4. **Build on shared pieces.** Use the format's phases and helpers, and the shared interaction primitives ([§6](docs/game-standard.md#6-interaction-primitives)). Custom UI is fine when nothing shared fits; explain why in your pull request.
 5. **Credit yourself.** Add your GitHub handle to `meta.contributors`, and to `contributors` on any variant (preset) you create. See [Game Standard §3](docs/game-standard.md#3-game-definition).
 6. **Test it.** Include a test that plays a full game from start to finish, plus tests for each guard and action.

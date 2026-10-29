@@ -1,0 +1,905 @@
+# 04 — Playable
+
+**Goal of this chapter:** make core Charades playable on a phone: open the site, pick Charades, name the teams, play every turn, see the results, play again. This is the first chapter with screens: UI tests, theme tokens, the first UI components, the shared interaction primitives, each phase's view, and the app's pages.
+
+**Branch:** `chapter/04-playable`
+
+**Where this fits.** Phase 1 of the roadmap (the SDK and Charades) is now six chapters:
+
+| Chapter | Scope | Ends with |
+|---|---|---|
+| 01: Machine runner | Rng, machine types, `defineMachine`, the runner | A test machine plays a full game in tests |
+| 02: Content packs | Pack schema, loading packs, JSON Schemas, `validate-content` in CI | All five CI checks are real |
+| 03: Team-turns format | The format's settings, item pool, loop and `teamTurns`; `defineGame`; core Charades | Core Charades plays start to finish in tests |
+| **04: Playable** (this one) | UI tests, theme tokens, Button and Input, views in `defineGame`, interaction primitives, game list, setup, play and results screens | Core Charades is playable on a phone |
+| 05: Survives real life | Save and resume, refreshing mid-turn, the back button during a game, keeping the screen awake, "quit game?" | A refresh or a locked phone never loses a game |
+| 06: Charades complete | Modes, double points for acting and singing, skip penalty, settings and presets, editable turn summary, rules, the game's README | Charades meets the Definition of Done |
+
+The old chapter 04 ("app shell") held all of 04 and 05. Like the old chapter 03, it was too big to review properly, and it was mostly screens, which take longer to check than code with tests. Split, chapter 04 ends with something you can hold and play, and chapter 05 makes it robust.
+
+**Until chapter 05, a refresh loses the game.** That's a known gap, not a bug: saving needs its own design (what's saved, how old saves are handled), and it gets a chapter.
+
+---
+
+## Step 1: Six chapters
+
+**What:** record the new six-chapter plan: this file, and notes in chapter 03, whose table and "next" line still describe five.
+
+**Why:** the same reason as chapter 03, step 1. Old chapters record what was planned at the time, so they aren't rewritten; a short "Changed in chapter 04" note keeps them accurate. Two code comments that said "chapter 05" for Charades' extras now say chapter 06.
+
+### Files changed
+
+- `docs/tutorial/04-playable.md` (new, this file).
+- `docs/tutorial/03-team-turns-format.md`: notes under the chapter table and under "Chapter 03 done".
+- `src/games/charades/index.ts`, `src/games/charades/machine.ts`, `src/sdk/game/defineGame.ts`: comments point at chapter 06.
+
+### How to verify
+
+1. Open chapter 03. Both notes link here.
+2. Search `src/` for `chapter 05`: no results.
+3. No behaviour changed: `pnpm test` still reports 179 passed.
+
+---
+
+## Step 2: Screen tests
+
+**What:** set up tests that draw React components and check what a player would see, with one small test of the current app page.
+
+**Why:** from step 7 on, most of this chapter is screens. Machine tests prove the rules work; they can't prove that tapping "Got it" on the card actually sends `got`. Screen tests can. We set them up first, on a page that already exists, so the setup is proven before anything depends on it.
+
+### What a DOM is, and why tests fake one
+
+A browser turns HTML into a tree of objects (the **DOM**: Document Object Model) that code can read and change: `document.querySelector('h1')`, `button.click()`. React works by changing that tree. Our tests run in Node, which has no browser and so no `document`. Run a React render there and it fails with `document is not defined`.
+
+**happy-dom** is a fake DOM written in JavaScript: enough of `document`, elements and events for React to render into, without opening a browser. It's fast, which matters when tests run on every save. It doesn't draw pixels, so it can't tell us whether something *looks* right; that's what the step 9 checkpoint on a real phone is for.
+
+### What we installed
+
+All dev dependencies: they're used by tests only and never reach players' phones.
+
+| Package | What it's for |
+|---|---|
+| `happy-dom` | The fake DOM described above. |
+| `@testing-library/react` | `render(<App />)` draws a component into the fake DOM; `screen` finds things in it. |
+| `@testing-library/dom` | The finding part (`getByRole`, `getByText`). The React package needs it but doesn't install it itself. |
+| `@testing-library/user-event` | Acts like a player: `user.click(button)`, `user.type(input, 'Lions')`. Used from step 7. |
+
+**Why Testing Library:** it finds things the way a player does, by what's written on them and what they are (`getByRole('button', { name: 'Start' })`), not by CSS classes or component names. A test written that way keeps passing when the styling changes and fails when a player would notice something broken. Finding by role also checks accessibility for free: a button a screen reader can't recognise as a button can't be found.
+
+### Only screen tests get the fake browser
+
+Every machine and content test still runs in plain Node. A test file opts in with a comment on its very first line:
+
+```ts
+// @vitest-environment happy-dom
+```
+
+Why not give every test the fake browser? The SDK's tests prove that game logic needs no browser at all (standard §4). Running them without one keeps that true: if a guard or action ever touched `document`, its test would fail.
+
+### `src/testSetup.ts` and `vite.config.ts`
+
+```ts
+afterEach(() => cleanup())
+```
+
+`cleanup()` removes whatever the last test rendered, so each test starts with an empty page. Testing Library does this by itself only when test functions like `afterEach` are global; ours are imported from `vitest`, so the setup file does it. `vite.config.ts` gains a `test` section that runs this file before every test file. The `/// <reference types="vitest/config" />` line at the top teaches TypeScript that the `test` section exists.
+
+### Tests: `src/app/App.test.tsx`
+
+One test: the current page shows "Ku Zo Wasa" as a heading and the subtitle. The page is replaced by the game library in step 10, and this test with it. The full table is in [docs/tests.md](../tests.md#app).
+
+### Files changed
+
+- `package.json`, `pnpm-lock.yaml`: the four dev dependencies.
+- `vite.config.ts`: the `test.setupFiles` setting.
+- `src/testSetup.ts`, `src/app/App.test.tsx` (new).
+- `docs/tests.md`: screen tests explained; the new test; counts updated to 180.
+
+### How to verify
+
+1. `pnpm test` reports `180 passed`.
+2. Delete the first line of `App.test.tsx` and run `pnpm test`. The test fails with `ReferenceError: document is not defined`: without the comment it runs in plain Node. Put the line back.
+3. `pnpm typecheck` and `pnpm lint` pass.
+
+---
+
+## Step 3: Theme tokens
+
+**What:** the default theme as CSS variables in `src/app/index.css`, light and dark, wired into Tailwind so classes like `bg-primary` use them. Tailwind's built-in colors are switched off, and a test fails if any file uses one.
+
+**Why:** standard §11 promises that a theme is a JSON file and no code. That only works if every color on every screen comes from a token. Setting the rule before the first component is built is cheap; retrofitting it after twenty components isn't.
+
+### Tokens, as variables
+
+A CSS variable is a named value that other CSS can use: `--primary: oklch(0.64 0.19 42)` defines it, `var(--primary)` uses it. Change the definition and everything that uses it changes. That's what a theme is: a different set of definitions.
+
+The names follow the ones shadcn/ui uses (step 4), so its components fit without renaming:
+
+| Token | Used for |
+|---|---|
+| `background`, `foreground` | The page, and text on it |
+| `card`, `card-foreground` | Raised surfaces such as the item card |
+| `primary`, `primary-foreground` | The main action on a screen |
+| `secondary`, `secondary-foreground` | Other actions |
+| `muted`, `muted-foreground` | Quiet backgrounds, secondary text |
+| `success`, `warning`, `destructive` (+ `-foreground`) | Got it, time running out, skip or quit |
+| `border`, `input`, `ring` | Borders, form fields, the keyboard focus outline |
+| `radius`, `font-body`, `duration` | Corner rounding, the font, animation speed |
+
+Colors come in pairs, a background and the `-foreground` color for text on it, so a theme can't put dark text on a dark button by accident: whoever picks one picks both.
+
+Colors are written as `oklch(lightness chroma hue)`. Unlike hex codes, its numbers mean something you can reason about: lightness 0 to 1, chroma (how colorful), and hue (the angle on the color wheel). The dark theme mostly flips lightness and keeps hues, so the two modes feel like the same app.
+
+### Dark mode
+
+```css
+@media (prefers-color-scheme: dark) {
+  :root { --background: oklch(0.18 0.012 50); … }
+}
+```
+
+The phone's own light/dark setting decides. Only colors change; radius, font and speed stay the same. `color-scheme: light dark` on `<html>` also tells the browser to draw its own parts (scrollbars, form controls) to match.
+
+### Wiring tokens into Tailwind
+
+```css
+@theme inline {
+  --color-*: initial;
+  --color-primary: var(--primary);
+  …
+}
+```
+
+Tailwind v4 makes a class for every `--color-<name>` it's told about: `--color-primary` gives `bg-primary`, `text-primary`, `border-primary` and so on. `inline` makes each class use `var(--primary)` itself instead of a copy of today's value, so switching to dark mode (or, later, another theme) changes every class.
+
+`--color-*: initial` first deletes Tailwind's built-in palette. After it, `bg-red-500` produces no CSS at all. That's the enforcement: there's simply no raw color to reach for.
+
+### A test that makes the silent failure loud
+
+A deleted class doesn't cause an error; it just does nothing, which is easy to miss. `src/app/theme.test.ts` reads every `.ts`/`.tsx` file in `src/` as text and fails if any uses a built-in color name like `bg-red-500` or `text-white`, naming the file. Two more tests check that every color has a dark value and is wired into Tailwind.
+
+The test reads files with Vite's `?raw` (give me this file's text) instead of Node's `fs`, because files in `src/` are type-checked for the browser, where `fs` doesn't exist. Vitest normally replaces CSS files with an empty string, so `vite.config.ts` tells it to load `index.css` for real.
+
+### Files changed
+
+- `src/app/index.css`: the tokens, dark mode, the Tailwind mapping and base styles.
+- `src/app/App.tsx`: the subtitle uses `text-muted-foreground`.
+- `src/app/theme.test.ts` (new).
+- `vite.config.ts`: Vitest loads `index.css`.
+- `docs/game-standard.md` §11: the token names.
+- `docs/tests.md`: the new tests; counts updated to 183.
+
+### How to verify
+
+1. `pnpm test` reports `183 passed`.
+2. In `App.tsx`, add `bg-blue-600` to the heading's `className` and run `pnpm test`. The theme test fails naming `/src/app/App.tsx: bg-blue-600`. Remove it.
+3. Run `pnpm dev` and open the page. Switch the phone (or the computer) between light and dark mode: the background and text change. (`pnpm build` also passes.)
+
+---
+
+## Step 4: Button and Input
+
+**What:** the first two UI components, in `src/ui/`: `Button` and `Input`, based on [shadcn/ui](https://ui.shadcn.com) and restyled onto the theme tokens, plus a small `cn` helper for combining class names.
+
+**Why:** every screen from step 7 on needs buttons, and the setup screen needs text fields. Standard §9 says `src/ui/` holds only what's used, so it starts with exactly these two. ("Quit game?" needs a Dialog; it arrives with that feature in chapter 05.)
+
+### What shadcn/ui is, and why it isn't installed
+
+shadcn/ui isn't a package you install and import. It's a collection of component source files you copy into your project and then own: read, change, delete. That suits this repo: the code is ours, every line is visible, and nothing updates underneath us.
+
+shadcn has a command-line tool that does the copying. We didn't use it, for two reasons:
+
+1. **It rewrites `src/app/index.css`** with its own color variables, replacing the tokens from step 3.
+2. **Its files import through path aliases** (`@/lib/utils`), which this repo doesn't use. Every import here is a relative path you can follow.
+
+So the two components were copied by hand and trimmed to what we use. Without the tool there's no `components.json` (its settings file). Adding a component later is the same small job: copy it from the shadcn site, swap its color names for our tokens, and list it in the tutorial.
+
+### Dependencies
+
+shadcn's Button normally brings four packages. We kept one:
+
+| Package | Kept? | Why |
+|---|---|---|
+| `tailwind-merge` | **Yes** (runtime, ~8 KB gzipped) | Resolves clashing classes so a caller's `className` wins over the component's (`bg-secondary` replaces `bg-primary` instead of both being applied, where whichever comes later in the CSS file wins, not whichever you wrote last). Hard to do correctly by hand. |
+| `clsx` | No | Joins class names and drops empty ones. `tailwind-merge` already does both. |
+| `class-variance-authority` | No | Builds variant classes. Two plain objects (`variants`, `sizes`) do the same here and are easier to read. |
+| `@radix-ui/react-slot` | No | Lets a Button render as another element (`asChild`). Nothing needs it yet. |
+
+lucide-react, the icon set chosen for this chapter, is added when the first icon is used (the library page, step 10), not before.
+
+### `cn`
+
+```ts
+cn('bg-primary px-4', false, 'bg-secondary') // 'px-4 bg-secondary'
+```
+
+Components list their own classes first and the caller's `className` last, so a screen can make a button full-width (`className="w-full"`) without copying it.
+
+### `Button`
+
+- **Variants:** `primary`, `secondary`, `success`, `destructive`, `outline`, `ghost`. Each is token classes only, so step 3's test checks them like any other file.
+- **Sizes:** `md` (48px tall), `lg` (64px), `icon` (48px square). Even the smallest beats standard §12's 44px minimum for thumbs.
+- **`type="button"` by default.** A plain `<button>` inside a `<form>` submits the form when tapped. The setup screen is a form, and a "remove team" button that submits it would be a confusing bug.
+- **Feedback:** it shrinks slightly while pressed (`active:scale-95`), unless the phone asks for reduced motion (`motion-reduce:`), as standard §12 requires.
+- **Focus outline** in the `ring` color, shown only for keyboard focus (`focus-visible`), not on tap.
+
+### `Input`
+
+- **16px text** (`text-base`). Phones zoom the whole page into a text field with smaller text when it's tapped, which is disorienting mid-setup.
+- `aria-invalid` turns its border `destructive`, so the setup screen (step 11) can mark a bad team name by setting one attribute.
+
+### Tests: `src/ui/ui.test.tsx`
+
+5 screen tests. They tap and type with `user-event` and find elements by role and label, the way step 2 described. The full table is in [docs/tests.md](../tests.md#ui-components).
+
+### Files changed
+
+- `package.json`, `pnpm-lock.yaml`: `tailwind-merge`.
+- `src/ui/cn.ts`, `src/ui/button.tsx`, `src/ui/input.tsx`, `src/ui/ui.test.tsx` (new).
+- `docs/tests.md`: the new tests; counts updated to 188.
+
+### How to verify
+
+1. `pnpm test` reports `188 passed`.
+2. In `button.tsx`, change `type = 'button', className` to `type, className` and run `pnpm test`. "is a button that does not submit forms unless asked to" fails. Change it back.
+3. `pnpm typecheck`, `pnpm lint` and `pnpm build` pass.
+
+---
+
+## Step 5: How each phase is shown (ADR 0005)
+
+**What:** decide how views plug into a game, before writing any. The decision is [ADR 0005](../decisions/0005-views.md). As in chapter 03, step 2, the types were tried in a throwaway prototype first; no code is committed in this step.
+
+**Why:** every screen in the rest of this chapter is a view, and every future game writes them. Like the builder in ADR 0004, it's an API that's expensive to change once games depend on it.
+
+### A view is a component for one phase
+
+The machine says which phase the game is in; the view for that phase draws it. Charades has four phases, so four views:
+
+| Phase | View | From |
+|---|---|---|
+| `handoff` | "Pass the phone to Lions", Start button | The format's default |
+| `turn` | The card, Got it / Skip, the countdown | Charades |
+| `turn_summary` | What Lions got and skipped, Next | Charades, replacing the format's default |
+| `results` | The leaderboard, Play again | The format's default |
+
+### The rules
+
+```ts
+views: { turn: TurnView, turn_summary: SummaryView }
+```
+
+- **The game's own phases must have a view.** Forgetting `turn` is a type error.
+- **The format's phases have defaults** for `handoff`, `turn_summary` and `results`, written once and shared by every team-turns game. A game lists one only to replace it.
+- Naming a phase the machine doesn't have is a type error too.
+
+Why can Charades replace the summary? The format's default can say "Lions scored 3", because `points` tells it what a turn is worth. It can't list *which* items were got, because only Charades knows its turn record holds `got` and `skipped` lists.
+
+### What a view gets
+
+```ts
+{ context, send, points }
+```
+
+- **`context`**: the game's data, to show (whose turn, the item on screen, scores).
+- **`send`**: to report what players did: `send({ type: 'got' })`. The view never changes the game itself (standard §4). The session (step 6) adds the time and calls the runner.
+- **`points`**: the game's scoring function, for summaries.
+
+### One thing we didn't get: `send` per phase
+
+Ideally the turn view's `send` would accept only `got`, `skip` and `time_up`, the events `turn` handles. The prototype showed that needs the builder to keep each phase's event list as a type, which ADR 0004's declared return type drops. Making the builder keep them would make the hardest code in the SDK harder still.
+
+So a view's `send` accepts any event the game has. A typo (`send({ type: 'jump' })`) is still a type error. Sending a real event to the wrong phase does nothing, because the runner ignores events a phase doesn't handle (ADR 0002), and the click-through test (step 9) would notice a button that does nothing.
+
+### Primitives and views are different things
+
+- A **primitive** (`src/sdk/interactions/`) is a reusable piece of screen with plain props: `<FlashCard text="Gala" onGot={…} onSkip={…} />`. It knows nothing about machines or games.
+- A **view** connects a primitive to a game: it reads `context`, and turns a tap into `send`.
+
+That split keeps the primitives testable on their own and reusable by any game or format.
+
+### What the prototype proved
+
+Each of these was a type error on the line with the mistake:
+
+| Mistake | Example |
+|---|---|
+| A game phase without a view | `views: {}` for Charades |
+| A view for a phase that doesn't exist | `views: { …, steal: … }` |
+| Sending an event the game doesn't have | `send({ type: 'jump' })` |
+| A view written for another game's items | A view reading `context.item.word` in a game whose items have `text` |
+
+### Files changed
+
+- `docs/decisions/0005-views.md` (new), `docs/decisions/README.md`.
+- `docs/tutorial/04-playable.md`: this section.
+
+### How to verify
+
+Read ADR 0005 and check that the four views in the table above follow its rules: Charades must write `turn`, may replace `turn_summary`, and gets `handoff` and `results` from the format. No code changed: `pnpm test` still reports 188 passed.
+
+---
+
+## Step 6: The game session
+
+**What:** `src/sdk/game/useGameSession.ts`, a React hook that plays a machine: it holds the game's state, sends events, and re-renders the screen when the state changes.
+
+```ts
+const { state, send, restart, ended } = useGameSession(game.machine, { config, items })
+```
+
+**Why:** the runner (chapter 01) is plain functions: `start` gives a state, `send` gives the next one. React needs that state *held* somewhere so the screen updates when it changes. The hook is that somewhere, and it's also where the two impure things a game needs, a random seed and the current time, enter. Nowhere else in the app reads them.
+
+### What a hook is
+
+A React component is a function that runs every time the screen needs redrawing. A **hook** is a function, named `use…`, that a component calls to keep something between those runs. `useState` keeps a value: when it changes, React redraws the component with the new value. `useGameSession` builds on it: the value it keeps is the game's state.
+
+### The pieces
+
+| Returns | What it does |
+|---|---|
+| `state` | `{ phase, context, rngState }`: what the play screen draws |
+| `send(event)` | Reads the clock, calls the runner's `send`, keeps the result |
+| `restart(input?)` | A new game with a new random seed: "Play again" |
+| `ended` | Whether the game reached a final phase (`isFinal`) |
+
+**The seed.** `Math.floor(Math.random() * 2 ** 32)`: a random whole number covering every state the Rng can start from. One per game, so every game in real play is different, and "Play again" doesn't deal the same cards.
+
+**The time.** `send` reads `Date.now()` and hands it to the runner. Note *where* it's read:
+
+```ts
+const time = now()
+setState((current) => sendEvent(machine, current, event, { now: time }))
+```
+
+`setState` with a function means "compute the new state from the current one". In development, React runs such functions twice to catch side effects. Reading the clock inside would give the two runs different times. Reading it once, outside, keeps the update a pure calculation.
+
+**Ignored events.** When a phase doesn't handle an event, the runner returns the exact same state object (ADR 0002). React sees nothing changed and doesn't redraw. A double tap costs nothing.
+
+**Tests can fix both.** An optional third argument, `{ seed, now }`, replaces the random seed and the clock, so tests are repeatable. The app passes nothing.
+
+### Tests: `src/sdk/game/useGameSession.test.ts`
+
+6 tests, using Testing Library's `renderHook`, which runs a hook inside a tiny test component. A tiny machine stands in for a game. The random-seed test replaces `Math.random` with fixed values (`vi.spyOn`) to check the seed comes from it. The full table is in [docs/tests.md](../tests.md#game-session).
+
+### Files changed
+
+- `src/sdk/game/useGameSession.ts`, `src/sdk/game/useGameSession.test.ts` (new).
+- `docs/game-standard.md` §4: running a machine in the app.
+- `docs/tests.md`: the new tests; counts updated to 194.
+
+### How to verify
+
+1. `pnpm test` reports `194 passed`.
+2. In `useGameSession.ts`, make `randomSeed` return `0` and run `pnpm test`. "picks a random seed for each new game…" fails. Change it back.
+3. `pnpm typecheck` and `pnpm lint` pass.
+
+---
+
+## Step 7: Primitives, part 1: Handoff, Countdown, FlashCard
+
+**What:** the first three interaction primitives (standard §6), in `src/sdk/interactions/`:
+
+| Primitive | What it shows | Props |
+|---|---|---|
+| `Handoff` | "Pass the phone to **Lions**", a detail line, a big Start button | `to`, `detail?`, `actionLabel?`, `onReady` |
+| `Countdown` | The seconds left, in the warning color near the end | `endsAt`, `onTimeUp`, `warnAt?` |
+| `FlashCard` | The item on a big card, Skip and Got it underneath | `text`, `hint?`, `onGot`, `onSkip` |
+
+**Why:** these three are a Charades turn and the screen before it. Each is plain props in, callbacks out: no machine, no game (ADR 0005). Step 9's views connect them to Charades.
+
+### Handoff: a privacy gate
+
+On one shared phone, the next team must not see the cards the last team just played. The handoff screen shows only who's next, and nothing about the previous turn. The team taps Start once they have the phone, and only then does the card appear.
+
+### Countdown
+
+**Rounded up.** With 4.2 seconds left it shows 5. Rounded down, it would show 0 for the last second while time hadn't actually run out.
+
+**Checking four times a second.** A timer that ticks every 1000 ms drifts: phones delay timers, especially when busy. Instead it checks every 250 ms how far the clock is from `endsAt`, so the number is never more than a quarter of a second behind, however late a tick runs.
+
+**Once, and only once.** When it reaches 0 it stops checking and calls `onTimeUp`. The view will send `time_up` from there, and sending it twice would be a bug (harmless, since the runner ignores it outside a turn, but a bug).
+
+**Already over?** If `endsAt` has passed when the countdown appears, it calls `onTimeUp` immediately. That's what makes a locked phone safe: unlock it after the time ran out, and the turn ends at once. Chapter 05 relies on this for refresh.
+
+**Vibration.** `navigator.vibrate?.(300)`: a 300 ms buzz on phones that support it. The `?.` skips it where there's no such feature (iPhones, most computers).
+
+**Motion.** The number pulses in the warning color, but only when the phone allows motion (`motion-safe:`), as standard §12 asks.
+
+**Reading the clock.** The countdown reads the time to *show* it, which is fine for a view (ADR 0005). It decides nothing: the machine decides what `time_up` means.
+
+`useEffectEvent` (new in React 19.2) solves a small problem: the timer effect should restart when `endsAt` changes, not every time the parent passes a new `onTimeUp` function. An effect event always calls the latest `onTimeUp` without being a reason to restart.
+
+### FlashCard
+
+The card takes most of the screen; the text is 48px, readable at arm's length by the team guessing. **Skip is on the left and Got it on the right**, where a right thumb rests, so the more common, happier tap is the easier one. Got it uses the `success` color; Skip is an outline button, so it doesn't feel like a penalty (core Charades has none).
+
+### Tests: `src/sdk/interactions/interactions.test.tsx`
+
+7 screen tests. The countdown tests use **fake timers** (`vi.useFakeTimers()`): the test moves the clock forward by hand (`vi.advanceTimersByTime(1_000)`), so a 60-second countdown is tested in milliseconds. `act(…)` wraps each move so React finishes redrawing before the test looks. The full table is in [docs/tests.md](../tests.md#interaction-primitives).
+
+### Files changed
+
+- `src/sdk/interactions/Handoff.tsx`, `Countdown.tsx`, `FlashCard.tsx`, `interactions.test.tsx` (new).
+- `docs/game-standard.md` §6: a Status column (built or planned) and a line on what a primitive is.
+- `docs/tests.md`: the new tests; counts updated to 201.
+
+### How to verify
+
+1. `pnpm test` reports `201 passed`.
+2. In `Countdown.tsx`, delete the `clearInterval(id)` line inside the interval (just above `timeUp()`) and run `pnpm test`. "calls onTimeUp once, when time runs out" fails: it's now called on every tick after the end. Put it back.
+3. `pnpm typecheck` and `pnpm lint` pass. The primitives can't be seen in the app until step 9 connects them; that's the checkpoint.
+
+---
+
+## Step 8: Primitives, part 2: Summary and Leaderboard
+
+**What:** the last two primitives this chapter needs:
+
+| Primitive | What it shows | Props |
+|---|---|---|
+| `Summary` | "**Lions** scored **3** points", lists of what happened, a Next button | `title`, `points`, `sections?`, `actionLabel?`, `onNext` |
+| `Leaderboard` | Every team with its place and score, highest first | `entries` |
+
+**Why:** the turn summary and the results screen. With these, every phase of core Charades has a primitive to be drawn with.
+
+### Summary: lists, not Charades
+
+`Summary` doesn't know about "got" and "skipped". It takes `sections`, a list of labelled lists:
+
+```ts
+sections={[{ label: 'Got it', items: ['Gala', 'Zobo'] }, { label: 'Skipped', items: ['Assembly'] }]}
+```
+
+Charades' view (step 9) builds those from its turn record. Name Ten could pass one list of answers, or none. Empty lists are left out, so a turn with no skips doesn't show an empty "Skipped" heading. "1 point" and "2 points" get the right word.
+
+It's **read-only** for now. Fixing a mis-tap here is the editable turn summary, planned for chapter 06 with its own design (ADR 0004 made the points model ready for it).
+
+### Leaderboard: ties
+
+`rank` works out places before anything is drawn:
+
+| Score | Place |
+|---|---|
+| 10 | 1 |
+| 10 | 1 |
+| 7 | 3 |
+
+Equal scores share a place, and the next place is skipped: two teams tied for first means nobody came second. This is how sports tables count. Teams with the same score keep the order they were entered in, because JavaScript's `sort` is stable: it never swaps items it considers equal.
+
+First place is highlighted in the `primary` color; on a tie, every team sharing it is. Who "won" is just whoever has place 1, so a draw needs no special case.
+
+`rank` is exported and tested on its own as a plain function. Logic worth testing is easier to test outside a component.
+
+### Tests: `src/sdk/interactions/summary.test.tsx`
+
+4 tests. `within(list)` limits a search to one part of the page, so the test can check the "Got it" list holds exactly Gala and Zobo. The full table is in [docs/tests.md](../tests.md#summary-and-leaderboard).
+
+### Files changed
+
+- `src/sdk/interactions/Summary.tsx`, `Leaderboard.tsx`, `summary.test.tsx` (new).
+- `docs/game-standard.md` §6: Summary (read-only for now) and Leaderboard are built.
+- `docs/tests.md`: the new tests; counts updated to 205.
+
+### How to verify
+
+1. `pnpm test` reports `205 passed`.
+2. In `Leaderboard.tsx`, change `rank` to give each team its position (`place: index + 1`) and run `pnpm test`. The `rank` test fails: tied teams get different places. Change it back.
+3. `pnpm typecheck` and `pnpm lint` pass.
+
+---
+
+## Step 9: Views, and the first playable game
+
+**What:** ADR 0005, built:
+
+- **The format's default views** in `src/sdk/formats/team-turns/views/`: `HandoffView`, `TurnSummaryView`, `ResultsView`, and the `TeamTurnsViewProps` type.
+- **Charades' views** in `src/games/charades/views/`: `TurnView` (the card and the timer) and `SummaryView` (replacing the format's, to list the items got and skipped).
+- **`views` in `defineGame`**: required for the game's own phases; the format's defaults filled in for the rest.
+- **`GameScreen`** in `src/app/play/`: plays any game by drawing the view for its current phase.
+- **A first registry** in `src/app/registry/`, and **a demo game** in `App.tsx`: Lions vs Eagles, 1 round, 30-second turns.
+
+**Why:** after this step there's something to hold. Steps 10 to 12 add the pages around it (library, setup, results buttons); this step makes the game itself playable, so it can be checked on a real phone before more is built on it.
+
+### A view connects a primitive to the machine
+
+```tsx
+export function HandoffView({ context, send }) {
+  return (
+    <Handoff
+      to={context.config.teams[context.current]}
+      detail={`Round ${context.round} of ${context.config.rounds}`}
+      onReady={() => send({ type: 'start' })}
+    />
+  )
+}
+```
+
+That's the whole pattern: read what to show from `context`, turn taps into events with `send`. Charades' `TurnView` does the same with two primitives: `Countdown` sends `time_up`, `FlashCard` sends `got` and `skip`.
+
+**The summary's button** says "Next", or "See results" after the last turn. It asks the format's own `turnsRemaining` guard, the same one the machine uses for `next`, so the label can never disagree with where the button goes. `nextLabel` is exported so Charades' summary uses it too.
+
+**The results view** says "Lions won!" or "It's a tie!", from `rank` (step 8): whoever has place 1. "Won" works for any team name, singular or plural.
+
+### `views` in `defineGame`
+
+```ts
+views: { turn: TurnView, turn_summary: SummaryView }
+```
+
+`defineGame` returns the game with `{ ...teamTurnsViews, ...game.views }`: the format's three defaults, with the game's own on top. The type marks `views` as `NoInfer`: the item, turn and event types come from the rest of the game, and the views are *checked* against them. Without it, TypeScript could learn the item type from a wrong view and report the mistake somewhere else, the same trap as ADR 0002's.
+
+As a backstop for code that bypasses types, `defineGame` also checks at runtime that every phase of the machine has a view.
+
+`teamTurns` now keeps the game's `points` on the machine (`machine.points`), so `GameScreen` can hand it to views.
+
+### `GameScreen`
+
+```tsx
+const { state, send } = useGameSession(game.machine, input, options)
+const View: TeamTurnsView<Item, Turn, Event, Config> = game.views[state.phase]
+return <View context={state.context} send={send} points={game.machine.points} />
+```
+
+Three lines of logic for any game. The explicit type on `View` is there because React's JSX checking can't see through a lookup by a phase name that's still a type parameter; declaring it as a plain view type gives it what it needs.
+
+### The registry, early
+
+`src/app/` may not import a game directly (standard §9): only `src/app/registry/` may. So the demo in `App.tsx` gets Charades from the registry: `games[0]`. The registry is just a list for now; step 10 adds the library page that shows it.
+
+### The bundle got bigger
+
+The built JavaScript grew from about 69 KB to 108 KB (gzipped). Until now the app didn't load any game; now it loads Charades, its packs, and zod to check them. That's acceptable for a party game, but worth watching: if it becomes a problem, zod's smaller "mini" build is the first thing to try.
+
+### Testing a whole game by tapping
+
+`GameScreen.test.tsx` plays a full game of Charades the way a player would: tap Start, Got it, Skip, let the 30 seconds run out, read the summary, tap Next, and so on to the results. It's the test that catches a view sending the wrong event.
+
+Its clock is fake, so 30-second turns take no time. Only `Date` and `setInterval` (what the countdown uses) are faked: Testing Library waits on a real `setTimeout` between taps, and a fake one would never fire, so the test would hang.
+
+### Files changed
+
+- `src/sdk/formats/team-turns/views/` (new): `types.ts`, `HandoffView.tsx`, `TurnSummaryView.tsx`, `ResultsView.tsx`, `index.ts`, `views.test.tsx`.
+- `src/sdk/formats/team-turns/teamTurns.ts`: `machine.points`; `teamTurns.test.ts`: a test for it.
+- `src/sdk/game/defineGame.ts`: `views`, `GameViews`, `Game`; `defineGame.test.ts`: views tests and 3 compile-time checks.
+- `src/games/charades/views/TurnView.tsx`, `SummaryView.tsx` (new); `src/games/charades/index.ts`: lists them.
+- `src/app/registry/index.ts`, `src/app/play/GameScreen.tsx`, `src/app/play/GameScreen.test.tsx` (new).
+- `src/app/App.tsx`: the demo game; `App.test.tsx` updated.
+- `docs/game-standard.md` §3, §7, §9: views as built.
+- `docs/tests.md`: the new and changed tests; counts updated to 212 runtime tests and 29 compile-time checks.
+
+### How to verify
+
+1. `pnpm test` reports `212 passed`. `pnpm typecheck`, `pnpm lint`, `pnpm validate-content` and `pnpm build` pass.
+2. In `src/games/charades/views/TurnView.tsx`, make Got it send `skip` and run `pnpm test`. The whole-game test fails: "scored 0 points" instead of 2. Change it back.
+3. **On a phone.** Run `pnpm dev --host`, and open the "Network" address it prints on a phone on the same Wi-Fi. Play the demo game and check:
+   - **Handoff:** "Pass the phone to Lions" is readable at arm's length; Start is easy to hit.
+   - **Turn:** the card text is big and doesn't overflow for long items; Skip (left) and Got it (right) are comfortable with one thumb; the timer is visible, turns orange and pulses in the last 10 seconds, and the phone buzzes at zero (Android; iPhones don't support vibration).
+   - **Summary:** the lists of items got and skipped, and the Next / See results button.
+   - **Results:** the winner and the standings.
+   - **Dark mode:** switch the phone to dark mode and check every screen again.
+   - **Reduced motion:** with "reduce motion" on, buttons don't shrink when pressed and the timer doesn't pulse.
+
+   Known gaps, coming in steps 10 to 12: no way to pick teams or settings, nothing after the results, and a refresh restarts the demo (chapter 05).
+
+---
+
+## Step 9b: Long words shrink the card
+
+**What:** `FlashCard` picks its text size from the item's longest word.
+
+**Why:** from the step 9 phone check. Long *phrases* are fine: they wrap between words. A long *word* can't wrap, so at 48px a word like "Supercalifragilistic" is wider than a small phone's card and gets broken mid-word. Shrinking only that word would mix sizes inside one item, which looks like a bug, so the whole text shrinks.
+
+| Longest word | Size |
+|---|---|
+| up to 10 letters | `text-5xl` (48px, as before) |
+| 11 to 13 | `text-4xl` (36px) |
+| 14 to 16 | `text-3xl` (30px) |
+| 17 or more | `text-2xl` (24px) |
+
+The limits are worked out for a card about 320px wide, the narrowest common phone: a bold letter is a little over half its font size wide. Letters aren't all the same width ("WWW" is wider than "iii"), so this is a good guess, not a measurement; `break-words` stays as the last resort. Measuring the real text after drawing it would be exact but needs a second draw on every card, which isn't worth it yet.
+
+`textSize` is exported and tested as a plain function, like `rank` in step 8.
+
+### Files changed
+
+- `src/sdk/interactions/FlashCard.tsx`: `textSize`, used for the card text.
+- `src/sdk/interactions/interactions.test.tsx`: one test.
+- `docs/tests.md`: the new test; counts updated to 213.
+
+### How to verify
+
+1. `pnpm test` reports `213 passed`.
+2. In `FlashCard.tsx`, make `textSize` always return `'text-5xl'` and run `pnpm test`. "shrinks the whole text when its longest word is long" fails. Change it back.
+
+---
+
+## Step 10: Routing and the game library
+
+**What:**
+
+- **React Router**: each page gets its own address.
+- **The library page** at `/`: every game in the registry.
+- **A not-found page.**
+- **`vercel.json`**: makes those addresses work when typed in or refreshed.
+- **lucide-react**: the game's icon.
+
+`/charades` still plays the demo game (now with every pack) until step 11 replaces it with the setup screen.
+
+**Why:** a player should start at a list of games and pick one, and a link like `kuzowasa.com/charades` should open Charades directly.
+
+### Routing, from scratch
+
+This app is a **single-page app**. The server has one page, `index.html`, and JavaScript draws everything on it. Without routing, the address bar would say `/` whatever was on screen, and there'd be no way to link to one game.
+
+A **router** connects the two:
+
+1. It reads the address and picks the page to draw.
+2. Its links change the address *without* asking the server for a new page: the router just draws a different page. That's why moving around feels instant.
+
+The address-to-page table is in `App.tsx`:
+
+```tsx
+<Routes>
+  <Route path="/" element={<LibraryPage />} />
+  <Route path="/:gameId" element={<GamePage />} />
+  <Route path="*" element={<NotFoundPage />} />
+</Routes>
+```
+
+| Address | Page | Why |
+|---|---|---|
+| `/` | Library | Exact match. |
+| `/charades` | Game page, with `gameId` = `charades` | `:gameId` matches any **one** part of the address and passes it to the page. |
+| `/chess` | Game page, which finds no such game and shows "Page not found" | Same route; the page checks the registry. |
+| `/charades/nope/extra` | Not found | Too many parts for `/:gameId`, so `*` (anything) catches it. |
+
+The game page reads its part with `useParams()` and looks it up with `findGame` (new in the registry). Two ideas from the plan are still to come: `/charades` becomes the setup screen, and the game moves to `/charades/play` (both in step 11).
+
+**Which router.** `main.tsx` wraps the app in a `BrowserRouter`, which uses the browser's real address bar. Tests use a `MemoryRouter` instead: the same routes, with the address kept in memory, so a test can start the app at any address. That's why `App` holds only the routes and not the router: whoever draws it picks the router.
+
+We use React Router's simplest setup ("declarative mode"): routes written as components. It also has modes that load data before drawing a page, or render on a server; this app needs neither.
+
+**Version 8.** Older guides import from `react-router-dom`. That package is gone in version 8: everything comes from `react-router`.
+
+### `vercel.json`: why a refresh needs it
+
+Tapping a link from `/` to `/charades` never asks the server for anything. Typing `kuzowasa.com/charades`, refreshing it, or opening a shared link *does*: the browser asks the server for `/charades`. The server has no such file and would answer 404.
+
+The fix is a **rewrite**: answer every address with `index.html`, and let the router draw the right page.
+
+```json
+{ "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }] }
+```
+
+Real files are still served as themselves: Vercel only applies a rewrite when no file matches the address, so `/assets/index-….js` isn't affected. (`pnpm dev` and `pnpm preview` already do this on your computer, which is why it only shows up once deployed.)
+
+### Icons
+
+`meta.icon` names a [lucide](https://lucide.dev/icons) icon: `drama` for Charades. lucide has over a thousand icons, and each one is a separate import. Importing one by a name chosen at runtime would mean shipping all of them. So `src/app/library/gameIcon.ts` lists the icons games use:
+
+```ts
+export const gameIcons: Record<string, LucideIcon> = { drama: Drama }
+```
+
+A game whose icon isn't listed shows a plain game controller. A test checks every game in the registry has its icon listed, so that never happens by accident. CONTRIBUTING now says to add the icon when adding a game.
+
+### The library page
+
+A card per game: icon, name, tagline, player count. The whole card is one link, so it's easy to hit. It's built from theme tokens like every other screen. Each card is a link (`<a>`), not a button: it goes somewhere, and links can be long-pressed and opened in a new tab.
+
+### The bundle, again
+
+123 KB gzipped, up from 108 KB: React Router is most of it, one lucide icon almost nothing.
+
+### Tests: `src/app/App.test.tsx`
+
+The old "starts the demo game" test is replaced by 4:
+
+- the library at `/`, and tapping Charades opens it;
+- "Page not found" at two kinds of wrong address (one test run twice with `it.each`), with a working way back;
+- every game's icon is listed.
+
+The full table is in [docs/tests.md](../tests.md#app).
+
+### Files changed
+
+- `package.json`, `pnpm-lock.yaml`: `react-router` and `lucide-react`.
+- `src/main.tsx`: `BrowserRouter`.
+- `src/app/App.tsx`: the routes. `src/app/GamePage.tsx`, `src/app/NotFoundPage.tsx` (new). `src/app/library/LibraryPage.tsx`, `gameIcon.ts` (new).
+- `src/app/registry/index.ts`: `findGame`.
+- `vercel.json` (new).
+- `src/app/App.test.tsx`: rewritten.
+- `docs/game-standard.md` §3 (`meta.icon`), §9 (`app/`). `CONTRIBUTING.md`: registry and icon when adding a game.
+- `docs/tests.md`: the App tests; counts updated to 216.
+
+### How to verify
+
+1. `pnpm test` reports `216 passed`. `pnpm typecheck`, `pnpm lint` and `pnpm build` pass.
+2. In `gameIcon.ts`, delete the `drama: Drama,` line and run `pnpm test`. "has an icon for every game in the registry" fails. Put it back.
+3. Run `pnpm dev --host` and open it on a phone:
+   - `/` shows the library; tap Charades and the demo game starts.
+   - The phone's back gesture returns to the library.
+   - Open `/chess`: Page not found, and Back to games works.
+4. **After deploying**, open `www.kuzowasa.com/charades` directly and refresh it: it should load, not show Vercel's 404. That's the rewrite, and the one thing `pnpm dev` can't show.
+
+---
+
+## Step 11: The setup screen
+
+**What:**
+
+- `/charades` is now the **setup screen**: teams, rounds, turn length, packs, and an optional tag filter.
+- Start goes to **`/charades/play`**, which plays the game with those settings.
+- The demo game from step 9 is gone.
+
+**Why:** players choose their own teams and settings. It's built for any team-turns game: it reads the game's packs and checks against the game's config schema, so Name Ten and Trivia Night get it for free.
+
+### One schema, two jobs
+
+The setup screen doesn't have its own validation rules. On every change it runs the game's config schema (`TeamTurnsConfig` for Charades) on what's on screen:
+
+```ts
+const settings = game.config.schema.safeParse({ teams, rounds, seconds, packs: chosenPacks, tags: activeTags })
+```
+
+`safeParse` doesn't throw: it returns either the checked settings or a list of problems, each with a **path** saying what it's about. `['teams', 1]` is the second team's name, so "Two teams have this name" appears under that field. Start is off until there are no problems.
+
+So the rules live in one place. Change the limit on team names in `config.ts` and the screen follows. Even the defaults (3 rounds, 60 seconds) are read from the schema rather than written again.
+
+The screen also avoids most mistakes before the schema sees them:
+
+- **Steppers** (− and +) for rounds and turn length, which can't go out of range.
+- **No Remove** button at 2 teams, and **no Add team** at 10.
+
+The schema allows any turn length from 10 to 300 seconds; the screen offers 15-second steps, because nobody needs 37.
+
+### Packs and tags
+
+Every pack starts ticked, with its item count. The tags offered come from the ticked packs' items ("snack", "game", …): pick some to play only those, or none to play everything. The line above Start says how many items that leaves, using the same `choosePoolItems` the game will use, so the number is exact.
+
+Untick a pack and its tags disappear. A tag picked earlier stops counting, so a hidden choice never filters the game.
+
+### Remembering teams
+
+Start saves the team names in the browser's **localStorage**: a small store each website gets on the device. Next time, setup fills them in. They never leave the phone, which fits "no personal data" (standard §8).
+
+Reading it back is careful (\`savedTeams.ts\`). The saved value could be from an older version of the app, or edited by hand, so it's checked with a small zod schema. Anything unexpected is ignored and the defaults are used. Some private-browsing modes switch storage off and throw an error when it's used. That's caught too: remembering names is a nicety, never a reason to crash.
+
+### Getting the settings to the play page
+
+Start calls:
+
+```ts
+navigate('/charades/play', { state: { config } })
+```
+
+`navigate` changes the address the way a link does, and `state` sends data along that doesn't show in the address. The settings could have gone in the address instead (`/charades/play?teams=Lions,Eagles&rounds=3…`), but that's long, and anyone could edit it by hand.
+
+The play page **checks the settings again** with the schema before using them. They come from outside the page: browsers keep navigation state across a refresh, so it could even be from an older version of the app. If there are none (someone typed or shared `/charades/play`), it sends the player back to setup with `<Navigate replace>`. `replace` means the back button won't return to the empty play address.
+
+**Refreshing during a game** now restarts it with the same teams and settings: the browser kept the navigation state, but the game's progress was only in memory. Chapter 05 saves the progress.
+
+### Files changed
+
+- `src/app/setup/` (new): `SetupPage.tsx` (the route: find the game, save teams, go to play), `SetupScreen.tsx` (the form, for any team-turns game), `Stepper.tsx`, `savedTeams.ts`, `setup.test.tsx`.
+- `src/app/play/PlayPage.tsx` (new). `src/app/GamePage.tsx` (the demo) removed.
+- `src/app/App.tsx`: `/:gameId` is setup, `/:gameId/play` is play. `App.test.tsx`: the library test now lands on setup.
+- `docs/game-standard.md` §7 (the setup screen), §9 (`setup/`).
+- `docs/tests.md`: the setup tests; counts updated to 223.
+
+### How to verify
+
+1. `pnpm test` reports `223 passed`. `pnpm typecheck`, `pnpm lint` and `pnpm build` pass.
+2. In `SetupPage.tsx`, delete the `saveTeams(config.teams)` line and run `pnpm test`. The first setup test fails: nothing was saved. Put it back.
+3. Run `pnpm dev --host` and on a phone:
+   - Tap Charades. Rename the teams, add a third, change rounds and turn length, pick a tag or two, and Start. The game uses your teams and turn length.
+   - Clear a team name: the message appears under it and Start turns off.
+   - Go back to the library and open Charades again: your team names are filled in.
+   - Typing into a team name doesn't zoom the page (16px text, step 4).
+
+---
+
+## Step 12: After the game
+
+**What:** when a game ends, the results screen gets two buttons:
+
+- **Play again**: same teams and settings, a new game.
+- **Back to games**: to the library.
+
+**Why:** the end of a game shouldn't be a dead end. "Play again" is the most common thing a group does next.
+
+### App buttons, not game events
+
+The results view comes from the format (step 9), but these two buttons belong to the app, in `GameScreen`:
+
+```tsx
+{ended && (
+  <nav aria-label="After the game">
+    <Button onClick={() => restart()}>Play again</Button>
+    <Link to="/">Back to games</Link>
+  </nav>
+)}
+```
+
+Neither one is a move in the game, so neither is a machine event. They leave the game: `restart` (from `useGameSession`, step 6) throws the finished game away and starts a new one from the same input. `ended` is true once the machine reaches a final phase, so no game has to remember to show the buttons, and none can forget.
+
+**A new seed.** `restart` picks a new random seed, so the cards come in a new order. The pool is the same items the setup screen chose.
+
+"Back to games" is a link, not a button: it goes to another page (step 10).
+
+### What changed from the plan
+
+The plan put the play screen and the click-through test in this step. Both landed earlier: the game screen and the whole-game test in step 9 (so the phone check had something to play), and the play page in step 11 (Start needed somewhere to go). This step is what was left.
+
+### Files changed
+
+- `src/app/play/GameScreen.tsx`: the buttons after the game.
+- `src/app/play/GameScreen.test.tsx`: drawn inside a `MemoryRouter` (the screen now has a link); a new test for the buttons.
+- `docs/tests.md`: the new test; counts updated to 224.
+
+### How to verify
+
+1. `pnpm test` reports `224 passed`. `pnpm typecheck` and `pnpm lint` pass.
+2. In `GameScreen.tsx`, change Play again's `onClick` to `() => {}` and run `pnpm test`. The new test fails: after the tap there's no Lions handoff. Change it back.
+3. On a phone (`pnpm dev --host`): play a game to the end. Play again starts a new game with the same teams, usually with a different first card; Back to games returns to the library.
+
+---
+
+## Step 13: Docs catch up
+
+**What:** the public docs now say what's real:
+
+- **README:** Charades is "Playable (core rules); in progress". The status note says what's still being built. React Router is in the stack list. `pnpm dev --host` is mentioned for phones. "Game progress is saved only on your device" became "anything it saves, like your team names, stays on your device": nothing saves game progress until chapter 05.
+- **CONTRIBUTING:** new Charades packs are welcome now, and show up on the setup screen with `pnpm dev`.
+- **Game Standard:** the status note says the tooling is in place and the SDK is built as far as the first game needs.
+- **This chapter:** two forecasts that turned out wrong (which step something would land in) are corrected.
+
+Most of the standard was already updated step by step, as each part became real: §3 and §7 (views), §6 (primitives), §9 (folders), §11 (theme tokens).
+
+**Why:** a doc that describes something that doesn't exist yet, as if it did, is a bug (and so is one that still says "planned" for something that exists).
+
+### How to verify
+
+Read the README's Games table and status note, and CONTRIBUTING's status note: each should match what you saw on the phone.
+
+---
+
+## Chapter summary
+
+Core Charades is playable on a phone:
+
+1. Open the site: the library.
+2. Pick Charades: the setup screen, with team names remembered from last time.
+3. Start: hand the phone over, act or describe against the clock, see each turn's summary.
+4. The results, then Play again or Back to games.
+
+**Built:**
+
+| Part | Where | Step |
+|---|---|---|
+| Screen tests (Testing Library + happy-dom) | `src/testSetup.ts`, `*.test.tsx` | 2 |
+| Theme tokens, light and dark | `src/app/index.css` | 3 |
+| Button, Input | `src/ui/` | 4 |
+| Views in `defineGame` | ADR 0005, `src/sdk/game/defineGame.ts` | 5, 9 |
+| `useGameSession` | `src/sdk/game/` | 6 |
+| Handoff, Countdown, FlashCard, Summary, Leaderboard | `src/sdk/interactions/` | 7, 8, 9b |
+| The format's views and Charades' | `src/sdk/formats/team-turns/views/`, `src/games/charades/views/` | 9 |
+| Routing, library, not-found page | `src/app/` | 10 |
+| Setup screen | `src/app/setup/` | 11 |
+| Play again, Back to games | `src/app/play/` | 12 |
+
+**Tests:** 224 runtime tests and 29 compile-time checks, up from 179 and 26.
+
+**New dependencies:**
+
+- Runtime: `tailwind-merge`, `react-router`, `lucide-react`.
+- Development: Testing Library (`react`, `dom`, `user-event`), `happy-dom`.
+
+**Bundle:** 125 KB gzipped, up from 69 KB. That's zod and the packs (step 9) plus React Router (step 10).
+
+**Known gaps, for chapter 05:**
+
+- A refresh mid-game starts the game over (same settings, new game).
+- The back gesture during a game leaves it without asking.
+- The screen can lock during a turn.

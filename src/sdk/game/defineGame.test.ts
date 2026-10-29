@@ -3,6 +3,7 @@ import { z } from 'zod'
 import type { Pack } from '../content/pack'
 import { TeamTurnsConfig } from '../formats/team-turns/config'
 import { teamTurns } from '../formats/team-turns/teamTurns'
+import { teamTurnsViews, type TeamTurnsViewProps } from '../formats/team-turns/views'
 import { defineGame, type GameMeta } from './defineGame'
 
 // A tiny team-turns game standing in for a real one: items are `{ text }`, one point per word got.
@@ -21,6 +22,11 @@ const machine = teamTurns<Item, { got: number }, { type: 'got' }>()({
   guards: {},
   actions: { markGot: ({ context }) => ({ ...context, turn: { got: context.turn.got + 1 } }) },
 })
+
+// Views only need to exist for these tests; they're never drawn.
+type Props = TeamTurnsViewProps<Item, { got: number }, { type: 'got' }>
+const TurnView = (props: Props) => props.context.item?.text ?? null
+const SummaryView = (props: Props) => props.points(props.context.turn)
 
 function pack(id: string): Pack<Item> {
   return { id, name: id, description: id, language: 'en', maturity: 'everyone', contributors: ['AdeizaSama'], items: [{ text: 'Sun' }] }
@@ -46,6 +52,7 @@ const game = {
     presets: [{ id: 'quick', name: 'Quick game', contributors: ['AdeizaSama'], config: { rounds: 1, seconds: 30 }, packs: ['food'] }],
   },
   machine,
+  views: { turn: TurnView },
 }
 
 /** The error message `defineGame` throws for a game with some changes, or undefined if it doesn't throw. */
@@ -59,8 +66,18 @@ function problemsWith(changes: Record<string, unknown>): string | undefined {
 }
 
 describe('defineGame', () => {
-  it('returns a valid game unchanged', () => {
-    expect(defineGame(game)).toBe(game)
+  it('returns the game with the format’s default views filled in', () => {
+    const defined = defineGame(game)
+    expect(defined.machine).toBe(game.machine)
+    expect(defined.views).toEqual({ ...teamTurnsViews, turn: TurnView })
+  })
+
+  it('uses a game’s own view for a format phase instead of the default', () => {
+    expect(defineGame({ ...game, views: { turn: TurnView, turn_summary: SummaryView } }).views.turn_summary).toBe(SummaryView)
+  })
+
+  it('reports a phase without a view', () => {
+    expect(problemsWith({ views: {} })).toContain('views: Phase "turn" has no view')
   })
 
   it('accepts a game without presets', () => {
@@ -140,5 +157,23 @@ export const mistakes = [
       ...game,
       // @ts-expect-error: only the team-turns format exists so far
       meta: { ...meta, format: 'host-led' },
+    }),
+  () =>
+    defineGame({
+      ...game,
+      // @ts-expect-error: the game's `turn` phase has no view
+      views: { turn_summary: SummaryView },
+    }),
+  () =>
+    defineGame({
+      ...game,
+      // @ts-expect-error: the machine has no `steal` phase
+      views: { turn: TurnView, steal: TurnView },
+    }),
+  () =>
+    defineGame({
+      ...game,
+      // @ts-expect-error: a view written for another game's items
+      views: { turn: (props: TeamTurnsViewProps<{ word: string }, { got: number }, { type: 'got' }>) => props.context.item?.word ?? null },
     }),
 ]

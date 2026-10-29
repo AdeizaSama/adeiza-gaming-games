@@ -2,7 +2,7 @@
 
 The contract every game, content pack and theme in Ku Zo Wasa follows. If you're adding a game, read all of it. If you're adding content or a theme, read [Content packs](#10-content-packs) or [Themes](#11-themes) and [CONTRIBUTING.md](../CONTRIBUTING.md).
 
-> **Status:** the standard is settled; the code that implements it is being built now. The tooling that enforces it (CI, lint rules, content validation) is part of that work. Where this document and the code disagree, open an issue.
+> **Status:** the standard is settled, and the tooling that enforces it (CI, lint rules, content validation) is in place. The SDK is built as far as the first game needs: the team-turns format, its views, and the primitives in §6 marked Built. Parts still being built are marked where they appear. Where this document and the code disagree, open an issue.
 
 Changes to this standard, the SDK (`src/sdk/`) or the content pack format need a decision record in [`docs/decisions/`](decisions/README.md) (context, decision, consequences). These are the contracts every contributor builds on.
 
@@ -42,7 +42,7 @@ export default defineGame({
     id: "charades",                 // kebab-case, permanent
     name: "Charades",
     tagline: "Act it out. Beat the clock.",
-    icon: "drama",                   // icon name from the shared icon set
+    icon: "drama",                   // a lucide icon name (lucide.dev/icons), listed in src/app/library/gameIcon.ts
     format: "team-turns",            // §7
     players: { min: 2, max: 20 },
     complexity: 1,                   // 1–5
@@ -71,6 +71,10 @@ export default defineGame({
     ],
   },
   machine,                           // ./machine.ts
+  views: {                           // one per phase (ADR 0005)
+    turn: TurnView,                  // ./views/: required for each of the game's own phases
+    turn_summary: SummaryView,       // optional: replaces the format's default for its phase
+  },
 });
 ```
 
@@ -78,7 +82,9 @@ export default defineGame({
 
 **Defaults live in the config schema** (zod's `.default()`), not in a separate list, so they can't drift apart. A game that wants different defaults from the format's extends its schema.
 
-> **Being built:** two more fields are added as their parts are built, each required from then on: `views` (one per phase, from `./views/`) and `rules` (`./rules.md`, player-facing rules).
+**Views** ([ADR 0005](decisions/0005-views.md)): each of the game's own phases needs a view; the format provides default views for its phases (handoff, turn summary, results), and a game lists one only to replace it. `defineGame` fills in the defaults and checks every phase has a view. A view receives `context` (to show), `send` (to report what players did) and `points` (the game's scoring).
+
+> **Being built:** `rules` (`./rules.md`, player-facing rules) is added as a required field when the first game's rules are written.
 
 **Contributors.** Credit is recorded at both levels, as a list of GitHub handles:
 
@@ -141,7 +147,7 @@ Rules:
 - **Guard and action names are type-checked** against the `guards` and `actions` objects. A typo is a compile error, not a runtime surprise.
 - **Timers:** an action stores `turnEndsAt` in context; the view shows the countdown and sends `time_up`. The machine decides what that means.
 - **Final phases** (`final: true`) end the game; the app reads the result from context. A final phase can't list events (it's a type error), and every event after the game ends is ignored.
-- **Running a machine:** `start(machine, { input, seed })` gives the starting state; `send(machine, state, event, { now })` returns the next state without changing the one passed in; `isFinal(machine, state)` says whether the game has ended. All three are in `src/sdk/machine/runner.ts`.
+- **Running a machine:** `start(machine, { input, seed })` gives the starting state; `send(machine, state, event, { now })` returns the next state without changing the one passed in; `isFinal(machine, state)` says whether the game has ended. All three are in `src/sdk/machine/runner.ts`. In the app, `useGameSession(machine, input)` (`src/sdk/game/`) wraps them for React: it picks a random seed for each new game and passes `Date.now()` with each event, the only place either is read.
 - **`validateMachine(machine)`** (`src/sdk/machine/validateMachine.ts`) finds mistakes TypeScript can't, such as a transition placed after the fallback, where it can never run. It returns a list of problems; every game's tests check that the list is empty.
 - Each guard and action stays small and does one thing. Complex rules (e.g. Mafia night resolution) are a composition of small named actions, not one big function.
 
@@ -162,18 +168,20 @@ A phase is a named step that maps to one view. Shared vocabulary (use these name
 
 Views are composed from shared primitives in `src/sdk/interactions/`. A game may build custom UI only when no primitive fits, and must say why in its pull request.
 
-| Primitive | Used for |
-|---|---|
-| `Instruction` | Rules or a step explanation with a continue action |
-| `Handoff` | Pass-the-device screen; hides the previous turn's secret info |
-| `FlashCard` | Big term with got/skip (charades) |
-| `PromptCard` | Category or prompt with a counter (name ten) |
-| `MultipleChoice` | Question, options, reveal (trivia) |
-| `Countdown` | Shared timer display with warnings |
-| `Summary` | Turn/round recap with editable results |
-| `Leaderboard` | Team/player standings |
-| `SecretReveal` | One-player-at-a-time private reveal (future: Mafia roles) |
-| `Vote` | Pick a player or option (future: Mafia) |
+A primitive takes plain props (text, callbacks) and knows nothing about machines; a view connects it to a game ([ADR 0005](decisions/0005-views.md)). Primitives are built when the first game needs them.
+
+| Primitive | Used for | Status |
+|---|---|---|
+| `Instruction` | Rules or a step explanation with a continue action | Planned |
+| `Handoff` | Pass-the-device screen; hides the previous turn's secret info | Built |
+| `FlashCard` | Big term with got/skip (charades) | Built |
+| `PromptCard` | Category or prompt with a counter (name ten) | Planned |
+| `MultipleChoice` | Question, options, reveal (trivia) | Planned |
+| `Countdown` | Shared timer display with warnings; reports when time is up (it reads the clock only to show it) | Built |
+| `Summary` | Turn/round recap with editable results | Built, read-only for now |
+| `Leaderboard` | Team/player standings; tied scores share a place | Built |
+| `SecretReveal` | One-player-at-a-time private reveal (future: Mafia roles) | Planned |
+| `Vote` | Pick a player or option (future: Mafia) | Planned |
 
 ## 7. Formats
 
@@ -188,12 +196,12 @@ A format is the outer loop shared by several games: setup, turn order, rounds, s
 
 | Area | Provided |
 |---|---|
-| Setup | `TeamTurnsConfig` (`src/sdk/formats/team-turns/config.ts`): team names (2–10, in playing order), rounds (1–10, default 3), seconds per turn (10–300, default 60), packs, and tags (default: none, which plays every item). Games extend it with their own settings. Shown on one shared setup screen. |
+| Setup | `TeamTurnsConfig` (`src/sdk/formats/team-turns/config.ts`): team names (2–10, in playing order), rounds (1–10, default 3), seconds per turn (10–300, default 60), packs, and tags (default: none, which plays every item). Games extend it with their own settings. Shown on one shared setup screen (`src/app/setup/`), which offers turn lengths in 15-second steps and fills in the team names last used on the device. |
 | Phases | `handoff → turn → turn_summary → results`, including the loop and the end. `turn` is the game's. An optional `round_summary` is added when a game needs it. |
 | Context | `TeamTurnsContext`: `config` (the settings), `scores`, `current` (whose turn), `round`, `turnEndsAt`, `pool`, `item` (the card on screen), and `turn` (the game's record of the current turn) |
 | Item pool | The chosen packs' items, each item once (an item in two packs is kept from the first pack chosen), filtered to the chosen tags if any. Drawn in a shuffled order without repeats. When every item has been drawn, they're shuffled back in and drawing continues, with the item just shown placed last. |
 | Guards/actions | `turnsRemaining`; `startTurn` (fresh turn record and timer), `drawItem`, `bankPoints` (adds the turn's points to the team's score), `advanceTeam`. A game's turn may use them, usually `drawItem`. |
-| Views | Handoff, editable turn summary, leaderboard, results (being built) |
+| Views | Default views for `handoff`, `turn_summary` and `results` in `src/sdk/formats/team-turns/views/` (a game may replace any of them). The turn summary is read-only for now; correcting a mis-tap on it is being built. |
 
 **team-turns: how a game plugs in** ([ADR 0004](decisions/0004-team-turns-builder.md)). A game passes its turn to `teamTurns` (`src/sdk/formats/team-turns/teamTurns.ts`), which returns the whole machine:
 
@@ -253,9 +261,9 @@ Out of scope for v1: multiplayer or multi-device play; accounts, backends or any
 
 ```
 src/
-  app/                 app shell: routing, library page, setup flow, persistence
+  app/                 app shell: routing (App.tsx), library page (library/), setup screen (setup/), game screen (play/), persistence
     registry/          the list of games; the only part of app/ that imports games
-  sdk/                 defineGame (game/), machine runner (machine/), Rng, content packs (content/), formats (formats/<format>/)
+  sdk/                 defineGame and useGameSession (game/), machine runner (machine/), Rng, content packs (content/), formats with their default views (formats/<format>/)
     interactions/      shared phase primitives (§6)
   ui/                  low-level components (button, dialog, …). Only what's used.
   games/
@@ -346,7 +354,24 @@ One file per pack: `src/games/<id>/content/<pack-id>.json`.
 
 ## 11. Themes
 
-`src/themes/<id>.json` holds design tokens only (colors for light/dark, fonts, radius, motion). The app maps them to CSS variables; components use variables, never raw colors. A theme pull request touches one JSON file plus an optional font import. Game-specific skins (e.g. Mafia's werewolf names) are **content**, not themes.
+`src/themes/<id>.json` holds design tokens only (colors for light/dark, fonts, radius, motion). The app maps them to CSS variables; components use variables, never raw colors.
+
+**The tokens** (one default theme, in `src/app/index.css`, until theme files land):
+
+| Token | Used for |
+|---|---|
+| `background`, `foreground` | The page, and text on it |
+| `card`, `card-foreground` | Raised surfaces such as the item card |
+| `primary`, `primary-foreground` | The main action on a screen |
+| `secondary`, `secondary-foreground` | Other actions |
+| `muted`, `muted-foreground` | Quiet backgrounds, secondary text |
+| `success`, `warning`, `destructive` (each with `-foreground`) | Got it, time running out, skip or quit |
+| `border`, `input`, `ring` | Borders, form fields, the keyboard focus outline |
+| `radius` | Corner rounding (`rounded-sm` to `rounded-xl` scale from it) |
+| `font-body` | The font |
+| `duration` | How long transitions take |
+
+Every color has a light and a dark value; dark mode follows the phone's setting. Tailwind's built-in palette is switched off, so classes like `bg-red-500` produce nothing; a test fails if any file uses one. A theme pull request touches one JSON file plus an optional font import. Game-specific skins (e.g. Mafia's werewolf names) are **content**, not themes.
 
 ## 12. Engineering rules
 

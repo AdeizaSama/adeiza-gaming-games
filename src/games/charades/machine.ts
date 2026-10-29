@@ -19,7 +19,7 @@ export type CharadesEvent = { type: 'got' } | { type: 'skip' }
  * - `time_up`: the turn ends. The item on screen when time runs out isn't counted either way.
  *
  * Every item is played as "describe" for now: modes, double points for acting or singing, and a skip penalty
- * come in chapter 05.
+ * come in chapter 06.
  */
 export const machine = teamTurns<CharadesItem, CharadesTurn, CharadesEvent>()({
   newTurn: () => ({ got: [], skipped: [] }),

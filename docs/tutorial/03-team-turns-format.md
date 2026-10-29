@@ -16,6 +16,8 @@
 
 The old chapter 03 held the format *and* the whole app shell, with a placeholder game to try it on. That was too much for one pull request someone can actually review. Splitting it also removes the placeholder: Charades is the real game from this chapter on, built in two stages. Here it gets the core rules (a correct guess scores 1, a skip just moves on, the timer ends the turn). The extras wait for chapter 05.
 
+> **Changed in [chapter 04](04-playable.md):** phase 1 is now six chapters. Chapter 04 makes core Charades playable on a phone, chapter 05 adds save and resume (so a refresh never loses a game), and "Charades complete" becomes chapter 06.
+
 **Why no screens yet.** Every screen shows one phase of a game (standard §5), so screens are built on top of the phases this chapter defines. Building them first would mean building against an API that's about to change.
 
 ---
@@ -650,3 +652,5 @@ The team-turns format is real, and Charades is built on it:
 179 tests and 26 compile-time checks. Still no screens.
 
 Next: chapter 04, the app shell: the game list, the setup screen (teams, rounds, timer, packs and tags), play and results screens, the interaction primitives, theme tokens, and save and resume. Core Charades becomes playable on a phone.
+
+> **Changed in [chapter 04](04-playable.md):** save and resume moved to chapter 05, and "Charades complete" to chapter 06.
