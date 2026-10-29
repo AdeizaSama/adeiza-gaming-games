@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 118 runtime tests (`pnpm test`) and 14 compile-time checks (`pnpm typecheck`).
+**Counts:** 129 runtime tests (`pnpm test`) and 14 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -23,6 +23,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 8 | |
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
 | [Content check (scripts)](#content-check-scripts) | `scripts/lib/validate.test.ts` | 6 | |
+| [Team-turns config](#team-turns-config) | `src/sdk/formats/team-turns/config.test.ts` | 11 | |
 
 **Two kinds of test:**
 
@@ -292,3 +293,21 @@ Each row is a mistake TypeScript must reject.
 | 116 | names the item in a problem, using the game's item key | Item names | Second item `Penguin` with an extra field | Problem at `items.1 ("Penguin")` | Contributors can search for the word instead of counting items from 0. |
 | 117 | keeps the plain position when the item has no usable text | Item names | Second item with empty text | Problem at `items.1.text` | An item too broken to name still gets a clear position. |
 | 118 | runs the same checks as the app, such as the id matching the file name | Same as the app | id `zoo` in `animals.json` | Problem at `id` | CI and the app use the same `checkPack`, so they agree. |
+
+## Team-turns config
+
+`src/sdk/formats/team-turns/config.test.ts`, testing `src/sdk/formats/team-turns/config.ts`, the settings every team-turns game shares. Starts from the least a setup screen sends (teams Lions and Eagles, pack `back-to-school`) and changes one setting at a time. "Rejected at X" means the error points at setting X.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 119 | fills in 3 rounds, 60 seconds and no tag filter | Defaults | Only teams and packs | Rounds 3, seconds 60, tags `[]` | Players can start a game after naming teams and picking a pack. |
+| 120 | keeps every setting that is given | Config schema | Three teams, 5 rounds, 90 seconds, two packs, tag `snack` | Unchanged | Defaults never overwrite what players chose. |
+| 121 | needs 2 to 10 teams | `teams` | 1 team; 10 teams; 11 teams | Rejected at `teams`; accepted; rejected at `teams` | A team game needs two sides, and more than 10 names won't fit the screens. |
+| 122 | trims team names and rejects blank or long ones | `teams` | `"  Lions "`; a name of spaces; 20 characters; 21 characters | Trimmed to `Lions`; rejected at `teams.1`; accepted; rejected at `teams.1` | Names show on the handoff screen and leaderboard, at arm's length. |
+| 123 | rejects two teams with the same name, ignoring case and spaces, pointing at the second | `teams` | Lions, Eagles, ` lions` | Rejected at `teams.2` | Two teams called the same would make the leaderboard ambiguous. Uses the same comparison as duplicate items. |
+| 124 | accepts whole numbers of rounds from 1 to 10 and seconds from 10 to 300 | `rounds`, `seconds` | Rounds 1, 10; 0, 11, 2.5. Seconds 10, 300; 9, 301, 60.5 | Ends of each range accepted; the rest rejected | Keeps games playable: no zero-round games, no 3-second turns. |
+| 125 | needs at least one pack, with pack ids written as in pack files, not repeated | `packs` | None; `Back To School`; `anime` twice | Rejected at `packs`; at `packs.0`; at `packs` | Every game needs items, and ids must match real pack files. |
+| 126 | checks tags are kebab-case and not repeated | `tags` | `tv-show`; `TV Show`; `snack` twice | Accepted; rejected at `tags.0`; rejected at `tags` | Same tag rules as items, so a filter can match them. |
+| 127 | rejects an unknown setting, such as a typo | Strict settings | `second: 90` | Rejected as an unknown setting | Catches typos, and settings left over from an older saved game. |
+| 128 | can be extended with a game's own settings and stays strict | `extend` | A Charades-like config with `punishSkips` | Default `false` filled in; `punishSkip` (typo) rejected | Games add their own settings on top (chapter 05) without losing the checks. |
+| 129 | types settings with defaults filled in, and the setup input with them optional | Types | `TeamTurnsConfig` and `TeamTurnsSetup` | Settings have every field; the setup input accepts only teams and packs | The machine never has to handle a missing setting. Checked by `pnpm typecheck`. |

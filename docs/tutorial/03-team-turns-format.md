@@ -139,3 +139,64 @@ Read ADR 0004 and check that:
 1. The Charades example uses only names the format provides (`drawItem`, `turn_summary`, `time_up`) or the game defines (`markGot`, `markSkipped`).
 2. Each rejected option says why, and (a)'s reason matches the trap recorded in ADR 0002's Consequences.
 3. No code changed: `pnpm test` still reports 118 passed.
+
+---
+
+## Step 3: The format's settings
+
+**What:** `src/sdk/formats/team-turns/config.ts`: a zod schema for the settings players choose before a team-turns game (teams, rounds, seconds per turn, packs, tags), with defaults and tests. This is the first file in `src/sdk/formats/`, where standard §7 says formats live.
+
+**Why:** these settings are the same for Charades, Name Ten and Trivia, so the format owns them. The setup screen (chapter 04) sends them, the schema checks them, and the machine (step 6) receives them with every default filled in. A saved game also carries them, so checking them stops an old or broken save from starting a game with nonsense like 0 rounds.
+
+### The settings
+
+| Setting | Rule | Default | Why |
+|---|---|---|---|
+| `teams` | 2 to 10 names, each 1 to 20 characters after trimming, no two the same | none: players name them | Names appear on the handoff screen and leaderboard. Two teams called "Lions" would make the scores ambiguous. Playing order is the order listed. |
+| `rounds` | Whole number, 1 to 10 | 3 | How many turns each team gets. |
+| `seconds` | Whole number, 10 to 300 | 60 | How long one turn lasts. |
+| `packs` | At least one pack id, written as in pack files, no repeats | none: players pick | Which content packs to draw from. |
+| `tags` | Tags written as in packs, no repeats | `[]` | Only play items with one of these tags. Empty means every item. |
+
+The limits (10 teams, 20 characters, 10 rounds, 10 to 300 seconds) are starting points, picked to fit a phone screen and keep games playable. Changing them later is one line each.
+
+**Tags are in the settings now, but there's no way to pick them yet.** The setup screen comes in chapter 04. Adding the setting now keeps standard §7 true ("pack/tag selection"), and the item pool (step 4) uses it.
+
+### Two types from one schema
+
+zod schemas with defaults have two shapes, and the file exports a type for each:
+
+- **`TeamTurnsSetup`** (`z.input`): what the setup screen sends. `rounds`, `seconds` and `tags` may be left out.
+- **`TeamTurnsConfig`** (`z.output`): what comes out after checking. Every setting is there. This is what the machine gets, so it never has to handle a missing value.
+
+### Reusing what chapter 02 built
+
+- **Pack ids and tags** use the same rules as pack files: `PackInfo.shape.id` (the `id` field from the pack schema) and `Tag`. A pack id in the settings can only be written the way it can be in a pack.
+- **Repeated names** use `findDuplicates`, so "Lions" and " lions" count as the same team, compared exactly like duplicate items.
+
+### Strict, and extendable
+
+Like packs, the schema is strict: an unknown setting is an error. That catches typos, and settings left over from an older saved game.
+
+A game with its own settings extends it. In chapter 05, Charades will do something like:
+
+```ts
+const CharadesConfig = TeamTurnsConfig.extend({ punishSkips: z.boolean().default(false) })
+```
+
+`extend` keeps the strictness and every check above. A test proves it.
+
+### Tests: `src/sdk/formats/team-turns/config.test.ts`
+
+11 tests: defaults, each setting's limits, repeated names, strictness, extending, and the two types. The full table is in [docs/tests.md](../tests.md#team-turns-config).
+
+### Files changed
+
+- `src/sdk/formats/team-turns/config.ts`, `src/sdk/formats/team-turns/config.test.ts` (new).
+- `docs/tests.md`: the new tests, and counts updated to 129.
+
+### How to verify
+
+1. `pnpm test` reports `129 passed` (118 before, 11 new).
+2. Break a limit: in `config.ts`, change `.max(20, ` to `.max(21, ` and run `pnpm test`. "trims team names and rejects blank or long ones" fails, because a 21-character name is now accepted. Change it back.
+3. `pnpm typecheck` and `pnpm lint` pass.
