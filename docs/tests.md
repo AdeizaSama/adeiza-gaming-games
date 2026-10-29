@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 223 runtime tests (`pnpm test`) and 29 compile-time checks (`pnpm typecheck`).
+**Counts:** 224 runtime tests (`pnpm test`) and 29 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -36,7 +36,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Interaction primitives](#interaction-primitives) | `src/sdk/interactions/interactions.test.tsx` | 8 | |
 | [Summary and Leaderboard](#summary-and-leaderboard) | `src/sdk/interactions/summary.test.tsx` | 4 | |
 | [Team-turns views](#team-turns-views) | `src/sdk/formats/team-turns/views/views.test.tsx` | 3 | |
-| [Game screen](#game-screen) | `src/app/play/GameScreen.test.tsx` | 1 | |
+| [Game screen](#game-screen) | `src/app/play/GameScreen.test.tsx` | 2 | |
 | [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 7 | |
 
 **Two kinds of test:**
@@ -531,11 +531,12 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 ## Game screen
 
-`src/app/play/GameScreen.test.tsx`, testing `src/app/play/GameScreen.tsx` with the real Charades game from the registry: Lions and Eagles, 1 round, 30-second turns, Back to School, seed 2026. Fakes the clock and `setInterval` (not `setTimeout`, which Testing Library needs) so turns pass instantly.
+`src/app/play/GameScreen.test.tsx`, testing `src/app/play/GameScreen.tsx` with the real Charades game from the registry: Lions and Eagles, 1 round, 30-second turns, Back to School, seed 2026. Fakes the clock and `setInterval` (not `setTimeout`, which Testing Library needs) so turns pass instantly. Drawn inside a `MemoryRouter`, because the screen has a link.
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 212 | plays a whole game of Charades by tapping, from the first handoff to the results | Every view, end to end | Lions: Start, Got it ×2, Skip, 30 s pass, Next. Eagles: Start, Got it, 30 s pass, See results | Timer starts at 30; Lions' summary: 2 points, 2 got, 1 skipped; Eagles' summary: 1 point; "Lions won!", standings Lions 2, Eagles 1 | Proves the whole chain: buttons send the right events, the machine moves, and each phase's view appears. A view sending the wrong event fails here. |
+| 224 | after the game, Play again starts over with the same teams, and Back to games leads to the library | Results actions | Two turns with nothing guessed, then tap Play again | No Play again during the game; "It's a tie!", Back to games links to `/`; then Lions' handoff, "Round 1 of 1", no Play again | The app's own buttons appear only once the game has ended, and Play again really restarts. |
 
 ## Setup screen
 

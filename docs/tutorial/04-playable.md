@@ -797,3 +797,49 @@ The play page **checks the settings again** with the schema before using them. T
    - Clear a team name: the message appears under it and Start turns off.
    - Go back to the library and open Charades again: your team names are filled in.
    - Typing into a team name doesn't zoom the page (16px text, step 4).
+
+---
+
+## Step 12: After the game
+
+**What:** when a game ends, the results screen gets two buttons:
+
+- **Play again**: same teams and settings, a new game.
+- **Back to games**: to the library.
+
+**Why:** the end of a game shouldn't be a dead end. "Play again" is the most common thing a group does next.
+
+### App buttons, not game events
+
+The results view comes from the format (step 9), but these two buttons belong to the app, in `GameScreen`:
+
+```tsx
+{ended && (
+  <nav aria-label="After the game">
+    <Button onClick={() => restart()}>Play again</Button>
+    <Link to="/">Back to games</Link>
+  </nav>
+)}
+```
+
+Neither one is a move in the game, so neither is a machine event. They leave the game: `restart` (from `useGameSession`, step 6) throws the finished game away and starts a new one from the same input. `ended` is true once the machine reaches a final phase, so no game has to remember to show the buttons, and none can forget.
+
+**A new seed.** `restart` picks a new random seed, so the cards come in a new order. The pool is the same items the setup screen chose.
+
+"Back to games" is a link, not a button: it goes to another page (step 10).
+
+### What changed from the plan
+
+The plan put the play screen and the click-through test in this step. Both landed earlier: the game screen and the whole-game test in step 9 (so the phone check had something to play), and the play page in step 11 (Start needed somewhere to go). This step is what was left.
+
+### Files changed
+
+- `src/app/play/GameScreen.tsx`: the buttons after the game.
+- `src/app/play/GameScreen.test.tsx`: drawn inside a `MemoryRouter` (the screen now has a link); a new test for the buttons.
+- `docs/tests.md`: the new test; counts updated to 224.
+
+### How to verify
+
+1. `pnpm test` reports `224 passed`. `pnpm typecheck` and `pnpm lint` pass.
+2. In `GameScreen.tsx`, change Play again's `onClick` to `() => {}` and run `pnpm test`. The new test fails: after the tap there's no Lions handoff. Change it back.
+3. On a phone (`pnpm dev --host`): play a game to the end. Play again starts a new game with the same teams and a different first card; Back to games returns to the library.
