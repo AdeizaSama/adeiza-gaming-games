@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 118 runtime tests (`pnpm test`) and 14 compile-time checks (`pnpm typecheck`).
+**Counts:** 179 runtime tests (`pnpm test`) and 26 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -23,6 +23,12 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 8 | |
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
 | [Content check (scripts)](#content-check-scripts) | `scripts/lib/validate.test.ts` | 6 | |
+| [Team-turns config](#team-turns-config) | `src/sdk/formats/team-turns/config.test.ts` | 11 | |
+| [Item pool](#item-pool) | `src/sdk/formats/team-turns/pool.test.ts` | 13 | |
+| [Team-turns guards and actions](#team-turns-guards-and-actions) | `src/sdk/formats/team-turns/rules.test.ts` | 8 | |
+| [teamTurns (Word Duel)](#teamturns-word-duel) | `src/sdk/formats/team-turns/teamTurns.test.ts` | 12 | 9 |
+| [defineGame](#definegame) | `src/sdk/game/defineGame.test.ts` | 8 | 3 |
+| [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 9 | |
 
 **Two kinds of test:**
 
@@ -36,6 +42,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | Dice (roll to target) | types, defineMachine | Two phases (`playing`, `done`). Roll a die until the score reaches a target. |
 | Counter | runner | Not a game. One phase that adds, doubles and rolls numbers, and three end phases, so every part of the runner gets exercised. |
 | Dice Duel | full game | Shaped like the team-turns format: teams take timed turns rolling dice over several rounds. |
+| Word Duel | teamTurns | Built with the real team-turns format: a team sees a word and guesses it (`got`, one point) or passes (`skip`) until time runs out. Never registered as a game. |
 | `{ text }` items | content packs, duplicates, loading packs | Items standing in for a real game's. In the duplicate tests they may also have `modes`, like Charades items, and the key is `text`. |
 
 ---
@@ -292,3 +299,134 @@ Each row is a mistake TypeScript must reject.
 | 116 | names the item in a problem, using the game's item key | Item names | Second item `Penguin` with an extra field | Problem at `items.1 ("Penguin")` | Contributors can search for the word instead of counting items from 0. |
 | 117 | keeps the plain position when the item has no usable text | Item names | Second item with empty text | Problem at `items.1.text` | An item too broken to name still gets a clear position. |
 | 118 | runs the same checks as the app, such as the id matching the file name | Same as the app | id `zoo` in `animals.json` | Problem at `id` | CI and the app use the same `checkPack`, so they agree. |
+
+## Team-turns config
+
+`src/sdk/formats/team-turns/config.test.ts`, testing `src/sdk/formats/team-turns/config.ts`, the settings every team-turns game shares. Starts from the least a setup screen sends (teams Lions and Eagles, pack `back-to-school`) and changes one setting at a time. "Rejected at X" means the error points at setting X.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 119 | fills in 3 rounds, 60 seconds and no tag filter | Defaults | Only teams and packs | Rounds 3, seconds 60, tags `[]` | Players can start a game after naming teams and picking a pack. |
+| 120 | keeps every setting that is given | Config schema | Three teams, 5 rounds, 90 seconds, two packs, tag `snack` | Unchanged | Defaults never overwrite what players chose. |
+| 121 | needs 2 to 10 teams | `teams` | 1 team; 10 teams; 11 teams | Rejected at `teams`; accepted; rejected at `teams` | A team game needs two sides, and more than 10 names won't fit the screens. |
+| 122 | trims team names and rejects blank or long ones | `teams` | `"  Lions "`; a name of spaces; 20 characters; 21 characters | Trimmed to `Lions`; rejected at `teams.1`; accepted; rejected at `teams.1` | Names show on the handoff screen and leaderboard, at arm's length. |
+| 123 | rejects two teams with the same name, ignoring case and spaces, pointing at the second | `teams` | Lions, Eagles, ` lions` | Rejected at `teams.2` | Two teams called the same would make the leaderboard ambiguous. Uses the same comparison as duplicate items. |
+| 124 | accepts whole numbers of rounds from 1 to 10 and seconds from 10 to 300 | `rounds`, `seconds` | Rounds 1, 10; 0, 11, 2.5. Seconds 10, 300; 9, 301, 60.5 | Ends of each range accepted; the rest rejected | Keeps games playable: no zero-round games, no 3-second turns. |
+| 125 | needs at least one pack, with pack ids written as in pack files, not repeated | `packs` | None; `Back To School`; `anime` twice | Rejected at `packs`; at `packs.0`; at `packs` | Every game needs items, and ids must match real pack files. |
+| 126 | checks tags are kebab-case and not repeated | `tags` | `tv-show`; `TV Show`; `snack` twice | Accepted; rejected at `tags.0`; rejected at `tags` | Same tag rules as items, so a filter can match them. |
+| 127 | rejects an unknown setting, such as a typo | Strict settings | `second: 90` | Rejected as an unknown setting | Catches typos, and settings left over from an older saved game. |
+| 128 | can be extended with a game's own settings and stays strict | `extend` | A Charades-like config with `punishSkips` | Default `false` filled in; `punishSkip` (typo) rejected | Games add their own settings on top (chapter 05) without losing the checks. |
+| 129 | types settings with defaults filled in, and the setup input with them optional | Types | `TeamTurnsConfig` and `TeamTurnsSetup` | Settings have every field; the setup input accepts only teams and packs | The machine never has to handle a missing setting. Checked by `pnpm typecheck`. |
+
+## Item pool
+
+`src/sdk/formats/team-turns/pool.test.ts`, testing `src/sdk/formats/team-turns/pool.ts`. Two packs: `food` (Jollof tagged `dish`, Puff puff tagged `snack`, Zobo) and `school` (Assembly, jollof tagged `party`). Items are keyed by text, so Jollof and jollof are the same item. The drawing tests use letters as items.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 130 | takes the chosen packs' items in the order the packs were chosen | `choosePoolItems` | Packs chosen as school, then food | Assembly, jollof, Puff puff, Zobo | The first pack chosen wins when items repeat, so the order must be the players'. |
+| 131 | leaves out packs that were not chosen | `choosePoolItems` | Only school | Assembly, jollof | Players only get the packs they picked. |
+| 132 | keeps an item in two chosen packs once, from the first pack chosen | `choosePoolItems` | food, then school | Jollof (tagged `dish`), Puff puff, Zobo, Assembly | ADR 0003: an item in two packs is drawn once, using the first pack's copy. |
+| 133 | with tags chosen, keeps only items with at least one of them | Tag filter | Both packs, tags `snack` and `party` | Puff puff, jollof | Filtering happens before removing repeats, so the `party` copy of jollof survives when only it matches. |
+| 134 | returns no items when nothing matches the tags | Tag filter | food, tag `sport` | An empty list | The setup screen can tell players nothing matches instead of starting an empty game. |
+| 135 | throws for a pack that does not exist | `choosePoolItems` | Pack `anime` | Error naming `"anime"` | The setup screen only offers real packs, so this is a bug to surface, not hide. |
+| 136 | shuffles every item into the pool, the same way for the same seed, without changing the list | `newPool` | a–e, seed 7, twice | Every item once, nothing drawn yet; same order both times; original list unchanged | Games are repeatable in tests and after a refresh. |
+| 137 | draws in pool order, moving each item to drawn, without changing the pool passed in | `drawFrom` | Remaining a, b | Draws a; pool now b remaining, a drawn; the original unchanged | The pool is game data: never changed in place, like any action's context. |
+| 138 | draws every item once before any repeats | `drawFrom` | 4 items, 4 draws | Each item exactly once | "Drawn without repeats" (standard §7). |
+| 139 | when every item is drawn, shuffles them back in and keeps going | `drawFrom` | 3 items, 6 draws | First 3 draws are all three items; so are the next 3 | A long game never runs out of cards; repeats only start once everything has been seen. |
+| 140 | never draws the item just shown first after shuffling back in | `drawFrom` | All of a–d drawn, d last; seeds 0–49 | Never d; d is last in the new order | Seeing the same card twice in a row would feel like a bug. |
+| 141 | repeats the only item when the pool has one | `drawFrom` | One item, already drawn | Draws it again | Edge case that must not crash. |
+| 142 | throws for a pool with no items at all | `drawFrom` | Nothing remaining or drawn | Error | A game with no items is a bug; the machine refuses to start one (step 6). |
+
+## Team-turns guards and actions
+
+`src/sdk/formats/team-turns/rules.test.ts`, testing `src/sdk/formats/team-turns/rules.ts`. A made-up game whose turn record is the list of words guessed, one point each. Three teams (Lions, Eagles, Sharks), two rounds, 60-second turns, a pool of `a` and `b`. Unless noted, Lions are playing in round 1. Team positions start at 0.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 143 | is true while teams are still to play this round, or rounds are left | `turnsRemaining` | Team 0 in round 1; team 2 in round 1; team 1 in round 2 | True for all three | The game goes on until every team has had every turn. |
+| 144 | is false once the last team has played in the last round | `turnsRemaining` | Team 2 in round 2 | False | This is what sends the game to results. Off by one here would end a game a turn early or late. |
+| 145 | starts a fresh turn record and sets the timer from now | `startTurn` | Last turn's record `['old']`, now = 1000 ms | Record empty; `turnEndsAt` 61000; the original unchanged | Each turn starts clean; the timer comes from the runner's `now`, never the clock. |
+| 146 | puts the next item from the pool on screen | `drawItem` | Pool `a`, `b` | Item `a`; pool `b` remaining, `a` drawn; the original unchanged | The card on screen and the pool move together. |
+| 147 | adds the turn's points to the current team only | `bankPoints` | Eagles (team 1) playing, scores 4, 2, 7, three words guessed | Scores 4, 5, 7; the original unchanged | Points go to the team that earned them. |
+| 148 | leaves scores as they are for a turn worth nothing | `bankPoints` | Nothing guessed, scores 3, 1, 0 | Unchanged | A bad turn scores zero, not an error. |
+| 149 | passes play to the next team in the same round | `advanceTeam` | Team 0, round 1 | Team 1, round 1 | Playing order is the order teams were entered. |
+| 150 | after the last team, goes back to the first team in the next round | `advanceTeam` | Team 2, round 1 | Team 0, round 2; the original unchanged | A round is one turn for every team. |
+
+## teamTurns (Word Duel)
+
+`src/sdk/formats/team-turns/teamTurns.test.ts`, testing `src/sdk/formats/team-turns/teamTurns.ts`. Word Duel is built with `teamTurns`: two teams (Lions, Eagles), 2 rounds, 30-second turns, five words (sun, moon, star, rain, wind). Unless noted, each turn is: start, got, skip, got, time up, next.
+
+### Runtime tests
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 151 | has no mistakes validateMachine can find | `validateMachine` | Word Duel | No problems | Every machine's tests must include this (standard §12), and the format's phases are part of every team-turns machine. |
+| 152 | adds the format's phases, guards and actions to the game's | `teamTurns` | Word Duel | Phases handoff, turn, turn_summary, results; guard `turnsRemaining`; the game's two actions plus the format's four; starts at `handoff` | The game wrote only `turn`; everything else must come from the format. |
+| 153 | starts at the first team's handoff with scores at zero and the items shuffled | Starting context | Seed 1 | `handoff`, scores 0 and 0, team 0, round 1, nothing on screen, all five words in the pool | The format builds the starting context from the settings and items. |
+| 154 | refuses to start with no items | Starting context | No items | Error | A game with nothing to draw can't be played; failing at the start is clearer than failing on the first draw. |
+| 155 | starts a turn with the timer set and the first item on screen | `start` event | `start` at 5000 ms | Phase `turn`, `turnEndsAt` 35000, the first drawn word on screen | The handoff's `start` runs `startTurn` then `drawItem`. |
+| 156 | records the turn as it goes and banks its points only when leaving the summary | Points (ADR 0004) | start, got, skip, time up, then next | In the summary: the turn record lists the word got and the word skipped, scores still 0 and 0. After next: scores 1 and 0, Eagles to play | Points are worked out from the turn record when players leave the summary, so a correction there (chapter 04) changes the score. |
+| 157 | plays from the first handoff to the results | Full playthrough | Seed 2026, play until the game ends | 4 turns (2 teams × 2 rounds), back at the handoff between turns, ends in `results` with scores 4 and 4 | Proves the whole format loop works with a game plugged in. |
+| 158 | reshuffles once every word has been drawn, so a long game never runs out | Item pool in play | 16 draws from 5 words | The pool still holds exactly the five words | The step 4 rule, working inside a real machine. |
+| 159 | ignores events once the game has ended | Final phase | `start` after the results | The same state back | Late taps can't restart a finished game. |
+| 160 | gives the same draws every time for the same seed | Determinism | Seed 2026, `start`, twice | Identical states; the first word is `sun` | Pins the draws. If the format, pool, runner or Rng changes, this changes, and someone has to decide whether that was intended. |
+| 161 | finishes the same way after a save and reload halfway through | Saving | Two turns, saved to JSON and loaded back, then played to the end | The same end as without the save, and as a game played straight through | A refresh mid-game must not change anything. |
+| 162 | works out the names from the game and adds the format's | Types | Word Duel's phase, guard and action names | Exactly the game's names plus the format's | Code using the machine (views, the app) knows every name. Checked by `pnpm typecheck`. |
+
+### Compile-time checks
+
+Each is a game passed to `teamTurns` with one mistake, and must be a type error on the game's own line (ADR 0004).
+
+| # | Mistake | Example | Why |
+|---|---|---|---|
+| C15 | Moving to a phase that doesn't exist | `to: 'turn_sumary'` | The error must land on the game's line, the trap ADR 0002 warned about. |
+| C16 | Unknown action name | `actions: ['markGott']` | As C15, for actions. |
+| C17 | An action is used but never written | `actions: ['markGot']` with `actions: {}` | The game would crash the first time it ran. |
+| C18 | Jumping straight to the results | `to: 'results'` | Only the format ends the game; a game can't skip its loop (standard §7). |
+| C19 | No `turn` phase | `phases: { play: … }` | The format's handoff starts `turn`, so it must exist. |
+| C20 | Writing one of the format's phases | `handoff: { … }` | A game can add phases but not replace the format's. |
+| C21 | Writing one of the format's actions | `actions: { drawItem: … }` | Same, for actions: two `drawItem`s would silently replace one. |
+| C22 | A final game phase | `final: true` | Only the format's `results` ends the game. |
+| C23 | An event the game doesn't have | `on: { jump: … }` | As C12, inside a format game. |
+
+## defineGame
+
+`src/sdk/game/defineGame.test.ts`, testing `src/sdk/game/defineGame.ts`. A tiny team-turns game (`word-duel`) with `{ text }` items, two packs (`animals`, `food`), the plain `TeamTurnsConfig` schema, and one preset (`quick`: 1 round, 30 seconds, pack `food`). Each test changes one part. "Reports X" means the thrown error lists a problem at X.
+
+### Runtime tests
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 163 | returns a valid game unchanged | `defineGame` | The valid game | The same object back | `defineGame` checks; it never alters the game. |
+| 164 | accepts a game without presets | Presets | No `presets` | No error | Presets are optional; core Charades has none yet. |
+| 165 | reports problems in meta, with where each is | `meta` | Id `Word Duel`, complexity 6, players min 4 max 2, no contributors | One error naming the game, listing `meta.id`, `meta.complexity`, `meta.players` and `meta.contributors` | The library shows these; mistakes fail the game's tests instead of reaching players. All problems at once. |
+| 166 | needs at least one pack | Content | No packs | Reports `content.packs` | A game without items can't be played. |
+| 167 | checks a preset's settings against the game's config schema | Presets | Preset with 5-second turns | Reports `config.presets.0.config.seconds` | A preset is just settings, so the same rules apply as on the setup screen. |
+| 168 | reports a preset that names a pack the game does not have | Presets | Preset with pack `anime` | Reports `config.presets.0.packs` naming `"anime"` | A typo in a pack id would give players an empty game. |
+| 169 | reports two presets with the same id, and a preset without contributors | Presets | Two presets called `quick`, the second without contributors | Reports `config.presets.1.id` and `config.presets.1.contributors` | Preset ids are used in links; credit is required (§3). |
+| 170 | keeps the item and settings types from the schemas | Types | The defined game | Packs typed `Pack<{ text: string }>[]`; settings typed `TeamTurnsConfig` | The app (chapter 04) works with a game's real types. Checked by `pnpm typecheck`. |
+
+### Compile-time checks
+
+| # | Mistake | Example | Why |
+|---|---|---|---|
+| C24 | The machine plays different items from the packs | A machine for `{ word }` items with `{ text }` packs | The item schema, the packs and the machine must agree on what an item is. |
+| C25 | A preset sets the teams | `config: { teams: ['A', 'B'] }` | Players always name their own teams. |
+| C26 | A format that doesn't exist yet | `format: 'host-led'` | Only `team-turns` is built. |
+
+## Charades machine
+
+`src/games/charades/machine.test.ts`, testing `src/games/charades/machine.ts` and `index.ts`: core Charades on the team-turns format. Uses the real game: two teams (Lions, Eagles), 3 rounds, 60-second turns, and the items of the real Back to School pack, picked with `choosePoolItems` as the app will.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 171 | is a valid game with the Back to School pack | `index.ts` | The game's default export | Id `charades`, includes `back-to-school`, uses the Charades machine | Importing `index.ts` runs `defineGame`'s checks; a broken game fails here. |
+| 172 | has no mistakes validateMachine can find | `validateMachine` | The Charades machine | No problems | Required for every game (standard §12). |
+| 173 | got: records the item, shows the next one, and is worth a point | `got` | `got` on the first card, then time up and next | The card is in the turn's `got` list; a new card is on screen; Lions score 1 | The core rule: a correct guess scores. |
+| 174 | skip: records the item and shows the next one, with no penalty | `skip` | `skip` on the first card, then time up and next | The card is in `skipped`; a new card is on screen; scores stay 0 and 0 | Core Charades has no skip penalty (that's an option in chapter 05). |
+| 175 | time_up: ends the turn without counting the item on screen | `time_up` | `got`, then time up | Turn summary, one item got, none skipped | The card on screen when time runs out wasn't guessed or passed, so it isn't recorded. |
+| 176 | ignores got and skip outside a turn | Ignored events | `got` at the handoff; `skip` on the summary | The same state back | A stray tap between turns can't score. |
+| 177 | plays a full game from the first handoff to the results | Full playthrough | Seed 2026; each turn: start, got, got, skip, got, time up, next | 6 turns; ends in `results`; scores 9 and 9; 30 different items drawn | The whole game plays end to end with real content (standard §12). |
+| 178 | markGot adds the item on screen to the items got, without changing the context passed in | `markGot` | Gala on screen, empty turn | Gala in `got`; the original unchanged | A test per action (standard §12). |
+| 179 | markSkipped adds the item on screen to the items skipped, without changing the context passed in | `markSkipped` | Gala on screen, empty turn | Gala in `skipped`; the original unchanged | As above. |

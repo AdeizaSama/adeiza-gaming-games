@@ -15,6 +15,8 @@
 
 One big chapter would have meant one huge pull request, with the runner's design only tested by Charades at the very end. Split, the runner is merged and used before anything large depends on it.
 
+> **Changed in [chapter 03](03-team-turns-format.md):** phase 1 is now five chapters. Chapter 03 is the team-turns format and core Charades (no screens), chapter 04 the app shell, chapter 05 Charades complete. There's no placeholder game.
+
 ---
 
 ## Step 1: Choose how pull requests are merged

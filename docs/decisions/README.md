@@ -7,6 +7,7 @@ Short documents that record a decision about the project's contracts: the Game S
 | [0001](0001-game-standard.md) | The Game Standard | Accepted; amended by 0002 |
 | [0002](0002-machine-runner.md) | The machine runner API | Accepted |
 | [0003](0003-content-packs.md) | The content pack format | Accepted |
+| [0004](0004-team-turns-builder.md) | How a game plugs its turn into the team-turns format | Accepted |
 
 ## Writing one
 

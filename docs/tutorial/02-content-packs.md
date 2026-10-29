@@ -6,6 +6,8 @@
 
 **Charades content comes early.** Packs belong to a game, and their items are checked against that game's item schema. The first game, Charades, is built in chapter 04, so a content check written now would have nothing to check. This chapter therefore brings two pieces of Charades forward: its item schema and one starter pack. The rest of the game (machine, views, rules) stays in chapter 04. Until then `src/games/charades/` is incomplete on purpose.
 
+> **Changed in [chapter 03](03-team-turns-format.md):** phase 1 is now five chapters. Core Charades (its machine) is built in chapter 03, the screens in chapter 04, and the rest of the game (modes, scoring extras, rules) in chapter 05.
+
 ---
 
 ## Step 1: Merge chapters with a merge commit
@@ -837,3 +839,5 @@ Content packs are real:
 All five CI checks from standard §12 run on every pull request: typecheck, lint, test, validate-content and build. 118 tests.
 
 Next: chapter 03, the team-turns format: `defineGame`, the format's phases, guards and actions, the shared interaction primitives, and the app shell with save and resume. A placeholder game becomes playable on a phone.
+
+> **Changed in [chapter 03](03-team-turns-format.md):** chapter 03 is now the format, `defineGame` and core Charades, played in tests. The interaction primitives, app shell and save and resume moved to chapter 04, and there's no placeholder game.
