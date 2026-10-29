@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 201 runtime tests (`pnpm test`) and 26 compile-time checks (`pnpm typecheck`).
+**Counts:** 205 runtime tests (`pnpm test`) and 26 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -34,6 +34,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [UI components](#ui-components) | `src/ui/ui.test.tsx` | 5 | |
 | [Game session](#game-session) | `src/sdk/game/useGameSession.test.ts` | 6 | |
 | [Interaction primitives](#interaction-primitives) | `src/sdk/interactions/interactions.test.tsx` | 7 | |
+| [Summary and Leaderboard](#summary-and-leaderboard) | `src/sdk/interactions/summary.test.tsx` | 4 | |
 
 **Two kinds of test:**
 
@@ -494,3 +495,14 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 199 | calls onTimeUp straight away if the time has already passed | Countdown | Ends at 5 s, shown at 10 s | Called once immediately | A turn whose time ran out while the phone was locked (or, from chapter 05, before a refresh) ends at once. |
 | 200 | turns to the warning color from warnAt seconds left | Countdown | Ends at 15 s, warn at 10; after 5 s | No warning class, then `text-warning` | Players see time running out without reading the number. |
 | 201 | vibrates when time runs out, on phones that can | Countdown | A phone with `vibrate`; ends at 1 s | `vibrate` called once | The team acting may not be looking at the screen. |
+
+## Summary and Leaderboard
+
+`src/sdk/interactions/summary.test.tsx`, testing `Summary.tsx` and `Leaderboard.tsx` in `src/sdk/interactions/`. Screen tests (happy-dom), except `rank`, which is a plain function.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 202 | shows who played, what they scored, and each list of items | Summary | Lions, 2 points, Got it: Gala, Zobo; Skipped: Assembly; tap Next | Heading Lions, "scored 2 points", both lists with their items, onNext once | Players see what happened in the turn before moving on. |
+| 203 | says "1 point", and leaves out empty lists | Summary | Eagles, 1 point, an empty Skipped list | "scored 1 point"; no list shown | Small things players notice: grammar, and empty headings. |
+| 204 | orders by score, gives tied scores the same place and skips the next, keeping tied entries in order | `rank` | A 7, B 10, C 10, D 3 | 1 B, 1 C, 3 A, 4 D; the original list unchanged | Two teams with the same score both came first; the next team is third, not second. |
+| 205 | lists every team with its place and score, highest first, highlighting first place | Leaderboard | Lions 4, Eagles 9 | Eagles first (highlighted), then Lions | The results screen at a glance. |

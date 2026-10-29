@@ -172,8 +172,8 @@ A primitive takes plain props (text, callbacks) and knows nothing about machines
 | `PromptCard` | Category or prompt with a counter (name ten) | Planned |
 | `MultipleChoice` | Question, options, reveal (trivia) | Planned |
 | `Countdown` | Shared timer display with warnings; reports when time is up (it reads the clock only to show it) | Built |
-| `Summary` | Turn/round recap with editable results | Planned |
-| `Leaderboard` | Team/player standings | Planned |
+| `Summary` | Turn/round recap with editable results | Built, read-only for now |
+| `Leaderboard` | Team/player standings; tied scores share a place | Built |
 | `SecretReveal` | One-player-at-a-time private reveal (future: Mafia roles) | Planned |
 | `Vote` | Pick a player or option (future: Mafia) | Planned |
 

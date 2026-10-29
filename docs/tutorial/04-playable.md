@@ -429,3 +429,60 @@ The card takes most of the screen; the text is 48px, readable at arm's length by
 1. `pnpm test` reports `201 passed`.
 2. In `Countdown.tsx`, delete the `clearInterval(id)` line inside the interval (just above `timeUp()`) and run `pnpm test`. "calls onTimeUp once, when time runs out" fails: it's now called on every tick after the end. Put it back.
 3. `pnpm typecheck` and `pnpm lint` pass. The primitives can't be seen in the app until step 9 connects them; that's the checkpoint.
+
+---
+
+## Step 8: Primitives, part 2: Summary and Leaderboard
+
+**What:** the last two primitives this chapter needs:
+
+| Primitive | What it shows | Props |
+|---|---|---|
+| `Summary` | "**Lions** scored **3** points", lists of what happened, a Next button | `title`, `points`, `sections?`, `actionLabel?`, `onNext` |
+| `Leaderboard` | Every team with its place and score, highest first | `entries` |
+
+**Why:** the turn summary and the results screen. With these, every phase of core Charades has a primitive to be drawn with.
+
+### Summary: lists, not Charades
+
+`Summary` doesn't know about "got" and "skipped". It takes `sections`, a list of labelled lists:
+
+```ts
+sections={[{ label: 'Got it', items: ['Gala', 'Zobo'] }, { label: 'Skipped', items: ['Assembly'] }]}
+```
+
+Charades' view (step 9) builds those from its turn record. Name Ten could pass one list of answers, or none. Empty lists are left out, so a turn with no skips doesn't show an empty "Skipped" heading. "1 point" and "2 points" get the right word.
+
+It's **read-only** for now. Fixing a mis-tap here is the editable turn summary, planned for chapter 06 with its own design (ADR 0004 made the points model ready for it).
+
+### Leaderboard: ties
+
+`rank` works out places before anything is drawn:
+
+| Score | Place |
+|---|---|
+| 10 | 1 |
+| 10 | 1 |
+| 7 | 3 |
+
+Equal scores share a place, and the next place is skipped: two teams tied for first means nobody came second. This is how sports tables count. Teams with the same score keep the order they were entered in, because JavaScript's `sort` is stable: it never swaps items it considers equal.
+
+First place is highlighted in the `primary` color; on a tie, every team sharing it is. Who "won" is just whoever has place 1, so a draw needs no special case.
+
+`rank` is exported and tested on its own as a plain function. Logic worth testing is easier to test outside a component.
+
+### Tests: `src/sdk/interactions/summary.test.tsx`
+
+4 tests. `within(list)` limits a search to one part of the page, so the test can check the "Got it" list holds exactly Gala and Zobo. The full table is in [docs/tests.md](../tests.md#summary-and-leaderboard).
+
+### Files changed
+
+- `src/sdk/interactions/Summary.tsx`, `Leaderboard.tsx`, `summary.test.tsx` (new).
+- `docs/game-standard.md` §6: Summary (read-only for now) and Leaderboard are built.
+- `docs/tests.md`: the new tests; counts updated to 205.
+
+### How to verify
+
+1. `pnpm test` reports `205 passed`.
+2. In `Leaderboard.tsx`, change `rank` to give each team its position (`place: index + 1`) and run `pnpm test`. The `rank` test fails: tied teams get different places. Change it back.
+3. `pnpm typecheck` and `pnpm lint` pass.
