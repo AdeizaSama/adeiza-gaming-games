@@ -91,6 +91,10 @@ describe('teamTurns: Word Duel, a full game', () => {
     expect(wordDuel.initial).toBe('handoff')
   })
 
+  it('keeps the game’s points, for views to show what a turn is worth', () => {
+    expect(wordDuel.points({ got: ['sun', 'moon'], skipped: ['star'] })).toBe(2)
+  })
+
   it('starts at the first team’s handoff with scores at zero and the items shuffled', () => {
     const state = start(wordDuel, { input, seed: 1 })
     expect(state.phase).toBe('handoff')

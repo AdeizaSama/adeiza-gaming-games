@@ -4,9 +4,9 @@ import { describe, expect, it } from 'vitest'
 import App from './App'
 
 describe('App', () => {
-  it('shows the name and subtitle', () => {
+  it('starts the demo game at the first team’s handoff', () => {
     render(<App />)
-    expect(screen.getByRole('heading', { name: 'Ku Zo Wasa' })).toBeDefined()
-    expect(screen.getByText('Party games for one phone.')).toBeDefined()
+    expect(screen.getByText('Pass the phone to')).toBeDefined()
+    expect(screen.getByRole('heading', { name: 'Lions' })).toBeDefined()
   })
 })

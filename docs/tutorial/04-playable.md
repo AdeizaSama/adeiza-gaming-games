@@ -486,3 +486,98 @@ First place is highlighted in the `primary` color; on a tie, every team sharing 
 1. `pnpm test` reports `205 passed`.
 2. In `Leaderboard.tsx`, change `rank` to give each team its position (`place: index + 1`) and run `pnpm test`. The `rank` test fails: tied teams get different places. Change it back.
 3. `pnpm typecheck` and `pnpm lint` pass.
+
+---
+
+## Step 9: Views, and the first playable game
+
+**What:** ADR 0005, built:
+
+- **The format's default views** in `src/sdk/formats/team-turns/views/`: `HandoffView`, `TurnSummaryView`, `ResultsView`, and the `TeamTurnsViewProps` type.
+- **Charades' views** in `src/games/charades/views/`: `TurnView` (the card and the timer) and `SummaryView` (replacing the format's, to list the items got and skipped).
+- **`views` in `defineGame`**: required for the game's own phases; the format's defaults filled in for the rest.
+- **`GameScreen`** in `src/app/play/`: plays any game by drawing the view for its current phase.
+- **A first registry** in `src/app/registry/`, and **a demo game** in `App.tsx`: Lions vs Eagles, 1 round, 30-second turns.
+
+**Why:** after this step there's something to hold. Steps 10 to 12 add the pages around it (library, setup, results buttons); this step makes the game itself playable, so it can be checked on a real phone before more is built on it.
+
+### A view connects a primitive to the machine
+
+```tsx
+export function HandoffView({ context, send }) {
+  return (
+    <Handoff
+      to={context.config.teams[context.current]}
+      detail={`Round ${context.round} of ${context.config.rounds}`}
+      onReady={() => send({ type: 'start' })}
+    />
+  )
+}
+```
+
+That's the whole pattern: read what to show from `context`, turn taps into events with `send`. Charades' `TurnView` does the same with two primitives: `Countdown` sends `time_up`, `FlashCard` sends `got` and `skip`.
+
+**The summary's button** says "Next", or "See results" after the last turn. It asks the format's own `turnsRemaining` guard, the same one the machine uses for `next`, so the label can never disagree with where the button goes. `nextLabel` is exported so Charades' summary uses it too.
+
+**The results view** says "Lions won!" or "It's a tie!", from `rank` (step 8): whoever has place 1. "Won" works for any team name, singular or plural.
+
+### `views` in `defineGame`
+
+```ts
+views: { turn: TurnView, turn_summary: SummaryView }
+```
+
+`defineGame` returns the game with `{ ...teamTurnsViews, ...game.views }`: the format's three defaults, with the game's own on top. The type marks `views` as `NoInfer`: the item, turn and event types come from the rest of the game, and the views are *checked* against them. Without it, TypeScript could learn the item type from a wrong view and report the mistake somewhere else, the same trap as ADR 0002's.
+
+As a backstop for code that bypasses types, `defineGame` also checks at runtime that every phase of the machine has a view.
+
+`teamTurns` now keeps the game's `points` on the machine (`machine.points`), so `GameScreen` can hand it to views.
+
+### `GameScreen`
+
+```tsx
+const { state, send } = useGameSession(game.machine, input, options)
+const View: TeamTurnsView<Item, Turn, Event, Config> = game.views[state.phase]
+return <View context={state.context} send={send} points={game.machine.points} />
+```
+
+Three lines of logic for any game. The explicit type on `View` is there because React's JSX checking can't see through a lookup by a phase name that's still a type parameter; declaring it as a plain view type gives it what it needs.
+
+### The registry, early
+
+`src/app/` may not import a game directly (standard §9): only `src/app/registry/` may. So the demo in `App.tsx` gets Charades from the registry: `games[0]`. The registry is just a list for now; step 10 adds the library page that shows it.
+
+### The bundle got bigger
+
+The built JavaScript grew from about 69 KB to 108 KB (gzipped). Until now the app didn't load any game; now it loads Charades, its packs, and zod to check them. That's acceptable for a party game, but worth watching: if it becomes a problem, zod's smaller "mini" build is the first thing to try.
+
+### Testing a whole game by tapping
+
+`GameScreen.test.tsx` plays a full game of Charades the way a player would: tap Start, Got it, Skip, let the 30 seconds run out, read the summary, tap Next, and so on to the results. It's the test that catches a view sending the wrong event.
+
+Its clock is fake, so 30-second turns take no time. Only `Date` and `setInterval` (what the countdown uses) are faked: Testing Library waits on a real `setTimeout` between taps, and a fake one would never fire, so the test would hang.
+
+### Files changed
+
+- `src/sdk/formats/team-turns/views/` (new): `types.ts`, `HandoffView.tsx`, `TurnSummaryView.tsx`, `ResultsView.tsx`, `index.ts`, `views.test.tsx`.
+- `src/sdk/formats/team-turns/teamTurns.ts`: `machine.points`; `teamTurns.test.ts`: a test for it.
+- `src/sdk/game/defineGame.ts`: `views`, `GameViews`, `Game`; `defineGame.test.ts`: views tests and 3 compile-time checks.
+- `src/games/charades/views/TurnView.tsx`, `SummaryView.tsx` (new); `src/games/charades/index.ts`: lists them.
+- `src/app/registry/index.ts`, `src/app/play/GameScreen.tsx`, `src/app/play/GameScreen.test.tsx` (new).
+- `src/app/App.tsx`: the demo game; `App.test.tsx` updated.
+- `docs/game-standard.md` §3, §7, §9: views as built.
+- `docs/tests.md`: the new and changed tests; counts updated to 212 runtime tests and 29 compile-time checks.
+
+### How to verify
+
+1. `pnpm test` reports `212 passed`. `pnpm typecheck`, `pnpm lint`, `pnpm validate-content` and `pnpm build` pass.
+2. In `src/games/charades/views/TurnView.tsx`, make Got it send `skip` and run `pnpm test`. The whole-game test fails: "scored 0 points" instead of 2. Change it back.
+3. **On a phone.** Run `pnpm dev --host`, and open the "Network" address it prints on a phone on the same Wi-Fi. Play the demo game and check:
+   - **Handoff:** "Pass the phone to Lions" is readable at arm's length; Start is easy to hit.
+   - **Turn:** the card text is big and doesn't overflow for long items; Skip (left) and Got it (right) are comfortable with one thumb; the timer is visible, turns orange and pulses in the last 10 seconds, and the phone buzzes at zero (Android; iPhones don't support vibration).
+   - **Summary:** the lists of items got and skipped, and the Next / See results button.
+   - **Results:** the winner and the standings.
+   - **Dark mode:** switch the phone to dark mode and check every screen again.
+   - **Reduced motion:** with "reduce motion" on, buttons don't shrink when pressed and the timer doesn't pulse.
+
+   Known gaps, coming in steps 10 to 12: no way to pick teams or settings, nothing after the results, and a refresh restarts the demo (chapter 05).

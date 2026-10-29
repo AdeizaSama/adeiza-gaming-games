@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 205 runtime tests (`pnpm test`) and 26 compile-time checks (`pnpm typecheck`).
+**Counts:** 212 runtime tests (`pnpm test`) and 29 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -26,8 +26,8 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Team-turns config](#team-turns-config) | `src/sdk/formats/team-turns/config.test.ts` | 11 | |
 | [Item pool](#item-pool) | `src/sdk/formats/team-turns/pool.test.ts` | 13 | |
 | [Team-turns guards and actions](#team-turns-guards-and-actions) | `src/sdk/formats/team-turns/rules.test.ts` | 8 | |
-| [teamTurns (Word Duel)](#teamturns-word-duel) | `src/sdk/formats/team-turns/teamTurns.test.ts` | 12 | 9 |
-| [defineGame](#definegame) | `src/sdk/game/defineGame.test.ts` | 8 | 3 |
+| [teamTurns (Word Duel)](#teamturns-word-duel) | `src/sdk/formats/team-turns/teamTurns.test.ts` | 13 | 9 |
+| [defineGame](#definegame) | `src/sdk/game/defineGame.test.ts` | 10 | 6 |
 | [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 9 | |
 | [App](#app) | `src/app/App.test.tsx` | 1 | |
 | [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 3 | |
@@ -35,6 +35,8 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Game session](#game-session) | `src/sdk/game/useGameSession.test.ts` | 6 | |
 | [Interaction primitives](#interaction-primitives) | `src/sdk/interactions/interactions.test.tsx` | 7 | |
 | [Summary and Leaderboard](#summary-and-leaderboard) | `src/sdk/interactions/summary.test.tsx` | 4 | |
+| [Team-turns views](#team-turns-views) | `src/sdk/formats/team-turns/views/views.test.tsx` | 3 | |
+| [Game screen](#game-screen) | `src/app/play/GameScreen.test.tsx` | 1 | |
 
 **Two kinds of test:**
 
@@ -371,6 +373,7 @@ Each row is a mistake TypeScript must reject.
 |---|---|---|---|---|---|
 | 151 | has no mistakes validateMachine can find | `validateMachine` | Word Duel | No problems | Every machine's tests must include this (standard §12), and the format's phases are part of every team-turns machine. |
 | 152 | adds the format's phases, guards and actions to the game's | `teamTurns` | Word Duel | Phases handoff, turn, turn_summary, results; guard `turnsRemaining`; the game's two actions plus the format's four; starts at `handoff` | The game wrote only `turn`; everything else must come from the format. |
+| 208 | keeps the game's points, for views to show what a turn is worth | `machine.points` | Two words got, one skipped | 2 | ADR 0005: summary views show `points(turn)`. |
 | 153 | starts at the first team's handoff with scores at zero and the items shuffled | Starting context | Seed 1 | `handoff`, scores 0 and 0, team 0, round 1, nothing on screen, all five words in the pool | The format builds the starting context from the settings and items. |
 | 154 | refuses to start with no items | Starting context | No items | Error | A game with nothing to draw can't be played; failing at the start is clearer than failing on the first draw. |
 | 155 | starts a turn with the timer set and the first item on screen | `start` event | `start` at 5000 ms | Phase `turn`, `turnEndsAt` 35000, the first drawn word on screen | The handoff's `start` runs `startTurn` then `drawItem`. |
@@ -406,7 +409,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 163 | returns a valid game unchanged | `defineGame` | The valid game | The same object back | `defineGame` checks; it never alters the game. |
+| 163 | returns the game with the format's default views filled in | `defineGame`, views | The valid game, with a view for `turn` only | The same machine; views are the format's three defaults plus the game's `turn` | ADR 0005: games write views for their own phases and get the format's for free. |
 | 164 | accepts a game without presets | Presets | No `presets` | No error | Presets are optional; core Charades has none yet. |
 | 165 | reports problems in meta, with where each is | `meta` | Id `Word Duel`, complexity 6, players min 4 max 2, no contributors | One error naming the game, listing `meta.id`, `meta.complexity`, `meta.players` and `meta.contributors` | The library shows these; mistakes fail the game's tests instead of reaching players. All problems at once. |
 | 166 | needs at least one pack | Content | No packs | Reports `content.packs` | A game without items can't be played. |
@@ -414,6 +417,8 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 168 | reports a preset that names a pack the game does not have | Presets | Preset with pack `anime` | Reports `config.presets.0.packs` naming `"anime"` | A typo in a pack id would give players an empty game. |
 | 169 | reports two presets with the same id, and a preset without contributors | Presets | Two presets called `quick`, the second without contributors | Reports `config.presets.1.id` and `config.presets.1.contributors` | Preset ids are used in links; credit is required (§3). |
 | 170 | keeps the item and settings types from the schemas | Types | The defined game | Packs typed `Pack<{ text: string }>[]`; settings typed `TeamTurnsConfig` | The app (chapter 04) works with a game's real types. Checked by `pnpm typecheck`. |
+| 206 | uses a game's own view for a format phase instead of the default | Views | Views for `turn` and `turn_summary` | The game's summary view is used | A game can replace a format view (Charades lists the items got and skipped). |
+| 207 | reports a phase without a view | Views | `views: {}` (types bypassed) | Reports `views: Phase "turn" has no view` | Types catch this; the check also covers code that bypasses them. |
 
 ### Compile-time checks
 
@@ -422,6 +427,9 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | C24 | The machine plays different items from the packs | A machine for `{ word }` items with `{ text }` packs | The item schema, the packs and the machine must agree on what an item is. |
 | C25 | A preset sets the teams | `config: { teams: ['A', 'B'] }` | Players always name their own teams. |
 | C26 | A format that doesn't exist yet | `format: 'host-led'` | Only `team-turns` is built. |
+| C27 | A game phase without a view | `views: { turn_summary: … }` with no `turn` | Players would see a blank screen in that phase. |
+| C28 | A view for a phase the machine doesn't have | `views: { turn, steal }` | Usually a typo; the view would never be shown. |
+| C29 | A view written for another game's items | A view reading `item.word` in a game whose items have `text` | It would show nothing, or crash, on the real items. |
 
 ## Charades machine
 
@@ -445,7 +453,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 180 | shows the name and subtitle | App | Render the app | A heading "Ku Zo Wasa" and the text "Party games for one phone." | Proves screen tests work. The page it checks is replaced by the game library in step 10. |
+| 180 | starts the demo game at the first team's handoff | App | Render the app | "Pass the phone to" and a heading Lions | The app shows a playable game. Until step 10 it's a fixed demo game; then the app starts at the game library. |
 
 ## Theme tokens
 
@@ -506,3 +514,21 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 203 | says "1 point", and leaves out empty lists | Summary | Eagles, 1 point, an empty Skipped list | "scored 1 point"; no list shown | Small things players notice: grammar, and empty headings. |
 | 204 | orders by score, gives tied scores the same place and skips the next, keeping tied entries in order | `rank` | A 7, B 10, C 10, D 3 | 1 B, 1 C, 3 A, 4 D; the original list unchanged | Two teams with the same score both came first; the next team is third, not second. |
 | 205 | lists every team with its place and score, highest first, highlighting first place | Leaderboard | Lions 4, Eagles 9 | Eagles first (highlighted), then Lions | The results screen at a glance. |
+
+## Team-turns views
+
+`src/sdk/formats/team-turns/views/views.test.tsx`, testing the format's default views in `src/sdk/formats/team-turns/views/`. Screen tests (happy-dom). A made-up game whose turn record is a count of words guessed; Lions and Eagles, 2 rounds, Eagles playing, 3 words got.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 209 | handoff: names the team and the round, and Start sends start | `HandoffView` | Round 1 of 2; tap Start | Heading Eagles, "Round 1 of 2"; sends `start` | The view connects the Handoff primitive to the machine. |
+| 210 | turn summary: shows the turn's points, and Next, or See results after the last turn | `TurnSummaryView` | Round 1; then round 2 (the last turn) | "scored 3 points" and Next (sends `next`); then See results | The button says where `next` will go, using the format's own `turnsRemaining`. |
+| 211 | results: names the winner, or says it's a tie | `ResultsView` | Scores 5 and 8; then 6 and 6 | "Eagles won!"; then "It's a tie!" | A draw needs its own headline. |
+
+## Game screen
+
+`src/app/play/GameScreen.test.tsx`, testing `src/app/play/GameScreen.tsx` with the real Charades game from the registry: Lions and Eagles, 1 round, 30-second turns, Back to School, seed 2026. Fakes the clock and `setInterval` (not `setTimeout`, which Testing Library needs) so turns pass instantly.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 212 | plays a whole game of Charades by tapping, from the first handoff to the results | Every view, end to end | Lions: Start, Got it ×2, Skip, 30 s pass, Next. Eagles: Start, Got it, 30 s pass, See results | Timer starts at 30; Lions' summary: 2 points, 2 got, 1 skipped; Eagles' summary: 1 point; "Lions won!", standings Lions 2, Eagles 1 | Proves the whole chain: buttons send the right events, the machine moves, and each phase's view appears. A view sending the wrong event fails here. |

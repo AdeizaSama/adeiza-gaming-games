@@ -71,6 +71,10 @@ export default defineGame({
     ],
   },
   machine,                           // ./machine.ts
+  views: {                           // one per phase (ADR 0005)
+    turn: TurnView,                  // ./views/: required for each of the game's own phases
+    turn_summary: SummaryView,       // optional: replaces the format's default for its phase
+  },
 });
 ```
 
@@ -78,7 +82,9 @@ export default defineGame({
 
 **Defaults live in the config schema** (zod's `.default()`), not in a separate list, so they can't drift apart. A game that wants different defaults from the format's extends its schema.
 
-> **Being built:** two more fields are added as their parts are built, each required from then on: `views` (one per phase, from `./views/`) and `rules` (`./rules.md`, player-facing rules).
+**Views** ([ADR 0005](decisions/0005-views.md)): each of the game's own phases needs a view; the format provides default views for its phases (handoff, turn summary, results), and a game lists one only to replace it. `defineGame` fills in the defaults and checks every phase has a view. A view receives `context` (to show), `send` (to report what players did) and `points` (the game's scoring).
+
+> **Being built:** `rules` (`./rules.md`, player-facing rules) is added as a required field when the first game's rules are written.
 
 **Contributors.** Credit is recorded at both levels, as a list of GitHub handles:
 
@@ -195,7 +201,7 @@ A format is the outer loop shared by several games: setup, turn order, rounds, s
 | Context | `TeamTurnsContext`: `config` (the settings), `scores`, `current` (whose turn), `round`, `turnEndsAt`, `pool`, `item` (the card on screen), and `turn` (the game's record of the current turn) |
 | Item pool | The chosen packs' items, each item once (an item in two packs is kept from the first pack chosen), filtered to the chosen tags if any. Drawn in a shuffled order without repeats. When every item has been drawn, they're shuffled back in and drawing continues, with the item just shown placed last. |
 | Guards/actions | `turnsRemaining`; `startTurn` (fresh turn record and timer), `drawItem`, `bankPoints` (adds the turn's points to the team's score), `advanceTeam`. A game's turn may use them, usually `drawItem`. |
-| Views | Handoff, editable turn summary, leaderboard, results (being built) |
+| Views | Default views for `handoff`, `turn_summary` and `results` in `src/sdk/formats/team-turns/views/` (a game may replace any of them). The turn summary is read-only for now; correcting a mis-tap on it is being built. |
 
 **team-turns: how a game plugs in** ([ADR 0004](decisions/0004-team-turns-builder.md)). A game passes its turn to `teamTurns` (`src/sdk/formats/team-turns/teamTurns.ts`), which returns the whole machine:
 
@@ -257,7 +263,7 @@ Out of scope for v1: multiplayer or multi-device play; accounts, backends or any
 src/
   app/                 app shell: routing, library page, setup flow, persistence
     registry/          the list of games; the only part of app/ that imports games
-  sdk/                 defineGame (game/), machine runner (machine/), Rng, content packs (content/), formats (formats/<format>/)
+  sdk/                 defineGame and useGameSession (game/), machine runner (machine/), Rng, content packs (content/), formats with their default views (formats/<format>/)
     interactions/      shared phase primitives (§6)
   ui/                  low-level components (button, dialog, …). Only what's used.
   games/

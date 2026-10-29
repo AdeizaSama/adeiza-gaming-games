@@ -3,6 +3,8 @@ import { TeamTurnsConfig } from '../../sdk/formats/team-turns/config'
 import { defineGame } from '../../sdk/game/defineGame'
 import { machine } from './machine'
 import { itemKey, itemSchema } from './schema'
+import { SummaryView } from './views/SummaryView'
+import { TurnView } from './views/TurnView'
 
 export default defineGame({
   meta: {
@@ -24,4 +26,6 @@ export default defineGame({
   // The format's settings for now. Charades' own (modes, skip penalty) and its presets come in chapter 06.
   config: { schema: TeamTurnsConfig },
   machine,
+  // handoff and results use the format's views; the summary is replaced to list the items got and skipped.
+  views: { turn: TurnView, turn_summary: SummaryView },
 })
