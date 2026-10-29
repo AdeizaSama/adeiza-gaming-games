@@ -51,30 +51,34 @@ export default defineGame({
   },
   content: {
     itemSchema,                      // zod schema for ONE content item, from ./schema.ts
+    itemKey,                         // (item) => item.text, from ./schema.ts: what makes two items the same
     packs: loadPacks(                // checks every pack (§10) and returns them sorted by id
       import.meta.glob("./content/*.json", { eager: true, import: "default" }),
       itemSchema,
-      itemKey,                       // (item) => item.text, from ./schema.ts: what makes two items the same
+      itemKey,
     ),
   },
   config: {
-    schema: CharadesConfig,          // zod schema for setup options
-    defaults: { rounds: 3, seconds: 60, /* … */ },
-    presets: [                       // named variants
+    schema: CharadesConfig,          // zod schema for setup options, defaults included (§7)
+    presets: [                       // named variants (optional)
       {
         id: "anime-90",
         name: "Anime Charades, 90-second turns",
         contributors: ["AdeizaSama"],  // GitHub handles of the variant's creators
-        config: { seconds: 90 },       // overrides on top of defaults
+        config: { seconds: 90 },       // settings that differ from the defaults; never teams
         packs: ["anime"],              // content pack ids
       },
     ],
   },
-  rules: rulesMarkdown,              // ./rules.md
   machine,                           // ./machine.ts
-  views,                             // ./views/* — one per phase
 });
 ```
+
+`defineGame` is in `src/sdk/game/`. Besides type-checking, it checks what types can't, and throws one error listing every problem: `meta` (kebab-case id, complexity 1–5, `players.max` ≥ `players.min`, at least one contributor), at least one pack, and each preset (unique id, contributors, packs that exist, settings that pass the config schema). A game's tests import it, so a broken game fails CI.
+
+**Defaults live in the config schema** (zod's `.default()`), not in a separate list, so they can't drift apart. A game that wants different defaults from the format's extends its schema.
+
+> **Being built:** two more fields are added as their parts are built, each required from then on: `views` (one per phase, from `./views/`) and `rules` (`./rules.md`, player-facing rules).
 
 **Contributors.** Credit is recorded at both levels, as a list of GitHub handles:
 
@@ -342,7 +346,7 @@ One file per pack: `src/games/<id>/content/<pack-id>.json`.
 ## 13. Definition of Done (per game)
 
 - [ ] Fits an existing format, or is explicitly deferred
-- [ ] `defineGame` export with meta, schemas, defaults, rules, machine, views
+- [ ] `defineGame` export with meta, content, config schema (defaults included) and presets, rules, machine, views
 - [ ] Guards and actions are deterministic; full-playthrough test, `validateMachine` test, and per-guard and per-action tests
 - [ ] At least one content pack passing validation
 - [ ] Views use interaction primitives (custom UI justified)

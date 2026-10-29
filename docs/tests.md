@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 162 runtime tests (`pnpm test`) and 23 compile-time checks (`pnpm typecheck`).
+**Counts:** 170 runtime tests (`pnpm test`) and 26 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -27,6 +27,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Item pool](#item-pool) | `src/sdk/formats/team-turns/pool.test.ts` | 13 | |
 | [Team-turns guards and actions](#team-turns-guards-and-actions) | `src/sdk/formats/team-turns/rules.test.ts` | 8 | |
 | [teamTurns (Word Duel)](#teamturns-word-duel) | `src/sdk/formats/team-turns/teamTurns.test.ts` | 12 | 9 |
+| [defineGame](#definegame) | `src/sdk/game/defineGame.test.ts` | 8 | 3 |
 
 **Two kinds of test:**
 
@@ -387,3 +388,28 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | C21 | Writing one of the format's actions | `actions: { drawItem: … }` | Same, for actions: two `drawItem`s would silently replace one. |
 | C22 | A final game phase | `final: true` | Only the format's `results` ends the game. |
 | C23 | An event the game doesn't have | `on: { jump: … }` | As C12, inside a format game. |
+
+## defineGame
+
+`src/sdk/game/defineGame.test.ts`, testing `src/sdk/game/defineGame.ts`. A tiny team-turns game (`word-duel`) with `{ text }` items, two packs (`animals`, `food`), the plain `TeamTurnsConfig` schema, and one preset (`quick`: 1 round, 30 seconds, pack `food`). Each test changes one part. "Reports X" means the thrown error lists a problem at X.
+
+### Runtime tests
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 163 | returns a valid game unchanged | `defineGame` | The valid game | The same object back | `defineGame` checks; it never alters the game. |
+| 164 | accepts a game without presets | Presets | No `presets` | No error | Presets are optional; core Charades has none yet. |
+| 165 | reports problems in meta, with where each is | `meta` | Id `Word Duel`, complexity 6, players min 4 max 2, no contributors | One error naming the game, listing `meta.id`, `meta.complexity`, `meta.players` and `meta.contributors` | The library shows these; mistakes fail the game's tests instead of reaching players. All problems at once. |
+| 166 | needs at least one pack | Content | No packs | Reports `content.packs` | A game without items can't be played. |
+| 167 | checks a preset's settings against the game's config schema | Presets | Preset with 5-second turns | Reports `config.presets.0.config.seconds` | A preset is just settings, so the same rules apply as on the setup screen. |
+| 168 | reports a preset that names a pack the game does not have | Presets | Preset with pack `anime` | Reports `config.presets.0.packs` naming `"anime"` | A typo in a pack id would give players an empty game. |
+| 169 | reports two presets with the same id, and a preset without contributors | Presets | Two presets called `quick`, the second without contributors | Reports `config.presets.1.id` and `config.presets.1.contributors` | Preset ids are used in links; credit is required (§3). |
+| 170 | keeps the item and settings types from the schemas | Types | The defined game | Packs typed `Pack<{ text: string }>[]`; settings typed `TeamTurnsConfig` | The app (chapter 04) works with a game's real types. Checked by `pnpm typecheck`. |
+
+### Compile-time checks
+
+| # | Mistake | Example | Why |
+|---|---|---|---|
+| C24 | The machine plays different items from the packs | A machine for `{ word }` items with `{ text }` packs | The item schema, the packs and the machine must agree on what an item is. |
+| C25 | A preset sets the teams | `config: { teams: ['A', 'B'] }` | Players always name their own teams. |
+| C26 | A format that doesn't exist yet | `format: 'host-led'` | Only `team-turns` is built. |

@@ -459,3 +459,74 @@ The full tables are in [docs/tests.md](../tests.md#teamturns-word-duel).
 2. `pnpm typecheck` passes, which proves the 9 mistakes are still type errors. To see one: in `teamTurns.test.ts`, delete the `// @ts-expect-error` line above `'turn_sumary'`, run `pnpm typecheck`, and read the error on that line. Put the comment back.
 3. Make the last turn not count: in `teamTurns.ts`, change `{ to: 'results', actions: ['bankPoints'] }` to `{ to: 'results' }` and run `pnpm test`. "plays from the first handoff to the results" fails with scores 4 and 2 instead of 4 and 4. Change it back.
 4. `pnpm lint` passes.
+
+---
+
+## Step 7: `defineGame`
+
+**What:** `src/sdk/game/defineGame.ts`: the function every game's `index.ts` exports (standard §3), with `GameMeta`, the schema for what the library shows about a game, and tests.
+
+**Why:** the app (chapter 04) needs one object per game that holds everything about it: what to show in the library, where its content is, which settings it has, and its machine. `defineGame` is that object's shape, and the place where mistakes TypeScript can't see are caught.
+
+### What's in it now
+
+```ts
+defineGame({
+  meta:    { id, name, tagline, icon, format: 'team-turns', players, complexity, tags, contributors },
+  content: { itemSchema, itemKey, packs },
+  config:  { schema, presets? },
+  machine,
+})
+```
+
+Compared with standard §3 before this step, three things changed:
+
+1. **`content.itemKey` is new.** The item pool (step 4) needs it to keep each item once, and only the game knows what makes two of its items the same.
+2. **`config.defaults` is gone.** The defaults already live in the config schema (`.default(3)` in step 3). A second list would be a second place to update, and sooner or later the two would disagree.
+3. **`views` and `rules` aren't there yet.** Views are built in chapter 04 and Charades' rules in chapter 05. Each is added then, as a **required** field. Adding them now as optional would let a game with no screens type-check, and nothing would force it to change later.
+
+### What the types check
+
+`defineGame`'s type parameters are worked out from the game, and every part must agree:
+
+- The **item type** from `itemSchema` must be the one the packs hold and the one the machine plays. A machine for `{ word }` items with `{ text }` packs is a type error.
+- The **settings type** from `config.schema` must be the one the machine was built with.
+- **Presets** can't set `teams`: players always name their own.
+
+### What it checks when the game loads
+
+Types can't check values like "complexity is between 1 and 5" or "this preset's pack exists". `defineGame` does, and throws one error listing every problem, the same way `loadPacks` does for packs:
+
+```
+Game "word-duel" has problems:
+  meta.id: Use lowercase words joined by hyphens, e.g. "movies-90s"
+  meta.complexity: Too big: expected number to be <=5
+  config.presets.0.packs: No pack with id "anime"
+```
+
+- **`meta`**: kebab-case id, a name, tagline and icon, complexity 1 to 5, `players.max` at least `players.min`, at least one contributor (GitHub usernames, the same rule as packs).
+- **At least one pack.**
+- **Each preset**: a unique kebab-case id, a name, contributors, at least one pack, only packs that exist, and settings that pass the game's config schema. That last check runs the preset's settings through the schema with two placeholder team names, since presets never include teams.
+
+Because a game's tests import its `index.ts`, a broken game fails CI, never a player's phone.
+
+### Compile-time checks that would throw
+
+`defineMachine`'s tests list their mistakes in a plain array. `defineGame` also checks values when it runs, so one of the mistakes (`format: 'host-led'`) would throw as soon as the test file loads. Each mistake is wrapped in a function that's never called, `() => defineGame({ … })`, so TypeScript still checks it but it never runs.
+
+### Tests: `src/sdk/game/defineGame.test.ts`
+
+8 runtime tests and 3 compile-time checks. The full tables are in [docs/tests.md](../tests.md#definegame).
+
+### Files changed
+
+- `src/sdk/game/defineGame.ts`, `src/sdk/game/defineGame.test.ts` (new).
+- `docs/game-standard.md` §3: the example matches `defineGame`, with what it checks, where defaults live, and a note on `views` and `rules`. §13: the Definition of Done line matches.
+- `docs/tests.md`: the new tests; counts updated to 170 runtime tests and 26 compile-time checks.
+
+### How to verify
+
+1. `pnpm test` reports `170 passed` (162 before, 8 new).
+2. `pnpm typecheck` passes, so the 3 mistakes are still type errors.
+3. Break a check: in `defineGame.ts`, change `complexity: z.int().min(1).max(5)` to `.max(6)` and run `pnpm test`. "reports problems in meta, with where each is" fails. Change it back.
+4. `pnpm lint` passes.
