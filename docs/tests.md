@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 251 runtime tests (`pnpm test`) and 29 compile-time checks (`pnpm typecheck`).
+**Counts:** 254 runtime tests (`pnpm test`) and 29 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -41,6 +41,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Saved game](#saved-game) | `src/app/play/savedGame.test.ts` | 12 | |
 | [Play page](#play-page) | `src/app/play/PlayPage.test.tsx` | 3 | |
 | [Continuing a saved game](#continuing-a-saved-game) | `src/app/library/continue.test.tsx` | 6 | |
+| [Wake lock](#wake-lock) | `src/app/play/useWakeLock.test.ts` | 3 | |
 
 **Two kinds of test:**
 
@@ -596,3 +597,13 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 247 | says when a save couldn't be restored, found by the library or by the play page | Discarded notice | An old-version save, opening `/`; then a save with an unknown phase, opening `/charades/play` | The notice with "older version of the app"; then the library with the notice naming the phase | A lost game is explained wherever it's found, never silent. The play page sends the reason to the library. |
 | 248 | asks before Start replaces an unfinished game: Continue saved game keeps it, Start new game replaces it | Replace question | A save in round 2; Start; Continue saved game | "Replace your saved game?" naming the teams and round; then the saved game, round 2 | One save per device: starting a new game must never silently destroy the old one. |
 | 249 | replaces the saved game after Start new game, and without asking when the saved game is finished | Replace question | A save in round 2; Start, Start new game; then a finished save, Start | A new game in round 1, saved; then no question, and a new unfinished save | Replacing is the answer's job; a finished game isn't worth asking about. |
+
+## Wake lock
+
+`src/app/play/useWakeLock.test.ts`, testing `src/app/play/useWakeLock.ts`. Runs the hook with `renderHook` in happy-dom, which has no wake lock of its own: tests give `navigator` a fake one whose requests succeed (or fail), and set the page's visibility by hand.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 252 | keeps the screen on while shown, and lets it go when the page closes | Request, release | Show the hook; then remove it | A `'screen'` lock requested; then released once | The screen stays on during play, and only during play. |
+| 253 | asks again when the page comes back after being hidden | Visibility | Hide the page; show it again | One request while hidden; a second when visible | Browsers drop the lock whenever the page is hidden (another app, the lock button); without asking again it would only last until the first interruption. |
+| 254 | carries on without it where it is missing or refused | No support | No wake lock at all; then one that refuses | No error either way | Older phones lack it and battery savers refuse it: the game must play regardless. |

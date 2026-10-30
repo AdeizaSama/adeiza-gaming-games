@@ -10,6 +10,7 @@ import { useGameSession, type SessionOptions } from '../../sdk/game/useGameSessi
 import type { MachineEvent, MachineState } from '../../sdk/machine/types'
 import { Button } from '../../ui/button'
 import { Dialog } from '../../ui/dialog'
+import { useWakeLock } from './useWakeLock'
 
 export interface GameScreenProps<
   Item,
@@ -50,6 +51,8 @@ export function GameScreen<
   // Declared as a plain view type: React's JSX typing can't see through a lookup by a still-generic phase name.
   const View: TeamTurnsView<Item, Turn, Event, Config> = game.views[state.phase]
   const [quitting, setQuitting] = useState(false)
+  // The screen stays on for the whole game: handoffs and summaries included, when nobody touches the phone either.
+  useWakeLock()
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col">

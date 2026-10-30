@@ -414,3 +414,51 @@ Ignored means the defaults are used, without a notice. Losing remembered setup c
 1. `pnpm test` reports `251 passed`. `pnpm typecheck` and `pnpm lint` pass.
 2. In `savedSetup.ts`, change the `packs` line to `const packs = saved.data.packs` (no filter) and run `pnpm test`. "drops remembered packs that no longer exist" fails. Change it back.
 3. On a phone (`pnpm dev --host`): in setup, rename a team, change the rounds and pick a tag, then swipe back and open Charades again. Everything is as you left it.
+
+---
+
+## Step 8: Keeping the screen on
+
+**What:** `useWakeLock`, used by the game screen: the phone's screen stays on for the whole game.
+
+**Why:** phones dim and lock after a minute or so without a touch, and in a party game the phone often isn't touched:
+
+- while someone acts out a long clue;
+- on the handoff screen, while the next team decides who goes;
+- on the summary, while everyone argues about a point;
+- on the results, while people read the standings.
+
+A locked phone doesn't lose the game any more (step 4), but unlocking it mid-turn costs seconds the team needs.
+
+### The Screen Wake Lock API
+
+```ts
+const lock = await navigator.wakeLock.request('screen') // keep the screen on
+await lock.release()                                     // let it sleep again
+```
+
+`request` returns a **promise**: the answer arrives a moment later, which is why the hook uses `await`. Three details shape the hook:
+
+- **The browser drops the lock whenever the page is hidden**: switching apps, pressing the lock button. So the hook listens for `visibilitychange` and asks again when the page is visible.
+- **The page can close before the answer arrives.** If it has, the lock is released at once instead of being kept by a page that's gone.
+- **It can be missing or refused.** Older phones don't have it, and some battery savers say no. Either way, the screen behaves as usual and nothing breaks.
+
+It doesn't stop anyone pressing the power button, and it ends when the game screen closes: setup and the library sleep as usual.
+
+### Testing a browser feature the test browser doesn't have
+
+happy-dom has no wake lock. The tests give `navigator` a fake one with `vi.stubGlobal` (as the countdown's vibration test did, chapter 04 step 7), and set `document.visibilityState` by hand to act out hiding and showing the page. `await act(async () => {})` lets the fake's promised answer arrive before the test checks.
+
+### Files changed
+
+- `src/app/play/useWakeLock.ts`, `useWakeLock.test.ts` (new).
+- `src/app/play/GameScreen.tsx`: uses it.
+- `docs/tests.md`: the wake lock tests; counts updated to 254.
+
+### How to verify
+
+1. `pnpm test` reports `254 passed`. `pnpm typecheck` and `pnpm lint` pass.
+2. In `useWakeLock.ts`, delete the `document.addEventListener('visibilitychange', …)` line and run `pnpm test`. "asks again when the page comes back" fails. Put it back.
+3. On a phone (`pnpm dev --host`): start a game and leave it on the handoff screen for longer than the phone's auto-lock time. The screen stays on. Switch to another app and back, and wait again: it still stays on.
+
+   The wake lock only works on a secure page (`https://`) or on `localhost`. A phone opening the computer's network address (`http://192.168…`) isn't either, so **this check needs the deployed site**. Over the network address the screen locks as usual: that's the "missing" case, not a bug.
