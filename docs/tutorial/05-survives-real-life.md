@@ -304,3 +304,65 @@ Handoff, Summary and Charades' turn view changed one class each.
 1. `pnpm test` reports `243 passed`. `pnpm typecheck` and `pnpm lint` pass.
 2. In `PlayPage.tsx`, delete the `clearGame()` line and run `pnpm test`. The Quit test fails: the save is still there. Put it back.
 3. On a phone (`pnpm dev --host`): tap Quit during a turn. The question appears, the page behind is dimmed, and Keep playing returns to the turn. Then Quit again and Quit game: the library. On Android, the back button closes the question instead of leaving the page.
+
+---
+
+## Step 6: Continue, replace, and saying what was lost
+
+**What:**
+
+- **Continue card.** The library shows "Continue Charades: Lions vs Eagles · Round 2 of 3" above the games when an unfinished game is saved.
+- **Replace question.** Start asks "Replace your saved game?" when one is saved, with **Start new game** or **Continue saved game**.
+- **Notice.** When a save had to be thrown away, the library says so, and why.
+
+**Why:** ADR 0006: one save per device, so getting back to it must be easy and replacing it must be deliberate. A back swipe out of a game now costs one tap on Continue.
+
+### The library reads the save once
+
+```tsx
+const [saved] = useState(() => summarizeSave())
+```
+
+As on the play page (step 4), the read happens once, when the page opens, because reading can delete a stale save. A finished game isn't offered: there's nothing left to play.
+
+### A notice that reaches the library
+
+A stale save can be found in two places:
+
+| Found by | How the library learns of it |
+|---|---|
+| The library itself | the read above returns `discarded` with the reason |
+| The play page (after a refresh, say) | it redirects to the library with the reason in navigation state |
+
+```tsx
+if (saved.status === 'discarded') return <Navigate to="/" replace state={{ discarded: saved.reason }} />
+```
+
+Either way it's shown once: the save was deleted when it was found, so the next visit has nothing to report. The notice uses `role="status"`, which screen readers announce without moving focus.
+
+### Asking before replacing
+
+Start runs the same code as before, wrapped in a `start` function. If an unfinished game is saved, the setup page keeps that function in state and opens the question instead:
+
+```tsx
+if (saved.status === 'ok' && !saved.summary.finished) setPending({ start, replacing: saved.summary })
+else start()
+```
+
+**Start new game** calls the kept function. **Continue saved game** goes to the play page, which plays the save that's still there. The question names the game it would replace ("Your Charades game (Lions vs Eagles · Round 2 of 3) will be lost"), because "your saved game" alone doesn't say which one.
+
+### Files changed
+
+- `src/app/library/LibraryPage.tsx`: the Continue card and the notice. `continue.test.tsx` (new).
+- `src/app/setup/SetupPage.tsx`: the replace question.
+- `src/app/play/PlayPage.tsx`: a stale save goes to the library with its reason.
+- `src/app/play/savedGame.ts`: `describeSave`.
+- `docs/tests.md`: the new tests; counts updated to 249.
+
+### How to verify
+
+1. `pnpm test` reports `249 passed`. `pnpm typecheck` and `pnpm lint` pass.
+2. In `SetupPage.tsx`, change `if (saved.status === 'ok' && !saved.summary.finished) setPending` to `if (false) setPending` and run `pnpm test`. The two replace tests fail. Change it back.
+3. On a phone (`pnpm dev --host`):
+   - Start a game, play a turn, then swipe back to the library: Continue is at the top and returns to the same point.
+   - From the library, open Charades and tap Start: the replace question appears.

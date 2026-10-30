@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 243 runtime tests (`pnpm test`) and 29 compile-time checks (`pnpm typecheck`).
+**Counts:** 249 runtime tests (`pnpm test`) and 29 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -40,6 +40,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 7 | |
 | [Saved game](#saved-game) | `src/app/play/savedGame.test.ts` | 12 | |
 | [Play page](#play-page) | `src/app/play/PlayPage.test.tsx` | 3 | |
+| [Continuing a saved game](#continuing-a-saved-game) | `src/app/library/continue.test.tsx` | 6 | |
 
 **Two kinds of test:**
 
@@ -580,3 +581,16 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 240 | carries on a saved turn after a refresh, with the clock still running, and saves every move | Resume, saving | Open at 10 000 ms; tap Got it | Lions' turn, timer at 20; the save now has 2 items got | A refresh loses nothing but the seconds it took, and every move is saved. |
 | 241 | ends the turn at once if its time ran out during the refresh | Resume after time ran out | Open at 45 000 ms | Lions' summary, "scored 1 point"; the save is at `turn_summary` | The turn ended while the page was gone; the game catches up instead of showing a timer below zero. |
 | 243 | asks before quitting: Keep playing carries on, Quit game deletes the save and goes to the library | Quit | A new saved game; Quit, Keep playing; Quit, Quit game | The dialog; then the handoff again; then the library, and nothing saved | One stray tap mustn't end a game, and a deliberate quit mustn't leave a save behind. |
+
+## Continuing a saved game
+
+`src/app/library/continue.test.tsx`, testing the library's Continue card and notice (`src/app/library/LibraryPage.tsx`), the setup screen's "Replace your saved game?" (`src/app/setup/SetupPage.tsx`) and `describeSave`. Screen tests (happy-dom), starting the app at an address with a `MemoryRouter`; `localStorage` emptied before each. The saved game: Charades, Lions and Eagles, 2 rounds, seed 2026, played with nothing guessed: after 2 turns it's round 2, after 4 it's finished.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 244 | describes a save by its teams and round | `describeSave` | 2 teams, round 2 of 3; 3 teams, round 1 of 1 | "Lions vs Eagles · Round 2 of 3"; "Lions, Eagles and Hawks · Round 1 of 1" | Players recognise their game by who's playing and how far along it is. |
+| 245 | offers the unfinished game first in the library, and Continue carries on with it | Continue card | A save in round 2; open `/`; tap Continue | A "Continue Charades" link with the teams and round; then the handoff, "Round 2 of 2" | After a back swipe or a closed tab, getting back is one tap. |
+| 246 | offers nothing to continue for a finished game | Continue card | A save at the results | No Continue link | There's nothing left to play in a finished game (ADR 0006). |
+| 247 | says when a save couldn't be restored, found by the library or by the play page | Discarded notice | An old-version save, opening `/`; then a save with an unknown phase, opening `/charades/play` | The notice with "older version of the app"; then the library with the notice naming the phase | A lost game is explained wherever it's found, never silent. The play page sends the reason to the library. |
+| 248 | asks before Start replaces an unfinished game: Continue saved game keeps it, Start new game replaces it | Replace question | A save in round 2; Start; Continue saved game | "Replace your saved game?" naming the teams and round; then the saved game, round 2 | One save per device: starting a new game must never silently destroy the old one. |
+| 249 | replaces the saved game after Start new game, and without asking when the saved game is finished | Replace question | A save in round 2; Start, Start new game; then a finished save, Start | A new game in round 1, saved; then no question, and a new unfinished save | Replacing is the answer's job; a finished game isn't worth asking about. |

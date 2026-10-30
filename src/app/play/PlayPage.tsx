@@ -18,6 +18,8 @@ export function PlayPage() {
   // Read once when the page opens, not on every render: loading can delete a stale save.
   const [saved] = useState(() => (game ? loadGame(game) : undefined))
   if (!game || !saved) return <NotFoundPage />
+  // A save that had to be thrown away: the library says so. No save for this game: its setup screen.
+  if (saved.status === 'discarded') return <Navigate to="/" replace state={{ discarded: saved.reason }} />
   if (saved.status !== 'ok') return <Navigate to={`/${game.meta.id}`} replace />
 
   const { config } = saved.state.context

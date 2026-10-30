@@ -137,3 +137,9 @@ export function summarizeSave(
     summary: { game, teams: config.teams, round, rounds: config.rounds, finished: isFinal(game.machine, state), savedAt },
   }
 }
+
+/** "Lions vs Eagles · Round 2 of 3", or "Lions, Eagles and Hawks · …" for more teams. */
+export function describeSave({ teams, round, rounds }: Pick<SaveSummary, 'teams' | 'round' | 'rounds'>): string {
+  const names = teams.length === 2 ? `${teams[0]} vs ${teams[1]}` : `${teams.slice(0, -1).join(', ')} and ${teams.at(-1)}`
+  return `${names} · Round ${round} of ${rounds}`
+}
