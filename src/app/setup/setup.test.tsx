@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it } from 'vitest'
 import App from '../App'
+import { summarizeSave } from '../play/savedGame'
 import { loadTeams, saveTeams } from './savedTeams'
 
 /** The app at an address, like a player opening a link. */
@@ -40,6 +41,8 @@ describe('setup screen', () => {
     expect(screen.getByText('Pass the phone to')).toBeDefined()
     expect(screen.getByRole('heading', { name: 'Lions' })).toBeDefined()
     expect(loadTeams()).toEqual(['Lions', 'Team 2'])
+    const saved = summarizeSave()
+    expect(saved.status === 'ok' && saved.summary.teams).toEqual(['Lions', 'Team 2'])
   })
 
   it('fills in the teams saved on this device, and ignores a save it can’t read', () => {
@@ -114,7 +117,7 @@ describe('setup screen', () => {
     expect(start().disabled).toBe(true)
   })
 
-  it('sends an address with no settings, like a shared /charades/play link, back to setup', () => {
+  it('sends the play page back to setup when there is no saved game, like a shared /charades/play link', () => {
     renderAt('/charades/play')
     expect(screen.getByRole('heading', { level: 1, name: 'Charades' })).toBeDefined()
     expect(start()).toBeDefined()

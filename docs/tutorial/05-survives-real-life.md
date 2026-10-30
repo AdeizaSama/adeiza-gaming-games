@@ -188,3 +188,58 @@ Some private-browsing modes throw an error on any storage call. Every call here 
 
 1. `pnpm test` reports `239 passed`. `pnpm typecheck` and `pnpm lint` pass.
 2. In `savedGame.ts`, change `!Object.hasOwn(game.machine.phases, state.phase)` to `!(state.phase in game.machine.phases)` and run `pnpm test`. "throws away a save with a phase name every object has" fails. Change it back.
+
+---
+
+## Step 4: Start saves, the play page loads
+
+**What:** games are now saved and resumed.
+
+- **Start** creates the game with `newGame`, saves it, and opens `/charades/play` without passing anything along.
+- **The play page** loads the save and plays it. It saves again after every change, through the session's `onChange`.
+- **No save for this game?** The play page goes back to setup.
+
+**Why:** this is the step that makes a refresh harmless. Everything before it was groundwork.
+
+### Three ways in, one path
+
+```tsx
+const [saved] = useState(() => (game ? loadGame(game) : undefined))
+if (saved.status !== 'ok') return <Navigate to={`/${game.meta.id}`} replace />
+return <GameScreen initial={saved.state} options={{ onChange: (state) => saveGame(game, state) }} … />
+```
+
+Arriving from Start, refreshing, and (step 6) tapping Continue all land here. Each finds a save and plays it. Chapter 04's navigation state is gone, so there's no second way for a game to arrive that could behave differently.
+
+**Read once.** `loadGame` runs inside `useState`'s starting function, so it runs when the page opens and not on every redraw. That matters because loading can *delete* a stale save: reading storage is fine anywhere, but changing it on every render isn't.
+
+**Play again after a refresh.** It needs the original input (settings and items). The settings are in the save (`context.config`); the items are chosen again from them with `choosePoolItems`. Play again is a new game anyway, so today's packs are the right ones to use.
+
+### Refreshing mid-turn
+
+Nothing special was needed: chapter 04 built the pieces.
+
+- The turn's end is a moment (`turnEndsAt`), saved with the game.
+- After a refresh, the countdown shows the time left until that moment.
+- If the moment has passed, the countdown sends `time_up` as soon as it appears (chapter 04, step 7), and the turn ends.
+
+Two tests prove it with a fake clock:
+
+- Reopening 10 seconds into a 30-second turn shows 20 seconds left.
+- Reopening 15 seconds after the end shows the turn summary.
+
+### Files changed
+
+- `src/app/setup/SetupPage.tsx`: Start creates and saves the game.
+- `src/app/play/PlayPage.tsx`: plays the save, and saves each change. `PlayPage.test.tsx` (new).
+- `src/app/setup/setup.test.tsx`: Start saves a game; the play page without a save goes to setup.
+- `docs/tests.md`: the play page tests, and two setup rows; counts updated to 241.
+
+### How to verify
+
+1. `pnpm test` reports `241 passed`. `pnpm typecheck` and `pnpm lint` pass.
+2. In `PlayPage.tsx`, change `options={{ onChange: … }}` to `options={{}}` and run `pnpm test`. Both play page tests fail: moves aren't saved any more. Change it back.
+3. On a phone (`pnpm dev --host`):
+   - Start a game and get one item in the first turn, then refresh: the same team, the same item, and the timer still counting.
+   - Lock the phone mid-turn for longer than the turn has left, then unlock: the turn summary.
+   - Close the tab and reopen `/charades/play`: the game is still there.

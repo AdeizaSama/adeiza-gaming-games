@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 239 runtime tests (`pnpm test`) and 29 compile-time checks (`pnpm typecheck`).
+**Counts:** 241 runtime tests (`pnpm test`) and 29 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -39,6 +39,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Game screen](#game-screen) | `src/app/play/GameScreen.test.tsx` | 2 | |
 | [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 7 | |
 | [Saved game](#saved-game) | `src/app/play/savedGame.test.ts` | 12 | |
+| [Play page](#play-page) | `src/app/play/PlayPage.test.tsx` | 2 | |
 
 **Two kinds of test:**
 
@@ -548,13 +549,13 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 217 | starts with two teams and the default settings, and Start begins the game and remembers the teams | Setup, Start | Open `/charades`; rename Team 1 to Lions; tap Start | Team 1, Team 2; 3 rounds; 60 seconds; Back to School ticked; "34 items to play"; then "Pass the phone to" Lions; saved teams Lions, Team 2 | One tap from the library to a game with sensible defaults, and the next game starts with the same names. |
+| 217 | starts with two teams and the default settings, and Start begins the game and remembers the teams | Setup, Start | Open `/charades`; rename Team 1 to Lions; tap Start | Team 1, Team 2; 3 rounds; 60 seconds; Back to School ticked; "34 items to play"; then "Pass the phone to" Lions; saved teams Lions, Team 2; a saved game with those teams | One tap from the library to a game with sensible defaults, and the next game starts with the same names. Start saves the game before the play page opens (ADR 0006). |
 | 218 | fills in the teams saved on this device, and ignores a save it can't read | `loadTeams` | Saved Lions, Eagles, Hawks; then broken JSON; then one team | Three fields with those names; then nothing loaded, twice | Saved data can be old or edited by hand: a bad save means the defaults, never a crash. |
 | 219 | adds and removes teams, from 2 up to 10 | Teams | Add a team; remove Team 1; add until 10 | Team 3 appears; Team 2 and Team 3 remain; no Remove at 2 teams, no Add team at 10 | The screen can't make a team count the schema rejects. |
 | 220 | shows what's wrong with a team name next to it, and Start is off until it's fixed | Teams, errors | Empty Team 1; then "team 2"; then "team 2s" | "Give every team a name", field marked invalid, Start off; "Two teams have this name", Start off; Start on | The schema's own messages, shown where the problem is. |
 | 221 | changes rounds and turn length with − and +, within their limits | `Stepper` | Turn length −; rounds − twice | 45 seconds; 1 round, its − button off | Values stay in range without typing. |
 | 222 | counts the items a tag leaves, and needs at least one pack | Packs, tags | Pick snack; add song; untick Back to School | "5 items to play"; "7 items to play"; "Pick at least one pack", no tags offered, Start off | Players see what a filter leaves before they start. |
-| 223 | sends an address with no settings, like a shared /charades/play link, back to setup | Play page | Open `/charades/play` | Charades' setup screen | Settings travel with Start, not in the address: without them there's nothing to play. |
+| 223 | sends the play page back to setup when there is no saved game, like a shared /charades/play link | Play page | Open `/charades/play` with nothing saved | Charades' setup screen | The play page only plays a save (ADR 0006): without one there's nothing to play. |
 
 ## Saved game
 
@@ -568,3 +569,12 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 237 | reports a save for a different game without deleting it | `loadGame` | A Charades save, loaded for another game id | "other game", Charades; the save kept | Opening another game's play page mustn't destroy the Charades save. |
 | 238 | summarizes the save for the library, and says when the game is finished | `summarizeSave` | A new game; then one played to the results | Teams, round 1 of 1, not finished; then finished | The library's Continue card (step 6) needs this, and hides finished games. |
 | 239 | keeps playing when storage is switched off | Storage errors | A storage whose every call throws | Save, load and clear don't throw; nothing loaded | Some private-browsing modes switch storage off; the game must still play. |
+
+## Play page
+
+`src/app/play/PlayPage.test.tsx`, testing `src/app/play/PlayPage.tsx` the way a refresh reaches it: a game is saved, then the app opens at `/charades/play`. Screen tests (happy-dom) with a fake clock (`Date` and `setInterval` only). The saved game: Charades, Lions and Eagles, 1 round, 30-second turns, seed 2026; Lions' turn started at 0 ms (it ends at 30 000) and they got one item.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 240 | carries on a saved turn after a refresh, with the clock still running, and saves every move | Resume, saving | Open at 10 000 ms; tap Got it | Lions' turn, timer at 20; the save now has 2 items got | A refresh loses nothing but the seconds it took, and every move is saved. |
+| 241 | ends the turn at once if its time ran out during the refresh | Resume after time ran out | Open at 45 000 ms | Lions' summary, "scored 1 point"; the save is at `turn_summary` | The turn ended while the page was gone; the game catches up instead of showing a timer below zero. |

@@ -1,12 +1,15 @@
 import { useNavigate, useParams } from 'react-router'
+import { choosePoolItems } from '../../sdk/formats/team-turns/pool'
+import { newGame } from '../../sdk/game/useGameSession'
 import { NotFoundPage } from '../NotFoundPage'
+import { saveGame } from '../play/savedGame'
 import { findGame } from '../registry'
 import { saveTeams } from './savedTeams'
 import { SetupScreen } from './SetupScreen'
 
 /**
- * `/:gameId`: the game's setup screen. Start remembers the team names and goes to `/:gameId/play`, carrying the
- * settings in the router's navigation state (not in the address: they'd make it long and editable by hand).
+ * `/:gameId`: the game's setup screen. Start creates the game, saves it, and goes to `/:gameId/play`, which plays
+ * the save (ADR 0006). Nothing is passed along: the save is the only way a game reaches the play page.
  */
 export function SetupPage() {
   const { gameId } = useParams()
@@ -19,8 +22,10 @@ export function SetupPage() {
       key={game.meta.id}
       game={game}
       onStart={(config) => {
+        const items = choosePoolItems(game.content.packs, config, game.content.itemKey)
         saveTeams(config.teams)
-        navigate(`/${game.meta.id}/play`, { state: { config } })
+        saveGame(game, newGame(game.machine, { config, items }))
+        navigate(`/${game.meta.id}/play`)
       }}
     />
   )
