@@ -71,3 +71,62 @@ This changes one thing from chapter 04: the setup screen stops passing settings 
 ### How to verify
 
 Read ADR 0006. Each of the five checks should match a way a save can go stale that you can imagine happening. If you can think of a sixth, it belongs in the ADR before step 3 builds the checks.
+
+---
+
+## Step 2: A session that can resume
+
+**What:** `useGameSession` now plays a state it's given, and reports every change. A new function, `newGame`, creates new games.
+
+```ts
+// Before (chapter 04): the hook created the game.
+useGameSession(machine, input, { seed })
+
+// Now: create the game separately, or load a saved one, and hand it over.
+const game = newGame(machine, input)                      // or: the saved state
+const { state, send, restart, ended } = useGameSession(machine, game, { onChange: save })
+restart(input)                                            // Play again
+```
+
+**Why:** ADR 0006. To resume, the session must accept a saved state, not only create a new one. To save, someone must hear about each change. The hook still saves nothing itself; the SDK stays storage-free.
+
+### `onChange`: after drawing, not during the update
+
+A save writes to storage: a **side effect**, something outside React. React's state updates must have none: React may run an update twice to check that (chapter 04, step 6). So the save happens in an **effect**, which React runs after it has drawn the new state:
+
+```ts
+useEffect(() => {
+  if (state !== first) reportChange(state)
+}, [state, first])
+```
+
+The effect runs whenever `state` changes. An event the phase ignores returns the same state object, so it doesn't run, and nothing is saved for a tap that did nothing. The starting state isn't reported: whoever passed it in already has it (the app will have just saved it).
+
+`reportChange` is an **effect event** (`useEffectEvent`, as in the countdown): it always calls the latest `onChange`, without a new `onChange` function being a reason to run the effect.
+
+### "Only the first one counts"
+
+```ts
+const [first] = useState(initial)
+const [state, setState] = useState(first)
+```
+
+`useState` keeps its first value and ignores the argument on later renders. Holding `initial` this way means a parent that builds a new starting object every render (as the play page does) doesn't confuse the hook. Without it, the effect would see a "new" starting state on every render and report a change that never happened. A test (227) does exactly that.
+
+### Seeds stay in one file
+
+`newGame` picks the random seed, and `restart` uses `newGame`. Both live in `useGameSession.ts`, so it's still the only file that chooses seeds (standard §4). Tests pass a fixed seed as the third argument: `newGame(machine, input, 2026)`.
+
+### Files changed
+
+- `src/sdk/game/useGameSession.ts`: `newGame`; the hook takes a state; `onChange`; `restart(input)`.
+- `src/sdk/game/useGameSession.test.ts`: the six tests use `newGame`; three new.
+- `src/app/play/GameScreen.tsx`: takes `initial` (the game to play) and `input` (for Play again). `src/app/play/PlayPage.tsx`: creates the game with `newGame` for now; step 4 moves that to Start. `GameScreen.test.tsx`: `newGame(…, 2026)` instead of the `seed` option.
+- `docs/game-standard.md` §4: the new hook.
+- `docs/tests.md`: the session tests; counts updated to 227.
+
+### How to verify
+
+1. `pnpm test` reports `227 passed`. `pnpm typecheck` and `pnpm lint` pass.
+2. In `useGameSession.ts`, use `initial` instead of `first` (in `useState(first)` and both places in the effect) and run `pnpm test`. "keeps playing when the caller passes a new starting state on every render" fails: two changes reported instead of one. Change it back.
+3. Play a game with `pnpm dev`: nothing looks different. Saving isn't connected yet.

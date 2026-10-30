@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 224 runtime tests (`pnpm test`) and 29 compile-time checks (`pnpm typecheck`).
+**Counts:** 227 runtime tests (`pnpm test`) and 29 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -32,7 +32,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [App](#app) | `src/app/App.test.tsx` | 4 | |
 | [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 3 | |
 | [UI components](#ui-components) | `src/ui/ui.test.tsx` | 5 | |
-| [Game session](#game-session) | `src/sdk/game/useGameSession.test.ts` | 6 | |
+| [Game session](#game-session) | `src/sdk/game/useGameSession.test.ts` | 9 | |
 | [Interaction primitives](#interaction-primitives) | `src/sdk/interactions/interactions.test.tsx` | 8 | |
 | [Summary and Leaderboard](#summary-and-leaderboard) | `src/sdk/interactions/summary.test.tsx` | 4 | |
 | [Team-turns views](#team-turns-views) | `src/sdk/formats/team-turns/views/views.test.tsx` | 3 | |
@@ -482,16 +482,19 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 ## Game session
 
-`src/sdk/game/useGameSession.test.ts`, testing `src/sdk/game/useGameSession.ts`. Runs the hook in a fake browser with Testing Library's `renderHook`. A tiny machine: `go` starts a clock from `now` and moves to `playing`, `roll` adds a die roll, `stop` ends the game; the input is the starting total.
+`src/sdk/game/useGameSession.test.ts`, testing `newGame` and `useGameSession` in `src/sdk/game/useGameSession.ts`. Runs the hook in a fake browser with Testing Library's `renderHook`. A tiny machine: `go` starts a clock from `now` and moves to `playing`, `roll` adds a die roll, `stop` ends the game; the input is the starting total. Each session starts from `newGame(machine, input, seed)` (ADR 0006).
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 189 | starts the game from the input | Starting | Input 10, seed 1 | Phase `ready`, total 10, not ended | The session starts the machine the way `start` does. |
+| 189 | starts from the state it is given | Starting | `newGame` with input 10, seed 1 | Phase `ready`, total 10, not ended | The session plays the state it's handed, new or saved. |
 | 190 | sends events with the current time and re-renders with the new state | `send` | `go` with a clock reading 5000 | Phase `playing`, clock started at 5000 | The time comes from the session, never from game logic. |
 | 191 | plays the same way for the same seed | Determinism | Seed 7 twice: go, roll | The same total | Tests can pin a seed and get repeatable games. |
 | 192 | keeps the same state when an event is ignored | Ignored events | `roll` in `ready` | The exact same state object | Nothing re-renders for a tap the phase doesn't handle. |
 | 193 | says when the game has ended | `ended` | go, stop | `ended` is true | The play screen knows when to offer "Play again". |
-| 194 | picks a random seed for each new game, and restart starts over with a new one | Random seed, `restart` | `Math.random` returning 0.25 then 0.5; go, then restart | Seeds 2^30, then 2^31; restart is back at `ready` with the same input | Every game is different in real play, and "Play again" doesn't replay the same deck. |
+| 194 | newGame picks a random seed, and restart starts over with a new one | Random seed, `newGame`, `restart` | `Math.random` returning 0.25 then 0.5; go, then restart with input 3 | Seeds 2^30, then 2^31; restart is back at `ready` with that input | Every game is different in real play, and "Play again" doesn't replay the same deck. |
+| 225 | carries on a saved game exactly where it was | Resuming | A game after `go`, written to JSON and read back; then roll | The same state as rolling the original | A save is plain JSON, and resuming one draws what the original would have drawn (`rngState`). |
+| 226 | reports every change to onChange, but not the starting state or ignored events | `onChange` | Start; an ignored roll; go; restart | No call, no call, one call with the new state, a second call at `ready` | The app saves on every change and only then. |
+| 227 | keeps playing when the caller passes a new starting state on every render | First state only | A new `newGame` each render; go; re-render | Still `playing`; one change reported | A parent that rebuilds its props mustn't restart the game or report a change that didn't happen. |
 
 ## Interaction primitives
 

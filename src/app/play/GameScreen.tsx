@@ -1,10 +1,11 @@
 import { Link } from 'react-router'
 import type { TeamTurnsConfig } from '../../sdk/formats/team-turns/config'
-import type { TeamTurnsInput } from '../../sdk/formats/team-turns/teamTurns'
+import type { TeamTurnsContext } from '../../sdk/formats/team-turns/rules'
+import type { TeamTurnsInput, TeamTurnsPhase } from '../../sdk/formats/team-turns/teamTurns'
 import type { TeamTurnsView } from '../../sdk/formats/team-turns/views'
 import type { Game } from '../../sdk/game/defineGame'
 import { useGameSession, type SessionOptions } from '../../sdk/game/useGameSession'
-import type { MachineEvent } from '../../sdk/machine/types'
+import type { MachineEvent, MachineState } from '../../sdk/machine/types'
 import { Button } from '../../ui/button'
 
 export interface GameScreenProps<
@@ -18,10 +19,12 @@ export interface GameScreenProps<
   ActionName extends string,
 > {
   game: Game<Item, Config, Setup, Turn, Event, Phase, GuardName, ActionName>
-  /** The settings and items for this game (from the setup screen). */
+  /** The game to play: new, or saved (ADR 0006). */
+  initial: MachineState<TeamTurnsContext<Item, Turn, Config>, TeamTurnsPhase | Phase>
+  /** The settings and items, for "Play again". */
   input: TeamTurnsInput<Item, Config>
-  /** For tests: a fixed seed and clock. */
-  options?: SessionOptions
+  /** `onChange` to save each change; a fixed clock for tests. */
+  options?: SessionOptions<MachineState<TeamTurnsContext<Item, Turn, Config>, TeamTurnsPhase | Phase>>
 }
 
 /**
@@ -37,8 +40,8 @@ export function GameScreen<
   Phase extends string,
   GuardName extends string,
   ActionName extends string,
->({ game, input, options }: GameScreenProps<Item, Config, Setup, Turn, Event, Phase, GuardName, ActionName>) {
-  const { state, send, restart, ended } = useGameSession(game.machine, input, options)
+>({ game, initial, input, options }: GameScreenProps<Item, Config, Setup, Turn, Event, Phase, GuardName, ActionName>) {
+  const { state, send, restart, ended } = useGameSession(game.machine, initial, options)
   // Declared as a plain view type: React's JSX typing can't see through a lookup by a still-generic phase name.
   const View: TeamTurnsView<Item, Turn, Event, Config> = game.views[state.phase]
 
@@ -48,7 +51,7 @@ export function GameScreen<
       {/* After the game: the app's own buttons, not the game's. They leave the game rather than send it events. */}
       {ended && (
         <nav aria-label="After the game" className="flex flex-col gap-3 p-6">
-          <Button size="lg" onClick={() => restart()}>
+          <Button size="lg" onClick={() => restart(input)}>
             Play again
           </Button>
           <Link
