@@ -140,7 +140,8 @@ Rules:
   - **Guards** only read. They never draw from `rng`.
   - **Actions** return a new context and never change the one they're given. Drawing from `rng` is the one allowed side effect: it moves the random sequence forward, and the runner saves where it is.
   - The `Rng` (`src/sdk/rng.ts`) offers `next()` (0 to 1), `int(min, max)` (inclusive) and `shuffle(items)` (returns a shuffled copy); it is seeded, so the same seed always gives the same draws.
-- **Context is serializable** (plain JSON). The app saves `{ phase, context, rngState }` so a refresh or accidental back-swipe resumes the game, with the same random draws it would have had.
+- **Context is serializable**: plain JSON (strings, numbers, booleans, `null`, arrays, plain objects), never `Date`s, `Map`s, functions or class instances. The app saves `{ phase, context, rngState }` after every change, one game per device ([ADR 0006](decisions/0006-save-and-resume.md)), so a refresh, back swipe or closed tab resumes the game with the same random draws it would have had.
+- **Changing the shape of a saved context means bumping `saveVersion`** (`src/app/play/savedGame.ts`): a field added, renamed or removed in a format's or game's context, its items or its turn record. Older saves are then thrown away with a notice instead of loaded wrong. Saves are also checked on load for an unknown game, an unknown phase and settings the game's schema rejects.
 - **Events are a discriminated union** (`{ type: "got" } | { type: "skip" } | …`). Views send events; they never change context directly.
 - **Guarded transitions are checked in order;** the first match wins, and a transition with no `when` is the fallback. A transition's actions run in the order listed, each getting the context the previous one returned.
 - **Events a phase doesn't list are ignored.** So is an event whose transitions all have failing guards. The state stays exactly as it was.

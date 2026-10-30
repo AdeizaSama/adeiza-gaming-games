@@ -462,3 +462,61 @@ happy-dom has no wake lock. The tests give `navigator` a fake one with `vi.stubG
 3. On a phone (`pnpm dev --host`): start a game and leave it on the handoff screen for longer than the phone's auto-lock time. The screen stays on. Switch to another app and back, and wait again: it still stays on.
 
    The wake lock only works on a secure page (`https://`) or on `localhost`. A phone opening the computer's network address (`http://192.168…`) isn't either, so **this check needs the deployed site**. Over the network address the screen locks as usual: that's the "missing" case, not a bug.
+
+---
+
+## Step 9: Docs catch up
+
+**What:**
+
+- **Game Standard §4:** what "plain JSON" allows in a context, that the app saves after every change, and the **version rule** (change a saved context's shape → bump `saveVersion`).
+- **PR template:** a checklist line for the version rule, under "SDK and contracts". Nothing can check it automatically: a renamed field still type-checks, and only old saves on real phones would notice.
+- **README:** the status note says games survive a refresh, a locked phone or a closed tab. The privacy line says what's saved on the device: the game in progress and team names.
+
+**Why:** the version rule only works if people know it exists, and the place they'll meet it is the pull request.
+
+### How to verify
+
+Read the new bullets in standard §4 and the PR template's new line. Someone changing `TeamTurnsContext` should run into one of them.
+
+---
+
+## Chapter summary
+
+A game now outlasts what happens to phones at a party:
+
+| What happens | What players see |
+|---|---|
+| Refresh mid-turn | The same turn, with the timer still counting |
+| Phone locked past the end of a turn | The turn summary when it's unlocked |
+| Back swipe or closed tab | "Continue Charades" at the top of the library |
+| A stray tap on Quit | "Quit this game?", with Keep playing |
+| Start while a game is saved | "Replace your saved game?" |
+| An update that makes an old save unusable | "Your last game couldn't be restored", and why |
+| Leaving setup half done | Everything as it was left |
+| Nobody touching the phone for a minute | The screen stays on (where the phone supports it) |
+
+**Built:**
+
+| Part | Where | Step |
+|---|---|---|
+| ADR 0006: save and resume | `docs/decisions/` | 1 |
+| `newGame`; `useGameSession` resumes and reports changes | `src/sdk/game/` | 2 |
+| The save store and its checks | `src/app/play/savedGame.ts` | 3 |
+| Start saves, the play page loads | `src/app/setup/SetupPage.tsx`, `src/app/play/PlayPage.tsx` | 4 |
+| Dialog; Quit | `src/ui/dialog.tsx`, `src/app/play/GameScreen.tsx` | 5 |
+| Continue card, replace question, lost-save notice | `src/app/library/`, `src/app/setup/` | 6 |
+| Setup choices remembered | `src/app/setup/savedSetup.ts` | 7 |
+| Wake lock | `src/app/play/useWakeLock.ts` | 8 |
+
+**Tests:** 254 runtime tests and 29 compile-time checks, up from 224 and 29.
+
+**New dependencies:** none.
+
+**What's next:** chapter 06 completes Charades:
+
+- acting and singing modes, with double points;
+- a skip penalty;
+- settings and presets;
+- correcting a mis-tap on the turn summary;
+- the rules screen and the game's README.
