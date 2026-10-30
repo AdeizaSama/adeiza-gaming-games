@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 241 runtime tests (`pnpm test`) and 29 compile-time checks (`pnpm typecheck`).
+**Counts:** 243 runtime tests (`pnpm test`) and 29 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -31,7 +31,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 9 | |
 | [App](#app) | `src/app/App.test.tsx` | 4 | |
 | [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 3 | |
-| [UI components](#ui-components) | `src/ui/ui.test.tsx` | 5 | |
+| [UI components](#ui-components) | `src/ui/ui.test.tsx` | 6 | |
 | [Game session](#game-session) | `src/sdk/game/useGameSession.test.ts` | 9 | |
 | [Interaction primitives](#interaction-primitives) | `src/sdk/interactions/interactions.test.tsx` | 8 | |
 | [Summary and Leaderboard](#summary-and-leaderboard) | `src/sdk/interactions/summary.test.tsx` | 4 | |
@@ -39,7 +39,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Game screen](#game-screen) | `src/app/play/GameScreen.test.tsx` | 2 | |
 | [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 7 | |
 | [Saved game](#saved-game) | `src/app/play/savedGame.test.ts` | 12 | |
-| [Play page](#play-page) | `src/app/play/PlayPage.test.tsx` | 2 | |
+| [Play page](#play-page) | `src/app/play/PlayPage.test.tsx` | 3 | |
 
 **Two kinds of test:**
 
@@ -472,7 +472,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 ## UI components
 
-`src/ui/ui.test.tsx`, testing `src/ui/cn.ts`, `button.tsx` and `input.tsx`. Screen tests (happy-dom); taps and typing go through `user-event`, which acts like a player.
+`src/ui/ui.test.tsx`, testing `src/ui/cn.ts`, `button.tsx`, `input.tsx` and `dialog.tsx`. Screen tests (happy-dom); taps and typing go through `user-event`, which acts like a player.
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
@@ -481,6 +481,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 186 | calls onClick when tapped, and not when disabled | Button | Tap; then tap while disabled | Called once in total | Start must do nothing while setup is invalid. |
 | 187 | uses theme colors for its variant, and lets the caller adjust it | Button | `variant="success"`, `className="w-full"` | Classes include `bg-success` and `w-full` | Variants come from tokens; screens can still size buttons. |
 | 188 | is a text field that can be found by its label and typed into | Input | Labelled "Team 1", type `Lions` | Found by its label; value `Lions` | Team names are typed here; a field without a usable label is invisible to screen readers. |
+| 242 | opens as a modal with its title and buttons, and asks to close on a tap outside it | Dialog | Closed; then open, titled "Quit this game?"; tap its button; tap outside | No dialog; then a dialog by that name, with a description; `onClose` not called for the button, called once for the outside tap | The browser's `<dialog>` is opened by a method, not an attribute: the component must turn the `open` prop into calls. A tap outside is a natural "never mind". |
 
 ## Game session
 
@@ -541,7 +542,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 212 | plays a whole game of Charades by tapping, from the first handoff to the results | Every view, end to end | Lions: Start, Got it ×2, Skip, 30 s pass, Next. Eagles: Start, Got it, 30 s pass, See results | Timer starts at 30; Lions' summary: 2 points, 2 got, 1 skipped; Eagles' summary: 1 point; "Lions won!", standings Lions 2, Eagles 1 | Proves the whole chain: buttons send the right events, the machine moves, and each phase's view appears. A view sending the wrong event fails here. |
-| 224 | after the game, Play again starts over with the same teams, and Back to games leads to the library | Results actions | Two turns with nothing guessed, then tap Play again | No Play again during the game; "It's a tie!", Back to games links to `/`; then Lions' handoff, "Round 1 of 1", no Play again | The app's own buttons appear only once the game has ended, and Play again really restarts. |
+| 224 | after the game, Play again starts over with the same teams, and Back to games leads to the library | Results actions | Two turns with nothing guessed, then tap Play again | No Play again during the game; "It's a tie!", no Quit, Back to games links to `/`; then Lions' handoff, "Round 1 of 1", no Play again | The app's own buttons appear only once the game has ended, and Play again really restarts. |
 
 ## Setup screen
 
@@ -578,3 +579,4 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 |---|---|---|---|---|---|
 | 240 | carries on a saved turn after a refresh, with the clock still running, and saves every move | Resume, saving | Open at 10 000 ms; tap Got it | Lions' turn, timer at 20; the save now has 2 items got | A refresh loses nothing but the seconds it took, and every move is saved. |
 | 241 | ends the turn at once if its time ran out during the refresh | Resume after time ran out | Open at 45 000 ms | Lions' summary, "scored 1 point"; the save is at `turn_summary` | The turn ended while the page was gone; the game catches up instead of showing a timer below zero. |
+| 243 | asks before quitting: Keep playing carries on, Quit game deletes the save and goes to the library | Quit | A new saved game; Quit, Keep playing; Quit, Quit game | The dialog; then the handoff again; then the library, and nothing saved | One stray tap mustn't end a game, and a deliberate quit mustn't leave a save behind. |

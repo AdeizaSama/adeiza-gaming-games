@@ -243,3 +243,64 @@ Two tests prove it with a fake clock:
    - Start a game and get one item in the first turn, then refresh: the same team, the same item, and the timer still counting.
    - Lock the phone mid-turn for longer than the turn has left, then unlock: the turn summary.
    - Close the tab and reopen `/charades/play`: the game is still there.
+
+---
+
+## Step 5: Quit, with a question first
+
+**What:**
+
+- **A Dialog component** (`src/ui/dialog.tsx`).
+- **A Quit button** at the top of every game screen except the results.
+- **The question:** Quit asks "Quit this game? The scores will be lost." Keep playing closes the question. **Quit game** deletes the save and goes to the library.
+
+**Why:** now that games survive leaving, ending one has to be a deliberate act, and a stray tap must not be able to do it.
+
+### The browser's own `<dialog>`
+
+Browsers have a built-in modal dialog element. Opened with `showModal()`, it:
+
+- sits above the page and dims everything behind it;
+- makes the rest of the page unusable until it's answered;
+- keeps keyboard focus inside itself;
+- closes on Escape, or Android's back button.
+
+shadcn/ui's Dialog does the same with a Radix package; ours uses the browser's.
+
+The one awkward part: `<dialog>` is opened and closed by **calling methods**, not by setting an attribute, while React describes the page as data (`open={true}`). An effect connects the two:
+
+```tsx
+useEffect(() => {
+  if (open && !dialog.open) dialog.showModal()
+  if (!open && dialog.open) dialog.close()
+}, [open])
+```
+
+A tap on the dimmed area also closes it. That tap lands on the `<dialog>` element itself, while taps on its content land on what's inside, so `event.target === event.currentTarget` tells them apart.
+
+**No dark scrim.** The backdrop uses `bg-background/80`: the page's own background at 80%, so it dims toward black in dark mode and toward cream in light mode. A fixed black would need a new theme token; this needs none.
+
+### Room for the button
+
+The turn screen already has the team name at the top left and the timer at the top right. So Quit gets its own slim bar above the view, rather than covering either. To make room:
+
+- `GameScreen` now owns the screen height (`flex min-h-dvh flex-col`).
+- The views fill what's left (`flex-1`) instead of each claiming the whole screen (`min-h-dvh`).
+
+Handoff, Summary and Charades' turn view changed one class each.
+
+**The clock doesn't stop while the question is open**, as with a refresh (ADR 0006). If time runs out behind the dialog, Keep playing shows the turn summary.
+
+### Files changed
+
+- `src/ui/dialog.tsx` (new). `src/ui/ui.test.tsx`: one test.
+- `src/app/play/GameScreen.tsx`: the Quit bar and dialog; `onQuit`. `src/app/play/PlayPage.tsx`: quitting deletes the save and opens the library.
+- `src/sdk/interactions/Handoff.tsx`, `Summary.tsx`, `src/games/charades/views/TurnView.tsx`: `min-h-dvh` → `flex-1`.
+- `src/app/play/GameScreen.test.tsx`: no Quit on the results. `PlayPage.test.tsx`: the Quit test.
+- `docs/tests.md`: counts updated to 243.
+
+### How to verify
+
+1. `pnpm test` reports `243 passed`. `pnpm typecheck` and `pnpm lint` pass.
+2. In `PlayPage.tsx`, delete the `clearGame()` line and run `pnpm test`. The Quit test fails: the save is still there. Put it back.
+3. On a phone (`pnpm dev --host`): tap Quit during a turn. The question appears, the page behind is dimmed, and Keep playing returns to the turn. Then Quit again and Quit game: the library. On Android, the back button closes the question instead of leaving the page.

@@ -61,4 +61,21 @@ describe('play page', () => {
     const saved = loadGame(charades)
     expect(saved.status === 'ok' && saved.state.phase).toBe('turn_summary')
   })
+
+  it('asks before quitting: Keep playing carries on, Quit game deletes the save and goes to the library', async () => {
+    saveGame(charades, fresh)
+    const user = userEvent.setup()
+    openPlayPage()
+
+    await user.click(screen.getByRole('button', { name: 'Quit' }))
+    expect(screen.getByRole('dialog', { name: 'Quit this game?' })).toBeDefined()
+    await user.click(screen.getByRole('button', { name: 'Keep playing' }))
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.getByText('Pass the phone to')).toBeDefined()
+
+    await user.click(screen.getByRole('button', { name: 'Quit' }))
+    await user.click(screen.getByRole('button', { name: 'Quit game' }))
+    expect(screen.getByRole('heading', { name: 'Ku Zo Wasa' })).toBeDefined()
+    expect(loadGame(charades)).toEqual({ status: 'none' })
+  })
 })

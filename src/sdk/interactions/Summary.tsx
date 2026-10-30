@@ -24,7 +24,7 @@ export interface SummaryProps {
 export function Summary({ title, points, sections = [], actionLabel = 'Next', onNext }: SummaryProps) {
   const shown = sections.filter((section) => section.items.length > 0)
   return (
-    <section className="flex min-h-dvh flex-col gap-8 p-6">
+    <section className="flex flex-1 flex-col gap-8 p-6">
       <header className="flex flex-col items-center gap-2 pt-8 text-center">
         <h2 className="text-4xl font-bold text-balance">{title}</h2>
         <p className="text-2xl text-muted-foreground">

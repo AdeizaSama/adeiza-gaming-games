@@ -1,3 +1,5 @@
+import { X } from 'lucide-react'
+import { useState } from 'react'
 import { Link } from 'react-router'
 import type { TeamTurnsConfig } from '../../sdk/formats/team-turns/config'
 import type { TeamTurnsContext } from '../../sdk/formats/team-turns/rules'
@@ -7,6 +9,7 @@ import type { Game } from '../../sdk/game/defineGame'
 import { useGameSession, type SessionOptions } from '../../sdk/game/useGameSession'
 import type { MachineEvent, MachineState } from '../../sdk/machine/types'
 import { Button } from '../../ui/button'
+import { Dialog } from '../../ui/dialog'
 
 export interface GameScreenProps<
   Item,
@@ -25,6 +28,8 @@ export interface GameScreenProps<
   input: TeamTurnsInput<Item, Config>
   /** `onChange` to save each change; a fixed clock for tests. */
   options?: SessionOptions<MachineState<TeamTurnsContext<Item, Turn, Config>, TeamTurnsPhase | Phase>>
+  /** Players confirmed they want to quit: delete the save and leave. */
+  onQuit: () => void
 }
 
 /**
@@ -40,13 +45,31 @@ export function GameScreen<
   Phase extends string,
   GuardName extends string,
   ActionName extends string,
->({ game, initial, input, options }: GameScreenProps<Item, Config, Setup, Turn, Event, Phase, GuardName, ActionName>) {
+>({ game, initial, input, options, onQuit }: GameScreenProps<Item, Config, Setup, Turn, Event, Phase, GuardName, ActionName>) {
   const { state, send, restart, ended } = useGameSession(game.machine, initial, options)
   // Declared as a plain view type: React's JSX typing can't see through a lookup by a still-generic phase name.
   const View: TeamTurnsView<Item, Turn, Event, Config> = game.views[state.phase]
+  const [quitting, setQuitting] = useState(false)
 
   return (
-    <main className="mx-auto min-h-dvh w-full max-w-md">
+    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col">
+      {/* Quit asks first: one stray tap mustn't end a game. Not on the results, which have their own buttons. */}
+      {!ended && (
+        <div className="flex px-2 pt-2">
+          <Button variant="ghost" onClick={() => setQuitting(true)}>
+            <X aria-hidden className="size-5" />
+            Quit
+          </Button>
+        </div>
+      )}
+      <Dialog open={quitting} onClose={() => setQuitting(false)} title="Quit this game?" description="The scores will be lost.">
+        <Button variant="destructive" onClick={onQuit}>
+          Quit game
+        </Button>
+        <Button variant="outline" onClick={() => setQuitting(false)}>
+          Keep playing
+        </Button>
+      </Dialog>
       <View context={state.context} send={send} points={game.machine.points} />
       {/* After the game: the app's own buttons, not the game's. They leave the game rather than send it events. */}
       {ended && (

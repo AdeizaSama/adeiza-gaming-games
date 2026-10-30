@@ -17,7 +17,7 @@ const input = { config, items: choosePoolItems(charades.content.packs, config, c
 function renderGame() {
   return render(
     <MemoryRouter>
-      <GameScreen game={charades} initial={newGame(charades.machine, input, 2026)} input={input} />
+      <GameScreen game={charades} initial={newGame(charades.machine, input, 2026)} input={input} onQuit={() => {}} />
     </MemoryRouter>,
   )
 }
@@ -74,6 +74,7 @@ describe('GameScreen', () => {
       await user.click(screen.getByRole('button', { name: next }))
     }
     expect(screen.getByRole('heading', { name: "It's a tie!" })).toBeDefined()
+    expect(screen.queryByRole('button', { name: 'Quit' })).toBeNull()
     expect(screen.getByRole('link', { name: 'Back to games' }).getAttribute('href')).toBe('/')
 
     await user.click(screen.getByRole('button', { name: 'Play again' }))

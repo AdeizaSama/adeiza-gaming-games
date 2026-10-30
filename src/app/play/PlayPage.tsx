@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { Navigate, useLocation, useParams } from 'react-router'
+import { Navigate, useLocation, useNavigate, useParams } from 'react-router'
 import { choosePoolItems } from '../../sdk/formats/team-turns/pool'
 import { NotFoundPage } from '../NotFoundPage'
 import { findGame } from '../registry'
 import { GameScreen } from './GameScreen'
-import { loadGame, saveGame } from './savedGame'
+import { clearGame, loadGame, saveGame } from './savedGame'
 
 /**
  * `/:gameId/play`: plays this game's save (ADR 0006). Arriving from Start, from Continue, or by a refresh is all the
@@ -13,6 +13,7 @@ import { loadGame, saveGame } from './savedGame'
 export function PlayPage() {
   const { gameId } = useParams()
   const location = useLocation()
+  const navigate = useNavigate()
   const game = findGame(gameId)
   // Read once when the page opens, not on every render: loading can delete a stale save.
   const [saved] = useState(() => (game ? loadGame(game) : undefined))
@@ -29,6 +30,10 @@ export function PlayPage() {
       initial={saved.state}
       input={input}
       options={{ onChange: (state) => saveGame(game, state) }}
+      onQuit={() => {
+        clearGame()
+        navigate('/')
+      }}
     />
   )
 }
