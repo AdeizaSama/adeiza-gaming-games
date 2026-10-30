@@ -366,3 +366,51 @@ else start()
 3. On a phone (`pnpm dev --host`):
    - Start a game, play a turn, then swipe back to the library: Continue is at the top and returns to the same point.
    - From the library, open Charades and tap Start: the replace question appears.
+
+---
+
+## Step 7: Setup remembers as you go
+
+**What:** the setup screen saves every choice as it's made: team names, rounds, turn length, packs and tags. Opening setup again shows them as they were left.
+
+**Why:** ADR 0006: saving starts at setup, not only at Start. Naming five teams and then swiping back by mistake shouldn't mean typing them again.
+
+### Two stores
+
+| Key | Holds | Shared? |
+|---|---|---|
+| `ku-zo-wasa:teams` | team names (chapter 04) | by every game: the same friends play them all |
+| `ku-zo-wasa:setup:charades` | rounds, turn length, packs, tags (`savedSetup.ts`) | one per game: packs and tags only make sense for their own game |
+
+The screen saves both in one effect that runs whenever a choice changes:
+
+```tsx
+useEffect(() => {
+  saveTeams(teams)
+  saveSetup(game.meta.id, { rounds, seconds, packs: chosenPacks, tags: chosenTags })
+}, [game.meta.id, teams, rounds, seconds, chosenPacks, chosenTags])
+```
+
+Team names are saved as typed, half-finished ones included. On the way back they show up as left, with the usual message under an empty one.
+
+### Stale choices
+
+Like a saved game, saved choices can outlive what they refer to:
+
+- **A pack can be deleted or renamed** while a phone still remembers it. Picking it would make `choosePoolItems` throw ("No pack with id"), so `loadSetup` drops pack ids that don't exist any more. If none are left, the saved choices are ignored and every pack is picked.
+- **The settings' limits can change.** The choices are checked against the game's config schema, with two placeholder teams, and ignored if they fail.
+
+Ignored means the defaults are used, without a notice. Losing remembered setup choices is a small thing; losing a game is not, which is why only that gets a notice.
+
+### Files changed
+
+- `src/app/setup/savedSetup.ts` (new): `loadSetup`, `saveSetup`.
+- `src/app/setup/SetupScreen.tsx`: starts from the saved choices, saves each change.
+- `src/app/setup/setup.test.tsx`: two tests.
+- `docs/tests.md`: counts updated to 251.
+
+### How to verify
+
+1. `pnpm test` reports `251 passed`. `pnpm typecheck` and `pnpm lint` pass.
+2. In `savedSetup.ts`, change the `packs` line to `const packs = saved.data.packs` (no filter) and run `pnpm test`. "drops remembered packs that no longer exist" fails. Change it back.
+3. On a phone (`pnpm dev --host`): in setup, rename a team, change the rounds and pick a tag, then swipe back and open Charades again. Everything is as you left it.
