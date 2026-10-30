@@ -130,3 +130,61 @@ const [state, setState] = useState(first)
 1. `pnpm test` reports `227 passed`. `pnpm typecheck` and `pnpm lint` pass.
 2. In `useGameSession.ts`, use `initial` instead of `first` (in `useState(first)` and both places in the effect) and run `pnpm test`. "keeps playing when the caller passes a new starting state on every render" fails: two changes reported instead of one. Change it back.
 3. Play a game with `pnpm dev`: nothing looks different. Saving isn't connected yet.
+
+---
+
+## Step 3: The save store
+
+**What:** `src/app/play/savedGame.ts`, which reads and writes the one saved game:
+
+| Function | Does |
+|---|---|
+| `saveGame(game, state)` | Saves the game, replacing any other. |
+| `loadGame(game)` | The save for this game: `ok` with its state, `none`, `other game`, or `discarded` with a reason. |
+| `summarizeSave()` | For the library: which game, the teams, the round, whether it's finished. |
+| `clearGame()` | Deletes the save. |
+
+Nothing uses them yet; step 4 connects them.
+
+**Why:** ADR 0006's checks, in one place, tested against every kind of stale save before any screen relies on them.
+
+### Reading is checking
+
+`read` turns whatever is in storage into a result, in the order of ADR 0006:
+
+```ts
+if (version !== saveVersion) return discard(`the save is from an older version of the app (save version ${version})`)
+const game = findGame(gameId)
+if (!game) return discard(`there's no game "${gameId}" any more`)
+```
+
+Each failed check deletes the save and returns a reason, so a bad save is reported once and never again. The reasons are written for players; step 6 shows them in the library.
+
+**The shape check is shallow on purpose.** zod checks the outside (`version`, `gameId`, `savedAt`, `state` with a `phase`, `context` and `rngState`), and the settings inside the context against the game's schema. Everything else in the context is covered by the version rule (ADR 0006), not by a schema per game.
+
+**`Object.hasOwn`, not `in`.** `'turn' in phases` asks "does this object have a `turn`?", and it also looks at what every JavaScript object inherits: `'toString' in {}` is `true`. A save naming the phase "toString" would pass and then crash the runner. `Object.hasOwn` only looks at the object's own keys. A test checks this case.
+
+### One cast, after the checks
+
+Storage gives back text, and TypeScript can't know that text is a Charades state. After the checks, `loadGame` tells it so:
+
+```ts
+// The checks in `read` passed for this game, and the version rule covers the rest of the context (ADR 0006).
+return { status: 'ok', state: saved.state as unknown as StateOf<G>, savedAt: saved.savedAt }
+```
+
+`as` is a promise to TypeScript, not a check. It's acceptable here because it comes right after the checks that justify it, and the comment says which. `StateOf<G>` works out a game's state type from the game itself: its context type (what `machine.context` returns) and its phase names (the keys of `machine.phases`). So adding a game needs no new types here.
+
+### Storage that's off
+
+Some private-browsing modes throw an error on any storage call. Every call here is wrapped: saving fails quietly and the game goes on unsaved, exactly as before this chapter. A test passes a storage that throws on everything.
+
+### Files changed
+
+- `src/app/play/savedGame.ts`, `savedGame.test.ts` (new).
+- `docs/tests.md`: the saved-game tests; counts updated to 239.
+
+### How to verify
+
+1. `pnpm test` reports `239 passed`. `pnpm typecheck` and `pnpm lint` pass.
+2. In `savedGame.ts`, change `!Object.hasOwn(game.machine.phases, state.phase)` to `!(state.phase in game.machine.phases)` and run `pnpm test`. "throws away a save with a phase name every object has" fails. Change it back.

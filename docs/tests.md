@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 227 runtime tests (`pnpm test`) and 29 compile-time checks (`pnpm typecheck`).
+**Counts:** 239 runtime tests (`pnpm test`) and 29 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -38,6 +38,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Team-turns views](#team-turns-views) | `src/sdk/formats/team-turns/views/views.test.tsx` | 3 | |
 | [Game screen](#game-screen) | `src/app/play/GameScreen.test.tsx` | 2 | |
 | [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 7 | |
+| [Saved game](#saved-game) | `src/app/play/savedGame.test.ts` | 12 | |
 
 **Two kinds of test:**
 
@@ -554,3 +555,16 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 221 | changes rounds and turn length with − and +, within their limits | `Stepper` | Turn length −; rounds − twice | 45 seconds; 1 round, its − button off | Values stay in range without typing. |
 | 222 | counts the items a tag leaves, and needs at least one pack | Packs, tags | Pick snack; add song; untick Back to School | "5 items to play"; "7 items to play"; "Pick at least one pack", no tags offered, Start off | Players see what a filter leaves before they start. |
 | 223 | sends an address with no settings, like a shared /charades/play link, back to setup | Play page | Open `/charades/play` | Charades' setup screen | Settings travel with Start, not in the address: without them there's nothing to play. |
+
+## Saved game
+
+`src/app/play/savedGame.test.ts`, testing `src/app/play/savedGame.ts` (ADR 0006). Uses the fake browser's `localStorage`, emptied before each test. A new game of Charades: Lions and Eagles, 1 round, 30-second turns, Back to School, seed 2026. Some saves are written by hand, to test saves the app didn't write, or wrote long ago.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 228 | saves a game and loads it back exactly | `saveGame`, `loadGame` | The game after `start`, saved at 6000 | The same state, saved at 6000 | Resuming must continue the very same game. |
+| 229 | finds nothing when nothing is saved, or after clearGame | `clearGame` | Nothing; then a save, cleared | Nothing, twice | Quit (step 5) deletes the save. |
+| 230–236 | throws away a save with … , and says why | Checks on load | Not JSON · the wrong shape · an older version · a game that was removed · a phase that was renamed · the phase "toString" · 99 rounds | Discarded with the matching reason; the save is deleted | Every way a save can go stale, from ADR 0006. Never a crash, always a reason for the notice. "toString" exists on every object: a plain `in` check would let it through. Runs once per case (`it.each`). |
+| 237 | reports a save for a different game without deleting it | `loadGame` | A Charades save, loaded for another game id | "other game", Charades; the save kept | Opening another game's play page mustn't destroy the Charades save. |
+| 238 | summarizes the save for the library, and says when the game is finished | `summarizeSave` | A new game; then one played to the results | Teams, round 1 of 1, not finished; then finished | The library's Continue card (step 6) needs this, and hides finished games. |
+| 239 | keeps playing when storage is switched off | Storage errors | A storage whose every call throws | Save, load and clear don't throw; nothing loaded | Some private-browsing modes switch storage off; the game must still play. |
