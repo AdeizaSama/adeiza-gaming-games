@@ -17,7 +17,7 @@ export interface HandoffProps {
  */
 export function Handoff({ to, detail, actionLabel = 'Start', onReady }: HandoffProps) {
   return (
-    <section className="flex min-h-dvh flex-col items-center justify-center gap-10 p-6 text-center">
+    <section className="flex flex-1 flex-col items-center justify-center gap-10 p-6 text-center">
       <div className="flex flex-col gap-3">
         <p className="text-lg text-muted-foreground">Pass the phone to</p>
         <h2 className="text-5xl font-bold text-balance">{to}</h2>

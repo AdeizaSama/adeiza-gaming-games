@@ -7,7 +7,7 @@ import type { CharadesItem } from '../schema'
 /** A Charades turn: the team and the timer at the top, the card with Skip and Got it below. */
 export function TurnView({ context, send }: TeamTurnsViewProps<CharadesItem, CharadesTurn, CharadesEvent>) {
   return (
-    <section className="flex min-h-dvh flex-col gap-4 p-4">
+    <section className="flex flex-1 flex-col gap-4 p-4">
       <header className="flex items-center justify-between">
         <p className="text-xl font-semibold">{context.config.teams[context.current]}</p>
         {context.turnEndsAt !== null && (

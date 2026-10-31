@@ -6,7 +6,7 @@ An open-source library of **single-device party games**: charades, name ten, tri
 
 The library is built to be extended. Developers can add games, designers can add themes, and anyone can add or improve the words, categories and questions the games use.
 
-> **Status: early development.** Charades is playable with its core rules. Saving a game in progress, and the rest of Charades (acting and singing modes, presets, the rules screen), are being built now. Expect breaking changes until the first release.
+> **Status: early development.** Charades is playable with its core rules, and a game survives a refresh, a locked phone or a closed tab. The rest of Charades (acting and singing modes, presets, the rules screen) is being built now. Expect breaking changes until the first release.
 
 ---
 
@@ -22,7 +22,7 @@ The library is built to be extended. Developers can add games, designers can add
 ## Principles
 
 - **One device.** Every game is playable with a single phone or tablet, passed around or held by a host.
-- **No accounts, no tracking.** The library is a static site. It collects no personal data, and anything it saves, like your team names, stays on your device.
+- **No accounts, no tracking.** The library is a static site. It collects no personal data. Your game in progress and your team names are saved on your device, and nowhere else.
 - **Content is data.** Words, categories, questions and themes are plain JSON. Contributing them never requires writing code.
 - **Games are isolated.** Each game lives in its own folder and only depends on the shared SDK, never on another game.
 

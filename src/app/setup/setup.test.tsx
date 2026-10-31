@@ -4,6 +4,9 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it } from 'vitest'
 import App from '../App'
+import { summarizeSave } from '../play/savedGame'
+import { games } from '../registry'
+import { loadSetup } from './savedSetup'
 import { loadTeams, saveTeams } from './savedTeams'
 
 /** The app at an address, like a player opening a link. */
@@ -15,6 +18,7 @@ function renderAt(address: string) {
   )
 }
 
+const charades = games[0]
 const team = (n: number) => screen.getByRole<HTMLInputElement>('textbox', { name: `Team ${n}` })
 const start = () => screen.getByRole<HTMLButtonElement>('button', { name: 'Start' })
 
@@ -40,6 +44,8 @@ describe('setup screen', () => {
     expect(screen.getByText('Pass the phone to')).toBeDefined()
     expect(screen.getByRole('heading', { name: 'Lions' })).toBeDefined()
     expect(loadTeams()).toEqual(['Lions', 'Team 2'])
+    const saved = summarizeSave()
+    expect(saved.status === 'ok' && saved.summary.teams).toEqual(['Lions', 'Team 2'])
   })
 
   it('fills in the teams saved on this device, and ignores a save it can’t read', () => {
@@ -114,9 +120,40 @@ describe('setup screen', () => {
     expect(start().disabled).toBe(true)
   })
 
-  it('sends an address with no settings, like a shared /charades/play link, back to setup', () => {
+  it('sends the play page back to setup when there is no saved game, like a shared /charades/play link', () => {
     renderAt('/charades/play')
     expect(screen.getByRole('heading', { level: 1, name: 'Charades' })).toBeDefined()
     expect(start()).toBeDefined()
+  })
+
+  it('remembers setup choices as they are made, so leaving setup loses nothing', async () => {
+    const user = userEvent.setup()
+    const { unmount } = renderAt('/charades')
+    await user.clear(team(1))
+    await user.type(team(1), 'Lions')
+    await user.click(within(screen.getByRole('group', { name: 'Rounds' })).getByRole('button', { name: 'More: Rounds' }))
+    await user.click(within(screen.getByRole('group', { name: 'Turn length' })).getByRole('button', { name: 'More: Turn length' }))
+    await user.click(screen.getByRole('button', { name: 'snack' }))
+    unmount() // a back swipe, before Start
+
+    renderAt('/charades')
+    expect(team(1).value).toBe('Lions')
+    expect(within(screen.getByRole('group', { name: 'Rounds' })).getByText('4')).toBeDefined()
+    expect(within(screen.getByRole('group', { name: 'Turn length' })).getByText('75 seconds')).toBeDefined()
+    expect(screen.getByRole('button', { name: 'snack' }).getAttribute('aria-pressed')).toBe('true')
+    expect(screen.getByText('5 items to play')).toBeDefined()
+  })
+
+  it('drops remembered packs that no longer exist, and ignores choices that are no longer allowed', () => {
+    const key = 'ku-zo-wasa:setup:charades'
+    localStorage.setItem(key, JSON.stringify({ rounds: 5, seconds: 90, packs: ['back-to-school', 'removed-pack'], tags: [] }))
+    expect(loadSetup(charades)).toEqual({ rounds: 5, seconds: 90, packs: ['back-to-school'], tags: [] })
+
+    localStorage.setItem(key, JSON.stringify({ rounds: 5, seconds: 90, packs: ['removed-pack'], tags: [] }))
+    expect(loadSetup(charades)).toBeUndefined()
+    localStorage.setItem(key, JSON.stringify({ rounds: 99, seconds: 90, packs: ['back-to-school'], tags: [] }))
+    expect(loadSetup(charades)).toBeUndefined()
+    localStorage.setItem(key, 'not json')
+    expect(loadSetup(charades)).toBeUndefined()
   })
 })

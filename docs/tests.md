@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 224 runtime tests (`pnpm test`) and 29 compile-time checks (`pnpm typecheck`).
+**Counts:** 254 runtime tests (`pnpm test`) and 29 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -31,13 +31,17 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 9 | |
 | [App](#app) | `src/app/App.test.tsx` | 4 | |
 | [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 3 | |
-| [UI components](#ui-components) | `src/ui/ui.test.tsx` | 5 | |
-| [Game session](#game-session) | `src/sdk/game/useGameSession.test.ts` | 6 | |
+| [UI components](#ui-components) | `src/ui/ui.test.tsx` | 6 | |
+| [Game session](#game-session) | `src/sdk/game/useGameSession.test.ts` | 9 | |
 | [Interaction primitives](#interaction-primitives) | `src/sdk/interactions/interactions.test.tsx` | 8 | |
 | [Summary and Leaderboard](#summary-and-leaderboard) | `src/sdk/interactions/summary.test.tsx` | 4 | |
 | [Team-turns views](#team-turns-views) | `src/sdk/formats/team-turns/views/views.test.tsx` | 3 | |
 | [Game screen](#game-screen) | `src/app/play/GameScreen.test.tsx` | 2 | |
-| [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 7 | |
+| [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 9 | |
+| [Saved game](#saved-game) | `src/app/play/savedGame.test.ts` | 12 | |
+| [Play page](#play-page) | `src/app/play/PlayPage.test.tsx` | 3 | |
+| [Continuing a saved game](#continuing-a-saved-game) | `src/app/library/continue.test.tsx` | 6 | |
+| [Wake lock](#wake-lock) | `src/app/play/useWakeLock.test.ts` | 3 | |
 
 **Two kinds of test:**
 
@@ -470,7 +474,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 ## UI components
 
-`src/ui/ui.test.tsx`, testing `src/ui/cn.ts`, `button.tsx` and `input.tsx`. Screen tests (happy-dom); taps and typing go through `user-event`, which acts like a player.
+`src/ui/ui.test.tsx`, testing `src/ui/cn.ts`, `button.tsx`, `input.tsx` and `dialog.tsx`. Screen tests (happy-dom); taps and typing go through `user-event`, which acts like a player.
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
@@ -479,19 +483,23 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 186 | calls onClick when tapped, and not when disabled | Button | Tap; then tap while disabled | Called once in total | Start must do nothing while setup is invalid. |
 | 187 | uses theme colors for its variant, and lets the caller adjust it | Button | `variant="success"`, `className="w-full"` | Classes include `bg-success` and `w-full` | Variants come from tokens; screens can still size buttons. |
 | 188 | is a text field that can be found by its label and typed into | Input | Labelled "Team 1", type `Lions` | Found by its label; value `Lions` | Team names are typed here; a field without a usable label is invisible to screen readers. |
+| 242 | opens as a modal with its title and buttons, and asks to close on a tap outside it | Dialog | Closed; then open, titled "Quit this game?"; tap its button; tap outside | No dialog; then a dialog by that name, with a description; `onClose` not called for the button, called once for the outside tap | The browser's `<dialog>` is opened by a method, not an attribute: the component must turn the `open` prop into calls. A tap outside is a natural "never mind". |
 
 ## Game session
 
-`src/sdk/game/useGameSession.test.ts`, testing `src/sdk/game/useGameSession.ts`. Runs the hook in a fake browser with Testing Library's `renderHook`. A tiny machine: `go` starts a clock from `now` and moves to `playing`, `roll` adds a die roll, `stop` ends the game; the input is the starting total.
+`src/sdk/game/useGameSession.test.ts`, testing `newGame` and `useGameSession` in `src/sdk/game/useGameSession.ts`. Runs the hook in a fake browser with Testing Library's `renderHook`. A tiny machine: `go` starts a clock from `now` and moves to `playing`, `roll` adds a die roll, `stop` ends the game; the input is the starting total. Each session starts from `newGame(machine, input, seed)` (ADR 0006).
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 189 | starts the game from the input | Starting | Input 10, seed 1 | Phase `ready`, total 10, not ended | The session starts the machine the way `start` does. |
+| 189 | starts from the state it is given | Starting | `newGame` with input 10, seed 1 | Phase `ready`, total 10, not ended | The session plays the state it's handed, new or saved. |
 | 190 | sends events with the current time and re-renders with the new state | `send` | `go` with a clock reading 5000 | Phase `playing`, clock started at 5000 | The time comes from the session, never from game logic. |
 | 191 | plays the same way for the same seed | Determinism | Seed 7 twice: go, roll | The same total | Tests can pin a seed and get repeatable games. |
 | 192 | keeps the same state when an event is ignored | Ignored events | `roll` in `ready` | The exact same state object | Nothing re-renders for a tap the phase doesn't handle. |
 | 193 | says when the game has ended | `ended` | go, stop | `ended` is true | The play screen knows when to offer "Play again". |
-| 194 | picks a random seed for each new game, and restart starts over with a new one | Random seed, `restart` | `Math.random` returning 0.25 then 0.5; go, then restart | Seeds 2^30, then 2^31; restart is back at `ready` with the same input | Every game is different in real play, and "Play again" doesn't replay the same deck. |
+| 194 | newGame picks a random seed, and restart starts over with a new one | Random seed, `newGame`, `restart` | `Math.random` returning 0.25 then 0.5; go, then restart with input 3 | Seeds 2^30, then 2^31; restart is back at `ready` with that input | Every game is different in real play, and "Play again" doesn't replay the same deck. |
+| 225 | carries on a saved game exactly where it was | Resuming | A game after `go`, written to JSON and read back; then roll | The same state as rolling the original | A save is plain JSON, and resuming one draws what the original would have drawn (`rngState`). |
+| 226 | reports every change to onChange, but not the starting state or ignored events | `onChange` | Start; an ignored roll; go; restart | No call, no call, one call with the new state, a second call at `ready` | The app saves on every change and only then. |
+| 227 | keeps playing when the caller passes a new starting state on every render | First state only | A new `newGame` each render; go; re-render | Still `playing`; one change reported | A parent that rebuilds its props mustn't restart the game or report a change that didn't happen. |
 
 ## Interaction primitives
 
@@ -536,7 +544,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 212 | plays a whole game of Charades by tapping, from the first handoff to the results | Every view, end to end | Lions: Start, Got it ×2, Skip, 30 s pass, Next. Eagles: Start, Got it, 30 s pass, See results | Timer starts at 30; Lions' summary: 2 points, 2 got, 1 skipped; Eagles' summary: 1 point; "Lions won!", standings Lions 2, Eagles 1 | Proves the whole chain: buttons send the right events, the machine moves, and each phase's view appears. A view sending the wrong event fails here. |
-| 224 | after the game, Play again starts over with the same teams, and Back to games leads to the library | Results actions | Two turns with nothing guessed, then tap Play again | No Play again during the game; "It's a tie!", Back to games links to `/`; then Lions' handoff, "Round 1 of 1", no Play again | The app's own buttons appear only once the game has ended, and Play again really restarts. |
+| 224 | after the game, Play again starts over with the same teams, and Back to games leads to the library | Results actions | Two turns with nothing guessed, then tap Play again | No Play again during the game; "It's a tie!", no Quit, Back to games links to `/`; then Lions' handoff, "Round 1 of 1", no Play again | The app's own buttons appear only once the game has ended, and Play again really restarts. |
 
 ## Setup screen
 
@@ -544,10 +552,58 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 217 | starts with two teams and the default settings, and Start begins the game and remembers the teams | Setup, Start | Open `/charades`; rename Team 1 to Lions; tap Start | Team 1, Team 2; 3 rounds; 60 seconds; Back to School ticked; "34 items to play"; then "Pass the phone to" Lions; saved teams Lions, Team 2 | One tap from the library to a game with sensible defaults, and the next game starts with the same names. |
+| 217 | starts with two teams and the default settings, and Start begins the game and remembers the teams | Setup, Start | Open `/charades`; rename Team 1 to Lions; tap Start | Team 1, Team 2; 3 rounds; 60 seconds; Back to School ticked; "34 items to play"; then "Pass the phone to" Lions; saved teams Lions, Team 2; a saved game with those teams | One tap from the library to a game with sensible defaults, and the next game starts with the same names. Start saves the game before the play page opens (ADR 0006). |
 | 218 | fills in the teams saved on this device, and ignores a save it can't read | `loadTeams` | Saved Lions, Eagles, Hawks; then broken JSON; then one team | Three fields with those names; then nothing loaded, twice | Saved data can be old or edited by hand: a bad save means the defaults, never a crash. |
 | 219 | adds and removes teams, from 2 up to 10 | Teams | Add a team; remove Team 1; add until 10 | Team 3 appears; Team 2 and Team 3 remain; no Remove at 2 teams, no Add team at 10 | The screen can't make a team count the schema rejects. |
 | 220 | shows what's wrong with a team name next to it, and Start is off until it's fixed | Teams, errors | Empty Team 1; then "team 2"; then "team 2s" | "Give every team a name", field marked invalid, Start off; "Two teams have this name", Start off; Start on | The schema's own messages, shown where the problem is. |
 | 221 | changes rounds and turn length with − and +, within their limits | `Stepper` | Turn length −; rounds − twice | 45 seconds; 1 round, its − button off | Values stay in range without typing. |
 | 222 | counts the items a tag leaves, and needs at least one pack | Packs, tags | Pick snack; add song; untick Back to School | "5 items to play"; "7 items to play"; "Pick at least one pack", no tags offered, Start off | Players see what a filter leaves before they start. |
-| 223 | sends an address with no settings, like a shared /charades/play link, back to setup | Play page | Open `/charades/play` | Charades' setup screen | Settings travel with Start, not in the address: without them there's nothing to play. |
+| 223 | sends the play page back to setup when there is no saved game, like a shared /charades/play link | Play page | Open `/charades/play` with nothing saved | Charades' setup screen | The play page only plays a save (ADR 0006): without one there's nothing to play. |
+| 250 | remembers setup choices as they are made, so leaving setup loses nothing | Setup draft | Rename Team 1 to Lions, rounds +, turn length +, pick snack; leave; open setup again | Lions, 4 rounds, 75 seconds, snack picked, "5 items to play" | A back swipe or refresh mid-setup keeps everything, not only after Start (ADR 0006). |
+| 251 | drops remembered packs that no longer exist, and ignores choices that are no longer allowed | `loadSetup` | Saved packs: one existing, one removed; then only a removed pack; then 99 rounds; then broken JSON | The existing pack kept; then nothing loaded, three times | A pack can be deleted while a phone remembers it: picking it would crash the item pool. |
+
+## Saved game
+
+`src/app/play/savedGame.test.ts`, testing `src/app/play/savedGame.ts` (ADR 0006). Uses the fake browser's `localStorage`, emptied before each test. A new game of Charades: Lions and Eagles, 1 round, 30-second turns, Back to School, seed 2026. Some saves are written by hand, to test saves the app didn't write, or wrote long ago.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 228 | saves a game and loads it back exactly | `saveGame`, `loadGame` | The game after `start`, saved at 6000 | The same state, saved at 6000 | Resuming must continue the very same game. |
+| 229 | finds nothing when nothing is saved, or after clearGame | `clearGame` | Nothing; then a save, cleared | Nothing, twice | Quit (step 5) deletes the save. |
+| 230–236 | throws away a save with … , and says why | Checks on load | Not JSON · the wrong shape · an older version · a game that was removed · a phase that was renamed · the phase "toString" · 99 rounds | Discarded with the matching reason; the save is deleted | Every way a save can go stale, from ADR 0006. Never a crash, always a reason for the notice. "toString" exists on every object: a plain `in` check would let it through. Runs once per case (`it.each`). |
+| 237 | reports a save for a different game without deleting it | `loadGame` | A Charades save, loaded for another game id | "other game", Charades; the save kept | Opening another game's play page mustn't destroy the Charades save. |
+| 238 | summarizes the save for the library, and says when the game is finished | `summarizeSave` | A new game; then one played to the results | Teams, round 1 of 1, not finished; then finished | The library's Continue card (step 6) needs this, and hides finished games. |
+| 239 | keeps playing when storage is switched off | Storage errors | A storage whose every call throws | Save, load and clear don't throw; nothing loaded | Some private-browsing modes switch storage off; the game must still play. |
+
+## Play page
+
+`src/app/play/PlayPage.test.tsx`, testing `src/app/play/PlayPage.tsx` the way a refresh reaches it: a game is saved, then the app opens at `/charades/play`. Screen tests (happy-dom) with a fake clock (`Date` and `setInterval` only). The saved game: Charades, Lions and Eagles, 1 round, 30-second turns, seed 2026; Lions' turn started at 0 ms (it ends at 30 000) and they got one item.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 240 | carries on a saved turn after a refresh, with the clock still running, and saves every move | Resume, saving | Open at 10 000 ms; tap Got it | Lions' turn, timer at 20; the save now has 2 items got | A refresh loses nothing but the seconds it took, and every move is saved. |
+| 241 | ends the turn at once if its time ran out during the refresh | Resume after time ran out | Open at 45 000 ms | Lions' summary, "scored 1 point"; the save is at `turn_summary` | The turn ended while the page was gone; the game catches up instead of showing a timer below zero. |
+| 243 | asks before quitting: Keep playing carries on, Quit game deletes the save and goes to the library | Quit | A new saved game; Quit, Keep playing; Quit, Quit game | The dialog; then the handoff again; then the library, and nothing saved | One stray tap mustn't end a game, and a deliberate quit mustn't leave a save behind. |
+
+## Continuing a saved game
+
+`src/app/library/continue.test.tsx`, testing the library's Continue card and notice (`src/app/library/LibraryPage.tsx`), the setup screen's "Replace your saved game?" (`src/app/setup/SetupPage.tsx`) and `describeSave`. Screen tests (happy-dom), starting the app at an address with a `MemoryRouter`; `localStorage` emptied before each. The saved game: Charades, Lions and Eagles, 2 rounds, seed 2026, played with nothing guessed: after 2 turns it's round 2, after 4 it's finished.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 244 | describes a save by its teams and round | `describeSave` | 2 teams, round 2 of 3; 3 teams, round 1 of 1 | "Lions vs Eagles · Round 2 of 3"; "Lions, Eagles and Hawks · Round 1 of 1" | Players recognise their game by who's playing and how far along it is. |
+| 245 | offers the unfinished game first in the library, and Continue carries on with it | Continue card | A save in round 2; open `/`; tap Continue | A "Continue Charades" link with the teams and round; then the handoff, "Round 2 of 2" | After a back swipe or a closed tab, getting back is one tap. |
+| 246 | offers nothing to continue for a finished game | Continue card | A save at the results | No Continue link | There's nothing left to play in a finished game (ADR 0006). |
+| 247 | says when a save couldn't be restored, found by the library or by the play page | Discarded notice | An old-version save, opening `/`; then a save with an unknown phase, opening `/charades/play` | The notice with "older version of the app"; then the library with the notice naming the phase | A lost game is explained wherever it's found, never silent. The play page sends the reason to the library. |
+| 248 | asks before Start replaces an unfinished game: Continue saved game keeps it, Start new game replaces it | Replace question | A save in round 2; Start; Continue saved game | "Replace your saved game?" naming the teams and round; then the saved game, round 2 | One save per device: starting a new game must never silently destroy the old one. |
+| 249 | replaces the saved game after Start new game, and without asking when the saved game is finished | Replace question | A save in round 2; Start, Start new game; then a finished save, Start | A new game in round 1, saved; then no question, and a new unfinished save | Replacing is the answer's job; a finished game isn't worth asking about. |
+
+## Wake lock
+
+`src/app/play/useWakeLock.test.ts`, testing `src/app/play/useWakeLock.ts`. Runs the hook with `renderHook` in happy-dom, which has no wake lock of its own: tests give `navigator` a fake one whose requests succeed (or fail), and set the page's visibility by hand.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 252 | keeps the screen on while shown, and lets it go when the page closes | Request, release | Show the hook; then remove it | A `'screen'` lock requested; then released once | The screen stays on during play, and only during play. |
+| 253 | asks again when the page comes back after being hidden | Visibility | Hide the page; show it again | One request while hidden; a second when visible | Browsers drop the lock whenever the page is hidden (another app, the lock button); without asking again it would only last until the first interruption. |
+| 254 | carries on without it where it is missing or refused | No support | No wake lock at all; then one that refuses | No error either way | Older phones lack it and battery savers refuse it: the game must play regardless. |

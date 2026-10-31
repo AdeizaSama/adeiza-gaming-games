@@ -37,6 +37,7 @@ Delete the sections that don't apply.
 **SDK and contracts**
 
 - [ ] Changes to `src/sdk/` or the content pack format have a decision record in `docs/decisions/` (link: )
+- [ ] If the shape of a saved context changed (a format's or game's context, items or turn record), `saveVersion` in `src/app/play/savedGame.ts` is bumped ([ADR 0006](https://github.com/AdeizaSama/adeiza-gaming-games/blob/main/docs/decisions/0006-save-and-resume.md))
 - [ ] New runtime dependencies (if any) are justified below
 
 ## Notes for the reviewer

@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { Button } from './button'
 import { cn } from './cn'
+import { Dialog } from './dialog'
 import { Input } from './input'
 
 describe('cn', () => {
@@ -50,5 +51,31 @@ describe('Input', () => {
     const field = screen.getByRole('textbox', { name: 'Team 1' })
     await user.type(field, 'Lions')
     expect((field as HTMLInputElement).value).toBe('Lions')
+  })
+})
+
+describe('Dialog', () => {
+  it('opens as a modal with its title and buttons, and asks to close on a tap outside it', async () => {
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+    const { rerender } = render(
+      <Dialog open={false} onClose={onClose} title="Quit this game?" description="The scores will be lost.">
+        <Button>Quit game</Button>
+      </Dialog>,
+    )
+    expect(screen.queryByRole('dialog')).toBeNull()
+
+    rerender(
+      <Dialog open onClose={onClose} title="Quit this game?" description="The scores will be lost.">
+        <Button>Quit game</Button>
+      </Dialog>,
+    )
+    const dialog = screen.getByRole('dialog', { name: 'Quit this game?' })
+    expect(dialog.getAttribute('aria-describedby')).toBeTruthy()
+    await user.click(screen.getByRole('button', { name: 'Quit game' }))
+    expect(onClose).not.toHaveBeenCalled()
+
+    await user.click(dialog) // the dimmed area around the dialog's content
+    expect(onClose).toHaveBeenCalledTimes(1)
   })
 })

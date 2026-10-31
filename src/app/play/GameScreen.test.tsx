@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { TeamTurnsConfig } from '../../sdk/formats/team-turns/config'
 import { choosePoolItems } from '../../sdk/formats/team-turns/pool'
+import { newGame } from '../../sdk/game/useGameSession'
 import { games } from '../registry'
 import { GameScreen } from './GameScreen'
 
@@ -16,7 +17,7 @@ const input = { config, items: choosePoolItems(charades.content.packs, config, c
 function renderGame() {
   return render(
     <MemoryRouter>
-      <GameScreen game={charades} input={input} options={{ seed: 2026 }} />
+      <GameScreen game={charades} initial={newGame(charades.machine, input, 2026)} input={input} onQuit={() => {}} />
     </MemoryRouter>,
   )
 }
@@ -73,6 +74,7 @@ describe('GameScreen', () => {
       await user.click(screen.getByRole('button', { name: next }))
     }
     expect(screen.getByRole('heading', { name: "It's a tie!" })).toBeDefined()
+    expect(screen.queryByRole('button', { name: 'Quit' })).toBeNull()
     expect(screen.getByRole('link', { name: 'Back to games' }).getAttribute('href')).toBe('/')
 
     await user.click(screen.getByRole('button', { name: 'Play again' }))

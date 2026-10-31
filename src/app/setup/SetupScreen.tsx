@@ -1,5 +1,5 @@
 import { ChevronLeft, X } from 'lucide-react'
-import { useId, useState, type ReactNode } from 'react'
+import { useEffect, useId, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { TeamTurnsConfig } from '../../sdk/formats/team-turns/config'
 import { choosePoolItems } from '../../sdk/formats/team-turns/pool'
@@ -7,7 +7,8 @@ import type { Game } from '../../sdk/game/defineGame'
 import type { MachineEvent } from '../../sdk/machine/types'
 import { Button } from '../../ui/button'
 import { Input } from '../../ui/input'
-import { loadTeams } from './savedTeams'
+import { loadSetup, saveSetup } from './savedSetup'
+import { loadTeams, saveTeams } from './savedTeams'
 import { Stepper } from './Stepper'
 
 /** The format's own defaults (3 rounds, 60 seconds), read from its schema so this screen can't disagree with it. */
@@ -54,12 +55,20 @@ export function SetupScreen<
   ActionName extends string,
 >({ game, onStart }: SetupScreenProps<Item, Config, Setup, Turn, Event, Phase, GuardName, ActionName>) {
   const { packs, itemKey } = game.content
+  // What players chose last time, on this device; the defaults otherwise.
+  const [saved] = useState(() => loadSetup(game))
   const [teams, setTeams] = useState(() => loadTeams() ?? defaults.teams)
-  const [rounds, setRounds] = useState(defaults.rounds)
-  const [seconds, setSeconds] = useState(defaults.seconds)
-  const [chosenPacks, setChosenPacks] = useState(() => packs.map((pack) => pack.id))
-  const [chosenTags, setChosenTags] = useState<string[]>([])
+  const [rounds, setRounds] = useState(saved?.rounds ?? defaults.rounds)
+  const [seconds, setSeconds] = useState(saved?.seconds ?? defaults.seconds)
+  const [chosenPacks, setChosenPacks] = useState(() => saved?.packs ?? packs.map((pack) => pack.id))
+  const [chosenTags, setChosenTags] = useState<string[]>(saved?.tags ?? [])
   const id = useId()
+
+  // Remember every change as it's made, so a back swipe or a refresh in the middle of setup loses nothing.
+  useEffect(() => {
+    saveTeams(teams)
+    saveSetup(game.meta.id, { rounds, seconds, packs: chosenPacks, tags: chosenTags })
+  }, [game.meta.id, teams, rounds, seconds, chosenPacks, chosenTags])
 
   // Only the chosen packs' tags are offered. A tag picked before its pack was unticked stops counting.
   const tags = [...new Set(packs.filter((pack) => chosenPacks.includes(pack.id)).flatMap((pack) => pack.items.flatMap((item) => item.tags ?? [])))].sort()
