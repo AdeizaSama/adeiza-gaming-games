@@ -192,3 +192,60 @@ export function resultOf(entry) {
 ### How to verify
 
 `pnpm test`: 277 tests. The whole-game screen test now goes through review: Adjust, count the card that was on screen when time ran out, Done, and Lions score 5 instead of 3.
+
+---
+
+## Step 6: The card says how to clue it; docs catch up
+
+**What:**
+
+- **The card:** in Mix it up, `TurnView` shows "Describe it", "Act it out" or "Sing or hum it" above the card. In Describe mode it shows nothing.
+- **The summary:** Charades' own `SummaryView` is deleted. Review now lists every card, so the turn summary goes back to the format's default: who played and what they scored.
+- **Tests:** `src/games/charades/views/views.test.tsx`, for what Charades adds on top of the primitives.
+- **The standard:** §7 describes `onStart` and `points(turn, config)`; the example game lists a `review` view.
+- **README:** the status line mentions review.
+
+**Why:** Mix it up is useless if the card doesn't say how to clue it. And two screens listing the same cards one after the other is one too many.
+
+### How to verify
+
+`pnpm test`: 280 tests. Players can't choose Mix it up or the points yet (that's chapter 07's setup screen), so on a phone this chapter shows up as:
+
+- a review screen after every turn;
+- 2 points for each card got, and 1 off for each skip;
+- no "Describe it" line on the card any more.
+
+---
+
+## Chapter summary
+
+Charades now scores every card by how it was clued, and lets a host fix the mistakes a loud room makes before they count:
+
+| What happens | What players see |
+|---|---|
+| Time runs out | The review: every card of the turn with its result, the one on screen as "Not counted" |
+| Someone tapped the wrong button | The host taps Adjust, then the card: Got it ↔ Skipped |
+| The team said it as the buzzer went | Adjust, tap the last card: it counts |
+| Mix it up (from chapter 07's setup) | Each card says Describe it, Act it out or Sing or hum it, and scores by it |
+
+**Built:**
+
+| Part | Where | Step |
+|---|---|---|
+| ADR 0007: turn review | `docs/decisions/` | 1 |
+| Charades' settings: mode and points | `src/games/charades/config.ts` | 2 |
+| `points(turn, config)`, `onStart`; the turn log; `saveVersion` 2 | `src/sdk/formats/team-turns/`, `src/games/charades/machine.ts` | 3 |
+| The `Review` primitive | `src/sdk/interactions/Review.tsx` | 4 |
+| The review phase and its view | `src/games/charades/` | 5 |
+| The mode on the card; the format's summary back | `src/games/charades/views/` | 6 |
+
+**Tests:** 280 runtime tests and 30 compile-time checks, up from 254 and 29.
+
+**New dependencies:** none.
+
+**What's next:** chapter 07 puts the new settings on the setup screen:
+
+- mode, and an Advanced settings dialog for the points;
+- presets;
+- the rules screen, and the game's README;
+- the Definition of Done for Charades.

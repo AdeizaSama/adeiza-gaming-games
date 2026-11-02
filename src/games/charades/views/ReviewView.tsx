@@ -8,7 +8,7 @@ import type { CharadesItem, CharadesMode } from '../schema'
 const modeLabels: Record<CharadesMode, string> = { describe: 'Described', act: 'Acted', sing: 'Sung' }
 
 /** One card as a review row. A skip that costs nothing reads as neutral, not bad. */
-function row(entry: CharadesEntry, config: CharadesConfig): ReviewRow {
+export function reviewRow(entry: CharadesEntry, config: CharadesConfig): ReviewRow {
   const result = resultOf(entry)
   return {
     text: entry.item.text,
@@ -24,7 +24,7 @@ export function ReviewView({ context, send }: TeamTurnsViewProps<CharadesItem, C
   return (
     <Review
       title={context.config.teams[context.current]}
-      rows={context.turn.entries.map((entry) => row(entry, context.config))}
+      rows={context.turn.entries.map((entry) => reviewRow(entry, context.config))}
       onToggle={(index) => send({ type: 'toggle', index })}
       onDone={() => send({ type: 'done' })}
     />

@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 277 runtime tests (`pnpm test`) and 30 compile-time checks (`pnpm typecheck`).
+**Counts:** 280 runtime tests (`pnpm test`) and 30 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -30,6 +30,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [teamTurns (Word Duel)](#teamturns-word-duel) | `src/sdk/formats/team-turns/teamTurns.test.ts` | 14 | 10 |
 | [defineGame](#definegame) | `src/sdk/game/defineGame.test.ts` | 10 | 6 |
 | [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 22 | |
+| [Charades views](#charades-views) | `src/games/charades/views/views.test.tsx` | 3 | |
 | [App](#app) | `src/app/App.test.tsx` | 4 | |
 | [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 3 | |
 | [UI components](#ui-components) | `src/ui/ui.test.tsx` | 6 | |
@@ -439,7 +440,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 168 | reports a preset that names a pack the game does not have | Presets | Preset with pack `anime` | Reports `config.presets.0.packs` naming `"anime"` | A typo in a pack id would give players an empty game. |
 | 169 | reports two presets with the same id, and a preset without contributors | Presets | Two presets called `quick`, the second without contributors | Reports `config.presets.1.id` and `config.presets.1.contributors` | Preset ids are used in links; credit is required (§3). |
 | 170 | keeps the item and settings types from the schemas | Types | The defined game | Packs typed `Pack<{ text: string }>[]`; settings typed `TeamTurnsConfig` | The app (chapter 04) works with a game's real types. Checked by `pnpm typecheck`. |
-| 206 | uses a game's own view for a format phase instead of the default | Views | Views for `turn` and `turn_summary` | The game's summary view is used | A game can replace a format view (Charades lists the items got and skipped). |
+| 206 | uses a game's own view for a format phase instead of the default | Views | Views for `turn` and `turn_summary` | The game's summary view is used | A game can replace a format view when the default can't show what it needs. |
 | 207 | reports a phase without a view | Views | `views: {}` (types bypassed) | Reports `views: Phase "turn" has no view` | Types catch this; the check also covers code that bypasses them. |
 
 ### Compile-time checks
@@ -481,6 +482,16 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 276 | toggleEntry corrects only the card named, and a second toggle undoes it | `toggleEntry` | Two cards; toggle card 1 twice | Only card 1 changed; then neither; the original unchanged | As above. |
 | 277 | isEntry is true only for a toggle naming a card played this turn | `isEntry` | Two cards; toggles for 0, 1, 2, −1 and 0.5; a `done` | True, true; false for the rest | A test per guard (standard §12). Events come from views, so a bad index is checked, not trusted. |
 | 268 | pickMode picks describe in describe mode, and one of the item's modes in mix it up | `pickMode` | Gala (describe, sing); describe; then mix with seeds 1–8 | `describe`; then both `describe` and `sing`, nothing else | As above. |
+
+## Charades views
+
+`src/games/charades/views/views.test.tsx`, testing `TurnView.tsx` and `ReviewView.tsx` in `src/games/charades/views/`: what Charades adds on top of the primitives. The turn view is drawn in happy-dom; review rows are checked as plain data (`reviewRow`), since `Review` itself is tested in the SDK.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 278 | says how to clue the card in Mix it up, and nothing in Describe mode | Mode on the card | Gala, picked to be acted; in mix, then in describe | "Act it out"; then the card with no mode line | In Mix it up the card must say how to clue it; in Describe mode everything is described, so saying so is noise. |
+| 279 | names each result, and marks a corrected card | `reviewRow` | Gala got; at time up; got then corrected | Got it (good); Not counted (neutral); Skipped (bad), changed | The words and colors players see in review come from the one `resultOf` rule. |
+| 280 | shows how the card was clued only in Mix it up, and a free skip as neutral | `reviewRow` | Gala acted, in mix; a skip with skip points 0 | Detail "Acted"; Skipped in neutral | The mode matters for scoring only in Mix it up; a skip that costs nothing shouldn't look like a loss. |
 
 ## App
 
@@ -583,7 +594,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 212 | plays a whole game of Charades by tapping, from the first handoff to the results | Every view, end to end | Lions: Start, Got it ×2, Skip, 30 s pass; in review Adjust, tap the last card, Done; Next. Eagles: Start, Got it, 30 s pass, Done, See results | Timer starts at 30; review shows 4 cards, the last not counted, then "Got it" and changed; Lions' summary: 5 points (2 + 2 − 1 + 2), 3 got, 1 skipped; Eagles' summary: 2 points; "Lions won!", standings Lions 5, Eagles 2 | Proves the whole chain: buttons send the right events, the machine moves, and each phase's view appears. A view sending the wrong event fails here. |
+| 212 | plays a whole game of Charades by tapping, from the first handoff to the results | Every view, end to end | Lions: Start, Got it ×2, Skip, 30 s pass; in review Adjust, tap the last card, Done; Next. Eagles: Start, Got it, 30 s pass, Done, See results | Timer starts at 30; review shows 4 cards, the last not counted, then "Got it" and changed; Lions' summary: 5 points (2 + 2 − 1 + 2); Eagles' summary: 2 points; "Lions won!", standings Lions 5, Eagles 2 | Proves the whole chain: buttons send the right events, the machine moves, and each phase's view appears. A view sending the wrong event fails here. |
 | 224 | after the game, Play again starts over with the same teams, and Back to games leads to the library | Results actions | Two turns with nothing guessed, then tap Play again | No Play again during the game; "It's a tie!", no Quit, Back to games links to `/`; then Lions' handoff, "Round 1 of 1", no Play again | The app's own buttons appear only once the game has ended, and Play again really restarts. |
 
 ## Setup screen

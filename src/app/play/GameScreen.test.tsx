@@ -52,8 +52,6 @@ describe('GameScreen', () => {
     await user.click(screen.getByRole('button', { name: 'Done' }))
 
     expect(screen.getByText(/scored/).textContent).toBe('scored 5 points')
-    expect(within(screen.getByRole('list', { name: 'Got it' })).getAllByRole('listitem')).toHaveLength(3)
-    expect(within(screen.getByRole('list', { name: 'Skipped' })).getAllByRole('listitem')).toHaveLength(1)
     await user.click(screen.getByRole('button', { name: 'Next' }))
 
     // Eagles' turn: one got, then time runs out. It's the last turn.
