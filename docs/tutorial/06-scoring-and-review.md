@@ -41,3 +41,30 @@ How much a card is worth now depends on the settings (a correct act might be wor
 ### How to verify
 
 Read the ADR. The flow diagram and the result table are what steps 3 and 4 build.
+
+---
+
+## Step 2: Charades' own settings
+
+**What:** `src/games/charades/config.ts`, the settings schema for Charades: the format's settings plus `mode` and `points`.
+
+**Why:** both modes and the scoring are settings players choose, so they belong in the schema that checks setup (standard §5). The app uses the game's schema everywhere settings are checked: setup, presets and loading a saved game.
+
+### Extending the format's schema
+
+```ts
+export const CharadesConfig = TeamTurnsConfig.extend({
+  mode: z.enum(['describe', 'mix']).default('describe'),
+  points: z.strictObject({ describe: …default(2), act: …default(3), sing: …default(3), skip: …default(1) }).prefault({}),
+})
+```
+
+`extend` keeps everything the format checks (team names, rounds, packs) and stays strict, so a typo in a setting is still an error.
+
+**`prefault` vs `default`.** `default(value)` is used *instead of* parsing when the field is missing, so it would need all four numbers written out again. `prefault({})` parses `{}` when the field is missing, which lets each number's own default fill itself in. Change one default and nothing else needs updating.
+
+**Skip is a cost, written as a positive number.** `skip: 1` means a skip takes 1 point off. 0 turns the penalty off, so no separate on/off switch is needed.
+
+### How to verify
+
+`pnpm test src/games/charades/config.test.ts`: 5 tests. Change a default in `config.ts` and the first test fails.

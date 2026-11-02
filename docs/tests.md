@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 254 runtime tests (`pnpm test`) and 29 compile-time checks (`pnpm typecheck`).
+**Counts:** 259 runtime tests (`pnpm test`) and 29 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -20,6 +20,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Loading packs](#loading-packs) | `src/sdk/content/loadPacks.test.ts` | 12 | |
 | [Finding games (scripts)](#finding-games-scripts) | `scripts/lib/games.test.ts` | 6 | |
 | [Charades content](#charades-content) | `src/games/charades/schema.test.ts` | 8 | |
+| [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
 | [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 8 | |
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
 | [Content check (scripts)](#content-check-scripts) | `scripts/lib/validate.test.ts` | 6 | |
@@ -258,6 +259,18 @@ Each row is a mistake TypeScript must reject.
 | 88 | rejects an unknown field, such as the old available_types | Strict fields | An item with `available_types` | Rejected as an unknown field | Catches typos and field names from older formats instead of silently ignoring them. |
 | 89 | identifies an item by its text | `itemKey` | Gala, with a tag and a mode | `"Gala"` | Duplicates are found by text only (step 3). |
 | 90 | all pass the pack checks | Real packs | Every file in `content/`, loaded with `import.meta.glob` exactly as the app will | Loads without error and includes `back-to-school` | Checks the real content, the same way the app loads it. A broken pack makes this test file fail. |
+
+## Charades settings
+
+`src/games/charades/config.test.ts`, testing `src/games/charades/config.ts`: Charades' own settings on top of the format's (ADR 0007).
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 255 | defaults to describe, with 2 for a describe, 3 for an act or a sing, and 1 off for a skip | Defaults | Only teams and packs | Mode `describe`, points 2 / 3 / 3 / 1, the format's 3 rounds | The defaults are the maintainer's scoring; most groups never change them. |
+| 256 | fills in the point values that are left out | `points` | Only `act: 5` | Act 5, the other three at their defaults | Changing one value never resets the others. |
+| 257 | accepts mix and rejects other modes | `mode` | `mix`; `act` | Accepted; rejected at `mode` | There are two modes; "always act" was dropped because most items can't be acted. |
+| 258 | keeps points whole and between 1 and 5, and lets a skip cost nothing | Point limits | Skip 0; describe 0; sing 6; act 2.5 | Accepted; then rejected at each field | Whole numbers keep scores free of halves; a correct answer is always worth something; skip 0 turns the penalty off. |
+| 259 | rejects unknown settings, like the format does | Strict fields | `punishSkips`; a `bonus` point value | Rejected at the top level; rejected at `points` | Catches typos and settings left over from older versions. |
 
 ## JSON Schemas (scripts)
 
