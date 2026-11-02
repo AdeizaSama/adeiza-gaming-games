@@ -18,7 +18,7 @@ const fresh = newGame(charades.machine, { config, items: choosePoolItems(charade
 function played(turns: number) {
   let state = fresh
   for (let n = 0; n < turns; n++) {
-    for (const type of ['start', 'time_up', 'next'] as const) state = send(charades.machine, state, { type }, { now: 0 })
+    for (const type of ['start', 'time_up', 'done', 'next'] as const) state = send(charades.machine, state, { type }, { now: 0 })
   }
   return state
 }

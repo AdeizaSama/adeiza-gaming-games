@@ -138,3 +138,57 @@ The screen starts locked: the cards are plain rows, not buttons, so a tap does n
 ### How to verify
 
 `pnpm test src/sdk/interactions/review.test.tsx`: 3 tests. Change `useState(false)` to `useState(true)` in `Review.tsx` and all three fail.
+
+---
+
+## Step 5: The review phase
+
+**What:** Charades' `review` phase between its turn and the format's summary, with its events, guard and actions, and `ReviewView`, which connects it to the `Review` primitive.
+
+**Why:** this is the ADR's decision made real: mis-taps are fixed before the turn's points are banked.
+
+### The flow
+
+```ts
+turn: {
+  on: { …, time_up: { to: 'review', actions: ['markTimeUp'] } },
+},
+review: {
+  interaction: 'review',
+  on: {
+    toggle: { when: 'isEntry', actions: ['toggleEntry'] },
+    done: { to: 'turn_summary' },
+  },
+},
+```
+
+No format code changed: `GamePhase` already allowed a game phase to lead to `turn_summary` (chapter 03).
+
+### A log entry keeps what happened, and whether it was corrected
+
+Step 3's entry had a `result`. A correction needs to know where it started, because the card on screen at time up corrects differently from the others. So an entry now keeps what happened during the turn, `played` (`got`, `skipped` or `time_up`), and a `changed` flag. One function says what counts:
+
+```ts
+export function resultOf(entry) {
+  if (!entry.changed) return entry.played === 'time_up' ? 'not_counted' : entry.played
+  return entry.played === 'skipped' || entry.played === 'time_up' ? 'got' : 'skipped'
+}
+```
+
+`toggleEntry` only flips `changed`, so a second tap undoes the first. Scoring, the review screen and the summary all go through `resultOf`, so they can't disagree about a card. The review also shows which cards were changed.
+
+### A guard for the index
+
+`toggle` carries a number from the view. The `isEntry` guard checks it names a card played this turn (a whole number, in range) before `toggleEntry` runs. A bad index is ignored, like any event that doesn't apply.
+
+### The view
+
+`ReviewView` turns each entry into a `Review` row:
+
+- the result's words: Got it, Skipped or Not counted;
+- its tone: a skip reads as bad only when skips cost points;
+- how the card was clued (Described, Acted, Sung), shown only in Mix it up.
+
+### How to verify
+
+`pnpm test`: 277 tests. The whole-game screen test now goes through review: Adjust, count the card that was on screen when time ran out, Done, and Lions score 5 instead of 3.

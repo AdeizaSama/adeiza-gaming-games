@@ -61,7 +61,7 @@ describe('saved game', () => {
 
     // Both teams play their one turn: the game reaches the results.
     let state = fresh
-    for (const type of ['start', 'time_up', 'next', 'start', 'time_up', 'next'] as const) {
+    for (const type of ['start', 'time_up', 'done', 'next', 'start', 'time_up', 'done', 'next'] as const) {
       state = send(charades.machine, state, { type }, { now: 0 })
     }
     expect(state.phase).toBe('results')

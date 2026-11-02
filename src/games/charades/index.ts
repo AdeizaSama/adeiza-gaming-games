@@ -3,6 +3,7 @@ import { defineGame } from '../../sdk/game/defineGame'
 import { CharadesConfig } from './config'
 import { machine } from './machine'
 import { itemKey, itemSchema } from './schema'
+import { ReviewView } from './views/ReviewView'
 import { SummaryView } from './views/SummaryView'
 import { TurnView } from './views/TurnView'
 
@@ -27,5 +28,5 @@ export default defineGame({
   config: { schema: CharadesConfig },
   machine,
   // handoff and results use the format's views; the summary is replaced to list the items got and skipped.
-  views: { turn: TurnView, turn_summary: SummaryView },
+  views: { turn: TurnView, review: ReviewView, turn_summary: SummaryView },
 })

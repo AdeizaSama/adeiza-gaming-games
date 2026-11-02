@@ -34,7 +34,7 @@ describe('GameScreen', () => {
     const user = userEvent.setup()
     renderGame()
 
-    // Lions' turn: got, got, skip, then time runs out.
+    // Lions' turn: got, got, skip, then time runs out as they say the fourth card.
     expect(screen.getByRole('heading', { name: 'Lions' })).toBeDefined()
     await user.click(screen.getByRole('button', { name: 'Start' }))
     expect(screen.getByRole('timer').textContent).toBe('30')
@@ -43,8 +43,16 @@ describe('GameScreen', () => {
     await user.click(screen.getByRole('button', { name: 'Skip' }))
     act(() => vi.advanceTimersByTime(30_000))
 
-    expect(screen.getByText(/scored/).textContent).toBe('scored 3 points')
-    expect(within(screen.getByRole('list', { name: 'Got it' })).getAllByRole('listitem')).toHaveLength(2)
+    // Review: the host counts the fourth card, said as the buzzer went. 2 + 2 − 1 + 2 = 5.
+    const cards = () => within(screen.getByRole('list', { name: 'Cards this turn' })).getAllByRole('listitem')
+    expect(cards().map((card) => card.textContent?.endsWith('Not counted'))).toEqual([false, false, false, true])
+    await user.click(screen.getByRole('button', { name: 'Adjust' }))
+    await user.click(within(cards()[3]).getByRole('button'))
+    expect(cards()[3].textContent).toMatch(/Got itchanged$/)
+    await user.click(screen.getByRole('button', { name: 'Done' }))
+
+    expect(screen.getByText(/scored/).textContent).toBe('scored 5 points')
+    expect(within(screen.getByRole('list', { name: 'Got it' })).getAllByRole('listitem')).toHaveLength(3)
     expect(within(screen.getByRole('list', { name: 'Skipped' })).getAllByRole('listitem')).toHaveLength(1)
     await user.click(screen.getByRole('button', { name: 'Next' }))
 
@@ -53,12 +61,13 @@ describe('GameScreen', () => {
     await user.click(screen.getByRole('button', { name: 'Start' }))
     await user.click(screen.getByRole('button', { name: 'Got it' }))
     act(() => vi.advanceTimersByTime(30_000))
+    await user.click(screen.getByRole('button', { name: 'Done' }))
     expect(screen.getByText(/scored/).textContent).toBe('scored 2 points')
     await user.click(screen.getByRole('button', { name: 'See results' }))
 
     expect(screen.getByRole('heading', { name: 'Lions won!' })).toBeDefined()
     const standings = within(screen.getByRole('list', { name: 'Standings' })).getAllByRole('listitem')
-    expect(standings.map((row) => row.textContent)).toEqual(['1Lions3', '2Eagles2'])
+    expect(standings.map((row) => row.textContent)).toEqual(['1Lions5', '2Eagles2'])
   })
 
   it('after the game, Play again starts over with the same teams, and Back to games leads to the library', async () => {
@@ -70,6 +79,7 @@ describe('GameScreen', () => {
     for (const next of ['Next', 'See results']) {
       await user.click(screen.getByRole('button', { name: 'Start' }))
       act(() => vi.advanceTimersByTime(30_000))
+      await user.click(screen.getByRole('button', { name: 'Done' }))
       await user.click(screen.getByRole('button', { name: next }))
     }
     expect(screen.getByRole('heading', { name: "It's a tie!" })).toBeDefined()

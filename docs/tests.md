@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 271 runtime tests (`pnpm test`) and 30 compile-time checks (`pnpm typecheck`).
+**Counts:** 277 runtime tests (`pnpm test`) and 30 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -29,7 +29,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Team-turns guards and actions](#team-turns-guards-and-actions) | `src/sdk/formats/team-turns/rules.test.ts` | 9 | |
 | [teamTurns (Word Duel)](#teamturns-word-duel) | `src/sdk/formats/team-turns/teamTurns.test.ts` | 14 | 10 |
 | [defineGame](#definegame) | `src/sdk/game/defineGame.test.ts` | 10 | 6 |
-| [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 16 | |
+| [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 22 | |
 | [App](#app) | `src/app/App.test.tsx` | 4 | |
 | [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 3 | |
 | [UI components](#ui-components) | `src/ui/ui.test.tsx` | 6 | |
@@ -461,19 +461,25 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 |---|---|---|---|---|---|
 | 171 | is a valid game with the Back to School pack and its own settings | `index.ts` | The game's default export | Id `charades`, includes `back-to-school`, uses the Charades machine and settings schema | Importing `index.ts` runs `defineGame`'s checks; a broken game fails here. |
 | 172 | has no mistakes validateMachine can find | `validateMachine` | The Charades machine | No problems | Required for every game (standard §12). |
-| 173 | got: logs the card as got with its mode, shows the next one, and is worth the describe points | `got` | `got` on the first card, then time up and next | One entry: the card, `describe`, `got`; a new card on screen; Lions score 2 | The core rule: a correct guess scores its mode's points. |
-| 174 | skip: logs the card as skipped and shows the next one; a turn never scores below 0 | `skip` | `skip` on the first card, then time up and next | One entry, `skipped`; a new card on screen; scores stay 0 and 0 | A skip costs points, but a bad turn can't take away earlier turns' points (ADR 0007). |
-| 262 | scores a turn as the sum of its cards: two got and a skip is 2 + 2 − 1 | Points | got, got, skip, time up, next | Lions score 3 | Each card counts on its own, so a review can change one card's result. |
-| 175 | time_up: ends the turn without logging the card on screen | `time_up` | `got`, then time up | Turn summary, one entry (`got`) | The card on screen when time runs out wasn't guessed or passed. |
-| 176 | ignores got and skip outside a turn | Ignored events | `got` at the handoff; `skip` on the summary | The same state back | A stray tap between turns can't score. |
+| 173 | got: logs the card as got with its mode, shows the next one, and is worth the describe points | `got` | `got` on the first card, then time up, done and next | One entry: the card, `describe`, played `got`, not changed; a new card on screen; Lions score 2 | The core rule: a correct guess scores its mode's points. |
+| 174 | skip: logs the card as skipped and shows the next one; a turn never scores below 0 | `skip` | `skip` on the first card, then time up, done and next | One entry, played `skipped`; a new card on screen; scores stay 0 and 0 | A skip costs points, but a bad turn can't take away earlier turns' points (ADR 0007). |
+| 262 | scores a turn as the sum of its cards: two got and a skip is 2 + 2 − 1 | Points | got, got, skip, time up, done, next | Lions score 3 | Each card counts on its own, so a review can change one card's result. |
+| 175 | time_up: logs the card on screen as not counted and goes to review; done goes on to the summary | `time_up`, `done` | `got`, time up, then done | Review, with the results got and not counted; the card on screen is the one logged; no new card drawn; then the summary, worth 2 | The card on screen when time ran out is kept, so review can count it if the team said it as the buzzer went (ADR 0007). |
+| 272 | review: a correction changes what the turn is worth, and a second one undoes it | `toggle` | got, skip, time up (worth 1); toggle the skip; toggle the last card; toggle it again; done, next | 4 (the skip now got); 6 (the last card got); back to 4; Lions bank 6 | The whole point of review: a corrected card scores as if it had been tapped right. |
+| 273 | review: ignores a correction for a card that wasn't played, and corrections outside review | `isEntry`, ignored events | Toggle card 2 and −1 of two; toggle in a turn; toggle on the summary | The same state back each time | A bad index can't crash or score, and nothing changes a turn once its review is done. |
+| 176 | ignores got and skip outside a turn | Ignored events | `got` at the handoff; `skip` in review | The same state back | A stray tap between turns can't score. |
 | 263 | describe: plays every card as describe, even items that can be acted or sung | Describe mode | A full game, seed 2026 | Some cards could be acted; every card is `describe` | Describe is the default way to play: the card shows no mode. |
 | 264 | mix it up: gives each card one of its item's modes, so describe-only items are still described | Mix it up | A full game in mix, seed 2026, 4 cards a turn | 24 cards, each in one of its item's modes; some acted; some multi-mode items still described | A card is never asked to be acted unless its pack says it can be. |
 | 265 | mix it up: picks the first card's mode too, and the same seed picks the same modes | `onStart`, determinism | 11 cards from seed 7, twice | The same modes both times, more than one kind | The first card is drawn by the format, so `onStart` picks its mode; modes come from the machine's `rng`, so a resumed game shows the same ones. |
-| 177 | plays a full game from the first handoff to the results | Full playthrough | Seed 2026; each turn: start, got, got, skip, got, time up, next | 6 turns; ends in `results`; scores 15 and 15; 30 different items drawn | The whole game plays end to end with real content (standard §12). |
-| 266 | entryPoints: a got card earns its mode's points, a skipped card costs the skip points | `entryPoints` | Points 1 / 4 / 5 / 2; a got card in each mode; a skipped act | 1, 4, 5; −2 | Every mode reads its own setting. A skip costs the same whatever the mode. |
+| 177 | plays a full game from the first handoff to the results | Full playthrough | Seed 2026; each turn: start, got, got, skip, got, time up, done, next | 6 turns; ends in `results`; scores 15 and 15; 30 different items drawn | The whole game plays end to end with real content (standard §12). |
+| 274 | resultOf: a correction swaps got and skipped, and counts the card on screen at time up as got | `resultOf` | Each of got, skipped and time up, as played and corrected | got, skipped, not counted; corrected: skipped, got, got | The one rule for what a correction means, in one function the views and scoring share. |
+| 266 | entryPoints: a got card earns its mode's points, a skipped card costs the skip points, not counted is 0 | `entryPoints` | Points 1 / 4 / 5 / 2; got in describe and act; a skipped sing corrected to got; a skipped act; an act at time up | 1, 4, 5; −2; 0 | Every mode reads its own setting; a corrected card scores by its new result. |
 | 267 | points: adds up the turn's cards under the game's settings, never below 0 | `points` | Act + sing − skip; describe at 4; two skips; nothing | 5; 4; 0; 0 | The settings decide the score; a turn's floor is 0 (ADR 0007). |
-| 178 | markGot logs the card on screen as got, in its mode, without changing the context passed in | `markGot` | Gala on screen, mode sing, empty turn | One entry: Gala, `sing`, `got`; the original unchanged | A test per action (standard §12). |
-| 179 | markSkipped logs the card on screen as skipped, in its mode, without changing the context passed in | `markSkipped` | Gala on screen, mode describe, empty turn | One entry: Gala, `describe`, `skipped`; the original unchanged | As above. |
+| 178 | markGot logs the card on screen as got, in its mode, without changing the context passed in | `markGot` | Gala on screen, mode sing, empty turn | One entry: Gala, `sing`, played `got`, not changed; the original unchanged | A test per action (standard §12). |
+| 179 | markSkipped logs the card on screen as skipped, in its mode, without changing the context passed in | `markSkipped` | Gala on screen, mode describe, empty turn | One entry: Gala, `describe`, played `skipped`, not changed; the original unchanged | As above. |
+| 275 | markTimeUp logs the card on screen as played at time up, after the cards before it | `markTimeUp` | Zobo already logged; Gala on screen, mode sing | Zobo, then Gala played at `time_up`; the original unchanged | As above. |
+| 276 | toggleEntry corrects only the card named, and a second toggle undoes it | `toggleEntry` | Two cards; toggle card 1 twice | Only card 1 changed; then neither; the original unchanged | As above. |
+| 277 | isEntry is true only for a toggle naming a card played this turn | `isEntry` | Two cards; toggles for 0, 1, 2, −1 and 0.5; a `done` | True, true; false for the rest | A test per guard (standard §12). Events come from views, so a bad index is checked, not trusted. |
 | 268 | pickMode picks describe in describe mode, and one of the item's modes in mix it up | `pickMode` | Gala (describe, sing); describe; then mix with seeds 1–8 | `describe`; then both `describe` and `sing`, nothing else | As above. |
 
 ## App
@@ -577,7 +583,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 212 | plays a whole game of Charades by tapping, from the first handoff to the results | Every view, end to end | Lions: Start, Got it ×2, Skip, 30 s pass, Next. Eagles: Start, Got it, 30 s pass, See results | Timer starts at 30; Lions' summary: 3 points (2 + 2 − 1), 2 got, 1 skipped; Eagles' summary: 2 points; "Lions won!", standings Lions 3, Eagles 2 | Proves the whole chain: buttons send the right events, the machine moves, and each phase's view appears. A view sending the wrong event fails here. |
+| 212 | plays a whole game of Charades by tapping, from the first handoff to the results | Every view, end to end | Lions: Start, Got it ×2, Skip, 30 s pass; in review Adjust, tap the last card, Done; Next. Eagles: Start, Got it, 30 s pass, Done, See results | Timer starts at 30; review shows 4 cards, the last not counted, then "Got it" and changed; Lions' summary: 5 points (2 + 2 − 1 + 2), 3 got, 1 skipped; Eagles' summary: 2 points; "Lions won!", standings Lions 5, Eagles 2 | Proves the whole chain: buttons send the right events, the machine moves, and each phase's view appears. A view sending the wrong event fails here. |
 | 224 | after the game, Play again starts over with the same teams, and Back to games leads to the library | Results actions | Two turns with nothing guessed, then tap Play again | No Play again during the game; "It's a tie!", no Quit, Back to games links to `/`; then Lions' handoff, "Round 1 of 1", no Play again | The app's own buttons appear only once the game has ended, and Play again really restarts. |
 
 ## Setup screen
@@ -616,7 +622,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 240 | carries on a saved turn after a refresh, with the clock still running, and saves every move | Resume, saving | Open at 10 000 ms; tap Got it | Lions' turn, timer at 20; the save now has 2 cards logged | A refresh loses nothing but the seconds it took, and every move is saved. |
-| 241 | ends the turn at once if its time ran out during the refresh | Resume after time ran out | Open at 45 000 ms | Lions' summary, "scored 2 points"; the save is at `turn_summary` | The turn ended while the page was gone; the game catches up instead of showing a timer below zero. |
+| 241 | ends the turn at once if its time ran out during the refresh | Resume after time ran out | Open at 45 000 ms | Lions' review; the save is at `review` | The turn ended while the page was gone; the game catches up instead of showing a timer below zero. |
 | 243 | asks before quitting: Keep playing carries on, Quit game deletes the save and goes to the library | Quit | A new saved game; Quit, Keep playing; Quit, Quit game | The dialog; then the handoff again; then the library, and nothing saved | One stray tap mustn't end a game, and a deliberate quit mustn't leave a save behind. |
 
 ## Continuing a saved game

@@ -56,9 +56,9 @@ describe('play page', () => {
     vi.setSystemTime(45_000) // 15 seconds after the turn should have ended
     openPlayPage()
 
-    expect(screen.getByText(/scored/).textContent).toBe('scored 2 points')
+    expect(screen.getByRole('list', { name: 'Cards this turn' })).toBeDefined()
     const saved = loadGame(charades)
-    expect(saved.status === 'ok' && saved.state.phase).toBe('turn_summary')
+    expect(saved.status === 'ok' && saved.state.phase).toBe('review')
   })
 
   it('asks before quitting: Keep playing carries on, Quit game deletes the save and goes to the library', async () => {
