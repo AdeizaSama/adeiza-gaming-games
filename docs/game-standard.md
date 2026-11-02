@@ -73,7 +73,8 @@ export default defineGame({
   machine,                           // ./machine.ts
   views: {                           // one per phase (ADR 0005)
     turn: TurnView,                  // ./views/: required for each of the game's own phases
-    turn_summary: SummaryView,       // optional: replaces the format's default for its phase
+    review: ReviewView,              // Charades' own phase after the turn (ADR 0007)
+    // turn_summary: SummaryView,    // optional: replaces the format's default for its phase
   },
 });
 ```
@@ -179,7 +180,8 @@ A primitive takes plain props (text, callbacks) and knows nothing about machines
 | `PromptCard` | Category or prompt with a counter (name ten) | Planned |
 | `MultipleChoice` | Question, options, reveal (trivia) | Planned |
 | `Countdown` | Shared timer display with warnings; reports when time is up (it reads the clock only to show it) | Built |
-| `Summary` | Turn/round recap with editable results | Built, read-only for now |
+| `Summary` | Turn/round recap: who played, what they scored | Built |
+| `Review` | A turn card by card, locked until the host taps Adjust, to fix mis-taps before they count ([ADR 0007](decisions/0007-turn-review.md)) | Built |
 | `Leaderboard` | Team/player standings; tied scores share a place | Built |
 | `SecretReveal` | One-player-at-a-time private reveal (future: Mafia roles) | Planned |
 | `Vote` | Pick a player or option (future: Mafia) | Planned |
@@ -228,7 +230,8 @@ export const machine = teamTurns<CharadesItem, CharadesTurn, CharadesEvent>()({
 - The game lists only its own events; `teamTurns` adds `start`, `time_up` and `next`.
 - `phases` must include `turn`, which `handoff` starts. A game may add phases (Trivia's `steal`). Its transitions go only to its own phases or to `turn_summary`; a game phase can't be final.
 - The game handles `time_up` in its turn, because what running out of time means depends on the game.
-- **Points come from the turn record.** The format adds `points(turn)` to the team's score when players leave `turn_summary`, so a correction on the summary changes the score.
+- `onStart` (optional) lists game actions to run when a turn starts, right after the format draws its first item: the only point where a game can react to that draw (Charades picks the card's mode).
+- **Points come from the turn record and the settings.** The format adds `points(turn, config)` to the team's score when players leave `turn_summary`. A game that lets players fix mis-taps does it in its own phase before the summary, so corrections change the score (Charades' review, [ADR 0007](decisions/0007-turn-review.md)).
 - A phase, guard or action with the same name as one of the format's is a type error.
 - The game's items come from `choosePoolItems(packs, config, itemKey)` (`pool.ts`), run once when a game starts; the machine is started with `{ config, items }`, and refuses to start with no items.
 

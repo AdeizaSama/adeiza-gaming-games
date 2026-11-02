@@ -26,7 +26,7 @@ const machine = teamTurns<Item, { got: number }, { type: 'got' }>()({
 // Views only need to exist for these tests; they're never drawn.
 type Props = TeamTurnsViewProps<Item, { got: number }, { type: 'got' }>
 const TurnView = (props: Props) => props.context.item?.text ?? null
-const SummaryView = (props: Props) => props.points(props.context.turn)
+const SummaryView = (props: Props) => props.points(props.context.turn, props.context.config)
 
 function pack(id: string): Pack<Item> {
   return { id, name: id, description: id, language: 'en', maturity: 'everyone', contributors: ['AdeizaSama'], items: [{ text: 'Sun' }] }

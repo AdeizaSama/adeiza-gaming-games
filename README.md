@@ -6,7 +6,7 @@ An open-source library of **single-device party games**: charades, name ten, tri
 
 The library is built to be extended. Developers can add games, designers can add themes, and anyone can add or improve the words, categories and questions the games use.
 
-> **Status: early development.** Charades is playable with its core rules, and a game survives a refresh, a locked phone or a closed tab. The rest of Charades (acting and singing modes, presets, the rules screen) is being built now. Expect breaking changes until the first release.
+> **Status: early development.** Charades is playable, each turn can be reviewed and corrected before it counts, and a game survives a refresh, a locked phone or a closed tab. The rest of Charades (choosing modes and points at setup, presets, the rules screen) is being built now. Expect breaking changes until the first release.
 
 ---
 

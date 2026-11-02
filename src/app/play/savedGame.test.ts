@@ -1,6 +1,5 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it } from 'vitest'
-import { TeamTurnsConfig } from '../../sdk/formats/team-turns/config'
 import { choosePoolItems } from '../../sdk/formats/team-turns/pool'
 import { newGame } from '../../sdk/game/useGameSession'
 import { send } from '../../sdk/machine/runner'
@@ -8,7 +7,7 @@ import { games } from '../registry'
 import { clearGame, loadGame, saveGame, saveVersion, summarizeSave } from './savedGame'
 
 const charades = games[0]
-const config = TeamTurnsConfig.parse({ teams: ['Lions', 'Eagles'], rounds: 1, seconds: 30, packs: ['back-to-school'] })
+const config = charades.config.schema.parse({ teams: ['Lions', 'Eagles'], rounds: 1, seconds: 30, packs: ['back-to-school'] })
 const fresh = newGame(charades.machine, { config, items: choosePoolItems(charades.content.packs, config, charades.content.itemKey) }, 2026)
 const key = 'ku-zo-wasa:game'
 
@@ -62,7 +61,7 @@ describe('saved game', () => {
 
     // Both teams play their one turn: the game reaches the results.
     let state = fresh
-    for (const type of ['start', 'time_up', 'next', 'start', 'time_up', 'next'] as const) {
+    for (const type of ['start', 'time_up', 'done', 'next', 'start', 'time_up', 'done', 'next'] as const) {
       state = send(charades.machine, state, { type }, { now: 0 })
     }
     expect(state.phase).toBe('results')

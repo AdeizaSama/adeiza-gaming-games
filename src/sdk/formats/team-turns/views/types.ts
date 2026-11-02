@@ -10,8 +10,8 @@ export interface TeamTurnsViewProps<Item, Turn, Event extends MachineEvent, Conf
   context: TeamTurnsContext<Item, Turn, Config>
   /** Reports what the players did. The view never changes the game itself. */
   send: (event: Event | TeamTurnsEvent) => void
-  /** What a turn's record is worth: the game's scoring. */
-  points: (turn: Turn) => number
+  /** What a turn's record is worth under the game's settings: the game's scoring. */
+  points: (turn: Turn, config: Config) => number
 }
 
 /** A view for one phase of a team-turns game. */

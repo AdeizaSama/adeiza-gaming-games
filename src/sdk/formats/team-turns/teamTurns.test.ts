@@ -92,7 +92,7 @@ describe('teamTurns: Word Duel, a full game', () => {
   })
 
   it('keeps the game’s points, for views to show what a turn is worth', () => {
-    expect(wordDuel.points({ got: ['sun', 'moon'], skipped: ['star'] })).toBe(2)
+    expect(wordDuel.points({ got: ['sun', 'moon'], skipped: ['star'] }, config)).toBe(2)
   })
 
   it('starts at the first team’s handoff with scores at zero and the items shuffled', () => {
@@ -111,6 +111,21 @@ describe('teamTurns: Word Duel, a full game', () => {
     expect(turn.phase).toBe('turn')
     expect(turn.context.turnEndsAt).toBe(35_000)
     expect(turn.context.item).toBe(turn.context.pool.drawn[0])
+  })
+
+  it('runs the game’s onStart actions after the first item is drawn', () => {
+    // Word Duel with one extra rule: the first word of a turn counts as got before anyone plays.
+    const headStart = defineWordDuel({
+      newTurn: () => ({ got: [], skipped: [] }),
+      points: (turn) => turn.got.length,
+      onStart: ['markGot'],
+      phases: { turn: { interaction: 'flash_card', on: { time_up: { to: 'turn_summary' } } } },
+      guards: {},
+      actions: { markGot: ({ context }) => ({ ...context, turn: { ...context.turn, got: [context.item!] } }) },
+    })
+    const turn = send(headStart, start(headStart, { input, seed: 1 }), { type: 'start' }, { now: 0 })
+    expect(turn.context.turn.got).toEqual([turn.context.item])
+    expect(validateMachine(headStart)).toEqual([])
   })
 
   it('records the turn as it goes and banks its points only when leaving the summary', () => {
@@ -239,6 +254,14 @@ export const mistakes = [
     phases: { turn: { interaction: 'flash_card', final: true } },
     guards: {},
     actions: {},
+  }),
+  defineWordDuel({
+    ...record,
+    // @ts-expect-error: 'pickMode' is not one of the game's actions
+    onStart: ['pickMode'],
+    phases: { turn: { interaction: 'flash_card' } },
+    guards: {},
+    actions: { markGot: ({ context }) => context },
   }),
   defineWordDuel({
     ...record,

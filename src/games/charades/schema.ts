@@ -8,6 +8,7 @@ import { Tag } from '../../sdk/content/pack'
 
 /** How a team member can give the clue: talk around it, act it out silently, or sing or hum it. */
 export const CharadesMode = z.enum(['describe', 'act', 'sing'])
+export type CharadesMode = z.infer<typeof CharadesMode>
 
 /** True when no value appears twice. */
 const noRepeats = (list: readonly string[]) => new Set(list).size === list.length

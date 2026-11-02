@@ -1,9 +1,9 @@
 import { loadPacks } from '../../sdk/content/loadPacks'
-import { TeamTurnsConfig } from '../../sdk/formats/team-turns/config'
 import { defineGame } from '../../sdk/game/defineGame'
+import { CharadesConfig } from './config'
 import { machine } from './machine'
 import { itemKey, itemSchema } from './schema'
-import { SummaryView } from './views/SummaryView'
+import { ReviewView } from './views/ReviewView'
 import { TurnView } from './views/TurnView'
 
 export default defineGame({
@@ -23,9 +23,9 @@ export default defineGame({
     itemKey,
     packs: loadPacks(import.meta.glob('./content/*.json', { eager: true, import: 'default' }), itemSchema, itemKey),
   },
-  // The format's settings for now. Charades' own (modes, skip penalty) and its presets come in chapter 06.
-  config: { schema: TeamTurnsConfig },
+  // The format's settings plus mode and points (ADR 0007). Presets come in chapter 07.
+  config: { schema: CharadesConfig },
   machine,
-  // handoff and results use the format's views; the summary is replaced to list the items got and skipped.
-  views: { turn: TurnView, turn_summary: SummaryView },
+  // handoff, turn_summary and results use the format's views. Review lists the cards, so the summary needn't.
+  views: { turn: TurnView, review: ReviewView },
 })

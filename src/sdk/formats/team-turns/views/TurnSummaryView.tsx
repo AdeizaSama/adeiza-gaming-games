@@ -16,7 +16,7 @@ export function TurnSummaryView<Item, Turn, Event extends MachineEvent, Config e
   return (
     <Summary
       title={context.config.teams[context.current]}
-      points={points(context.turn)}
+      points={points(context.turn, context.config)}
       actionLabel={nextLabel(context)}
       onNext={() => send({ type: 'next' })}
     />

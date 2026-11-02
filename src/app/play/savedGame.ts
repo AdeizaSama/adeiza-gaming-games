@@ -8,8 +8,11 @@ import { findGame, games } from '../registry'
  *
  * **Bump `saveVersion`** in any change to the shape of a saved context (a format's or game's context, items or
  * turn record). Older saves are then thrown away with a notice instead of loaded wrong.
+ *
+ * 1: the first saves (chapter 05). 2: Charades logs each card with its mode, and has mode and points settings
+ * (ADR 0007).
  */
-export const saveVersion = 1
+export const saveVersion = 2
 const key = 'ku-zo-wasa:game'
 
 type AnyGame = (typeof games)[number]
