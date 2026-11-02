@@ -55,3 +55,53 @@ const change = (changes: Partial<SetupChoices<TeamTurnsConfig>>) => setChoices((
 ### How to verify
 
 `pnpm test src/app/setup`: test 281 saves Mix it up with custom points and gets them back, then loads a draft from before modes existed and gets the defaults. On a phone nothing looks different yet: change rounds, leave and come back, and it's kept as before.
+
+---
+
+## Step 3: A game's own settings on setup
+
+**What:**
+
+- `src/sdk/game/settings.ts`: the `SettingsView` type.
+- `config.view` in `defineGame`.
+- Charades' `views/SettingsView.tsx`: a mode choice, and an **Advanced settings** dialog with the points.
+- `Section` moves to `src/ui/section.tsx`, like `Stepper` did.
+
+**Why:** ADR 0008. The setup screen draws a game's settings view below the format's settings and passes it the draft from step 2.
+
+### The contract
+
+```ts
+export interface SettingsViewProps<Config> {
+  settings: Settings<Config>   // every setting but the teams
+  onChange: (changes: Partial<Settings<Config>>) => void
+}
+```
+
+On setup it's one line:
+
+```tsx
+{SettingsView && <SettingsView settings={choices} onChange={(changes) => setChoices((current) => ({ ...current, ...changes }))} />}
+```
+
+`defineGame` types `view` with `NoInfer`, like phase views: `Config` comes from the schema, and the view is checked against it. A view reading a setting the schema doesn't have is a compile error (C31).
+
+### Charades' settings
+
+- **Mode:** two radio cards, Describe and Mix it up, each with one line saying what it means.
+- **Advanced settings:** a button with the points summed up under it ("Describe 2 · Act 3 · Sing 3 · Skip −1"). It opens a dialog with one stepper per result:
+  - Described, Acted, and Sung or hummed: 1–5 points each.
+  - Skipped: 0–5, where 0 shows as "No penalty".
+
+  The stepper limits are the schema's limits, so the dialog can't produce a setting Start would reject. **Reset to defaults** is off while the points are already the defaults. In Describe mode a note says acted and sung cards only come up in Mix it up.
+
+The defaults come from the schema itself, not from numbers copied into the view:
+
+```ts
+const defaultPoints = CharadesConfig.shape.points.parse(undefined)
+```
+
+### How to verify
+
+- `pnpm test src/games/charades/views src/app/setup`. Test 282 picks Mix it up, sets skips to cost nothing, leaves setup and comes back, then starts a game with those settings.
+- On a phone, run `pnpm dev --host`. On Charades' setup, pick Mix it up and play a turn: each card says how to clue it. Then set Skipped to "No penalty" in Advanced settings and check that a skip costs nothing in review.

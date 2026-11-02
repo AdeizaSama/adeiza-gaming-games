@@ -157,6 +157,23 @@ describe('setup screen', () => {
     expect(loadSetup(charades)).toBeUndefined()
   })
 
+  it('shows the game’s own settings, keeps them in the draft, and Start plays them', async () => {
+    const user = userEvent.setup()
+    const { unmount } = renderAt('/charades')
+    await user.click(screen.getByRole('radio', { name: /Mix it up/ }))
+    await user.click(screen.getByRole('button', { name: 'Advanced settings' }))
+    await user.click(screen.getByRole('button', { name: 'Less: Skipped' }))
+    await user.click(screen.getByRole('button', { name: 'Done' }))
+    unmount()
+
+    renderAt('/charades')
+    expect(screen.getByRole<HTMLInputElement>('radio', { name: /Mix it up/ }).checked).toBe(true)
+    expect(screen.getByText('Describe 2 · Act 3 · Sing 3 · Skip 0')).toBeDefined()
+    await user.click(start())
+    const saved = JSON.parse(localStorage.getItem('ku-zo-wasa:game') ?? 'null')
+    expect(saved.state.context.config).toMatchObject({ mode: 'mix', points: { describe: 2, act: 3, sing: 3, skip: 0 } })
+  })
+
   it('keeps the game’s own settings in the draft, and gives a setting added since the save its default', () => {
     const mix = { ...defaultSetup(charades), mode: 'mix' as const, points: { describe: 1, act: 4, sing: 5, skip: 0 } }
     saveSetup('charades', mix)

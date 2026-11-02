@@ -1,11 +1,12 @@
 import { z } from 'zod'
+import type { Settings } from '../../sdk/game/settings'
 
 /**
  * A game's setup choices as players left them: every setting except teams, the game's own included (ADR 0008).
  * Kept per game so an unfinished setup survives a back swipe or a refresh. Team names are kept separately, shared by
  * every game (`savedTeams.ts`).
  */
-export type SetupChoices<Config> = Omit<Config, 'teams'>
+export type SetupChoices<Config> = Settings<Config>
 
 /** What `loadSetup` and `defaultSetup` need from a game. */
 interface SetupGame<Config> {

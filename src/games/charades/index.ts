@@ -4,6 +4,7 @@ import { CharadesConfig } from './config'
 import { machine } from './machine'
 import { itemKey, itemSchema } from './schema'
 import { ReviewView } from './views/ReviewView'
+import { SettingsView } from './views/SettingsView'
 import { TurnView } from './views/TurnView'
 
 export default defineGame({
@@ -23,8 +24,8 @@ export default defineGame({
     itemKey,
     packs: loadPacks(import.meta.glob('./content/*.json', { eager: true, import: 'default' }), itemSchema, itemKey),
   },
-  // The format's settings plus mode and points (ADR 0007). Presets come in chapter 07.
-  config: { schema: CharadesConfig },
+  // The format's settings plus mode and points (ADR 0007), shown on setup by SettingsView (ADR 0008).
+  config: { schema: CharadesConfig, view: SettingsView },
   machine,
   // handoff, turn_summary and results use the format's views. Review lists the cards, so the summary needn't.
   views: { turn: TurnView, review: ReviewView },

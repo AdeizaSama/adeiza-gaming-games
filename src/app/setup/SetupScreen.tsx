@@ -7,6 +7,7 @@ import type { Game } from '../../sdk/game/defineGame'
 import type { MachineEvent } from '../../sdk/machine/types'
 import { Button } from '../../ui/button'
 import { Input } from '../../ui/input'
+import { Section } from '../../ui/section'
 import { Stepper } from '../../ui/stepper'
 import { defaultSetup, loadSetup, saveSetup, type SetupChoices } from './savedSetup'
 import { loadTeams, saveTeams } from './savedTeams'
@@ -52,6 +53,7 @@ export function SetupScreen<
   ActionName extends string,
 >({ game, onStart }: SetupScreenProps<Item, Config, Setup, Turn, Event, Phase, GuardName, ActionName>) {
   const { packs, itemKey } = game.content
+  const SettingsView = game.config.view
   // Every setting but the teams, as one draft (ADR 0008): what players chose last time on this device, or the
   // game's defaults, read from its schema so this screen can't disagree with it.
   const [choices, setChoices] = useState(() => loadSetup(game) ?? defaultSetup(game))
@@ -143,6 +145,8 @@ export function SetupScreen<
         />
       </Section>
 
+      {SettingsView && <SettingsView settings={choices} onChange={(changes) => setChoices((current) => ({ ...current, ...changes }))} />}
+
       <Section title="Packs">
         {packs.map((pack) => (
           <label key={pack.id} className="flex items-start gap-3 rounded-xl bg-card p-4 text-card-foreground shadow-sm">
@@ -196,18 +200,6 @@ export function SetupScreen<
         </Button>
       </div>
     </main>
-  )
-}
-
-function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
-  return (
-    <section className="flex flex-col gap-3">
-      <div>
-        <h2 className="text-xl font-semibold">{title}</h2>
-        {hint && <p className="text-sm text-muted-foreground">{hint}</p>}
-      </div>
-      {children}
-    </section>
   )
 }
 

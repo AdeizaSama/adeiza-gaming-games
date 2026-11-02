@@ -5,6 +5,7 @@ import type { MachineEvent } from '../machine/types'
 import type { TeamTurnsConfig } from '../formats/team-turns/config'
 import type { TeamTurnsMachine, TeamTurnsPhase } from '../formats/team-turns/teamTurns'
 import { teamTurnsViews, type TeamTurnsView } from '../formats/team-turns/views'
+import type { SettingsView } from './settings'
 
 /** What the library shows about a game (standard §3). Checked when the game is defined. */
 export const GameMeta = z.strictObject({
@@ -84,6 +85,11 @@ export interface GameDefinition<
     /** The settings players choose, with defaults: `TeamTurnsConfig`, or the game's extension of it. */
     schema: z.ZodType<Config, Setup>
     presets?: Preset<Setup>[]
+    /**
+     * The game's own settings on the setup screen (ADR 0008), below the format's. Leave it out if the game has none.
+     * `NoInfer`, like `views`: it's checked against the schema's settings.
+     */
+    view?: NoInfer<SettingsView<Config>>
   }
   machine: TeamTurnsMachine<Item, Turn, Event, Config, Phase, GuardName, ActionName>
   /**

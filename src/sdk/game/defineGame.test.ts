@@ -5,6 +5,7 @@ import { TeamTurnsConfig } from '../formats/team-turns/config'
 import { teamTurns } from '../formats/team-turns/teamTurns'
 import { teamTurnsViews, type TeamTurnsViewProps } from '../formats/team-turns/views'
 import { defineGame, type GameMeta } from './defineGame'
+import type { SettingsViewProps } from './settings'
 
 // A tiny team-turns game standing in for a real one: items are `{ text }`, one point per word got.
 const itemSchema = z.strictObject({ text: z.string().min(1) })
@@ -175,5 +176,14 @@ export const mistakes = [
       ...game,
       // @ts-expect-error: a view written for another game's items
       views: { turn: (props: TeamTurnsViewProps<{ word: string }, { got: number }, { type: 'got' }>) => props.context.item?.word ?? null },
+    }),
+  () =>
+    defineGame({
+      ...game,
+      config: {
+        schema: TeamTurnsConfig,
+        // @ts-expect-error: a settings view for a setting this game doesn't have
+        view: (props: SettingsViewProps<TeamTurnsConfig & { mode: 'describe' | 'mix' }>) => props.settings.mode,
+      },
     }),
 ]
