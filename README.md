@@ -6,7 +6,7 @@ An open-source library of **single-device party games**: charades, name ten, tri
 
 The library is built to be extended. Developers can add games, designers can add themes, and anyone can add or improve the words, categories and questions the games use.
 
-> **Status: early development.** Charades is playable, each turn can be reviewed and corrected before it counts, and a game survives a refresh, a locked phone or a closed tab. Players choose the mode, points and a preset on the setup screen, and can read how to play first. Expect breaking changes until the first release.
+> **Status: early development.** Charades is complete: two modes, points you can change, presets, rules, a review after every turn, and games that survive a refresh, a locked phone or a closed tab. The other games are planned. Expect breaking changes until the first release.
 
 ---
 
@@ -14,7 +14,7 @@ The library is built to be extended. Developers can add games, designers can add
 
 | Game | Format | Status |
 |---|---|---|
-| Charades | team-turns | Playable (core rules); in progress |
+| [Charades](src/games/charades/README.md) | team-turns | Complete |
 | Name Ten | team-turns | Planned |
 | Trivia Night | team-turns | Planned |
 | Mafia | host-led | Planned |

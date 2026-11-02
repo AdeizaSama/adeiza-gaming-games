@@ -281,8 +281,9 @@ src/
       index.ts         the single defineGame export
       machine.ts       phase graph + guards + actions
       machine.test.ts  required
-      schema.ts        itemSchema + itemKey (§10), config schema; imports zod and sdk/ only
-      views/           phase views
+      schema.ts        itemSchema + itemKey (§10); imports zod and sdk/ only
+      config.ts        the game's settings schema, if it has settings of its own (§7)
+      views/           phase views, and the settings view (ADR 0008)
       content/*.json   content packs
       rules.md         player-facing rules
       README.md        for contributors: what the game is, content guidelines

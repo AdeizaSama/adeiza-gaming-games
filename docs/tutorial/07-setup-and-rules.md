@@ -227,3 +227,62 @@ They cover a turn, the two modes, points and two tips, and the points are the de
 
 - `pnpm test`: tests 300–302.
 - On a phone: on Charades' setup, tap **How to play**, read to the end, then tap **Back to setup** (or swipe back).
+
+---
+
+## Step 7: Charades is complete
+
+**What:**
+
+- `src/games/charades/README.md`: the rules in short, content guidelines, and what each file is.
+- The Definition of Done (standard §13), checked item by item.
+- The root README's status.
+
+**Why:** the Definition of Done is what "complete" means for a game. A game's README is where a contributor starts: what the game is, and what a good item looks like.
+
+### Content guidelines: Describe first
+
+Most games are played in Describe mode, so every item has to work when talked about. `modes` is optional and defaults to `["describe"]`. An item lists `act` or `sing` only when it's also good to act or sing. The README gives examples of each.
+
+### The Definition of Done
+
+| Item | Where it's met |
+|---|---|
+| Fits an existing format | `team-turns` |
+| `defineGame` with meta, content, config schema and presets, rules, machine, views | `src/games/charades/index.ts`; `defineGame` throws if any part is wrong |
+| Deterministic guards and actions; full-playthrough, `validateMachine`, per-guard and per-action tests | `machine.test.ts`: a full game with a fixed seed; `validateMachine`; a test each for `isEntry`, `pickMode`, `markGot`, `markSkipped`, `markTimeUp` and `toggleEntry` |
+| At least one valid content pack | Back to School (`pnpm validate-content`) |
+| Views use primitives | Turn: `FlashCard` and `Countdown`. Review: `Review`. Handoff, summary and results: the format's views. The settings view is a setup form, not a phase, and is built from `src/ui/` parts (`Section`, `Stepper`, `Dialog`, `Button`) |
+| Setup → turns → results on a phone, with resume after refresh | Checked by hand on a phone (below), and covered by screen tests since chapter 05 |
+| Looks right under every shipped theme, light and dark | One theme ships, with a dark scheme. Checked by hand (below). Phase 2's themes must be checked again |
+| A README for the game | `src/games/charades/README.md` |
+
+Two items can only be checked by eye, on a real phone:
+
+1. Run `pnpm dev --host` and open the address it prints on a phone on the same Wi-Fi.
+2. Pick a preset, read How to play, and play a game to the results. Refresh mid-turn and in review, and lock the phone during a turn.
+3. Switch the phone to dark mode and look at every screen again: setup, Advanced settings, How to play, handoff, turn, review, summary and results.
+
+---
+
+## Chapter summary
+
+Charades is complete.
+
+| Step | What | Contract |
+|---|---|---|
+| 1 | ADR 0008: settings and presets on setup | Yes |
+| 2 | One setup draft for every setting, the game's own included | |
+| 3 | `config.view`; Charades' mode and Advanced settings | Yes: `defineGame` |
+| 4 | Presets, applied whole and selected only when exact; packs optional | Yes: presets |
+| 5 | ADR 0009; `parseMarkdown`; the `Instruction` primitive | Yes: primitives |
+| 6 | `rules` in `defineGame`; Charades' rules; How to play | Yes: `defineGame` |
+| 7 | Charades' README; the Definition of Done | |
+
+**What we learned:**
+
+- A setting a game adds later shouldn't break what's saved on players' phones. Loading the draft *through the schema* fills the gap with the default, at no cost.
+- "Selected" on a preset is a promise. Comparing every setting exactly, rather than only the ones the preset names, keeps it.
+- The safest HTML is HTML that can't get in. Parsing markdown to data and rendering elements gives a renderer that can't inject anything, for less code than a library.
+
+**Tests:** 302 runtime tests and 32 compile-time checks.
