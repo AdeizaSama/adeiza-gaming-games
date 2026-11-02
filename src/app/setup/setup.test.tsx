@@ -120,6 +120,28 @@ describe('setup screen', () => {
     expect(start().disabled).toBe(true)
   })
 
+  it('How to play opens the game’s rules, and Back to setup returns to setup', async () => {
+    const user = userEvent.setup()
+    renderAt('/charades')
+    await user.click(screen.getByRole('link', { name: 'How to play' }))
+
+    expect(screen.getByRole('heading', { name: 'How to play Charades' })).toBeDefined()
+    expect(screen.getByRole('heading', { name: 'A turn' })).toBeDefined()
+    await user.click(screen.getByRole('button', { name: 'Back to setup' }))
+    expect(screen.getByRole('heading', { level: 1, name: 'Charades' })).toBeDefined()
+  })
+
+  it('opens the rules from a link too, where Back to setup goes to setup; a game that doesn’t exist has no rules', async () => {
+    const user = userEvent.setup()
+    const { unmount } = renderAt('/charades/rules')
+    await user.click(screen.getByRole('button', { name: 'Back to setup' }))
+    expect(start()).toBeDefined()
+    unmount()
+
+    renderAt('/anime/rules')
+    expect(screen.getByRole('heading', { name: 'Page not found' })).toBeDefined()
+  })
+
   it('sends the play page back to setup when there is no saved game, like a shared /charades/play link', () => {
     renderAt('/charades/play')
     expect(screen.getByRole('heading', { level: 1, name: 'Charades' })).toBeDefined()

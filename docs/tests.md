@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 299 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
+**Counts:** 302 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -28,7 +28,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Item pool](#item-pool) | `src/sdk/formats/team-turns/pool.test.ts` | 13 | |
 | [Team-turns guards and actions](#team-turns-guards-and-actions) | `src/sdk/formats/team-turns/rules.test.ts` | 9 | |
 | [teamTurns (Word Duel)](#teamturns-word-duel) | `src/sdk/formats/team-turns/teamTurns.test.ts` | 14 | 10 |
-| [defineGame](#definegame) | `src/sdk/game/defineGame.test.ts` | 11 | 8 |
+| [defineGame](#definegame) | `src/sdk/game/defineGame.test.ts` | 12 | 8 |
 | [Settings and presets](#settings-and-presets) | `src/sdk/game/settings.test.ts` | 5 | |
 | [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 22 | |
 | [Charades views](#charades-views) | `src/games/charades/views/views.test.tsx` | 6 | |
@@ -43,7 +43,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Instruction](#instruction) | `src/sdk/interactions/instruction.test.tsx` | 2 | |
 | [Team-turns views](#team-turns-views) | `src/sdk/formats/team-turns/views/views.test.tsx` | 3 | |
 | [Game screen](#game-screen) | `src/app/play/GameScreen.test.tsx` | 2 | |
-| [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 12 | |
+| [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 14 | |
 | [Saved game](#saved-game) | `src/app/play/savedGame.test.ts` | 12 | |
 | [Play page](#play-page) | `src/app/play/PlayPage.test.tsx` | 3 | |
 | [Continuing a saved game](#continuing-a-saved-game) | `src/app/library/continue.test.tsx` | 6 | |
@@ -439,6 +439,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 164 | accepts a game without presets | Presets | No `presets` | No error | Presets are optional. |
 | 165 | reports problems in meta, with where each is | `meta` | Id `Word Duel`, complexity 6, players min 4 max 2, no contributors | One error naming the game, listing `meta.id`, `meta.complexity`, `meta.players` and `meta.contributors` | The library shows these; mistakes fail the game's tests instead of reaching players. All problems at once. |
 | 166 | needs at least one pack | Content | No packs | Reports `content.packs` | A game without items can't be played. |
+| 300 | needs rules, in the markdown the rules screen can show | Rules | Rules of only spaces; then a paragraph and a table | Reports `rules: Write how to play`; then `rules: Line 3: tables aren't supported; use a list` | Every game has rules (standard §13), and a construct the rules screen can't show fails CI instead of reaching players as raw symbols (ADR 0009). |
 | 167 | checks a preset's settings against the game's config schema | Presets | Preset with 5-second turns | Reports `config.presets.0.config.seconds` | A preset is just settings, so the same rules apply as on the setup screen. |
 | 168 | reports a preset that names a pack the game does not have | Presets | Preset with pack `anime` | Reports `config.presets.0.packs` naming `"anime"` | A typo in a pack id would give players an empty game. |
 | 291 | accepts a preset without packs, checks its settings all the same, and reports an empty pack list | Presets | `quick` without packs; then with 5-second turns; then with `packs: []` | No error; reports `config.presets.0.config.seconds`; reports `config.presets.0.packs` "List at least one pack, or leave packs out" | A preset about how to play needn't name packs (ADR 0008), but its settings are still checked, and an empty list is a mistake, not a way to say "keep". |
@@ -641,7 +642,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 ## Setup screen
 
-`src/app/setup/setup.test.tsx`, testing the setup screen in `src/app/setup/` and the play page's check for settings. Screen tests (happy-dom), each starting the app at an address with a `MemoryRouter`, with nothing saved on the device. Charades' one pack, Back to School, has 34 items.
+`src/app/setup/setup.test.tsx`, testing the setup screen in `src/app/setup/`, the rules page (`src/app/rules/RulesPage.tsx`) and the play page's check for settings. Screen tests (happy-dom), each starting the app at an address with a `MemoryRouter`, with nothing saved on the device. Charades' one pack, Back to School, has 34 items.
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
@@ -651,6 +652,8 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 220 | shows what's wrong with a team name next to it, and Start is off until it's fixed | Teams, errors | Empty Team 1; then "team 2"; then "team 2s" | "Give every team a name", field marked invalid, Start off; "Two teams have this name", Start off; Start on | The schema's own messages, shown where the problem is. |
 | 221 | changes rounds and turn length with − and +, within their limits | `Stepper` | Turn length −; rounds − twice | 45 seconds; 1 round, its − button off | Values stay in range without typing. |
 | 222 | counts the items a tag leaves, and needs at least one pack | Packs, tags | Pick snack; add song; untick Back to School | "5 items to play"; "7 items to play"; "Pick at least one pack", no tags offered, Start off | Players see what a filter leaves before they start. |
+| 301 | How to play opens the game's rules, and Back to setup returns to setup | Rules page | Tap How to play; tap Back to setup | "How to play Charades" with the rules' "A turn" heading; then Charades' setup | Players can read the rules before they start, and get back with one tap. |
+| 302 | opens the rules from a link too, where Back to setup goes to setup; a game that doesn't exist has no rules | Rules page | Open `/charades/rules` and tap Back to setup; open `/anime/rules` | Setup with its Start button; "Page not found" | A shared rules link has no setup to go back to, so the button goes to setup instead of leaving the site. |
 | 223 | sends the play page back to setup when there is no saved game, like a shared /charades/play link | Play page | Open `/charades/play` with nothing saved | Charades' setup screen | The play page only plays a save (ADR 0006): without one there's nothing to play. |
 | 250 | remembers setup choices as they are made, so leaving setup loses nothing | Setup draft | Rename Team 1 to Lions, rounds +, turn length +, pick snack; leave; open setup again | Lions, 4 rounds, 75 seconds, snack picked, "5 items to play" | A back swipe or refresh mid-setup keeps everything, not only after Start (ADR 0006). |
 | 251 | drops remembered packs that no longer exist, and ignores choices that are no longer allowed | `loadSetup` | Saved packs: one existing, one removed; then only a removed pack; then 99 rounds; then broken JSON | The existing pack kept, with every other setting as saved; then nothing loaded, three times | A pack can be deleted while a phone remembers it: picking it would crash the item pool. |

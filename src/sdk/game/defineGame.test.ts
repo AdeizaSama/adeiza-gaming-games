@@ -52,6 +52,7 @@ const game = {
     schema: TeamTurnsConfig,
     presets: [{ id: 'quick', name: 'Quick game', contributors: ['AdeizaSama'], config: { rounds: 1, seconds: 30 }, packs: ['food'] }],
   },
+  rules: '## A turn\n\nGuess the word.',
   machine,
   views: { turn: TurnView },
 }
@@ -75,6 +76,11 @@ describe('defineGame', () => {
 
   it('uses a game’s own view for a format phase instead of the default', () => {
     expect(defineGame({ ...game, views: { turn: TurnView, turn_summary: SummaryView } }).views.turn_summary).toBe(SummaryView)
+  })
+
+  it('needs rules, in the markdown the rules screen can show', () => {
+    expect(problemsWith({ rules: '  ' })).toContain('rules: Write how to play')
+    expect(problemsWith({ rules: 'Fine\n\n| a | b |' })).toContain('rules: Line 3: tables aren’t supported; use a list')
   })
 
   it('reports a phase without a view', () => {

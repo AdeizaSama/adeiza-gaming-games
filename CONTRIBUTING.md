@@ -40,6 +40,14 @@ Each game's content lives in `src/games/<game>/content/`, one JSON file per pack
 
 Full rules: [Game Standard §10](docs/game-standard.md#10-content-packs).
 
+### Fix a game's rules (no code)
+
+Each game's rules are in `src/games/<game>/rules.md`, shown on its How to play screen. Fix a sentence, explain a rule better, or add a tip.
+
+- Use only `#`, `##` and `###` headings, paragraphs, lists starting with `- ` or `1. `, and `**bold**`.
+- Anything else (tables, links, images, code, italics, indented lines) fails the checks on your pull request, with the line number and what to do instead.
+- If the rules talk about points or settings, they describe the defaults; say so ("Unless you change them…").
+
 ## 2. Add a theme (no code)
 
 Themes are JSON files of design tokens (colors for light and dark mode, fonts, corner radius, motion) in `src/themes/`. *Theme support is planned; the token format will be documented here when it lands.*

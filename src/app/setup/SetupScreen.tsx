@@ -1,4 +1,4 @@
-import { ChevronLeft, X } from 'lucide-react'
+import { BookOpen, ChevronLeft, X } from 'lucide-react'
 import { useEffect, useId, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import type { TeamTurnsConfig } from '../../sdk/formats/team-turns/config'
@@ -93,6 +93,10 @@ export function SetupScreen<
         </Link>
         <h1 className="text-4xl font-bold">{game.meta.name}</h1>
         <p className="text-lg text-muted-foreground">{game.meta.tagline}</p>
+        <Link to={`/${game.meta.id}/rules`} state={{ fromSetup: true }} className="flex min-h-11 items-center gap-2 self-start font-semibold text-primary">
+          <BookOpen aria-hidden className="size-5" />
+          How to play
+        </Link>
       </header>
 
       <Section title="Teams" hint="In playing order.">

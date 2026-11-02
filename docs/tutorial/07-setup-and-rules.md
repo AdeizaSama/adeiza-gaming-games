@@ -185,3 +185,45 @@ The parser goes line by line. A line that starts something unsupported (a table,
 ### How to verify
 
 `pnpm test src/sdk/interactions`. To see a problem reported, add a line like `| a | b |` to the rules in test 293 and run it again.
+
+---
+
+## Step 6: Charades' rules, and How to play
+
+**What:**
+
+- `rules` becomes a required field of `defineGame`, checked with `parseMarkdown`.
+- Charades gets `src/games/charades/rules.md`.
+- A How to play page at `/:gameId/rules` (`src/app/rules/RulesPage.tsx`), with a link to it on setup.
+
+**Why:** every game must have rules (standard §13). ADR 0009 says a construct the screen can't show fails the tests. `defineGame` is where every game's other mistakes are already caught, so the check goes there too.
+
+### Importing a text file
+
+```ts
+import rules from './rules.md?raw'
+```
+
+`?raw` asks Vite for the file's contents as a string, instead of treating it as a module. The rules end up in the bundle as text: no request at run time, and nothing to load offline.
+
+### The check
+
+```ts
+if (game.rules.trim() === '') report('rules', 'Write how to play')
+for (const problem of parseMarkdown(game.rules).problems) report('rules', problem)
+```
+
+Put a table in `rules.md` and every test that imports Charades fails with `rules: Line 31: tables aren’t supported; use a list`.
+
+### A page, not a dialog
+
+The rules are a screen of text. A page scrolls like any page, and a back swipe on a phone returns to setup. The setup link passes `state: { fromSetup: true }`, so **Back to setup** goes back in the history instead of adding setup to it again. Opened from a shared link, it goes to setup instead, because going back would leave the site.
+
+### The rules themselves
+
+They cover a turn, the two modes, points and two tips, and the points are the defaults ("Unless you change them in Advanced settings"). They use the same words as the buttons players see: **Start**, **Got it**, **Skip**, **Adjust**, **Done**.
+
+### How to verify
+
+- `pnpm test`: tests 300–302.
+- On a phone: on Charades' setup, tap **How to play**, read to the end, then tap **Back to setup** (or swipe back).

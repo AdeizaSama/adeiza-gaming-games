@@ -71,6 +71,7 @@ export default defineGame({
       },
     ],
   },
+  rules,                             // import rules from "./rules.md?raw": how to play (ADR 0009)
   machine,                           // ./machine.ts
   views: {                           // one per phase (ADR 0005)
     turn: TurnView,                  // ./views/: required for each of the game's own phases
@@ -80,7 +81,7 @@ export default defineGame({
 });
 ```
 
-`defineGame` is in `src/sdk/game/`. Besides type-checking, it checks what types can't, and throws one error listing every problem: `meta` (kebab-case id, complexity 1–5, `players.max` ≥ `players.min`, at least one contributor), at least one pack, and each preset (unique id, contributors, packs that exist if it names any, settings that pass the config schema). A game's tests import it, so a broken game fails CI.
+`defineGame` is in `src/sdk/game/`. Besides type-checking, it checks what types can't, and throws one error listing every problem: `meta` (kebab-case id, complexity 1–5, `players.max` ≥ `players.min`, at least one contributor), at least one pack, and each preset (unique id, contributors, packs that exist if it names any, settings that pass the config schema), and rules that aren't empty and use only the supported markdown. A game's tests import it, so a broken game fails CI.
 
 **Defaults live in the config schema** (zod's `.default()`), not in a separate list, so they can't drift apart. A game that wants different defaults from the format's extends its schema.
 
@@ -90,7 +91,7 @@ export default defineGame({
 
 **Views** ([ADR 0005](decisions/0005-views.md)): each of the game's own phases needs a view; the format provides default views for its phases (handoff, turn summary, results), and a game lists one only to replace it. `defineGame` fills in the defaults and checks every phase has a view. A view receives `context` (to show), `send` (to report what players did) and `points` (the game's scoring).
 
-> **Being built:** `rules` (`./rules.md`, player-facing rules) is added as a required field when the first game's rules are written.
+**Rules** ([ADR 0009](decisions/0009-rules.md)): `rules.md` says how to play, for players, and is shown on the game's How to play screen. It uses a small part of markdown: `#`, `##` and `###` headings, paragraphs, `- ` and `1. ` lists, and `**bold**`. `defineGame` reports anything else (tables, links, code, italics…) with its line number, so it fails the game's tests instead of showing raw symbols.
 
 **Contributors.** Credit is recorded at both levels, as a list of GitHub handles:
 

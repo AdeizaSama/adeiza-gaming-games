@@ -2,6 +2,7 @@ import { loadPacks } from '../../sdk/content/loadPacks'
 import { defineGame } from '../../sdk/game/defineGame'
 import { CharadesConfig } from './config'
 import { machine } from './machine'
+import rules from './rules.md?raw'
 import { itemKey, itemSchema } from './schema'
 import { ReviewView } from './views/ReviewView'
 import { SettingsView } from './views/SettingsView'
@@ -35,6 +36,7 @@ export default defineGame({
       { id: 'party', name: 'Party', contributors: ['AdeizaSama'], config: { mode: 'mix' } },
     ],
   },
+  rules,
   machine,
   // handoff, turn_summary and results use the format's views. Review lists the cards, so the summary needn't.
   views: { turn: TurnView, review: ReviewView },

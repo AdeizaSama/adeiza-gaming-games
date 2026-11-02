@@ -5,6 +5,7 @@ import type { MachineEvent } from '../machine/types'
 import type { TeamTurnsConfig } from '../formats/team-turns/config'
 import type { TeamTurnsMachine, TeamTurnsPhase } from '../formats/team-turns/teamTurns'
 import { teamTurnsViews, type TeamTurnsView } from '../formats/team-turns/views'
+import { parseMarkdown } from '../interactions/markdown'
 import type { SettingsView } from './settings'
 
 /** What the library shows about a game (standard §3). Checked when the game is defined. */
@@ -59,10 +60,7 @@ export type GameViews<Item, Turn, Event extends MachineEvent, Config extends Tea
   Record<Phase, TeamTurnsView<Item, Turn, Event, Config>> &
     Partial<Record<TeamTurnsPhase, TeamTurnsView<Item, Turn, Event, Config>>>
 
-/**
- * Everything about one game (standard §3), as a game writes it. Built in stages: `rules` is added in chapter 06 as
- * a required field.
- */
+/** Everything about one game (standard §3), as a game writes it. */
 export interface GameDefinition<
   Item,
   Config extends TeamTurnsConfig,
@@ -92,6 +90,11 @@ export interface GameDefinition<
      */
     view?: NoInfer<SettingsView<Config>>
   }
+  /**
+   * How to play, for players: the game's `rules.md`, imported with `?raw`. Written in the small part of markdown
+   * `parseMarkdown` supports (ADR 0009).
+   */
+  rules: string
   machine: TeamTurnsMachine<Item, Turn, Event, Config, Phase, GuardName, ActionName>
   /**
    * One view per phase. `NoInfer`: the types come from the rest of the game, and the views are checked against
@@ -123,6 +126,7 @@ export type Game<
  * - There's at least one pack.
  * - Each preset has a unique id, a name and contributors, only names packs that exist (if it names any), and its
  *   settings pass the config schema.
+ * - The rules aren't empty, and use only the markdown `parseMarkdown` supports.
  * - Every phase of the machine has a view.
  *
  * Returns the game with the format's default views filled in for any format phase the game didn't list.
@@ -175,6 +179,9 @@ export function defineGame<
       for (const issue of settings.error.issues) report([`${at}.config`, ...issue.path].join('.'), issue.message)
     }
   }
+
+  if (game.rules.trim() === '') report('rules', 'Write how to play')
+  for (const problem of parseMarkdown(game.rules).problems) report('rules', problem)
 
   const views = { ...teamTurnsViews, ...game.views } as Game<Item, Config, Setup, Turn, Event, Phase, GuardName, ActionName>['views']
   for (const phase of Object.keys(game.machine.phases)) {
