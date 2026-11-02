@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 280 runtime tests (`pnpm test`) and 30 compile-time checks (`pnpm typecheck`).
+**Counts:** 302 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -28,9 +28,10 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Item pool](#item-pool) | `src/sdk/formats/team-turns/pool.test.ts` | 13 | |
 | [Team-turns guards and actions](#team-turns-guards-and-actions) | `src/sdk/formats/team-turns/rules.test.ts` | 9 | |
 | [teamTurns (Word Duel)](#teamturns-word-duel) | `src/sdk/formats/team-turns/teamTurns.test.ts` | 14 | 10 |
-| [defineGame](#definegame) | `src/sdk/game/defineGame.test.ts` | 10 | 6 |
+| [defineGame](#definegame) | `src/sdk/game/defineGame.test.ts` | 12 | 8 |
+| [Settings and presets](#settings-and-presets) | `src/sdk/game/settings.test.ts` | 5 | |
 | [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 22 | |
-| [Charades views](#charades-views) | `src/games/charades/views/views.test.tsx` | 3 | |
+| [Charades views](#charades-views) | `src/games/charades/views/views.test.tsx` | 6 | |
 | [App](#app) | `src/app/App.test.tsx` | 4 | |
 | [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 3 | |
 | [UI components](#ui-components) | `src/ui/ui.test.tsx` | 6 | |
@@ -38,9 +39,11 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Interaction primitives](#interaction-primitives) | `src/sdk/interactions/interactions.test.tsx` | 8 | |
 | [Summary and Leaderboard](#summary-and-leaderboard) | `src/sdk/interactions/summary.test.tsx` | 4 | |
 | [Review](#review) | `src/sdk/interactions/review.test.tsx` | 3 | |
+| [Markdown](#markdown) | `src/sdk/interactions/markdown.test.ts` | 5 | |
+| [Instruction](#instruction) | `src/sdk/interactions/instruction.test.tsx` | 2 | |
 | [Team-turns views](#team-turns-views) | `src/sdk/formats/team-turns/views/views.test.tsx` | 3 | |
 | [Game screen](#game-screen) | `src/app/play/GameScreen.test.tsx` | 2 | |
-| [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 9 | |
+| [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 14 | |
 | [Saved game](#saved-game) | `src/app/play/savedGame.test.ts` | 12 | |
 | [Play page](#play-page) | `src/app/play/PlayPage.test.tsx` | 3 | |
 | [Continuing a saved game](#continuing-a-saved-game) | `src/app/library/continue.test.tsx` | 6 | |
@@ -433,11 +436,13 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 163 | returns the game with the format's default views filled in | `defineGame`, views | The valid game, with a view for `turn` only | The same machine; views are the format's three defaults plus the game's `turn` | ADR 0005: games write views for their own phases and get the format's for free. |
-| 164 | accepts a game without presets | Presets | No `presets` | No error | Presets are optional; core Charades has none yet. |
+| 164 | accepts a game without presets | Presets | No `presets` | No error | Presets are optional. |
 | 165 | reports problems in meta, with where each is | `meta` | Id `Word Duel`, complexity 6, players min 4 max 2, no contributors | One error naming the game, listing `meta.id`, `meta.complexity`, `meta.players` and `meta.contributors` | The library shows these; mistakes fail the game's tests instead of reaching players. All problems at once. |
 | 166 | needs at least one pack | Content | No packs | Reports `content.packs` | A game without items can't be played. |
+| 300 | needs rules, in the markdown the rules screen can show | Rules | Rules of only spaces; then a paragraph and a table | Reports `rules: Write how to play`; then `rules: Line 3: tables aren't supported; use a list` | Every game has rules (standard §13), and a construct the rules screen can't show fails CI instead of reaching players as raw symbols (ADR 0009). |
 | 167 | checks a preset's settings against the game's config schema | Presets | Preset with 5-second turns | Reports `config.presets.0.config.seconds` | A preset is just settings, so the same rules apply as on the setup screen. |
 | 168 | reports a preset that names a pack the game does not have | Presets | Preset with pack `anime` | Reports `config.presets.0.packs` naming `"anime"` | A typo in a pack id would give players an empty game. |
+| 291 | accepts a preset without packs, checks its settings all the same, and reports an empty pack list | Presets | `quick` without packs; then with 5-second turns; then with `packs: []` | No error; reports `config.presets.0.config.seconds`; reports `config.presets.0.packs` "List at least one pack, or leave packs out" | A preset about how to play needn't name packs (ADR 0008), but its settings are still checked, and an empty list is a mistake, not a way to say "keep". |
 | 169 | reports two presets with the same id, and a preset without contributors | Presets | Two presets called `quick`, the second without contributors | Reports `config.presets.1.id` and `config.presets.1.contributors` | Preset ids are used in links; credit is required (§3). |
 | 170 | keeps the item and settings types from the schemas | Types | The defined game | Packs typed `Pack<{ text: string }>[]`; settings typed `TeamTurnsConfig` | The app (chapter 04) works with a game's real types. Checked by `pnpm typecheck`. |
 | 206 | uses a game's own view for a format phase instead of the default | Views | Views for `turn` and `turn_summary` | The game's summary view is used | A game can replace a format view when the default can't show what it needs. |
@@ -449,10 +454,24 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 |---|---|---|---|
 | C24 | The machine plays different items from the packs | A machine for `{ word }` items with `{ text }` packs | The item schema, the packs and the machine must agree on what an item is. |
 | C25 | A preset sets the teams | `config: { teams: ['A', 'B'] }` | Players always name their own teams. |
+| C32 | A preset sets tags | `config: { tags: ['fruit'] }` | Tags depend on the packs players choose, so a preset keeps them (ADR 0008). |
 | C26 | A format that doesn't exist yet | `format: 'host-led'` | Only `team-turns` is built. |
 | C27 | A game phase without a view | `views: { turn_summary: … }` with no `turn` | Players would see a blank screen in that phase. |
 | C28 | A view for a phase the machine doesn't have | `views: { turn, steal }` | Usually a typo; the view would never be shown. |
 | C29 | A view written for another game's items | A view reading `item.word` in a game whose items have `text` | It would show nothing, or crash, on the real items. |
+| C31 | A settings view for a setting the game doesn't have | `view` reading `settings.mode` in a game with only the format's settings | It would show a setting that's never saved or checked (ADR 0008). |
+
+## Settings and presets
+
+`src/sdk/game/settings.test.ts`, testing `src/sdk/game/settings.ts`: the rules for a game's settings on setup and for presets (ADR 0008). The schema is `TeamTurnsConfig` plus a nested setting of the game's own, `bonus: { got }` (default 1), like Charades' points. Two presets: `quick` (1 round, 30 seconds, no packs) and one with 90-second turns and packs `animals` and `food`.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 286 | defaultSettings: the schema's defaults for these packs, without teams | `defaultSettings` | Pack `food` | 3 rounds, 60 seconds, `food`, no tags, bonus 1; no teams | Setup starts from the schema's defaults, the game's own included, so the screen can't disagree with the schema. |
+| 287 | presetSettings: the defaults plus the preset's changes, undoing players' own changes, keeping packs and tags | `presetSettings` | 5 rounds, tag `fruit`, bonus 3; apply `quick` | 1 round, 30 seconds, bonus back to 1, `food` and `fruit` kept | A preset is applied whole (ADR 0008), so it never leaves a setting nobody chose for it. |
+| 288 | presetSettings: uses the preset's packs when it names some | `presetSettings` | Pack `food`, tag `fruit`; apply the 90-second preset | 90 seconds, packs `animals` and `food`, `fruit` kept | A preset about content still sets content. |
+| 289 | matchesPreset: only while every setting is the preset's, whatever the packs and tags | `matchesPreset` | `quick` applied; then other packs and tags; rounds 2; bonus 2; the defaults | True; true; false; false; false | A lit preset means exactly its settings; packs and tags it doesn't set don't count. |
+| 290 | matchesPreset: compares packs, in any order, when the preset names some | `matchesPreset` | The 90-second preset applied, packs reversed; then only `food` | True; false | Ticking packs in another order is the same choice. |
 
 ## Charades machine
 
@@ -485,13 +504,16 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 ## Charades views
 
-`src/games/charades/views/views.test.tsx`, testing `TurnView.tsx` and `ReviewView.tsx` in `src/games/charades/views/`: what Charades adds on top of the primitives. The turn view is drawn in happy-dom; review rows are checked as plain data (`reviewRow`), since `Review` itself is tested in the SDK.
+`src/games/charades/views/views.test.tsx`, testing `TurnView.tsx`, `ReviewView.tsx` and `SettingsView.tsx` in `src/games/charades/views/`: what Charades adds on top of the primitives. The turn and settings views are drawn in happy-dom; review rows are checked as plain data (`reviewRow`), since `Review` itself is tested in the SDK. The settings view gets its settings from a bit of state standing in for the setup screen.
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 278 | says how to clue the card in Mix it up, and nothing in Describe mode | Mode on the card | Gala, picked to be acted; in mix, then in describe | "Act it out"; then the card with no mode line | In Mix it up the card must say how to clue it; in Describe mode everything is described, so saying so is noise. |
 | 279 | names each result, and marks a corrected card | `reviewRow` | Gala got; at time up; got then corrected | Got it (good); Not counted (neutral); Skipped (bad), changed | The words and colors players see in review come from the one `resultOf` rule. |
 | 280 | shows how the card was clued only in Mix it up, and a free skip as neutral | `reviewRow` | Gala acted, in mix; a skip with skip points 0 | Detail "Acted"; Skipped in neutral | The mode matters for scoring only in Mix it up; a skip that costs nothing shouldn't look like a loss. |
+| 283 | picks the mode, Describe to start with | Mode | Default settings; tap Mix it up | Describe picked; then Mix it up | Describe is the game most people know; one tap changes it. |
+| 284 | changes points in Advanced settings within their limits, and resets them | Advanced settings | Mix it up; open Advanced settings; Acted + twice; Skipped −; Reset to defaults; Done | Reset off at first; Acted "5 points" with + off; Skipped "No penalty" with − off; summary "Describe 2 · Act 5 · Sing 3 · Skip 0"; after Reset "… Act 3 … Skip −1"; the dialog closes | The steppers can't leave the schema's ranges (1–5, skip 0–5), and a host who got lost can get back to the defaults in one tap. |
+| 285 | says acted and sung points only count in Mix it up, when Describe is picked | Advanced settings | Describe; open Advanced settings; Done; pick Mix it up; open again | The note; then no note | In Describe mode the acted and sung points never apply, so a host changing them should know. |
 
 ## App
 
@@ -578,6 +600,27 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 270 | Adjust unlocks the cards, a tap reports which one, and Lock locks them again | Adjust | Adjust; tap the third card; Lock | The hint changes; `onToggle(2)`; after Lock, no buttons and no more calls | Changing a result is a deliberate two-step act, and the game decides what a tap means. |
 | 271 | Done finishes the review, locked or not, and an empty turn has nothing to adjust | Done | Done label "Count it": tap it locked and unlocked; then no cards | `onDone` twice; then "Nothing was played this turn." and no Adjust | Done never needs Adjust first; nothing to adjust means no Adjust button. |
 
+## Markdown
+
+`src/sdk/interactions/markdown.test.ts`, testing `parseMarkdown` in `src/sdk/interactions/markdown.ts`: the small part of markdown rules are written in (ADR 0009). Blocks are compared as data: a heading, paragraph or list, made of plain and bold runs of text.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 293 | reads headings, paragraphs, both kinds of list and bold | `parseMarkdown` | A `#` heading; two lines of text with `**clock**`; a `##` heading; a numbered list with bold; a bulleted list | Five blocks: the paragraph's lines joined with a space, bold as its own run; no problems | Everything rules may use, read the way GitHub shows it. |
+| 294 | carries a list item on to the next line, starts a new list when the kind changes, and ends a paragraph at a heading | `parseMarkdown` | A bullet then a plain line; a numbered item then a plain line; a `###` heading with no blank line; Windows line ends | Two lists of one item each, with the lines joined; the heading; a paragraph | Long items wrap onto the next line in an editor; writers shouldn't need blank lines everywhere. |
+| 295 | reports every line that starts something unsupported, with its line number | Problems | A table, quote, code fence, `*` item, `####`, `#Title`, an indented line, a divider, `<div>` | One message per line, each with its number and what to do instead | Anything unsupported would show as raw symbols; CI says where and how to fix it. |
+| 296 | reports unsupported text inside a line on that line, and an unclosed ** where its block starts | Problems | A paragraph whose lines hold a link, an image, code, `*aside*`, `_aside_`, a tag; then an item with an unclosed `**` | Each on its own line (an image is also a link); the `**` on the item's line | The line number points at the mistake, not at the start of the paragraph. |
+| 297 | leaves ordinary text alone | No false alarms | `5 < 10`, `snake_case`, an apostrophe, bold, a dash; empty text | No problems; no blocks | Rules are ordinary writing: the checks only catch markdown we don't show. |
+
+## Instruction
+
+`src/sdk/interactions/instruction.test.tsx`, testing `src/sdk/interactions/Instruction.tsx`: the `Instruction` primitive and the `Markdown` it shows. Screen tests (happy-dom).
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 298 | shows the title and the text as headings, paragraphs, lists and bold, and the button carries on | `Instruction` | Title "How to play"; a `##` heading, bold, a numbered list; tap Got it | Title as a level-2 heading, the `##` as level 4; bold in `<strong>`; a numbered list (`<ol>`) of two items; `onAction` called once | Each block becomes its own element, one heading level below the title, so screen readers can move through the rules. |
+| 299 | never turns text into HTML | Safety | Text with `<b>` and an `<img onerror>` | No `<b>` or `<img>` on the page; the text shown as written | Rules come from files anyone can propose a change to. Nothing in them can become HTML on the page (ADR 0009). |
+
 ## Team-turns views
 
 `src/sdk/formats/team-turns/views/views.test.tsx`, testing the format's default views in `src/sdk/formats/team-turns/views/`. Screen tests (happy-dom). A made-up game whose turn record is a count of words guessed; Lions and Eagles, 2 rounds, Eagles playing, 3 words got.
@@ -599,7 +642,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 ## Setup screen
 
-`src/app/setup/setup.test.tsx`, testing the setup screen in `src/app/setup/` and the play page's check for settings. Screen tests (happy-dom), each starting the app at an address with a `MemoryRouter`, with nothing saved on the device. Charades' one pack, Back to School, has 34 items.
+`src/app/setup/setup.test.tsx`, testing the setup screen in `src/app/setup/`, the rules page (`src/app/rules/RulesPage.tsx`) and the play page's check for settings. Screen tests (happy-dom), each starting the app at an address with a `MemoryRouter`, with nothing saved on the device. Charades' one pack, Back to School, has 34 items.
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
@@ -609,9 +652,14 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 220 | shows what's wrong with a team name next to it, and Start is off until it's fixed | Teams, errors | Empty Team 1; then "team 2"; then "team 2s" | "Give every team a name", field marked invalid, Start off; "Two teams have this name", Start off; Start on | The schema's own messages, shown where the problem is. |
 | 221 | changes rounds and turn length with − and +, within their limits | `Stepper` | Turn length −; rounds − twice | 45 seconds; 1 round, its − button off | Values stay in range without typing. |
 | 222 | counts the items a tag leaves, and needs at least one pack | Packs, tags | Pick snack; add song; untick Back to School | "5 items to play"; "7 items to play"; "Pick at least one pack", no tags offered, Start off | Players see what a filter leaves before they start. |
+| 301 | How to play opens the game's rules, and Back to setup returns to setup | Rules page | Tap How to play; tap Back to setup | "How to play Charades" with the rules' "A turn" heading; then Charades' setup | Players can read the rules before they start, and get back with one tap. |
+| 302 | opens the rules from a link too, where Back to setup goes to setup; a game that doesn't exist has no rules | Rules page | Open `/charades/rules` and tap Back to setup; open `/anime/rules` | Setup with its Start button; "Page not found" | A shared rules link has no setup to go back to, so the button goes to setup instead of leaving the site. |
 | 223 | sends the play page back to setup when there is no saved game, like a shared /charades/play link | Play page | Open `/charades/play` with nothing saved | Charades' setup screen | The play page only plays a save (ADR 0006): without one there's nothing to play. |
 | 250 | remembers setup choices as they are made, so leaving setup loses nothing | Setup draft | Rename Team 1 to Lions, rounds +, turn length +, pick snack; leave; open setup again | Lions, 4 rounds, 75 seconds, snack picked, "5 items to play" | A back swipe or refresh mid-setup keeps everything, not only after Start (ADR 0006). |
-| 251 | drops remembered packs that no longer exist, and ignores choices that are no longer allowed | `loadSetup` | Saved packs: one existing, one removed; then only a removed pack; then 99 rounds; then broken JSON | The existing pack kept; then nothing loaded, three times | A pack can be deleted while a phone remembers it: picking it would crash the item pool. |
+| 251 | drops remembered packs that no longer exist, and ignores choices that are no longer allowed | `loadSetup` | Saved packs: one existing, one removed; then only a removed pack; then 99 rounds; then broken JSON | The existing pack kept, with every other setting as saved; then nothing loaded, three times | A pack can be deleted while a phone remembers it: picking it would crash the item pool. |
+| 292 | offers the game's presets: Classic is the defaults, a tap applies one whole, and any change unselects it | Presets on setup | Defaults; pick snack; Acted + in Advanced settings; tap Party; tap Quick; rounds + | Classic selected; then none; Party selected, Mix it up, points back to 2/3/3/1, snack still picked; 2 rounds, 45 seconds, Describe; then only snack pressed | A preset is applied whole and is lit only while it's exactly what's set (ADR 0008), so a lit preset never lies. |
+| 282 | shows the game's own settings, keeps them in the draft, and Start plays them | Settings view on setup | Pick Mix it up; in Advanced settings, skip −; Done; leave and come back; Start | Mix it up still picked, "Describe 2 · Act 3 · Sing 3 · Skip 0"; the saved game plays mode `mix` with skip 0 | The game's settings go through the same draft and the same Start as the format's (ADR 0008). |
+| 281 | keeps the game's own settings in the draft, and gives a setting added since the save its default | `loadSetup`, `saveSetup` | Mix it up with points 1/4/5/0; then a draft saved before Charades had modes; then one with a setting Charades doesn't have | The same back; then 5 rounds with mode `describe` and points 2/3/3/1; then nothing loaded | The draft holds every setting, the game's own too (ADR 0008). A game can add settings without breaking drafts on players' phones; the schema's defaults fill the gap. |
 
 ## Saved game
 

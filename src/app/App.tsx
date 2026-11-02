@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router'
 import { LibraryPage } from './library/LibraryPage'
 import { NotFoundPage } from './NotFoundPage'
 import { PlayPage } from './play/PlayPage'
+import { RulesPage } from './rules/RulesPage'
 import { SetupPage } from './setup/SetupPage'
 
 /**
@@ -14,6 +15,7 @@ export default function App() {
       <Route path="/" element={<LibraryPage />} />
       <Route path="/:gameId" element={<SetupPage />} />
       <Route path="/:gameId/play" element={<PlayPage />} />
+      <Route path="/:gameId/rules" element={<RulesPage />} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )

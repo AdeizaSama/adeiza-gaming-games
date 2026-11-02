@@ -5,6 +5,8 @@ import type { MachineEvent } from '../machine/types'
 import type { TeamTurnsConfig } from '../formats/team-turns/config'
 import type { TeamTurnsMachine, TeamTurnsPhase } from '../formats/team-turns/teamTurns'
 import { teamTurnsViews, type TeamTurnsView } from '../formats/team-turns/views'
+import { parseMarkdown } from '../interactions/markdown'
+import type { SettingsView } from './settings'
 
 /** What the library shows about a game (standard §3). Checked when the game is defined. */
 export const GameMeta = z.strictObject({
@@ -28,17 +30,18 @@ export const GameMeta = z.strictObject({
 export type GameMeta = z.infer<typeof GameMeta>
 
 /**
- * A named variant: settings and packs on top of the game's defaults (standard §1). Teams are never part of a
- * preset: players always name their own.
+ * A named variant: settings, and optionally packs, on top of the game's defaults (standard §1). Tapping one on setup
+ * applies it whole (ADR 0008). Teams and tags are never part of a preset: players name their own teams, and tags
+ * depend on the packs chosen.
  */
 export interface Preset<Setup> {
   id: string
   name: string
   contributors: string[]
   /** Settings that differ from the defaults, e.g. `{ seconds: 90 }`. */
-  config: Partial<Omit<Setup, 'teams' | 'packs'>>
-  /** Content pack ids. */
-  packs: string[]
+  config: Partial<Omit<Setup, 'teams' | 'packs' | 'tags'>>
+  /** Content pack ids. Leave out to keep the packs players chose. */
+  packs?: string[]
 }
 
 /** A preset's own fields; its settings are checked against the game's config schema. */
@@ -46,7 +49,7 @@ const PresetInfo = z.object({
   id: PackInfo.shape.id,
   name: z.string().trim().min(1),
   contributors: PackInfo.shape.contributors,
-  packs: z.array(z.string()).min(1, 'List at least one pack'),
+  packs: z.array(z.string()).min(1, 'List at least one pack, or leave packs out').optional(),
 })
 
 /**
@@ -57,10 +60,7 @@ export type GameViews<Item, Turn, Event extends MachineEvent, Config extends Tea
   Record<Phase, TeamTurnsView<Item, Turn, Event, Config>> &
     Partial<Record<TeamTurnsPhase, TeamTurnsView<Item, Turn, Event, Config>>>
 
-/**
- * Everything about one game (standard §3), as a game writes it. Built in stages: `rules` is added in chapter 06 as
- * a required field.
- */
+/** Everything about one game (standard §3), as a game writes it. */
 export interface GameDefinition<
   Item,
   Config extends TeamTurnsConfig,
@@ -84,7 +84,17 @@ export interface GameDefinition<
     /** The settings players choose, with defaults: `TeamTurnsConfig`, or the game's extension of it. */
     schema: z.ZodType<Config, Setup>
     presets?: Preset<Setup>[]
+    /**
+     * The game's own settings on the setup screen (ADR 0008), below the format's. Leave it out if the game has none.
+     * `NoInfer`, like `views`: it's checked against the schema's settings.
+     */
+    view?: NoInfer<SettingsView<Config>>
   }
+  /**
+   * How to play, for players: the game's `rules.md`, imported with `?raw`. Written in the small part of markdown
+   * `parseMarkdown` supports (ADR 0009).
+   */
+  rules: string
   machine: TeamTurnsMachine<Item, Turn, Event, Config, Phase, GuardName, ActionName>
   /**
    * One view per phase. `NoInfer`: the types come from the rest of the game, and the views are checked against
@@ -114,8 +124,9 @@ export type Game<
  * never reaches players:
  * - `meta` follows the rules above.
  * - There's at least one pack.
- * - Each preset has a unique id, a name and contributors, only names packs that exist, and its settings pass the
- *   config schema.
+ * - Each preset has a unique id, a name and contributors, only names packs that exist (if it names any), and its
+ *   settings pass the config schema.
+ * - The rules aren't empty, and use only the markdown `parseMarkdown` supports.
  * - Every phase of the machine has a view.
  *
  * Returns the game with the format's default views filled in for any format phase the game didn't list.
@@ -156,16 +167,21 @@ export function defineGame<
     if (presetIds.has(preset.id)) report(`${at}.id`, `"${preset.id}" is already used by another preset`)
     presetIds.add(preset.id)
 
-    for (const pack of preset.packs) {
+    for (const pack of preset.packs ?? []) {
       if (!packIds.has(pack)) report(`${at}.packs`, `No pack with id "${pack}"`)
     }
 
-    // Two placeholder teams stand in for the ones players will name, so only the preset's own settings are tested.
-    const settings = game.config.schema.safeParse({ ...preset.config, teams: ['Team 1', 'Team 2'], packs: preset.packs })
+    // Placeholder teams stand in for the ones players will name, and the first pack for the packs they'll choose
+    // when the preset names none, so only the preset's own settings are tested.
+    const packs = preset.packs ?? game.content.packs.slice(0, 1).map((pack) => pack.id)
+    const settings = game.config.schema.safeParse({ ...preset.config, teams: ['Team 1', 'Team 2'], packs })
     if (!settings.success) {
       for (const issue of settings.error.issues) report([`${at}.config`, ...issue.path].join('.'), issue.message)
     }
   }
+
+  if (game.rules.trim() === '') report('rules', 'Write how to play')
+  for (const problem of parseMarkdown(game.rules).problems) report('rules', problem)
 
   const views = { ...teamTurnsViews, ...game.views } as Game<Item, Config, Setup, Turn, Event, Phase, GuardName, ActionName>['views']
   for (const phase of Object.keys(game.machine.phases)) {

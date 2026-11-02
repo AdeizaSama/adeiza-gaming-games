@@ -5,6 +5,7 @@ import { TeamTurnsConfig } from '../formats/team-turns/config'
 import { teamTurns } from '../formats/team-turns/teamTurns'
 import { teamTurnsViews, type TeamTurnsViewProps } from '../formats/team-turns/views'
 import { defineGame, type GameMeta } from './defineGame'
+import type { SettingsViewProps } from './settings'
 
 // A tiny team-turns game standing in for a real one: items are `{ text }`, one point per word got.
 const itemSchema = z.strictObject({ text: z.string().min(1) })
@@ -51,6 +52,7 @@ const game = {
     schema: TeamTurnsConfig,
     presets: [{ id: 'quick', name: 'Quick game', contributors: ['AdeizaSama'], config: { rounds: 1, seconds: 30 }, packs: ['food'] }],
   },
+  rules: '## A turn\n\nGuess the word.',
   machine,
   views: { turn: TurnView },
 }
@@ -74,6 +76,11 @@ describe('defineGame', () => {
 
   it('uses a game’s own view for a format phase instead of the default', () => {
     expect(defineGame({ ...game, views: { turn: TurnView, turn_summary: SummaryView } }).views.turn_summary).toBe(SummaryView)
+  })
+
+  it('needs rules, in the markdown the rules screen can show', () => {
+    expect(problemsWith({ rules: '  ' })).toContain('rules: Write how to play')
+    expect(problemsWith({ rules: 'Fine\n\n| a | b |' })).toContain('rules: Line 3: tables aren’t supported; use a list')
   })
 
   it('reports a phase without a view', () => {
@@ -109,6 +116,17 @@ describe('defineGame', () => {
   it('reports a preset that names a pack the game does not have', () => {
     const presets = [{ ...game.config.presets[0], packs: ['anime'] }]
     expect(problemsWith({ config: { ...game.config, presets } })).toContain('config.presets.0.packs: No pack with id "anime"')
+  })
+
+  it('accepts a preset without packs, checks its settings all the same, and reports an empty pack list', () => {
+    const settingsOnly = { ...game.config.presets[0], packs: undefined }
+    expect(problemsWith({ config: { ...game.config, presets: [settingsOnly] } })).toBeUndefined()
+    expect(problemsWith({ config: { ...game.config, presets: [{ ...settingsOnly, config: { seconds: 5 } }] } })).toContain(
+      'config.presets.0.config.seconds:',
+    )
+    expect(problemsWith({ config: { ...game.config, presets: [{ ...settingsOnly, packs: [] }] } })).toContain(
+      'config.presets.0.packs: List at least one pack, or leave packs out',
+    )
   })
 
   it('reports two presets with the same id, and a preset without contributors', () => {
@@ -155,6 +173,15 @@ export const mistakes = [
   () =>
     defineGame({
       ...game,
+      config: {
+        schema: TeamTurnsConfig,
+        // @ts-expect-error: presets never set tags, which depend on the packs players choose
+        presets: [{ id: 'x', name: 'X', contributors: ['AdeizaSama'], config: { tags: ['fruit'] } }],
+      },
+    }),
+  () =>
+    defineGame({
+      ...game,
       // @ts-expect-error: only the team-turns format exists so far
       meta: { ...meta, format: 'host-led' },
     }),
@@ -175,5 +202,14 @@ export const mistakes = [
       ...game,
       // @ts-expect-error: a view written for another game's items
       views: { turn: (props: TeamTurnsViewProps<{ word: string }, { got: number }, { type: 'got' }>) => props.context.item?.word ?? null },
+    }),
+  () =>
+    defineGame({
+      ...game,
+      config: {
+        schema: TeamTurnsConfig,
+        // @ts-expect-error: a settings view for a setting this game doesn't have
+        view: (props: SettingsViewProps<TeamTurnsConfig & { mode: 'describe' | 'mix' }>) => props.settings.mode,
+      },
     }),
 ]

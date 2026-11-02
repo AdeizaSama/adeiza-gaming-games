@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import App from '../App'
 import { summarizeSave } from '../play/savedGame'
 import { games } from '../registry'
-import { loadSetup } from './savedSetup'
+import { defaultSetup, loadSetup, saveSetup } from './savedSetup'
 import { loadTeams, saveTeams } from './savedTeams'
 
 /** The app at an address, like a player opening a link. */
@@ -120,6 +120,28 @@ describe('setup screen', () => {
     expect(start().disabled).toBe(true)
   })
 
+  it('How to play opens the game’s rules, and Back to setup returns to setup', async () => {
+    const user = userEvent.setup()
+    renderAt('/charades')
+    await user.click(screen.getByRole('link', { name: 'How to play' }))
+
+    expect(screen.getByRole('heading', { name: 'How to play Charades' })).toBeDefined()
+    expect(screen.getByRole('heading', { name: 'A turn' })).toBeDefined()
+    await user.click(screen.getByRole('button', { name: 'Back to setup' }))
+    expect(screen.getByRole('heading', { level: 1, name: 'Charades' })).toBeDefined()
+  })
+
+  it('opens the rules from a link too, where Back to setup goes to setup; a game that doesn’t exist has no rules', async () => {
+    const user = userEvent.setup()
+    const { unmount } = renderAt('/charades/rules')
+    await user.click(screen.getByRole('button', { name: 'Back to setup' }))
+    expect(start()).toBeDefined()
+    unmount()
+
+    renderAt('/anime/rules')
+    expect(screen.getByRole('heading', { name: 'Page not found' })).toBeDefined()
+  })
+
   it('sends the play page back to setup when there is no saved game, like a shared /charades/play link', () => {
     renderAt('/charades/play')
     expect(screen.getByRole('heading', { level: 1, name: 'Charades' })).toBeDefined()
@@ -147,13 +169,71 @@ describe('setup screen', () => {
   it('drops remembered packs that no longer exist, and ignores choices that are no longer allowed', () => {
     const key = 'ku-zo-wasa:setup:charades'
     localStorage.setItem(key, JSON.stringify({ rounds: 5, seconds: 90, packs: ['back-to-school', 'removed-pack'], tags: [] }))
-    expect(loadSetup(charades)).toEqual({ rounds: 5, seconds: 90, packs: ['back-to-school'], tags: [] })
+    expect(loadSetup(charades)).toEqual({ ...defaultSetup(charades), rounds: 5, seconds: 90, packs: ['back-to-school'] })
 
     localStorage.setItem(key, JSON.stringify({ rounds: 5, seconds: 90, packs: ['removed-pack'], tags: [] }))
     expect(loadSetup(charades)).toBeUndefined()
     localStorage.setItem(key, JSON.stringify({ rounds: 99, seconds: 90, packs: ['back-to-school'], tags: [] }))
     expect(loadSetup(charades)).toBeUndefined()
     localStorage.setItem(key, 'not json')
+    expect(loadSetup(charades)).toBeUndefined()
+  })
+
+  it('shows the game’s own settings, keeps them in the draft, and Start plays them', async () => {
+    const user = userEvent.setup()
+    const { unmount } = renderAt('/charades')
+    await user.click(screen.getByRole('radio', { name: /Mix it up/ }))
+    await user.click(screen.getByRole('button', { name: 'Advanced settings' }))
+    await user.click(screen.getByRole('button', { name: 'Less: Skipped' }))
+    await user.click(screen.getByRole('button', { name: 'Done' }))
+    unmount()
+
+    renderAt('/charades')
+    expect(screen.getByRole<HTMLInputElement>('radio', { name: /Mix it up/ }).checked).toBe(true)
+    expect(screen.getByText('Describe 2 · Act 3 · Sing 3 · Skip 0')).toBeDefined()
+    await user.click(start())
+    const saved = JSON.parse(localStorage.getItem('ku-zo-wasa:game') ?? 'null')
+    expect(saved.state.context.config).toMatchObject({ mode: 'mix', points: { describe: 2, act: 3, sing: 3, skip: 0 } })
+  })
+
+  it('offers the game’s presets: Classic is the defaults, a tap applies one whole, and any change unselects it', async () => {
+    const user = userEvent.setup()
+    renderAt('/charades')
+    const preset = (name: string) => screen.getByRole('button', { name })
+    const rounds = within(screen.getByRole('group', { name: 'Rounds' }))
+    expect(preset('Classic').getAttribute('aria-pressed')).toBe('true')
+
+    await user.click(screen.getByRole('button', { name: 'snack' }))
+    await user.click(screen.getByRole('button', { name: 'Advanced settings' }))
+    await user.click(screen.getByRole('button', { name: 'More: Acted' }))
+    await user.click(screen.getByRole('button', { name: 'Done' }))
+    expect(preset('Classic').getAttribute('aria-pressed')).toBe('false')
+
+    await user.click(preset('Party'))
+    expect(preset('Party').getAttribute('aria-pressed')).toBe('true')
+    expect(screen.getByRole<HTMLInputElement>('radio', { name: /Mix it up/ }).checked).toBe(true)
+    expect(screen.getByText('Describe 2 · Act 3 · Sing 3 · Skip −1')).toBeDefined()
+    expect(screen.getByRole('button', { name: 'snack' }).getAttribute('aria-pressed')).toBe('true')
+
+    await user.click(preset('Quick'))
+    expect(rounds.getByText('2')).toBeDefined()
+    expect(within(screen.getByRole('group', { name: 'Turn length' })).getByText('45 seconds')).toBeDefined()
+    expect(screen.getByRole<HTMLInputElement>('radio', { name: /Describe/ }).checked).toBe(true)
+    await user.click(rounds.getByRole('button', { name: 'More: Rounds' }))
+    expect(screen.getAllByRole('button', { pressed: true }).map((button) => button.textContent)).toEqual(['snack'])
+  })
+
+  it('keeps the game’s own settings in the draft, and gives a setting added since the save its default', () => {
+    const mix = { ...defaultSetup(charades), mode: 'mix' as const, points: { describe: 1, act: 4, sing: 5, skip: 0 } }
+    saveSetup('charades', mix)
+    expect(loadSetup(charades)).toEqual(mix)
+
+    // Saved before Charades had modes and points (chapter 05).
+    localStorage.setItem('ku-zo-wasa:setup:charades', JSON.stringify({ rounds: 5, seconds: 90, packs: ['back-to-school'], tags: [] }))
+    expect(loadSetup(charades)).toMatchObject({ rounds: 5, mode: 'describe', points: { describe: 2, act: 3, sing: 3, skip: 1 } })
+
+    // A setting the game no longer has.
+    localStorage.setItem('ku-zo-wasa:setup:charades', JSON.stringify({ ...mix, punishSkips: true }))
     expect(loadSetup(charades)).toBeUndefined()
   })
 })

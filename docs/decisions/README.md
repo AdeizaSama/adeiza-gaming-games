@@ -11,6 +11,8 @@ Short documents that record a decision about the project's contracts: the Game S
 | [0005](0005-views.md) | Views: how each phase is shown | Accepted |
 | [0006](0006-save-and-resume.md) | Save and resume | Accepted |
 | [0007](0007-turn-review.md) | Turn review | Accepted |
+| [0008](0008-settings-and-presets.md) | Game settings and presets on setup | Accepted |
+| [0009](0009-rules.md) | Rules | Accepted |
 
 ## Writing one
 
