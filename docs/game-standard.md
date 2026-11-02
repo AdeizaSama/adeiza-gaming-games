@@ -179,7 +179,7 @@ A primitive takes plain props (text, callbacks) and knows nothing about machines
 
 | Primitive | Used for | Status |
 |---|---|---|
-| `Instruction` | Rules or a step explanation with a continue action | Planned |
+| `Instruction` | Rules or a step explanation with a continue action, in a small part of markdown ([ADR 0009](decisions/0009-rules.md)) | Built |
 | `Handoff` | Pass-the-device screen; hides the previous turn's secret info | Built |
 | `FlashCard` | Big term with got/skip (charades) | Built |
 | `PromptCard` | Category or prompt with a counter (name ten) | Planned |

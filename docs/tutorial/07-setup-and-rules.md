@@ -148,3 +148,40 @@ The schema fills in every default, then the preset's own changes win. Only packs
 
 - `pnpm test src/sdk/game src/app/setup`. Tests 286–290 are the rules; test 292 taps through the presets on the setup screen.
 - On a phone: Classic is lit when setup opens. Tap Party, then open Advanced settings and change a point: Party goes dark.
+
+---
+
+## Step 5: Rules in a small part of markdown
+
+**What:**
+
+- [ADR 0009](../decisions/0009-rules.md).
+- `src/sdk/interactions/markdown.ts`: `parseMarkdown`.
+- `src/sdk/interactions/Instruction.tsx`: the `Instruction` primitive and `Markdown`.
+
+**Why:** every game needs rules players can read, and rules are text that non-coders should be able to fix. Markdown is how GitHub shows text, so a contributor sees their change as players will. We support only what rules need, and report everything else.
+
+### What's supported
+
+`#`, `##` and `###` headings; paragraphs; `- ` and `1. ` lists; `**bold**`. That's the whole list.
+
+### Parse to data, render as elements
+
+`parseMarkdown` returns blocks, not HTML:
+
+```ts
+type Block =
+  | { type: 'heading'; level: 1 | 2 | 3; text: Span[] }
+  | { type: 'paragraph'; text: Span[] }
+  | { type: 'list'; ordered: boolean; items: Span[][] }
+```
+
+`Markdown` maps each block to a React element (`<h3>`, `<p>`, `<ol>`…), with text as text. React escapes text, so a rules file that contains `<img onerror=…>` shows those characters and nothing runs (test 299). A library that produces an HTML string would need `dangerouslySetInnerHTML` to show it.
+
+### Problems, with line numbers
+
+The parser goes line by line. A line that starts something unsupported (a table, a quote, a code fence, an indented line…) becomes a problem like `Line 7: tables aren’t supported; use a list`. Text inside a line is checked too: links, images, code, italics, HTML. Step 6 makes `defineGame` throw on any problem, so a mistake fails CI instead of showing raw symbols to players.
+
+### How to verify
+
+`pnpm test src/sdk/interactions`. To see a problem reported, add a line like `| a | b |` to the rules in test 293 and run it again.

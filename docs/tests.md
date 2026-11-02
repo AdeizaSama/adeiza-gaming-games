@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 292 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
+**Counts:** 299 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -39,6 +39,8 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Interaction primitives](#interaction-primitives) | `src/sdk/interactions/interactions.test.tsx` | 8 | |
 | [Summary and Leaderboard](#summary-and-leaderboard) | `src/sdk/interactions/summary.test.tsx` | 4 | |
 | [Review](#review) | `src/sdk/interactions/review.test.tsx` | 3 | |
+| [Markdown](#markdown) | `src/sdk/interactions/markdown.test.ts` | 5 | |
+| [Instruction](#instruction) | `src/sdk/interactions/instruction.test.tsx` | 2 | |
 | [Team-turns views](#team-turns-views) | `src/sdk/formats/team-turns/views/views.test.tsx` | 3 | |
 | [Game screen](#game-screen) | `src/app/play/GameScreen.test.tsx` | 2 | |
 | [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 12 | |
@@ -596,6 +598,27 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 269 | lists every card with its result, locked: tapping a card does nothing | Locked list | Show the three cards; tap Gala | Heading Lions; each card with its detail, result and "changed" mark; no buttons on the cards; `onToggle` not called | Review is on screen while the phone goes round; a stray tap there must not change a score. |
 | 270 | Adjust unlocks the cards, a tap reports which one, and Lock locks them again | Adjust | Adjust; tap the third card; Lock | The hint changes; `onToggle(2)`; after Lock, no buttons and no more calls | Changing a result is a deliberate two-step act, and the game decides what a tap means. |
 | 271 | Done finishes the review, locked or not, and an empty turn has nothing to adjust | Done | Done label "Count it": tap it locked and unlocked; then no cards | `onDone` twice; then "Nothing was played this turn." and no Adjust | Done never needs Adjust first; nothing to adjust means no Adjust button. |
+
+## Markdown
+
+`src/sdk/interactions/markdown.test.ts`, testing `parseMarkdown` in `src/sdk/interactions/markdown.ts`: the small part of markdown rules are written in (ADR 0009). Blocks are compared as data: a heading, paragraph or list, made of plain and bold runs of text.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 293 | reads headings, paragraphs, both kinds of list and bold | `parseMarkdown` | A `#` heading; two lines of text with `**clock**`; a `##` heading; a numbered list with bold; a bulleted list | Five blocks: the paragraph's lines joined with a space, bold as its own run; no problems | Everything rules may use, read the way GitHub shows it. |
+| 294 | carries a list item on to the next line, starts a new list when the kind changes, and ends a paragraph at a heading | `parseMarkdown` | A bullet then a plain line; a numbered item then a plain line; a `###` heading with no blank line; Windows line ends | Two lists of one item each, with the lines joined; the heading; a paragraph | Long items wrap onto the next line in an editor; writers shouldn't need blank lines everywhere. |
+| 295 | reports every line that starts something unsupported, with its line number | Problems | A table, quote, code fence, `*` item, `####`, `#Title`, an indented line, a divider, `<div>` | One message per line, each with its number and what to do instead | Anything unsupported would show as raw symbols; CI says where and how to fix it. |
+| 296 | reports unsupported text inside a line on that line, and an unclosed ** where its block starts | Problems | A paragraph whose lines hold a link, an image, code, `*aside*`, `_aside_`, a tag; then an item with an unclosed `**` | Each on its own line (an image is also a link); the `**` on the item's line | The line number points at the mistake, not at the start of the paragraph. |
+| 297 | leaves ordinary text alone | No false alarms | `5 < 10`, `snake_case`, an apostrophe, bold, a dash; empty text | No problems; no blocks | Rules are ordinary writing: the checks only catch markdown we don't show. |
+
+## Instruction
+
+`src/sdk/interactions/instruction.test.tsx`, testing `src/sdk/interactions/Instruction.tsx`: the `Instruction` primitive and the `Markdown` it shows. Screen tests (happy-dom).
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 298 | shows the title and the text as headings, paragraphs, lists and bold, and the button carries on | `Instruction` | Title "How to play"; a `##` heading, bold, a numbered list; tap Got it | Title as a level-2 heading, the `##` as level 4; bold in `<strong>`; a numbered list (`<ol>`) of two items; `onAction` called once | Each block becomes its own element, one heading level below the title, so screen readers can move through the rules. |
+| 299 | never turns text into HTML | Safety | Text with `<b>` and an `<img onerror>` | No `<b>` or `<img>` on the page; the text shown as written | Rules come from files anyone can propose a change to. Nothing in them can become HTML on the page (ADR 0009). |
 
 ## Team-turns views
 
