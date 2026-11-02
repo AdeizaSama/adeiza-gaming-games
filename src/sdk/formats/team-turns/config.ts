@@ -9,7 +9,7 @@ function repeats(values: readonly string[]): number[] {
 
 /**
  * The settings players choose on the setup screen for any team-turns game (standard §7).
- * A game with its own settings extends it: `TeamTurnsConfig.extend({ punishSkips: z.boolean().default(false) })`.
+ * A game with its own settings extends it: `TeamTurnsConfig.extend({ mode: z.enum(['describe', 'mix']).default('describe') })`.
  *
  * Strict, like packs: an unknown setting (often a typo, or one left over from an old saved game) is an error.
  */

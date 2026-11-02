@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import App from '../App'
 import { summarizeSave } from '../play/savedGame'
 import { games } from '../registry'
-import { loadSetup } from './savedSetup'
+import { defaultSetup, loadSetup, saveSetup } from './savedSetup'
 import { loadTeams, saveTeams } from './savedTeams'
 
 /** The app at an address, like a player opening a link. */
@@ -147,13 +147,27 @@ describe('setup screen', () => {
   it('drops remembered packs that no longer exist, and ignores choices that are no longer allowed', () => {
     const key = 'ku-zo-wasa:setup:charades'
     localStorage.setItem(key, JSON.stringify({ rounds: 5, seconds: 90, packs: ['back-to-school', 'removed-pack'], tags: [] }))
-    expect(loadSetup(charades)).toEqual({ rounds: 5, seconds: 90, packs: ['back-to-school'], tags: [] })
+    expect(loadSetup(charades)).toEqual({ ...defaultSetup(charades), rounds: 5, seconds: 90, packs: ['back-to-school'] })
 
     localStorage.setItem(key, JSON.stringify({ rounds: 5, seconds: 90, packs: ['removed-pack'], tags: [] }))
     expect(loadSetup(charades)).toBeUndefined()
     localStorage.setItem(key, JSON.stringify({ rounds: 99, seconds: 90, packs: ['back-to-school'], tags: [] }))
     expect(loadSetup(charades)).toBeUndefined()
     localStorage.setItem(key, 'not json')
+    expect(loadSetup(charades)).toBeUndefined()
+  })
+
+  it('keeps the game’s own settings in the draft, and gives a setting added since the save its default', () => {
+    const mix = { ...defaultSetup(charades), mode: 'mix' as const, points: { describe: 1, act: 4, sing: 5, skip: 0 } }
+    saveSetup('charades', mix)
+    expect(loadSetup(charades)).toEqual(mix)
+
+    // Saved before Charades had modes and points (chapter 05).
+    localStorage.setItem('ku-zo-wasa:setup:charades', JSON.stringify({ rounds: 5, seconds: 90, packs: ['back-to-school'], tags: [] }))
+    expect(loadSetup(charades)).toMatchObject({ rounds: 5, mode: 'describe', points: { describe: 2, act: 3, sing: 3, skip: 1 } })
+
+    // A setting the game no longer has.
+    localStorage.setItem('ku-zo-wasa:setup:charades', JSON.stringify({ ...mix, punishSkips: true }))
     expect(loadSetup(charades)).toBeUndefined()
   })
 })

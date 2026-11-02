@@ -1,18 +1,15 @@
 import { ChevronLeft, X } from 'lucide-react'
 import { useEffect, useId, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
-import { TeamTurnsConfig } from '../../sdk/formats/team-turns/config'
+import type { TeamTurnsConfig } from '../../sdk/formats/team-turns/config'
 import { choosePoolItems } from '../../sdk/formats/team-turns/pool'
 import type { Game } from '../../sdk/game/defineGame'
 import type { MachineEvent } from '../../sdk/machine/types'
 import { Button } from '../../ui/button'
 import { Input } from '../../ui/input'
-import { loadSetup, saveSetup } from './savedSetup'
+import { Stepper } from '../../ui/stepper'
+import { defaultSetup, loadSetup, saveSetup, type SetupChoices } from './savedSetup'
 import { loadTeams, saveTeams } from './savedTeams'
-import { Stepper } from './Stepper'
-
-/** The format's own defaults (3 rounds, 60 seconds), read from its schema so this screen can't disagree with it. */
-const defaults = TeamTurnsConfig.parse({ teams: ['Team 1', 'Team 2'], packs: ['any'] })
 
 /** The limits the schema allows (standard §7). */
 const maxTeams = 10
@@ -55,26 +52,26 @@ export function SetupScreen<
   ActionName extends string,
 >({ game, onStart }: SetupScreenProps<Item, Config, Setup, Turn, Event, Phase, GuardName, ActionName>) {
   const { packs, itemKey } = game.content
-  // What players chose last time, on this device; the defaults otherwise.
-  const [saved] = useState(() => loadSetup(game))
-  const [teams, setTeams] = useState(() => loadTeams() ?? defaults.teams)
-  const [rounds, setRounds] = useState(saved?.rounds ?? defaults.rounds)
-  const [seconds, setSeconds] = useState(saved?.seconds ?? defaults.seconds)
-  const [chosenPacks, setChosenPacks] = useState(() => saved?.packs ?? packs.map((pack) => pack.id))
-  const [chosenTags, setChosenTags] = useState<string[]>(saved?.tags ?? [])
+  // Every setting but the teams, as one draft (ADR 0008): what players chose last time on this device, or the
+  // game's defaults, read from its schema so this screen can't disagree with it.
+  const [choices, setChoices] = useState(() => loadSetup(game) ?? defaultSetup(game))
+  const [teams, setTeams] = useState(() => loadTeams() ?? ['Team 1', 'Team 2'])
+  const { rounds, seconds, packs: chosenPacks, tags: chosenTags } = choices
+  // The format's own settings. A spread keeps the game's fields as they are, so TypeScript accepts it for any game.
+  const change = (changes: Partial<SetupChoices<TeamTurnsConfig>>) => setChoices((current) => ({ ...current, ...changes }))
   const id = useId()
 
   // Remember every change as it's made, so a back swipe or a refresh in the middle of setup loses nothing.
   useEffect(() => {
     saveTeams(teams)
-    saveSetup(game.meta.id, { rounds, seconds, packs: chosenPacks, tags: chosenTags })
-  }, [game.meta.id, teams, rounds, seconds, chosenPacks, chosenTags])
+    saveSetup(game.meta.id, choices)
+  }, [game.meta.id, teams, choices])
 
   // Only the chosen packs' tags are offered. A tag picked before its pack was unticked stops counting.
   const tags = [...new Set(packs.filter((pack) => chosenPacks.includes(pack.id)).flatMap((pack) => pack.items.flatMap((item) => item.tags ?? [])))].sort()
   const activeTags = chosenTags.filter((tag) => tags.includes(tag))
 
-  const settings = game.config.schema.safeParse({ teams, rounds, seconds, packs: chosenPacks, tags: activeTags })
+  const settings = game.config.schema.safeParse({ ...choices, teams, tags: activeTags })
   const items = choosePoolItems(packs, { packs: chosenPacks, tags: activeTags }, itemKey)
 
   /** The schema's message for exactly this field, e.g. `('teams', 1)` for the second team's name. */
@@ -131,7 +128,7 @@ export function SetupScreen<
       </Section>
 
       <Section title="Rounds" hint="Every team plays once per round.">
-        <Stepper label="Rounds" value={rounds} min={1} max={10} onChange={setRounds} />
+        <Stepper label="Rounds" value={rounds} min={1} max={10} onChange={(value) => change({ rounds: value })} />
       </Section>
 
       <Section title="Turn length">
@@ -142,7 +139,7 @@ export function SetupScreen<
           max={300}
           step={15}
           format={(value) => `${value} seconds`}
-          onChange={setSeconds}
+          onChange={(value) => change({ seconds: value })}
         />
       </Section>
 
@@ -153,7 +150,7 @@ export function SetupScreen<
               type="checkbox"
               className="mt-1 size-5 shrink-0 accent-primary"
               checked={chosenPacks.includes(pack.id)}
-              onChange={() => setChosenPacks(toggle(chosenPacks, pack.id))}
+              onChange={() => change({ packs: toggle(chosenPacks, pack.id) })}
             />
             <span className="flex flex-col gap-1">
               <span className="font-semibold">
@@ -172,7 +169,7 @@ export function SetupScreen<
             {tags.map((tag) => {
               const on = activeTags.includes(tag)
               return (
-                <Button key={tag} variant={on ? 'primary' : 'outline'} aria-pressed={on} onClick={() => setChosenTags(toggle(chosenTags, tag))}>
+                <Button key={tag} variant={on ? 'primary' : 'outline'} aria-pressed={on} onClick={() => change({ tags: toggle(chosenTags, tag) })}>
                   {tag}
                 </Button>
               )
