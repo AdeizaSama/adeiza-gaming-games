@@ -1,17 +1,18 @@
 import { Summary } from '../../../sdk/interactions/Summary'
 import { nextLabel, type TeamTurnsViewProps } from '../../../sdk/formats/team-turns/views'
+import type { CharadesConfig } from '../config'
 import type { CharadesEvent, CharadesTurn } from '../machine'
 import type { CharadesItem } from '../schema'
 
 /** Replaces the format's turn summary (ADR 0005) to list the items the team got and skipped. */
-export function SummaryView({ context, send, points }: TeamTurnsViewProps<CharadesItem, CharadesTurn, CharadesEvent>) {
+export function SummaryView({ context, send, points }: TeamTurnsViewProps<CharadesItem, CharadesTurn, CharadesEvent, CharadesConfig>) {
   return (
     <Summary
       title={context.config.teams[context.current]}
-      points={points(context.turn)}
+      points={points(context.turn, context.config)}
       sections={[
-        { label: 'Got it', items: context.turn.got.map((item) => item.text) },
-        { label: 'Skipped', items: context.turn.skipped.map((item) => item.text) },
+        { label: 'Got it', items: context.turn.entries.filter((entry) => entry.result === 'got').map((entry) => entry.item.text) },
+        { label: 'Skipped', items: context.turn.entries.filter((entry) => entry.result === 'skipped').map((entry) => entry.item.text) },
       ]}
       actionLabel={nextLabel(context)}
       onNext={() => send({ type: 'next' })}

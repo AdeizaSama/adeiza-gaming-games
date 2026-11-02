@@ -47,11 +47,16 @@ export interface TeamTurnsGame<
   Phase extends string,
   GuardName extends string,
   ActionName extends string,
-> extends TurnRecord<Turn> {
+> extends TurnRecord<Turn, Config> {
   /** The game's phases. Must include `turn`, which the format's `handoff` starts. */
   phases: Record<Phase, GamePhase<Event | TeamTurnsEvent, Phase, FormatGuardName | GuardName, FormatActionName | ActionName>> &
     { turn: unknown } &
     Taken<TeamTurnsPhase>
+  /**
+   * The game's actions to run when a turn starts, after its first item is drawn (ADR 0007). The format's `start`
+   * draws that item, so this is the only place a game can react to it, e.g. Charades picking how it's clued.
+   */
+  onStart?: readonly NoInfer<ActionName>[]
   guards: Record<GuardName, Guard<TeamTurnsContext<Item, Turn, Config>, Event | TeamTurnsEvent>> & Taken<FormatGuardName>
   actions: Record<ActionName, Action<TeamTurnsContext<Item, Turn, Config>, Event | TeamTurnsEvent>> & Taken<FormatActionName>
 }
@@ -75,17 +80,17 @@ export type TeamTurnsMachine<
   TeamTurnsPhase | Phase,
   FormatGuardName | GuardName,
   FormatActionName | ActionName
-> & { points: (turn: Turn) => number }
+> & { points: (turn: Turn, config: Config) => number }
 
 /**
  * The format's loop. `start` begins a turn: a fresh turn record, the timer, the first item. `next` on the turn
  * summary adds the turn's points to the team's score, then moves to the next team's handoff, or to the results
  * after the last turn. The game's phases go between `handoff` and `turn_summary`.
  */
-const formatPhases = {
+const formatPhases = (onStart: readonly string[] = []) => ({
   handoff: {
     interaction: 'handoff',
-    on: { start: { to: 'turn', actions: ['startTurn', 'drawItem'] } },
+    on: { start: { to: 'turn', actions: ['startTurn', 'drawItem', ...onStart] } },
   },
   turn_summary: {
     interaction: 'summary',
@@ -97,7 +102,7 @@ const formatPhases = {
     },
   },
   results: { interaction: 'leaderboard', final: true },
-} as const
+})
 
 /**
  * Builds a team-turns game's machine from its turn (ADR 0004). The game writes what happens inside a turn; the
@@ -135,7 +140,7 @@ export function teamTurns<Item, Turn, Event extends MachineEvent, Config extends
         }
       },
       // The format's phases go last, so even untyped code can't replace them.
-      phases: { ...game.phases, ...formatPhases },
+      phases: { ...game.phases, ...formatPhases(game.onStart) },
       guards: { ...game.guards, ...teamTurnsGuards },
       actions: { ...game.actions, ...teamTurnsActions<Item, Turn, Config>(game) },
     }

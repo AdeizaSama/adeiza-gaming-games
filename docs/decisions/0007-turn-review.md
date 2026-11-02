@@ -51,10 +51,14 @@ Charades' turn record becomes a list of entries in play order, `{ item, mode, re
 
 The game's `points` function becomes `points(turn, config)`, so a game can score by settings. The format passes `context.config` when it banks points, and views get the same function. Games that don't need settings ignore the second argument.
 
+### A game can act when a turn starts
+
+In Mix it up, every card gets a mode when it's drawn. A game draws its own cards after Got and Skip, so it can add an action there. But the first card of every turn is drawn by the format's `start`, which a game can't change. `teamTurns` gets an optional `onStart`: names of the game's actions to run after that first draw. Charades lists `pickMode`.
+
 ## Consequences
 
 - **Easier:** mistakes are fixed before they count, and the buzzer-beater argument has an answer on screen. The next team-turns game with corrections reuses `Review` and writes only its own toggles.
 - **Easier:** any team-turns game can make its scoring a setting.
 - **Harder:** one more screen per turn. Done is the only tap needed when nothing is wrong.
 - **Saved games:** the turn record and settings change shape, so `saveVersion` goes to 2 (ADR 0006). Games saved before the update are discarded with the notice.
-- **SDK change:** `TurnRecord.points` and `TeamTurnsViewProps.points` take the settings as a second argument.
+- **SDK change:** `TurnRecord.points` and `TeamTurnsViewProps.points` take the settings as a second argument, and `teamTurns` accepts `onStart`.

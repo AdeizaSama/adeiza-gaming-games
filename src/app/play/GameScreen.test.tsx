@@ -3,14 +3,13 @@ import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { TeamTurnsConfig } from '../../sdk/formats/team-turns/config'
 import { choosePoolItems } from '../../sdk/formats/team-turns/pool'
 import { newGame } from '../../sdk/game/useGameSession'
 import { games } from '../registry'
 import { GameScreen } from './GameScreen'
 
 const charades = games[0]
-const config = TeamTurnsConfig.parse({ teams: ['Lions', 'Eagles'], rounds: 1, seconds: 30, packs: ['back-to-school'] })
+const config = charades.config.schema.parse({ teams: ['Lions', 'Eagles'], rounds: 1, seconds: 30, packs: ['back-to-school'] })
 const input = { config, items: choosePoolItems(charades.content.packs, config, charades.content.itemKey) }
 
 /** The game screen inside a router: its "Back to games" link needs one. */
@@ -44,7 +43,7 @@ describe('GameScreen', () => {
     await user.click(screen.getByRole('button', { name: 'Skip' }))
     act(() => vi.advanceTimersByTime(30_000))
 
-    expect(screen.getByText(/scored/).textContent).toBe('scored 2 points')
+    expect(screen.getByText(/scored/).textContent).toBe('scored 3 points')
     expect(within(screen.getByRole('list', { name: 'Got it' })).getAllByRole('listitem')).toHaveLength(2)
     expect(within(screen.getByRole('list', { name: 'Skipped' })).getAllByRole('listitem')).toHaveLength(1)
     await user.click(screen.getByRole('button', { name: 'Next' }))
@@ -54,12 +53,12 @@ describe('GameScreen', () => {
     await user.click(screen.getByRole('button', { name: 'Start' }))
     await user.click(screen.getByRole('button', { name: 'Got it' }))
     act(() => vi.advanceTimersByTime(30_000))
-    expect(screen.getByText(/scored/).textContent).toBe('scored 1 point')
+    expect(screen.getByText(/scored/).textContent).toBe('scored 2 points')
     await user.click(screen.getByRole('button', { name: 'See results' }))
 
     expect(screen.getByRole('heading', { name: 'Lions won!' })).toBeDefined()
     const standings = within(screen.getByRole('list', { name: 'Standings' })).getAllByRole('listitem')
-    expect(standings.map((row) => row.textContent)).toEqual(['1Lions2', '2Eagles1'])
+    expect(standings.map((row) => row.textContent)).toEqual(['1Lions3', '2Eagles2'])
   })
 
   it('after the game, Play again starts over with the same teams, and Back to games leads to the library', async () => {

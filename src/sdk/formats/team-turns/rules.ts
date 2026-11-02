@@ -26,11 +26,11 @@ export interface TeamTurnsContext<Item, Turn, Config extends TeamTurnsConfig = T
 }
 
 /** What the format needs from a game to run its guards and actions. */
-export interface TurnRecord<Turn> {
+export interface TurnRecord<Turn, Config extends TeamTurnsConfig = TeamTurnsConfig> {
   /** A fresh, empty record for a new turn. */
   newTurn: () => Turn
-  /** How many points a turn's record is worth. */
-  points: (turn: Turn) => number
+  /** How many points a turn's record is worth, under the game's settings (ADR 0007). */
+  points: (turn: Turn, config: Config) => number
 }
 
 type AnyContext = TeamTurnsContext<unknown, unknown>
@@ -46,7 +46,7 @@ export const teamTurnsGuards = {
  * The format's actions, built for one game: `startTurn` needs the game's `newTurn`, and `bankPoints` its `points`.
  * Each does one thing, so the format's phases (step 6) list them in order.
  */
-export function teamTurnsActions<Item, Turn, Config extends TeamTurnsConfig>({ newTurn, points }: TurnRecord<Turn>) {
+export function teamTurnsActions<Item, Turn, Config extends TeamTurnsConfig>({ newTurn, points }: TurnRecord<Turn, Config>) {
   type Context = TeamTurnsContext<Item, Turn, Config>
 
   return {
@@ -66,7 +66,7 @@ export function teamTurnsActions<Item, Turn, Config extends TeamTurnsConfig>({ n
     /** Adds what this turn's record is worth to the current team's score. */
     bankPoints: ({ context }) => ({
       ...context,
-      scores: context.scores.map((score, team) => (team === context.current ? score + points(context.turn) : score)),
+      scores: context.scores.map((score, team) => (team === context.current ? score + points(context.turn, context.config) : score)),
     }),
 
     /** Passes play to the next team; after the last team, back to the first for the next round. */

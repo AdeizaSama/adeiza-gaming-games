@@ -4,15 +4,14 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it } from 'vitest'
 import App from '../App'
-import { TeamTurnsConfig } from '../../sdk/formats/team-turns/config'
 import { choosePoolItems } from '../../sdk/formats/team-turns/pool'
 import { newGame } from '../../sdk/game/useGameSession'
 import { send } from '../../sdk/machine/runner'
-import { describeSave, saveGame, summarizeSave } from '../play/savedGame'
+import { describeSave, saveGame, saveVersion, summarizeSave } from '../play/savedGame'
 import { games } from '../registry'
 
 const charades = games[0]
-const config = TeamTurnsConfig.parse({ teams: ['Lions', 'Eagles'], rounds: 2, seconds: 30, packs: ['back-to-school'] })
+const config = charades.config.schema.parse({ teams: ['Lions', 'Eagles'], rounds: 2, seconds: 30, packs: ['back-to-school'] })
 const fresh = newGame(charades.machine, { config, items: choosePoolItems(charades.content.packs, config, charades.content.itemKey) }, 2026)
 
 /** The game after every team has played `turns` turns with nothing guessed. */
@@ -65,7 +64,7 @@ describe('continuing a saved game', () => {
     expect(screen.getByRole('status').textContent).toContain('older version of the app')
     unmount()
 
-    localStorage.setItem('ku-zo-wasa:game', JSON.stringify({ version: 1, gameId: 'charades', savedAt: 0, state: { ...fresh, phase: 'guessing' } }))
+    localStorage.setItem('ku-zo-wasa:game', JSON.stringify({ version: saveVersion, gameId: 'charades', savedAt: 0, state: { ...fresh, phase: 'guessing' } }))
     renderAt('/charades/play')
     expect(screen.getByRole('heading', { name: 'Ku Zo Wasa' })).toBeDefined()
     expect(screen.getByRole('status').textContent).toContain('Charades has no "guessing" phase any more')

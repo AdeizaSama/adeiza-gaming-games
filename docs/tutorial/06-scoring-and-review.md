@@ -68,3 +68,46 @@ export const CharadesConfig = TeamTurnsConfig.extend({
 ### How to verify
 
 `pnpm test src/games/charades/config.test.ts`: 5 tests. Change a default in `config.ts` and the first test fails.
+
+---
+
+## Step 3: The turn log and scoring by mode
+
+**What:**
+
+- **SDK:** `points(turn, config)` instead of `points(turn)`, and an optional `onStart` list in `teamTurns`.
+- **Charades:** the turn record becomes a log of cards, each card gets a mode when it's drawn, and points come from the settings.
+- **Saves:** `saveVersion` goes from 1 to 2.
+
+**Why:** review (step 4) needs every card in the order it was played, with enough on each card to score it again after a correction.
+
+### The log
+
+```ts
+interface CharadesEntry { item: CharadesItem; mode: 'describe' | 'act' | 'sing'; result: 'got' | 'skipped' }
+interface CharadesTurn { entries: CharadesEntry[]; mode: CharadesMode } // mode: how the card on screen is clued
+```
+
+Got and Skip add the card on screen to `entries` with `turn.mode` and a result. A turn's points are the sum of its cards, never below 0:
+
+```ts
+points: (turn, config) => Math.max(0, turn.entries.reduce((sum, entry) => sum + entryPoints(entry, config.points), 0)),
+```
+
+With the defaults, two got and a skip is 2 + 2 − 1 = 3.
+
+### Picking a mode, and why the format needed `onStart`
+
+`pickMode` runs after every draw: `describe` in Describe mode, or a random one of the item's `modes` in Mix it up. It uses the machine's `rng`, never `Math.random`, so a resumed game shows the same modes (standard §4).
+
+Charades writes the draws after Got and Skip itself, so it adds `pickMode` there. But the first card of every turn is drawn by the format's `start` transition, which belongs to the format. Without a change, the first card of a turn in Mix it up would have no mode. `teamTurns` now takes an optional `onStart: ['pickMode']`: the game's actions to run right after that first draw. A typo in it is a type error, like any other action name.
+
+**Describe mode uses no random numbers for modes**, so the draws in a describe game are exactly the same as before this step. That's why the full-game test still draws the same 30 items; only its scores changed (9 → 15, because a got is now worth 2).
+
+### Old saves
+
+The turn record and the settings changed shape, so a game saved by chapter 05's code can't be loaded by this one. Following the version rule (ADR 0006), `saveVersion` goes to 2, with a comment listing what each version means. An old save is thrown away with the notice.
+
+### How to verify
+
+`pnpm test`: 268 tests. Remove `...onStart` from the format's `start` transition and the `onStart` test fails; put an unknown name in `onStart` and `pnpm typecheck` fails.

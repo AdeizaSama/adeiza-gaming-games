@@ -4,7 +4,6 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '../App'
-import { TeamTurnsConfig } from '../../sdk/formats/team-turns/config'
 import { choosePoolItems } from '../../sdk/formats/team-turns/pool'
 import { newGame } from '../../sdk/game/useGameSession'
 import { send } from '../../sdk/machine/runner'
@@ -12,7 +11,7 @@ import { games } from '../registry'
 import { loadGame, saveGame } from './savedGame'
 
 const charades = games[0]
-const config = TeamTurnsConfig.parse({ teams: ['Lions', 'Eagles'], rounds: 1, seconds: 30, packs: ['back-to-school'] })
+const config = charades.config.schema.parse({ teams: ['Lions', 'Eagles'], rounds: 1, seconds: 30, packs: ['back-to-school'] })
 const fresh = newGame(charades.machine, { config, items: choosePoolItems(charades.content.packs, config, charades.content.itemKey) }, 2026)
 
 /** Lions' turn started at 0 ms (so it ends at 30 000) and they got one item: the game as it was before a refresh. */
@@ -49,7 +48,7 @@ describe('play page', () => {
 
     await user.click(screen.getByRole('button', { name: 'Got it' }))
     const saved = loadGame(charades)
-    expect(saved.status === 'ok' && saved.state.context.turn.got).toHaveLength(2)
+    expect(saved.status === 'ok' && saved.state.context.turn.entries).toHaveLength(2)
   })
 
   it('ends the turn at once if its time ran out during the refresh', () => {
@@ -57,7 +56,7 @@ describe('play page', () => {
     vi.setSystemTime(45_000) // 15 seconds after the turn should have ended
     openPlayPage()
 
-    expect(screen.getByText(/scored/).textContent).toBe('scored 1 point')
+    expect(screen.getByText(/scored/).textContent).toBe('scored 2 points')
     const saved = loadGame(charades)
     expect(saved.status === 'ok' && saved.state.phase).toBe('turn_summary')
   })

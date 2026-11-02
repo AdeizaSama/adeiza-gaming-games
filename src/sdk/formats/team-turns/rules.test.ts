@@ -74,6 +74,13 @@ describe('bankPoints', () => {
     expect(before.scores).toEqual([4, 2, 7])
   })
 
+  it('scores the turn under the game’s settings', () => {
+    // A made-up rule: each word is worth one point per round in the game.
+    const scoring = teamTurnsActions<string, Turn, TeamTurnsConfig>({ newTurn: () => ({ got: [] }), points: (turn, settings) => turn.got.length * settings.rounds })
+    const after = scoring.bankPoints({ context: context({ turn: { got: ['x', 'y'] } }), event, rng: rng(), now: 0 })
+    expect(after.scores).toEqual([4, 0, 0])
+  })
+
   it('leaves scores as they are for a turn worth nothing', () => {
     const after = actions.bankPoints({ context: context({ scores: [3, 1, 0] }), event, rng: rng(), now: 0 })
     expect(after.scores).toEqual([3, 1, 0])
