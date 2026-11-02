@@ -174,6 +174,33 @@ describe('setup screen', () => {
     expect(saved.state.context.config).toMatchObject({ mode: 'mix', points: { describe: 2, act: 3, sing: 3, skip: 0 } })
   })
 
+  it('offers the game’s presets: Classic is the defaults, a tap applies one whole, and any change unselects it', async () => {
+    const user = userEvent.setup()
+    renderAt('/charades')
+    const preset = (name: string) => screen.getByRole('button', { name })
+    const rounds = within(screen.getByRole('group', { name: 'Rounds' }))
+    expect(preset('Classic').getAttribute('aria-pressed')).toBe('true')
+
+    await user.click(screen.getByRole('button', { name: 'snack' }))
+    await user.click(screen.getByRole('button', { name: 'Advanced settings' }))
+    await user.click(screen.getByRole('button', { name: 'More: Acted' }))
+    await user.click(screen.getByRole('button', { name: 'Done' }))
+    expect(preset('Classic').getAttribute('aria-pressed')).toBe('false')
+
+    await user.click(preset('Party'))
+    expect(preset('Party').getAttribute('aria-pressed')).toBe('true')
+    expect(screen.getByRole<HTMLInputElement>('radio', { name: /Mix it up/ }).checked).toBe(true)
+    expect(screen.getByText('Describe 2 · Act 3 · Sing 3 · Skip −1')).toBeDefined()
+    expect(screen.getByRole('button', { name: 'snack' }).getAttribute('aria-pressed')).toBe('true')
+
+    await user.click(preset('Quick'))
+    expect(rounds.getByText('2')).toBeDefined()
+    expect(within(screen.getByRole('group', { name: 'Turn length' })).getByText('45 seconds')).toBeDefined()
+    expect(screen.getByRole<HTMLInputElement>('radio', { name: /Describe/ }).checked).toBe(true)
+    await user.click(rounds.getByRole('button', { name: 'More: Rounds' }))
+    expect(screen.getAllByRole('button', { pressed: true }).map((button) => button.textContent)).toEqual(['snack'])
+  })
+
   it('keeps the game’s own settings in the draft, and gives a setting added since the save its default', () => {
     const mix = { ...defaultSetup(charades), mode: 'mix' as const, points: { describe: 1, act: 4, sing: 5, skip: 0 } }
     saveSetup('charades', mix)

@@ -105,3 +105,46 @@ const defaultPoints = CharadesConfig.shape.points.parse(undefined)
 
 - `pnpm test src/games/charades/views src/app/setup`. Test 282 picks Mix it up, sets skips to cost nothing, leaves setup and comes back, then starts a game with those settings.
 - On a phone, run `pnpm dev --host`. On Charades' setup, pick Mix it up and play a turn: each card says how to clue it. Then set Skipped to "No penalty" in Advanced settings and check that a skip costs nothing in review.
+
+---
+
+## Step 4: Presets
+
+**What:**
+
+- `presetSettings` and `matchesPreset` in `src/sdk/game/settings.ts`.
+- A preset's `packs` becomes optional in `defineGame`.
+- Charades gets three presets: Quick, Classic and Party.
+- Setup shows them as buttons under Teams.
+
+**Why:** most players never open Advanced settings: they want "a quick game" or "a party game". Presets are those choices, made once by whoever wrote the game (ADR 0008).
+
+### Charades' presets
+
+```ts
+presets: [
+  { id: 'quick', name: 'Quick', contributors: ['AdeizaSama'], config: { rounds: 2, seconds: 45 } },
+  { id: 'classic', name: 'Classic', contributors: ['AdeizaSama'], config: {} }, // the defaults
+  { id: 'party', name: 'Party', contributors: ['AdeizaSama'], config: { mode: 'mix' } },
+],
+```
+
+None of them lists packs, so adding a pack never means editing a preset. `defineGame` still checks each preset's settings against the schema, standing in the game's first pack for the packs players will choose.
+
+### Applying a preset whole
+
+```ts
+const settings = schema.parse({ ...preset.config, teams: placeholderTeams, packs: preset.packs ?? placeholderPacks })
+return { ...withoutTeams(settings), packs: preset.packs ?? current.packs, tags: current.tags }
+```
+
+The schema fills in every default, then the preset's own changes win. Only packs and tags come from what players had. So tapping Party after changing points puts the points back.
+
+### Selected only when exact
+
+`matchesPreset` compares every setting with what the preset would set, objects (like `points`) included. Packs count only if the preset names some, in any order. So with the defaults, Classic is lit; change anything and no preset is lit. A lit button always tells the truth.
+
+### How to verify
+
+- `pnpm test src/sdk/game src/app/setup`. Tests 286–290 are the rules; test 292 taps through the presets on the setup screen.
+- On a phone: Classic is lit when setup opens. Tap Party, then open Advanced settings and change a point: Party goes dark.

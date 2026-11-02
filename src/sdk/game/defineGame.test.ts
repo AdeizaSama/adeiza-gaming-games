@@ -112,6 +112,17 @@ describe('defineGame', () => {
     expect(problemsWith({ config: { ...game.config, presets } })).toContain('config.presets.0.packs: No pack with id "anime"')
   })
 
+  it('accepts a preset without packs, checks its settings all the same, and reports an empty pack list', () => {
+    const settingsOnly = { ...game.config.presets[0], packs: undefined }
+    expect(problemsWith({ config: { ...game.config, presets: [settingsOnly] } })).toBeUndefined()
+    expect(problemsWith({ config: { ...game.config, presets: [{ ...settingsOnly, config: { seconds: 5 } }] } })).toContain(
+      'config.presets.0.config.seconds:',
+    )
+    expect(problemsWith({ config: { ...game.config, presets: [{ ...settingsOnly, packs: [] }] } })).toContain(
+      'config.presets.0.packs: List at least one pack, or leave packs out',
+    )
+  })
+
   it('reports two presets with the same id, and a preset without contributors', () => {
     const presets = [game.config.presets[0], { ...game.config.presets[0], contributors: [] }]
     const message = problemsWith({ config: { ...game.config, presets } })
@@ -151,6 +162,15 @@ export const mistakes = [
         schema: TeamTurnsConfig,
         // @ts-expect-error: presets never set the teams; players name their own
         presets: [{ id: 'x', name: 'X', contributors: ['AdeizaSama'], config: { teams: ['A', 'B'] }, packs: ['food'] }],
+      },
+    }),
+  () =>
+    defineGame({
+      ...game,
+      config: {
+        schema: TeamTurnsConfig,
+        // @ts-expect-error: presets never set tags, which depend on the packs players choose
+        presets: [{ id: 'x', name: 'X', contributors: ['AdeizaSama'], config: { tags: ['fruit'] } }],
       },
     }),
   () =>

@@ -4,6 +4,7 @@ import { Link } from 'react-router'
 import type { TeamTurnsConfig } from '../../sdk/formats/team-turns/config'
 import { choosePoolItems } from '../../sdk/formats/team-turns/pool'
 import type { Game } from '../../sdk/game/defineGame'
+import { matchesPreset, presetSettings } from '../../sdk/game/settings'
 import type { MachineEvent } from '../../sdk/machine/types'
 import { Button } from '../../ui/button'
 import { Input } from '../../ui/input'
@@ -54,6 +55,7 @@ export function SetupScreen<
 >({ game, onStart }: SetupScreenProps<Item, Config, Setup, Turn, Event, Phase, GuardName, ActionName>) {
   const { packs, itemKey } = game.content
   const SettingsView = game.config.view
+  const presets = game.config.presets ?? []
   // Every setting but the teams, as one draft (ADR 0008): what players chose last time on this device, or the
   // game's defaults, read from its schema so this screen can't disagree with it.
   const [choices, setChoices] = useState(() => loadSetup(game) ?? defaultSetup(game))
@@ -128,6 +130,27 @@ export function SetupScreen<
           </Button>
         )}
       </Section>
+
+      {presets.length > 0 && (
+        <Section title="Presets" hint="One tap sets how you play. Your teams stay as they are.">
+          <div className="flex flex-wrap gap-2">
+            {presets.map((preset) => {
+              // Selected only while every setting is the preset's (ADR 0008).
+              const on = matchesPreset(game.config.schema, preset, choices)
+              return (
+                <Button
+                  key={preset.id}
+                  variant={on ? 'primary' : 'outline'}
+                  aria-pressed={on}
+                  onClick={() => setChoices((current) => presetSettings(game.config.schema, preset, current))}
+                >
+                  {preset.name}
+                </Button>
+              )
+            })}
+          </div>
+        </Section>
+      )}
 
       <Section title="Rounds" hint="Every team plays once per round.">
         <Stepper label="Rounds" value={rounds} min={1} max={10} onChange={(value) => change({ rounds: value })} />

@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 285 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
+**Counts:** 292 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -28,7 +28,8 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Item pool](#item-pool) | `src/sdk/formats/team-turns/pool.test.ts` | 13 | |
 | [Team-turns guards and actions](#team-turns-guards-and-actions) | `src/sdk/formats/team-turns/rules.test.ts` | 9 | |
 | [teamTurns (Word Duel)](#teamturns-word-duel) | `src/sdk/formats/team-turns/teamTurns.test.ts` | 14 | 10 |
-| [defineGame](#definegame) | `src/sdk/game/defineGame.test.ts` | 10 | 7 |
+| [defineGame](#definegame) | `src/sdk/game/defineGame.test.ts` | 11 | 8 |
+| [Settings and presets](#settings-and-presets) | `src/sdk/game/settings.test.ts` | 5 | |
 | [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 22 | |
 | [Charades views](#charades-views) | `src/games/charades/views/views.test.tsx` | 6 | |
 | [App](#app) | `src/app/App.test.tsx` | 4 | |
@@ -40,7 +41,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Review](#review) | `src/sdk/interactions/review.test.tsx` | 3 | |
 | [Team-turns views](#team-turns-views) | `src/sdk/formats/team-turns/views/views.test.tsx` | 3 | |
 | [Game screen](#game-screen) | `src/app/play/GameScreen.test.tsx` | 2 | |
-| [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 11 | |
+| [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 12 | |
 | [Saved game](#saved-game) | `src/app/play/savedGame.test.ts` | 12 | |
 | [Play page](#play-page) | `src/app/play/PlayPage.test.tsx` | 3 | |
 | [Continuing a saved game](#continuing-a-saved-game) | `src/app/library/continue.test.tsx` | 6 | |
@@ -433,11 +434,12 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 163 | returns the game with the format's default views filled in | `defineGame`, views | The valid game, with a view for `turn` only | The same machine; views are the format's three defaults plus the game's `turn` | ADR 0005: games write views for their own phases and get the format's for free. |
-| 164 | accepts a game without presets | Presets | No `presets` | No error | Presets are optional; core Charades has none yet. |
+| 164 | accepts a game without presets | Presets | No `presets` | No error | Presets are optional. |
 | 165 | reports problems in meta, with where each is | `meta` | Id `Word Duel`, complexity 6, players min 4 max 2, no contributors | One error naming the game, listing `meta.id`, `meta.complexity`, `meta.players` and `meta.contributors` | The library shows these; mistakes fail the game's tests instead of reaching players. All problems at once. |
 | 166 | needs at least one pack | Content | No packs | Reports `content.packs` | A game without items can't be played. |
 | 167 | checks a preset's settings against the game's config schema | Presets | Preset with 5-second turns | Reports `config.presets.0.config.seconds` | A preset is just settings, so the same rules apply as on the setup screen. |
 | 168 | reports a preset that names a pack the game does not have | Presets | Preset with pack `anime` | Reports `config.presets.0.packs` naming `"anime"` | A typo in a pack id would give players an empty game. |
+| 291 | accepts a preset without packs, checks its settings all the same, and reports an empty pack list | Presets | `quick` without packs; then with 5-second turns; then with `packs: []` | No error; reports `config.presets.0.config.seconds`; reports `config.presets.0.packs` "List at least one pack, or leave packs out" | A preset about how to play needn't name packs (ADR 0008), but its settings are still checked, and an empty list is a mistake, not a way to say "keep". |
 | 169 | reports two presets with the same id, and a preset without contributors | Presets | Two presets called `quick`, the second without contributors | Reports `config.presets.1.id` and `config.presets.1.contributors` | Preset ids are used in links; credit is required (§3). |
 | 170 | keeps the item and settings types from the schemas | Types | The defined game | Packs typed `Pack<{ text: string }>[]`; settings typed `TeamTurnsConfig` | The app (chapter 04) works with a game's real types. Checked by `pnpm typecheck`. |
 | 206 | uses a game's own view for a format phase instead of the default | Views | Views for `turn` and `turn_summary` | The game's summary view is used | A game can replace a format view when the default can't show what it needs. |
@@ -449,11 +451,24 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 |---|---|---|---|
 | C24 | The machine plays different items from the packs | A machine for `{ word }` items with `{ text }` packs | The item schema, the packs and the machine must agree on what an item is. |
 | C25 | A preset sets the teams | `config: { teams: ['A', 'B'] }` | Players always name their own teams. |
+| C32 | A preset sets tags | `config: { tags: ['fruit'] }` | Tags depend on the packs players choose, so a preset keeps them (ADR 0008). |
 | C26 | A format that doesn't exist yet | `format: 'host-led'` | Only `team-turns` is built. |
 | C27 | A game phase without a view | `views: { turn_summary: … }` with no `turn` | Players would see a blank screen in that phase. |
 | C28 | A view for a phase the machine doesn't have | `views: { turn, steal }` | Usually a typo; the view would never be shown. |
 | C29 | A view written for another game's items | A view reading `item.word` in a game whose items have `text` | It would show nothing, or crash, on the real items. |
 | C31 | A settings view for a setting the game doesn't have | `view` reading `settings.mode` in a game with only the format's settings | It would show a setting that's never saved or checked (ADR 0008). |
+
+## Settings and presets
+
+`src/sdk/game/settings.test.ts`, testing `src/sdk/game/settings.ts`: the rules for a game's settings on setup and for presets (ADR 0008). The schema is `TeamTurnsConfig` plus a nested setting of the game's own, `bonus: { got }` (default 1), like Charades' points. Two presets: `quick` (1 round, 30 seconds, no packs) and one with 90-second turns and packs `animals` and `food`.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 286 | defaultSettings: the schema's defaults for these packs, without teams | `defaultSettings` | Pack `food` | 3 rounds, 60 seconds, `food`, no tags, bonus 1; no teams | Setup starts from the schema's defaults, the game's own included, so the screen can't disagree with the schema. |
+| 287 | presetSettings: the defaults plus the preset's changes, undoing players' own changes, keeping packs and tags | `presetSettings` | 5 rounds, tag `fruit`, bonus 3; apply `quick` | 1 round, 30 seconds, bonus back to 1, `food` and `fruit` kept | A preset is applied whole (ADR 0008), so it never leaves a setting nobody chose for it. |
+| 288 | presetSettings: uses the preset's packs when it names some | `presetSettings` | Pack `food`, tag `fruit`; apply the 90-second preset | 90 seconds, packs `animals` and `food`, `fruit` kept | A preset about content still sets content. |
+| 289 | matchesPreset: only while every setting is the preset's, whatever the packs and tags | `matchesPreset` | `quick` applied; then other packs and tags; rounds 2; bonus 2; the defaults | True; true; false; false; false | A lit preset means exactly its settings; packs and tags it doesn't set don't count. |
+| 290 | matchesPreset: compares packs, in any order, when the preset names some | `matchesPreset` | The 90-second preset applied, packs reversed; then only `food` | True; false | Ticking packs in another order is the same choice. |
 
 ## Charades machine
 
@@ -616,6 +631,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 223 | sends the play page back to setup when there is no saved game, like a shared /charades/play link | Play page | Open `/charades/play` with nothing saved | Charades' setup screen | The play page only plays a save (ADR 0006): without one there's nothing to play. |
 | 250 | remembers setup choices as they are made, so leaving setup loses nothing | Setup draft | Rename Team 1 to Lions, rounds +, turn length +, pick snack; leave; open setup again | Lions, 4 rounds, 75 seconds, snack picked, "5 items to play" | A back swipe or refresh mid-setup keeps everything, not only after Start (ADR 0006). |
 | 251 | drops remembered packs that no longer exist, and ignores choices that are no longer allowed | `loadSetup` | Saved packs: one existing, one removed; then only a removed pack; then 99 rounds; then broken JSON | The existing pack kept, with every other setting as saved; then nothing loaded, three times | A pack can be deleted while a phone remembers it: picking it would crash the item pool. |
+| 292 | offers the game's presets: Classic is the defaults, a tap applies one whole, and any change unselects it | Presets on setup | Defaults; pick snack; Acted + in Advanced settings; tap Party; tap Quick; rounds + | Classic selected; then none; Party selected, Mix it up, points back to 2/3/3/1, snack still picked; 2 rounds, 45 seconds, Describe; then only snack pressed | A preset is applied whole and is lit only while it's exactly what's set (ADR 0008), so a lit preset never lies. |
 | 282 | shows the game's own settings, keeps them in the draft, and Start plays them | Settings view on setup | Pick Mix it up; in Advanced settings, skip −; Done; leave and come back; Start | Mix it up still picked, "Describe 2 · Act 3 · Sing 3 · Skip 0"; the saved game plays mode `mix` with skip 0 | The game's settings go through the same draft and the same Start as the format's (ADR 0008). |
 | 281 | keeps the game's own settings in the draft, and gives a setting added since the save its default | `loadSetup`, `saveSetup` | Mix it up with points 1/4/5/0; then a draft saved before Charades had modes; then one with a setting Charades doesn't have | The same back; then 5 rounds with mode `describe` and points 2/3/3/1; then nothing loaded | The draft holds every setting, the game's own too (ADR 0008). A game can add settings without breaking drafts on players' phones; the schema's defaults fill the gap. |
 

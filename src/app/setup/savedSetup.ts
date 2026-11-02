@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { Settings } from '../../sdk/game/settings'
+import { defaultSettings, withoutTeams, type Settings } from '../../sdk/game/settings'
 
 /**
  * A game's setup choices as players left them: every setting except teams, the game's own included (ADR 0008).
@@ -23,16 +23,9 @@ const placeholderTeams = ['Team 1', 'Team 2']
 /** The outside shape. Whether the values are still allowed is checked against the game's schema in `loadSetup`. */
 const Saved = z.looseObject({ packs: z.array(z.string()) })
 
-/** Settings without the teams. */
-function withoutTeams<Config>(settings: Config): SetupChoices<Config> {
-  const choices = { ...settings }
-  delete (choices as { teams?: unknown }).teams
-  return choices
-}
-
 /** The game's defaults, from its schema, with every pack chosen. */
 export function defaultSetup<Config>(game: SetupGame<Config>): SetupChoices<Config> {
-  return withoutTeams(game.config.schema.parse({ teams: placeholderTeams, packs: game.content.packs.map((pack) => pack.id) }))
+  return defaultSettings(game.config.schema, game.content.packs.map((pack) => pack.id))
 }
 
 /**

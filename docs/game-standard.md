@@ -66,8 +66,8 @@ export default defineGame({
         id: "anime-90",
         name: "Anime Charades, 90-second turns",
         contributors: ["AdeizaSama"],  // GitHub handles of the variant's creators
-        config: { seconds: 90 },       // settings that differ from the defaults; never teams
-        packs: ["anime"],              // content pack ids
+        config: { seconds: 90 },       // settings that differ from the defaults; never teams or tags
+        packs: ["anime"],              // content pack ids (optional: leave out to keep the players' packs)
       },
     ],
   },
@@ -80,11 +80,13 @@ export default defineGame({
 });
 ```
 
-`defineGame` is in `src/sdk/game/`. Besides type-checking, it checks what types can't, and throws one error listing every problem: `meta` (kebab-case id, complexity 1–5, `players.max` ≥ `players.min`, at least one contributor), at least one pack, and each preset (unique id, contributors, packs that exist, settings that pass the config schema). A game's tests import it, so a broken game fails CI.
+`defineGame` is in `src/sdk/game/`. Besides type-checking, it checks what types can't, and throws one error listing every problem: `meta` (kebab-case id, complexity 1–5, `players.max` ≥ `players.min`, at least one contributor), at least one pack, and each preset (unique id, contributors, packs that exist if it names any, settings that pass the config schema). A game's tests import it, so a broken game fails CI.
 
 **Defaults live in the config schema** (zod's `.default()`), not in a separate list, so they can't drift apart. A game that wants different defaults from the format's extends its schema.
 
 **Settings view** ([ADR 0008](decisions/0008-settings-and-presets.md)): a game with settings of its own (Charades' mode and points) gives a component that the setup screen shows below the format's settings. It receives `settings` (every setting but the teams) and `onChange`. The setup screen keeps, saves and checks them with the rest.
+
+**Presets** ([ADR 0008](decisions/0008-settings-and-presets.md)) are shown on setup. Tapping one applies it whole: the game's defaults plus the preset's own settings, so changes players made are undone. Teams and tags stay as they are, and so do packs unless the preset names some. A preset is shown as selected only while the settings are exactly its own.
 
 **Views** ([ADR 0005](decisions/0005-views.md)): each of the game's own phases needs a view; the format provides default views for its phases (handoff, turn summary, results), and a game lists one only to replace it. `defineGame` fills in the defaults and checks every phase has a view. A view receives `context` (to show), `send` (to report what players did) and `points` (the game's scoring).
 
