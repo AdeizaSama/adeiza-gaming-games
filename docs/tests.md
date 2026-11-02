@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 268 runtime tests (`pnpm test`) and 30 compile-time checks (`pnpm typecheck`).
+**Counts:** 271 runtime tests (`pnpm test`) and 30 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -36,6 +36,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Game session](#game-session) | `src/sdk/game/useGameSession.test.ts` | 9 | |
 | [Interaction primitives](#interaction-primitives) | `src/sdk/interactions/interactions.test.tsx` | 8 | |
 | [Summary and Leaderboard](#summary-and-leaderboard) | `src/sdk/interactions/summary.test.tsx` | 4 | |
+| [Review](#review) | `src/sdk/interactions/review.test.tsx` | 3 | |
 | [Team-turns views](#team-turns-views) | `src/sdk/formats/team-turns/views/views.test.tsx` | 3 | |
 | [Game screen](#game-screen) | `src/app/play/GameScreen.test.tsx` | 2 | |
 | [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 9 | |
@@ -549,6 +550,16 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 203 | says "1 point", and leaves out empty lists | Summary | Eagles, 1 point, an empty Skipped list | "scored 1 point"; no list shown | Small things players notice: grammar, and empty headings. |
 | 204 | orders by score, gives tied scores the same place and skips the next, keeping tied entries in order | `rank` | A 7, B 10, C 10, D 3 | 1 B, 1 C, 3 A, 4 D; the original list unchanged | Two teams with the same score both came first; the next team is third, not second. |
 | 205 | lists every team with its place and score, highest first, highlighting first place | Leaderboard | Lions 4, Eagles 9 | Eagles first (highlighted), then Lions | The results screen at a glance. |
+
+## Review
+
+`src/sdk/interactions/review.test.tsx`, testing `src/sdk/interactions/Review.tsx`: the turn card by card, before its points count (ADR 0007). Screen tests (happy-dom) with three cards: Gala (acted, got), Zobo (skipped, changed), Assembly (not counted).
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 269 | lists every card with its result, locked: tapping a card does nothing | Locked list | Show the three cards; tap Gala | Heading Lions; each card with its detail, result and "changed" mark; no buttons on the cards; `onToggle` not called | Review is on screen while the phone goes round; a stray tap there must not change a score. |
+| 270 | Adjust unlocks the cards, a tap reports which one, and Lock locks them again | Adjust | Adjust; tap the third card; Lock | The hint changes; `onToggle(2)`; after Lock, no buttons and no more calls | Changing a result is a deliberate two-step act, and the game decides what a tap means. |
+| 271 | Done finishes the review, locked or not, and an empty turn has nothing to adjust | Done | Done label "Count it": tap it locked and unlocked; then no cards | `onDone` twice; then "Nothing was played this turn." and no Adjust | Done never needs Adjust first; nothing to adjust means no Adjust button. |
 
 ## Team-turns views
 

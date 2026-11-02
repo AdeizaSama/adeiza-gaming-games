@@ -111,3 +111,30 @@ The turn record and the settings changed shape, so a game saved by chapter 05's 
 ### How to verify
 
 `pnpm test`: 268 tests. Remove `...onStart` from the format's `start` transition and the `onStart` test fails; put an unknown name in `onStart` and `pnpm typecheck` fails.
+
+---
+
+## Step 4: The Review primitive
+
+**What:** `src/sdk/interactions/Review.tsx`, the shared screen for reviewing a turn, and its row in the standard's table of primitives (§6). `Summary` is now described as read-only for good.
+
+**Why:** the plan had the review phase before this screen, but `defineGame` refuses a game that has a phase with no view (chapter 04). So the screen comes first, and the next step adds the phase and its Charades view together.
+
+### What it knows, and what it doesn't
+
+Like every primitive, `Review` takes plain props and knows nothing about machines or Charades (ADR 0005):
+
+```ts
+<Review title="Lions" rows={[{ text: 'Gala', detail: 'Acted', result: 'Got it', tone: 'good' }, …]} onToggle={(index) => …} onDone={…} />
+```
+
+- `tone` picks the result's color from the theme tokens: `good` (success), `bad` (destructive) or `none` (muted).
+- `onToggle(index)` only says which card was tapped. What a tap changes is the game's rule, kept in its machine.
+
+### Locked until Adjust
+
+The screen starts locked: the cards are plain rows, not buttons, so a tap does nothing. **Adjust** turns every row into a button; **Lock** turns them back. That state lives in a `useState` inside the component, not in the game. A refresh locks the screen again, while the changes already made stay, because each one was a machine event.
+
+### How to verify
+
+`pnpm test src/sdk/interactions/review.test.tsx`: 3 tests. Change `useState(false)` to `useState(true)` in `Review.tsx` and all three fail.

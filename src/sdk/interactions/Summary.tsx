@@ -18,8 +18,8 @@ export interface SummaryProps {
 }
 
 /**
- * The end of a turn: who played, what they scored, and what happened (standard §6). Read-only for now; correcting
- * a mis-tap here comes with the editable turn summary (chapter 06).
+ * The end of a turn: who played, what they scored, and what happened (standard §6). Read-only: mis-taps are fixed
+ * before it, on the review screen (`Review`, ADR 0007).
  */
 export function Summary({ title, points, sections = [], actionLabel = 'Next', onNext }: SummaryProps) {
   const shown = sections.filter((section) => section.items.length > 0)
