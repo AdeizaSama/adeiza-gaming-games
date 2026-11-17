@@ -46,7 +46,7 @@ interface Pair {
 }
 
 const text = 4.5 // ordinary text
-const large = 3 // large text (24px, or 19px bold) and outlines that show focus
+const large = 3 // large text (24px, or 19px bold), and the edges of buttons, fields and the focus outline
 
 /** Every pair the app draws, from the components' classes. Add a pair here when a component starts using one. */
 export const contrastPairs: Pair[] = [
@@ -64,6 +64,9 @@ export const contrastPairs: Pair[] = [
   { text: 'destructive', on: 'background', minimum: text, what: 'error messages' },
   { text: 'warning', on: 'background', minimum: large, what: 'the timer’s large numbers when time is short' },
   { text: 'ring', on: 'background', minimum: large, what: 'the keyboard focus outline' },
+  { text: 'border', on: 'background', minimum: large, what: 'the outline of a button' },
+  { text: 'border', on: 'card', minimum: large, what: 'the outline of a button in a dialog' },
+  { text: 'input', on: 'background', minimum: large, what: 'the outline of a text field' },
 ]
 
 /**

@@ -51,7 +51,8 @@ describe('theme tokens', () => {
   })
 
   it('leaves outline widths to the theme: no file uses a fixed width like border-2', () => {
-    const files = import.meta.glob<string>(['/src/**/*.tsx'], { query: '?raw', import: 'default', eager: true })
+    // Components only: tests may name a fixed width on purpose, to check it's replaced.
+    const files = import.meta.glob<string>(['/src/**/*.tsx', '!/src/**/*.test.tsx'], { query: '?raw', import: 'default', eager: true })
     const offenders = Object.entries(files).flatMap(([file, text]) =>
       [...text.matchAll(/\bborder-([xytblr]-)?\d\b/g)].map((match) => `${file}: ${match[0]}`),
     )

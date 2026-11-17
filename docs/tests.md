@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 330 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
+**Counts:** 332 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -25,7 +25,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
 | [Content check (scripts)](#content-check-scripts) | `scripts/lib/validate.test.ts` | 9 | |
 | [Themes](#themes) | `src/sdk/theme/theme.test.ts` | 7 | |
-| [Contrast](#contrast) | `src/sdk/theme/contrast.test.ts` | 4 | |
+| [Contrast](#contrast) | `src/sdk/theme/contrast.test.ts` | 5 | |
 | [Theme variables](#theme-variables) | `src/sdk/theme/apply.test.ts` | 3 | |
 | [Team-turns config](#team-turns-config) | `src/sdk/formats/team-turns/config.test.ts` | 11 | |
 | [Item pool](#item-pool) | `src/sdk/formats/team-turns/pool.test.ts` | 13 | |
@@ -40,7 +40,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Applying a theme](#applying-a-theme) | `src/app/theme/themes.test.tsx` | 4 | |
 | [Bundled fonts](#bundled-fonts) | `src/app/theme/fonts.test.ts` | 2 | |
 | [Theme picker](#theme-picker) | `src/app/theme/picker.test.tsx` | 2 | |
-| [UI components](#ui-components) | `src/ui/ui.test.tsx` | 6 | |
+| [UI components](#ui-components) | `src/ui/ui.test.tsx` | 7 | |
 | [Game session](#game-session) | `src/sdk/game/useGameSession.test.ts` | 9 | |
 | [Interaction primitives](#interaction-primitives) | `src/sdk/interactions/interactions.test.tsx` | 8 | |
 | [Summary and Leaderboard](#summary-and-leaderboard) | `src/sdk/interactions/summary.test.tsx` | 4 | |
@@ -366,6 +366,7 @@ Each row is a mistake TypeScript must reject.
 | 313 | matches WCAG's published values, in either order and in either color format | `contrastRatio` | Black and white; #777 on white; both orders; `oklch(1 0 0)` on black; pure red in hex and in oklch, on black; one color on itself | 21; 4.48; the same both ways; 21; 5.25 both times; 1 | The math matches the published numbers, and oklch colors (lightness, chroma and hue) come out the same as their hex twins. |
 | 314 | passes black and white everywhere | `checkContrast` | The test theme | No problems | The pair list has no impossible pair. |
 | 315 | reports each pair under its minimum at the color to change, with what it's for, its ratio and the minimum | `checkContrast` | Primary #999 with white text on it | Two problems: white on primary, and primary on the page, each 2.84 : 1, needing 4.5 : 1 | The message tells a designer exactly which color to change and by how much, without running the app. |
+| 332 | checks the outlines of buttons against the page and dialogs, and of text fields against the page | `checkContrast`, outlines | Border and input #ddd on white | Three problems, each 1.35 : 1 needing 3 : 1: border on the page, border on a card, input on the page | An outline that's barely darker than the page doesn't show where the button is (WCAG's 3 : 1 for control edges). |
 | 316 | lets large text and the focus ring pass at 3 : 1, but not below | `checkContrast` | Warning and ring #949494 (3.03 : 1); then warning #aaaaaa (2.32 : 1) | No problems; then one at `colors.warning` | WCAG allows less contrast for big text (the timer) and outlines than for body text. |
 
 ## Theme variables
@@ -609,7 +610,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 182 | ships themes that pass the contrast check, and first-visit themes that are light and dark | Shipped themes | Every file in `src/themes/`; the first-visit ids | No contrast problems; Sunrise is light, Sunset is dark | The app's own themes meet the same bar as contributed ones, and a first visit can follow the phone's setting. |
 | 327 | maps the theme's fonts, shadows and outline width to classes, and puts headings in the heading font | `@theme`, utilities | `index.css` | `shadow-sm`/`shadow-lg` read `--elevation-sm`/`-lg`; `border-line` reads `--line`; `font-heading` reads `--font-heading`; h1–h5 use it; the body has `--page-gradient` | Each new token reaches the classes components already use, so components didn't need to learn about themes. |
 | 183 | is the only source of colors: no file uses a built-in Tailwind color | No raw colors | Every source file | No class like `bg-red-500` or `text-white` | Tailwind's palette is switched off, so such a class would silently do nothing; and themes (phase 2) can only change colors that come from tokens. |
-| 328 | leaves outline widths to the theme: no file uses a fixed width like border-2 | No fixed widths | Every `.tsx` file in `src/` | No `border-2`, `border-t-4` or the like | A fixed width would ignore a thick-outline theme. `border-line` is the one to use. |
+| 328 | leaves outline widths to the theme: no file uses a fixed width like border-2 | No fixed widths | Every `.tsx` component in `src/` (not tests) | No `border-2`, `border-t-4` or the like | A fixed width would ignore a thick-outline theme. `border-line` is the one to use. |
 
 ## UI components
 
@@ -618,6 +619,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 184 | drops empty values and lets a later class win over an earlier one that sets the same thing | `cn` | `'bg-primary px-4'`, `false`, `undefined`, `'bg-secondary'` | `'px-4 bg-secondary'` | A caller's `className` can adjust a component without both colors fighting. |
+| 331 | knows our own utilities: keeps the theme's outline width next to a border color, on outline buttons and text fields | `cn`, Button, Input | `border-line border-border`; `border-2` then `border-line`; `font-sans` then `font-heading font-bold`; an outline Button and an Input | Both border classes kept; `border-line` wins; `font-heading font-bold`; the button has `border-line` and `shadow-sm`, the field `border-line` | tailwind-merge didn't know `border-line`, took it for a color and dropped it, so outline buttons and fields lost their borders in chapter 08. |
 | 185 | is a button that does not submit forms unless asked to | Button | `<Button>Start</Button>` | A button named Start with `type="button"` | A plain `<button>` inside a form submits it; the setup screen has a form. |
 | 186 | calls onClick when tapped, and not when disabled | Button | Tap; then tap while disabled | Called once in total | Start must do nothing while setup is invalid. |
 | 187 | uses theme colors for its variant, and lets the caller adjust it | Button | `variant="success"`, `className="w-full"` | Classes include `bg-success` and `w-full` | Variants come from tokens; screens can still size buttons. |

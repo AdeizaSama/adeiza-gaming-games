@@ -368,7 +368,7 @@ One file per pack: `src/games/<id>/content/<pack-id>.json`.
 
 `src/themes/<id>.json` holds design tokens only (colors, fonts, radius, motion). Each theme is **light or dark**, never both: picking a theme picks exactly what players see, whatever the phone's dark-mode setting ([ADR 0010](decisions/0010-theme-files.md)). The app writes the chosen theme's tokens as CSS variables on `<html>`; components use variables, never raw colors. Three themes ship: Sunrise (light), Sunset (dark) and Sticky Notes (light). A first visit opens on Sunrise or Sunset by the phone's dark-mode setting; after that the theme changes only when a player picks one.
 
-**Contrast** ([ADR 0010](decisions/0010-theme-files.md)): `pnpm validate-content` checks every pair of colors the app draws text in (the list is `contrastPairs` in `src/sdk/theme/contrast.ts`) against WCAG 2.2 level AA: at least 4.5 : 1 for text, 3 : 1 for large text and the focus outline. A component that starts drawing a new pair adds it to the list.
+**Contrast** ([ADR 0010](decisions/0010-theme-files.md)): `pnpm validate-content` checks every pair of colors the app draws text in (the list is `contrastPairs` in `src/sdk/theme/contrast.ts`) against WCAG 2.2 level AA: at least 4.5 : 1 for text, 3 : 1 for large text, the focus outline and the outlines of buttons and text fields. A component that starts drawing a new pair adds it to the list.
 
 **The tokens:**
 

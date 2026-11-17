@@ -66,7 +66,7 @@ We rejected one CSS file per theme. CSS can do anything, so it can't be checked 
 `pnpm validate-content` (already a CI check) checks every theme file against the schema, and checks the **contrast** of each color pair that's used for text or for the focus outline. It reports any pair under the minimum from the Web Content Accessibility Guidelines (WCAG 2.2, level AA):
 
 - text pairs, such as `primary-foreground` on `primary`, must be at least **4.5 : 1**;
-- the focus ring against the background must be at least **3 : 1**.
+- the edges that show where a control is (the focus ring, and the outlines of buttons and text fields) must be at least **3 : 1** against what's around them.
 
 The message names the pair, its ratio and the minimum, so a designer can fix a theme without ever running the app.
 

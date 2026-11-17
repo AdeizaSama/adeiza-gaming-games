@@ -304,6 +304,38 @@ It passed the contrast check on the first run. Had it not, `pnpm validate-conten
 
 Follow CONTRIBUTING's steps to make a theme: copy `sunrise.json` to `ocean.json`, change `id`, `name` and a few colors, run `pnpm validate-content`, and pick it in the theme picker with `pnpm dev`.
 
+
+---
+
+## Step 10: Fixing buttons that melted into the page
+
+**What:**
+
+- `src/ui/cn.ts` tells tailwind-merge about `border-line` and `font-heading`.
+- Outline buttons get the theme's shadow.
+- The contrast check covers outlines.
+- Every theme's `border` and `input` colors are darker (lighter in Sunset).
+- Sticky Notes' page is a warmer cream.
+
+**Why:** checking the three themes on a phone showed outline buttons (Add team, the presets, the tags) and the team name fields looking like part of the page. There were three causes:
+
+1. **A bug from step 6.** `cn` uses tailwind-merge to drop classes that conflict. It didn't know our new `border-line`, so it read it as a border *color*. When `border-border` (a real color) came after it, tailwind-merge dropped `border-line`, and the border had no width at all. `extendTailwindMerge` now lists our utilities. Test 331 would have caught it.
+2. **Outlines too faint to see.** Sunrise's border color was 1.33 : 1 against the page. A 2px line that faint barely shows, even at the right width.
+3. **Nothing measured outlines.** WCAG asks for 3 : 1 on the edges that show where a control is. The check now includes `border` on the page and on cards, and `input` on the page.
+
+| Theme | `border` and `input` before | after |
+|---|---|---|
+| Sunrise | `oklch(0.89 0.015 75)`, 1.33 : 1 | `oklch(0.65 0.015 75)`, 3.0 : 1 |
+| Sunset | `oklch(0.32 0.015 50)`, 1.48 : 1 | `oklch(0.53 0.015 50)`, 3.4 : 1 |
+| Sticky Notes | `oklch(0.78 0.04 95)`, 1.75 : 1 | `oklch(0.62 0.04 95)`, 3.1 : 1 |
+
+**Border or shadow, by theme.** Outline buttons now also carry `shadow-sm`, which is whatever the theme says: nothing for `flat`, a soft shadow for `soft`, and a hard offset shadow for `bold` (Sticky Notes).
+
+### How to verify
+
+- `pnpm test src/ui src/sdk/theme`: tests 331–332.
+- On a phone, in each theme: Add team, the presets and the tags have a visible outline, and the team name fields have a border.
+
 ---
 
 ## Chapter summary
@@ -321,13 +353,15 @@ The look of the app is now data. A designer adds a theme as one JSON file, and C
 | 7 | The theme picker | |
 | 8 | Sticky Notes | |
 | 9 | CONTRIBUTING, the standard, README | |
+| 10 | Fix: outline widths dropped by tailwind-merge; outlines in the contrast check; outline buttons get the theme's shadow | |
 
 **What we learned:**
 
 - Measure before trusting. The light colors we'd used since chapter 04 failed four contrast pairs; nobody had noticed, because nothing measured them.
 - A first paint happens before the app's JavaScript runs. Saving the applied style and putting it back from a few lines in `index.html` costs nothing and needs no theme data there.
+- A tool that rewrites class names needs to know your own. tailwind-merge silently dropped `border-line` until it was told about it.
 - A variable can't point at itself. Tailwind's own names (`--shadow-sm`) and the theme's (`--elevation-sm`) have to differ.
 
-**Tests:** 330 runtime tests and 32 compile-time checks.
+**Tests:** 332 runtime tests and 32 compile-time checks.
 
 **Next:** chapter 09 adds theme parts (paper, glass, chalk, animated backgrounds, decorations) and two more themes, Space Travel and Chalkboard.

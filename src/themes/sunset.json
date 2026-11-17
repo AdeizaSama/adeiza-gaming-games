@@ -22,8 +22,8 @@
     "warning-foreground": "oklch(0.2 0.04 60)",
     "destructive": "oklch(0.66 0.2 27)",
     "destructive-foreground": "oklch(0.18 0.03 27)",
-    "border": "oklch(0.32 0.015 50)",
-    "input": "oklch(0.32 0.015 50)",
+    "border": "oklch(0.53 0.015 50)",
+    "input": "oklch(0.53 0.015 50)",
     "ring": "oklch(0.72 0.17 45)"
   },
   "fonts": { "body": "system-rounded", "heading": "system-rounded" },

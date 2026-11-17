@@ -31,6 +31,14 @@ describe('checkContrast', () => {
     ])
   })
 
+  it('checks the outlines of buttons against the page and dialogs, and of text fields against the page', () => {
+    expect(checkContrast(theme({ border: '#dddddd', input: '#dddddd' })).map((problem) => problem.message)).toEqual([
+      'border on background (the outline of a button) has a contrast of 1.35 : 1; it needs at least 3 : 1',
+      'border on card (the outline of a button in a dialog) has a contrast of 1.35 : 1; it needs at least 3 : 1',
+      'input on background (the outline of a text field) has a contrast of 1.35 : 1; it needs at least 3 : 1',
+    ])
+  })
+
   it('lets large text and the focus ring pass at 3 : 1, but not below', () => {
     expect(checkContrast(theme({ warning: '#949494', 'warning-foreground': '#000000', ring: '#949494' }))).toEqual([])
     expect(checkContrast(theme({ warning: '#aaaaaa', 'warning-foreground': '#000000' })).map((problem) => problem.path)).toEqual(['colors.warning'])
