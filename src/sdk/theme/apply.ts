@@ -1,16 +1,37 @@
 import { fonts } from './fonts'
 import { colorTokens, type Theme } from './schema'
 
+/** Shadows for small raised things (cards, list rows) and big ones (dialogs), by the theme's `shadow`. */
+const elevations: Record<Theme['shadow'], { sm: string; lg: string }> = {
+  flat: { sm: 'none', lg: 'none' },
+  // Tailwind's own shadow-sm and shadow-lg: what the app has always used.
+  soft: {
+    sm: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+    lg: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+  },
+  // Hard-edged and offset, in the text color, like a cut-out stuck on the page.
+  bold: { sm: '3px 3px 0 0 var(--foreground)', lg: '6px 6px 0 0 var(--foreground)' },
+}
+
+/** Outline widths (`border-line`), by the theme's `border`. */
+const lines: Record<Theme['border'], string> = { thin: '2px', thick: '3px' }
+
 /**
- * The CSS variables a theme sets (ADR 0010): every color token under its own name, plus the radius, the fonts and the
- * animation speed. `index.css` maps them to Tailwind classes, so `bg-primary` reads `--primary`.
+ * The CSS variables a theme sets (ADR 0010): every color token under its own name, plus the radius, the fonts, the
+ * shadows, the outline width, the page background and the animation speed. `index.css` maps them to Tailwind
+ * classes, so `bg-primary` reads `--primary`.
  */
 export function themeVariables(theme: Theme): Record<string, string> {
+  const { gradient } = theme
   return {
     ...Object.fromEntries(colorTokens.map((token) => [`--${token}`, theme.colors[token]])),
     '--radius': `${theme.radius}rem`,
     '--font-body': fonts[theme.fonts.body].family,
     '--font-heading': fonts[theme.fonts.heading].family,
+    '--elevation-sm': elevations[theme.shadow].sm,
+    '--elevation-lg': elevations[theme.shadow].lg,
+    '--line': lines[theme.border],
+    '--page-gradient': gradient ? `linear-gradient(to bottom, var(--${gradient.from}), var(--${gradient.to}))` : 'none',
     '--duration': `${theme.duration}ms`,
   }
 }

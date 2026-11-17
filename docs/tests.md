@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 323 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
+**Counts:** 328 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -26,6 +26,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Content check (scripts)](#content-check-scripts) | `scripts/lib/validate.test.ts` | 9 | |
 | [Themes](#themes) | `src/sdk/theme/theme.test.ts` | 7 | |
 | [Contrast](#contrast) | `src/sdk/theme/contrast.test.ts` | 4 | |
+| [Theme variables](#theme-variables) | `src/sdk/theme/apply.test.ts` | 3 | |
 | [Team-turns config](#team-turns-config) | `src/sdk/formats/team-turns/config.test.ts` | 11 | |
 | [Item pool](#item-pool) | `src/sdk/formats/team-turns/pool.test.ts` | 13 | |
 | [Team-turns guards and actions](#team-turns-guards-and-actions) | `src/sdk/formats/team-turns/rules.test.ts` | 9 | |
@@ -35,7 +36,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 22 | |
 | [Charades views](#charades-views) | `src/games/charades/views/views.test.tsx` | 6 | |
 | [App](#app) | `src/app/App.test.tsx` | 4 | |
-| [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 3 | |
+| [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 5 | |
 | [Applying a theme](#applying-a-theme) | `src/app/theme/themes.test.tsx` | 4 | |
 | [Bundled fonts](#bundled-fonts) | `src/app/theme/fonts.test.ts` | 2 | |
 | [UI components](#ui-components) | `src/ui/ui.test.tsx` | 6 | |
@@ -366,6 +367,16 @@ Each row is a mistake TypeScript must reject.
 | 315 | reports each pair under its minimum at the color to change, with what it's for, its ratio and the minimum | `checkContrast` | Primary #999 with white text on it | Two problems: white on primary, and primary on the page, each 2.84 : 1, needing 4.5 : 1 | The message tells a designer exactly which color to change and by how much, without running the app. |
 | 316 | lets large text and the focus ring pass at 3 : 1, but not below | `checkContrast` | Warning and ring #949494 (3.03 : 1); then warning #aaaaaa (2.32 : 1) | No problems; then one at `colors.warning` | WCAG allows less contrast for big text (the timer) and outlines than for body text. |
 
+## Theme variables
+
+`src/sdk/theme/apply.test.ts`, testing `themeVariables` in `src/sdk/theme/apply.ts`: the CSS variables a theme becomes (ADR 0010). Uses the test theme from `testTheme.ts`, with defaults filled in by `checkTheme`.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 324 | writes every color under its token's name, and the fonts as their families with fallbacks | Colors, fonts | Body Nunito, headings Caveat | `--primary` and `--card-foreground` as written; `"Nunito Variable", ui-rounded…` and `"Caveat Variable", ui-rounded…`; radius 1rem | Text shows in a system font while a bundled one loads, never in nothing. |
+| 325 | turns shadow and border styles into CSS: none, soft or bold shadows, and 2px or 3px outlines | Shadows, outlines | Flat; the default (soft); bold; thin; thick | `none`; Tailwind's soft shadow; a hard offset shadow in the text color; 2px; 3px | Designers pick a word; the CSS is ours, so every theme's shadows stay in proportion. |
+| 326 | fades the page from one color token to another, or leaves it plain | Gradient | No gradient; background to muted | `none`; `linear-gradient(to bottom, var(--background), var(--muted))` | A gradient can only use the theme's own colors, so it can't break contrast with anything off the list. |
+
 ## Team-turns config
 
 `src/sdk/formats/team-turns/config.test.ts`, testing `src/sdk/formats/team-turns/config.ts`, the settings every team-turns game shares. Starts from the least a setup screen sends (teams Lions and Eagles, pack `back-to-school`) and changes one setting at a time. "Rejected at X" means the error points at setting X.
@@ -586,7 +597,9 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 |---|---|---|---|---|---|
 | 181 | declares no values of its own, and makes every color token available to Tailwind classes | `@theme`, no values | `index.css`; each color token in the theme schema | No oklch or hex color and no dark-mode query; a `--color-<name>: var(--<name>);` line for every token | Values come only from theme files (ADR 0010); a token Tailwind doesn't know can't be used as a class. |
 | 182 | ships themes that pass the contrast check, and first-visit themes that are light and dark | Shipped themes | Every file in `src/themes/`; the first-visit ids | No contrast problems; Sunrise is light, Sunset is dark | The app's own themes meet the same bar as contributed ones, and a first visit can follow the phone's setting. |
+| 327 | maps the theme's fonts, shadows and outline width to classes, and puts headings in the heading font | `@theme`, utilities | `index.css` | `shadow-sm`/`shadow-lg` read `--elevation-sm`/`-lg`; `border-line` reads `--line`; `font-heading` reads `--font-heading`; h1–h5 use it; the body has `--page-gradient` | Each new token reaches the classes components already use, so components didn't need to learn about themes. |
 | 183 | is the only source of colors: no file uses a built-in Tailwind color | No raw colors | Every source file | No class like `bg-red-500` or `text-white` | Tailwind's palette is switched off, so such a class would silently do nothing; and themes (phase 2) can only change colors that come from tokens. |
+| 328 | leaves outline widths to the theme: no file uses a fixed width like border-2 | No fixed widths | Every `.tsx` file in `src/` | No `border-2`, `border-t-4` or the like | A fixed width would ignore a thick-outline theme. `border-line` is the one to use. |
 
 ## UI components
 

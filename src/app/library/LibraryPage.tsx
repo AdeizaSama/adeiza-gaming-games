@@ -25,7 +25,7 @@ export function LibraryPage() {
       </header>
 
       {discarded && (
-        <div role="status" className="rounded-xl border-2 border-warning p-4">
+        <div role="status" className="rounded-xl border-line border-warning p-4">
           <p className="font-semibold">Your last game couldn't be restored.</p>
           <p className="text-sm text-muted-foreground">Because {discarded}.</p>
         </div>

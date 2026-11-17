@@ -34,7 +34,7 @@ export function FlashCard({ text, hint, onGot, onSkip, gotLabel = 'Got it', skip
     <div className="flex w-full flex-1 flex-col gap-6">
       <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-xl bg-card p-6 text-center text-card-foreground shadow-sm">
         {hint && <p className="text-base font-medium tracking-wide text-muted-foreground uppercase">{hint}</p>}
-        <p className={cn(textSize(text), 'leading-tight font-bold text-balance break-words')}>{text}</p>
+        <p className={cn(textSize(text), 'font-heading leading-tight font-bold text-balance break-words')}>{text}</p>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <Button size="lg" variant="outline" onClick={onSkip}>

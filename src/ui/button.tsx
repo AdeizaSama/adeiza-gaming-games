@@ -7,7 +7,7 @@ const variants = {
   secondary: 'bg-secondary text-secondary-foreground',
   success: 'bg-success text-success-foreground',
   destructive: 'bg-destructive text-destructive-foreground',
-  outline: 'border-2 border-border bg-transparent text-foreground',
+  outline: 'border-line border-border bg-transparent text-foreground',
   ghost: 'bg-transparent text-foreground',
 }
 

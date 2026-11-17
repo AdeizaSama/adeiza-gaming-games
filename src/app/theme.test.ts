@@ -16,6 +16,15 @@ describe('theme tokens', () => {
     }
   })
 
+  it('maps the theme’s fonts, shadows and outline width to classes, and puts headings in the heading font', () => {
+    expect(css).toContain('--shadow-sm: var(--elevation-sm);')
+    expect(css).toContain('--shadow-lg: var(--elevation-lg);')
+    expect(css).toMatch(/@utility border-line \{\s*border-width: var\(--line\);/)
+    expect(css).toMatch(/@utility font-heading \{\s*font-family: var\(--font-heading\);/)
+    expect(css).toMatch(/h1,\s*h2,\s*h3,\s*h4,\s*h5 \{\s*@apply font-heading;/)
+    expect(css).toContain('background-image: var(--page-gradient);')
+  })
+
   it('ships themes that pass the contrast check, and first-visit themes that are light and dark', () => {
     for (const theme of themes) expect(checkContrast(theme), theme.id).toEqual([])
     expect(findTheme(firstThemes.light)?.scheme).toBe('light')
@@ -38,6 +47,15 @@ describe('theme tokens', () => {
     )
 
     // Tailwind's palette is switched off in index.css, so a class like `bg-red-500` would silently do nothing.
+    expect(offenders).toEqual([])
+  })
+
+  it('leaves outline widths to the theme: no file uses a fixed width like border-2', () => {
+    const files = import.meta.glob<string>(['/src/**/*.tsx'], { query: '?raw', import: 'default', eager: true })
+    const offenders = Object.entries(files).flatMap(([file, text]) =>
+      [...text.matchAll(/\bborder-([xytblr]-)?\d\b/g)].map((match) => `${file}: ${match[0]}`),
+    )
+    // Use border-line, which is 2px or 3px as the theme says.
     expect(offenders).toEqual([])
   })
 })

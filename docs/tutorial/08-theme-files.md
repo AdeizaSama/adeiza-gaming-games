@@ -201,3 +201,38 @@ Vitest normally skips CSS files, so `vite.config.ts` opts these in, as it does f
 
 - `pnpm test src/app/theme`: tests 322–323.
 - `pnpm build`, then look in `dist/assets/`: the `.woff2` files are there, separate from the JavaScript.
+
+---
+
+## Step 6: Fonts, shadows, outlines and gradients on screen
+
+**What:**
+
+- `themeVariables` writes the new tokens.
+- `index.css` maps them to classes.
+- The three places with a fixed `border-2` use `border-line`.
+- The word on a flash card uses `font-heading`.
+
+**Why:** step 2 put these tokens in the schema; now they change what players see. As with colors, components keep the classes they already had wherever possible, and the classes read theme variables.
+
+### How each token reaches the page
+
+| Token | Variable | Used through |
+|---|---|---|
+| `fonts.heading` | `--font-heading` | `h1`–`h5` in `index.css`, and a `font-heading` utility for the card word |
+| `shadow` | `--elevation-sm`, `--elevation-lg` | Tailwind's `shadow-sm` and `shadow-lg`, redefined in `@theme` |
+| `border` | `--line` | A `border-line` utility: 2px (thin) or 3px (thick) |
+| `gradient` | `--page-gradient` | `background-image` on the body |
+
+**Why new names for the variables.** Tailwind's `@theme` already has `--shadow-sm`. Writing `--shadow-sm: var(--shadow-sm)` would point the variable at itself, so the theme's values get their own names (`--elevation-sm`) and `@theme` points at them.
+
+**Why a utility for borders.** Tailwind's `border-2` is a fixed 2px. `@utility border-line { border-width: var(--line); }` makes a class whose width the theme decides. A test now fails on any `border-<number>` class.
+
+### Bold shadows
+
+`bold` is a hard, offset shadow in the text color (`3px 3px 0 0 var(--foreground)`), like a sticker on a page. Because it uses `var(--foreground)`, it suits light and dark themes alike.
+
+### How to verify
+
+- `pnpm test src/app/theme.test.ts src/sdk/theme`: tests 324–328.
+- Nothing changes on screen with Sunrise or Sunset: they use the defaults, which are today's values. Step 8's Sticky Notes is the first theme to change them.

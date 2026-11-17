@@ -41,12 +41,34 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) * 1.5);
   --font-sans: var(--font-body);
+  --shadow-sm: var(--elevation-sm);
+  --shadow-lg: var(--elevation-lg);
   --default-transition-duration: var(--duration);
+}
+
+/* Headings, and anything else in the heading font, such as the word on a card. */
+@utility font-heading {
+  font-family: var(--font-heading);
+}
+
+/* An outline as heavy as the theme says (thin or thick). Use it instead of a fixed width like border-2. */
+@utility border-line {
+  border-width: var(--line);
 }
 
 @layer base {
   body {
     @apply bg-background font-sans text-foreground antialiased;
+    /* The theme's gradient over the background color, if it has one. */
+    background-image: var(--page-gradient);
+    min-height: 100dvh;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5 {
+    @apply font-heading;
   }
   * {
     @apply border-border outline-ring;

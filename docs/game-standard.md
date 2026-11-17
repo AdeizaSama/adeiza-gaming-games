@@ -382,7 +382,10 @@ One file per pack: `src/games/<id>/content/<pack-id>.json`.
 | `success`, `warning`, `destructive` (each with `-foreground`) | Got it, time running out, skip or quit |
 | `border`, `input`, `ring` | Borders, form fields, the keyboard focus outline |
 | `radius` | Corner rounding (`rounded-sm` to `rounded-xl` scale from it) |
-| `font-body` | The font |
+| `fonts.body`, `fonts.heading` | The text font, and the font for headings and the word on a card (`font-heading`), each from the font list in `src/sdk/theme/fonts.ts` |
+| `shadow` | `flat`, `soft` or `bold` shadows under cards (`shadow-sm`) and dialogs (`shadow-lg`) |
+| `border` | `thin` (2px) or `thick` (3px) outlines. Components use `border-line`, never a fixed width like `border-2` |
+| `gradient` | Optional: the page fades from one color token to another |
 | `duration` | How long transitions take |
 
 Every color has a light and a dark value; dark mode follows the phone's setting. Tailwind's built-in palette is switched off, so classes like `bg-red-500` produce nothing; a test fails if any file uses one. A theme pull request touches one JSON file plus an optional font import. Game-specific skins (e.g. Mafia's werewolf names) are **content**, not themes.
