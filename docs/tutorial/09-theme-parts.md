@@ -289,3 +289,28 @@ The first version faded the page to `secondary`. It passed the contrast check, b
 
 - `pnpm validate-content`: Space Travel passes; test 340 covers the gradient pairs.
 - On a phone, pick Space Travel. The stars drift slowly; with the phone set to reduce motion, they stay still.
+
+---
+
+## Step 10: Chalkboard
+
+**What:** `src/themes/chalkboard.json`. No code.
+
+**Why:** the third new theme, and a fit for the Back to School pack.
+
+### The design
+
+| Choice | |
+|---|---|
+| `scheme` | dark |
+| Colors | A green-black board; white chalk for text; yellow, green and pink chalk for buttons; wood brown for outlines and frames |
+| `fonts` | Gochi Hand headings, Nunito text |
+| `parts` | Chalkboard cards (dust inside a wooden frame), chalk buttons (dusty fills, dashed outlines), chalk dust on the page, a smudge and a stub of chalk on the flash card and dialogs |
+| `shadow`, `border` | `flat` (a board has no shadows) and `thick` (chalk lines are wide) |
+
+The chalkboard surface draws its frame in the theme's `border` color, so here the wood brown does double duty: outlines of buttons and frames of cards. It passed the contrast check on the first run, outlines included.
+
+### How to verify
+
+- `pnpm validate-content`: Chalkboard passes.
+- On a phone, pick Chalkboard: the flash card is a framed board with chalk in the corner.

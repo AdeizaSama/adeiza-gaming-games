@@ -1,0 +1,41 @@
+{
+  "$schema": "../../schemas/theme.schema.json",
+  "id": "chalkboard",
+  "name": "Chalkboard",
+  "description": "Colored chalk on a dusty green board, in a wooden frame.",
+  "contributors": ["AdeizaSama"],
+  "scheme": "dark",
+  "colors": {
+    "background": "oklch(0.27 0.035 160)",
+    "foreground": "oklch(0.95 0.01 100)",
+    "card": "oklch(0.31 0.04 160)",
+    "card-foreground": "oklch(0.95 0.01 100)",
+    "primary": "oklch(0.88 0.12 95)",
+    "primary-foreground": "oklch(0.22 0.03 160)",
+    "secondary": "oklch(0.39 0.04 160)",
+    "secondary-foreground": "oklch(0.95 0.01 100)",
+    "muted": "oklch(0.33 0.035 160)",
+    "muted-foreground": "oklch(0.82 0.02 120)",
+    "success": "oklch(0.83 0.13 145)",
+    "success-foreground": "oklch(0.22 0.03 160)",
+    "warning": "oklch(0.82 0.13 65)",
+    "warning-foreground": "oklch(0.22 0.03 160)",
+    "destructive": "oklch(0.78 0.13 15)",
+    "destructive-foreground": "oklch(0.22 0.03 160)",
+    "border": "oklch(0.62 0.08 60)",
+    "input": "oklch(0.62 0.08 60)",
+    "ring": "oklch(0.88 0.12 95)"
+  },
+  "fonts": { "body": "nunito", "heading": "gochi-hand" },
+  "radius": 0.5,
+  "shadow": "flat",
+  "border": "thick",
+  "duration": 200,
+  "parts": {
+    "surface": "chalkboard",
+    "button": "chalk",
+    "background": "chalk-dust",
+    "decoration": "chalk-smudge",
+    "icons": "regular"
+  }
+}
