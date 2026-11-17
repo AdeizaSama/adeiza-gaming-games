@@ -257,3 +257,32 @@ Choosing an option calls `pickTheme` straight away, so the whole page changes be
 
 - `pnpm test src/app/theme`: tests 329–330.
 - On a phone, run `pnpm dev --host`. Tap the palette button, pick Sunset, then Sunrise; close and reload: the theme you picked stays.
+
+---
+
+## Step 8: Sticky Notes
+
+**What:** `src/themes/sticky-notes.json`, the first theme that isn't today's look. One JSON file, no code: what a designer's pull request will look like.
+
+**Why:** a theme that uses every token proves the format. Chapter 09 dresses it further with paper and tape.
+
+### The design
+
+| Token | Choice | Why |
+|---|---|---|
+| `scheme` | light | Paper is light |
+| `background` | warm paper | The desk the notes are stuck on |
+| `card` | sticky-note yellow | Cards, the flash card and dialogs are the notes |
+| `foreground`, `primary` | ink blue | Written in ballpoint, with a blue marker for buttons |
+| `secondary` | pink note | The other color of sticky note |
+| `fonts` | Caveat headings, Nunito text | Handwritten titles and card words; text that stays easy to read |
+| `radius` | 0.25 | Notes are nearly square |
+| `shadow` | bold | A hard shadow, like a note lifting off the page |
+| `border` | thick | Outlines drawn in marker |
+
+It passed the contrast check on the first run. Had it not, `pnpm validate-content` would have named each pair and its ratio.
+
+### How to verify
+
+- `pnpm validate-content` lists `src/themes/sticky-notes.json` with a ✓.
+- On a phone, pick Sticky Notes in the theme picker, then go through setup and a turn: handwritten headings, yellow cards with hard shadows, square-ish corners.

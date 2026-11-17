@@ -596,7 +596,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 329 | opens from the library header and lists every theme, with the one in use picked | Picker | Sunset picked; open the library; tap Theme | A "Theme" dialog listing Sunrise and Sunset with their descriptions, in id order; Sunset picked | Players see every theme by name, and which one they're on. |
+| 329 | opens from the library header and lists every theme, with the one in use picked | Picker | Sunset picked; open the library; tap Theme | A "Theme" dialog listing Sticky Notes, Sunrise and Sunset with their descriptions, in id order; Sunset picked | Players see every theme by name, and which one they're on. |
 | 330 | applies a theme as soon as it's tapped, and remembers it | Picker | Sunrise in use; tap Theme, then Sunset, then Done; open the library again and tap Theme | The page is Sunset (dark) straight away; the dialog closes; Sunset still picked | The theme shows behind the dialog, so players see it before they decide, and it stays picked. |
 
 ## Theme tokens
