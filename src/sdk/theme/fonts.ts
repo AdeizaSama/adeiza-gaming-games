@@ -21,6 +21,16 @@ export const fonts = {
   'system-rounded': { name: 'The phone’s rounded font', family: rounded },
   'system-sans': { name: 'The phone’s standard font', family: 'system-ui, sans-serif' },
   'system-serif': { name: 'The phone’s serif font', family: 'ui-serif, Georgia, serif' },
+  caveat: {
+    name: 'Caveat: handwriting, like a marker on paper',
+    family: `"Caveat Variable", ${rounded}`,
+    bundled: { package: '@fontsource-variable/caveat', license: 'OFL-1.1' },
+  },
+  nunito: {
+    name: 'Nunito: rounded and friendly, easy to read',
+    family: `"Nunito Variable", ${rounded}`,
+    bundled: { package: '@fontsource-variable/nunito', license: 'OFL-1.1' },
+  },
 } satisfies Record<string, Font>
 
 export type FontId = keyof typeof fonts

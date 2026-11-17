@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 321 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
+**Counts:** 323 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -37,6 +37,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [App](#app) | `src/app/App.test.tsx` | 4 | |
 | [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 3 | |
 | [Applying a theme](#applying-a-theme) | `src/app/theme/themes.test.tsx` | 4 | |
+| [Bundled fonts](#bundled-fonts) | `src/app/theme/fonts.test.ts` | 2 | |
 | [UI components](#ui-components) | `src/ui/ui.test.tsx` | 6 | |
 | [Game session](#game-session) | `src/sdk/game/useGameSession.test.ts` | 9 | |
 | [Interaction primitives](#interaction-primitives) | `src/sdk/interactions/interactions.test.tsx` | 8 | |
@@ -567,6 +568,15 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 319 | starts a first visit on Sunrise or Sunset by the phone's setting, and after that on the theme picked | `startingTheme` | Nothing saved, phone dark; phone light; Sunrise picked, phone dark; a saved theme that no longer exists, phone dark | Sunset; Sunrise; Sunrise; Sunset | The phone's setting is read once; after that the theme never changes on its own. A removed theme falls back instead of breaking. |
 | 320 | opens on the phone's setting when storage is switched off | `startingTheme` | Storage that throws, phone dark | Sunset | Private browsing mustn't stop the app opening. |
 | 321 | remembers the style, and index.html puts it back before the app starts | No flash | Pick Sunset; clear the page's style; run the script in `index.html` | The saved style equals the page's; after the script, Sunset's primary is back | The first paint already has the right colors, before the app's code has loaded. |
+
+## Bundled fonts
+
+`src/app/theme/fonts.test.ts`, testing the font list (`src/sdk/theme/fonts.ts`) against `src/app/theme/fonts.ts` and each font's own files in `node_modules/@fontsource-variable/` (ADR 0010).
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 322 | are each imported, so their files are served | Font imports | Every bundled font in the list | An `import '<package>'` line for each in `src/app/theme/fonts.ts` | A font on the list but not imported would silently fall back to a system font. |
+| 323 | use the family name their CSS declares, and are under the license the font states | Font names, licenses | Each bundled font's `index.css` and `metadata.json` | Our `family` starts with the declared name (e.g. `"Caveat Variable"`); the font's license is `OFL-1.1` | A one-letter typo in a family name falls back silently too. Only fonts whose own license allows bundling can be on the list. |
 
 ## Theme tokens
 

@@ -167,3 +167,37 @@ With nothing saved, `startingTheme` reads the phone's dark-mode setting and pick
 
 - `pnpm test src/app`: tests 181, 182 and 318–321.
 - On a phone with dark mode on, open the site in a private tab: it opens in Sunset. Turn dark mode off and reload: it stays Sunset.
+
+---
+
+## Step 5: Bundled fonts
+
+**What:**
+
+- Two fonts installed from npm: `@fontsource-variable/caveat` (handwriting) and `@fontsource-variable/nunito` (rounded).
+- Both are added to the font list in `src/sdk/theme/fonts.ts`.
+- `src/app/theme/fonts.ts` imports them, and `main.tsx` imports that file.
+
+**Why:** a theme gets most of its character from its fonts. ADR 0010 settled on a list we bundle rather than links to a font service. Sticky Notes (step 8) uses these two.
+
+### Why Fontsource
+
+Fontsource packages the open-licensed Google Fonts as npm packages. Vite copies their font files into the build, so they're served from our own site: no third party, and they work offline once loaded. The `-variable` packages hold every weight in one file.
+
+### What a font costs
+
+Importing a package adds `@font-face` rules, about 0.6 KB of CSS for both. Each rule names a file and the characters it covers (`unicode-range`), and the browser downloads a file only when text on the page needs those characters in that font. So:
+
+- With Sunrise or Sunset (system fonts), no font file is ever downloaded.
+- With a theme using Caveat and Nunito, the phone downloads their Latin files once (75 KB and 39 KB), then keeps them in its cache.
+
+### Licenses, checked by a test
+
+The test reads each font's own `metadata.json` and checks the font's license is the SIL Open Font License (`OFL-1.1`), which allows bundling. It also checks that our family name matches the one in the font's CSS (`"Caveat Variable"`, not `"Caveat"`). A wrong name doesn't error anywhere; the text just quietly shows in the fallback font.
+
+Vitest normally skips CSS files, so `vite.config.ts` opts these in, as it does for `index.css`.
+
+### How to verify
+
+- `pnpm test src/app/theme`: tests 322–323.
+- `pnpm build`, then look in `dist/assets/`: the `.woff2` files are there, separate from the JavaScript.

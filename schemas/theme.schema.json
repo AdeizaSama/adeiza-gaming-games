@@ -154,7 +154,9 @@
           "enum": [
             "system-rounded",
             "system-sans",
-            "system-serif"
+            "system-serif",
+            "caveat",
+            "nunito"
           ],
           "description": "A font from the list in src/sdk/theme/fonts.ts."
         },
@@ -164,7 +166,9 @@
           "enum": [
             "system-rounded",
             "system-sans",
-            "system-serif"
+            "system-serif",
+            "caveat",
+            "nunito"
           ],
           "description": "A font from the list in src/sdk/theme/fonts.ts."
         }
