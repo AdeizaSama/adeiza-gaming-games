@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Link, useLocation } from 'react-router'
 import { describeSave, summarizeSave } from '../play/savedGame'
 import { games } from '../registry'
+import { ThemePicker } from '../theme/ThemePicker'
 import { gameIcon } from './gameIcon'
 
 /**
@@ -19,9 +20,12 @@ export function LibraryPage() {
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-8 p-6">
-      <header>
-        <h1 className="text-4xl font-bold">Ku Zo Wasa</h1>
-        <p className="text-lg text-muted-foreground">Party games for one phone.</p>
+      <header className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-bold">Ku Zo Wasa</h1>
+          <p className="text-lg text-muted-foreground">Party games for one phone.</p>
+        </div>
+        <ThemePicker />
       </header>
 
       {discarded && (

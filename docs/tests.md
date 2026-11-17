@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 328 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
+**Counts:** 330 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -39,6 +39,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 5 | |
 | [Applying a theme](#applying-a-theme) | `src/app/theme/themes.test.tsx` | 4 | |
 | [Bundled fonts](#bundled-fonts) | `src/app/theme/fonts.test.ts` | 2 | |
+| [Theme picker](#theme-picker) | `src/app/theme/picker.test.tsx` | 2 | |
 | [UI components](#ui-components) | `src/ui/ui.test.tsx` | 6 | |
 | [Game session](#game-session) | `src/sdk/game/useGameSession.test.ts` | 9 | |
 | [Interaction primitives](#interaction-primitives) | `src/sdk/interactions/interactions.test.tsx` | 8 | |
@@ -588,6 +589,15 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 |---|---|---|---|---|---|
 | 322 | are each imported, so their files are served | Font imports | Every bundled font in the list | An `import '<package>'` line for each in `src/app/theme/fonts.ts` | A font on the list but not imported would silently fall back to a system font. |
 | 323 | use the family name their CSS declares, and are under the license the font states | Font names, licenses | Each bundled font's `index.css` and `metadata.json` | Our `family` starts with the declared name (e.g. `"Caveat Variable"`); the font's license is `OFL-1.1` | A one-letter typo in a family name falls back silently too. Only fonts whose own license allows bundling can be on the list. |
+
+## Theme picker
+
+`src/app/theme/picker.test.tsx`, testing `src/app/theme/ThemePicker.tsx` in the library header. Screen tests (happy-dom), starting the app at `/`; storage and the page's style are cleared before each.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 329 | opens from the library header and lists every theme, with the one in use picked | Picker | Sunset picked; open the library; tap Theme | A "Theme" dialog listing Sunrise and Sunset with their descriptions, in id order; Sunset picked | Players see every theme by name, and which one they're on. |
+| 330 | applies a theme as soon as it's tapped, and remembers it | Picker | Sunrise in use; tap Theme, then Sunset, then Done; open the library again and tap Theme | The page is Sunset (dark) straight away; the dialog closes; Sunset still picked | The theme shows behind the dialog, so players see it before they decide, and it stays picked. |
 
 ## Theme tokens
 

@@ -236,3 +236,24 @@ Vitest normally skips CSS files, so `vite.config.ts` opts these in, as it does f
 
 - `pnpm test src/app/theme.test.ts src/sdk/theme`: tests 324–328.
 - Nothing changes on screen with Sunrise or Sunset: they use the defaults, which are today's values. Step 8's Sticky Notes is the first theme to change them.
+
+---
+
+## Step 7: The theme picker
+
+**What:** `src/app/theme/ThemePicker.tsx`: a palette button in the library header that opens a "Theme" dialog with every theme.
+
+**Why:** players need a way to choose. The library is where the app starts, and a dialog keeps it to one screen (no settings page).
+
+### Previews in each theme's own colors
+
+Each option shows a small swatch: the theme's page, a card with "Aa" in its heading font, and a dot of its main color. These use inline `style` with colors from the theme file. That's the one place a component shows colors that aren't the current theme's, and it doesn't break the no-raw-colors rule: that rule is about Tailwind's built-in palette, and these colors come from a checked theme file.
+
+### Applied on tap
+
+Choosing an option calls `pickTheme` straight away, so the whole page changes behind the dialog and players see the theme before they close it. There's no Save button, because nothing needs undoing: tapping the old theme puts it back.
+
+### How to verify
+
+- `pnpm test src/app/theme`: tests 329–330.
+- On a phone, run `pnpm dev --host`. Tap the palette button, pick Sunset, then Sunrise; close and reload: the theme you picked stays.
