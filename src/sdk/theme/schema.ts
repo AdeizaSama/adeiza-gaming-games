@@ -38,7 +38,7 @@ export const themeParts = {
   surface: ['plain', 'paper', 'sticky-note', 'glass', 'chalkboard'],
   button: ['solid', 'chunky', 'sticker', 'glass', 'chalk'],
   background: ['flat', 'lined-paper', 'dot-grid', 'chalk-dust', 'starfield'],
-  decoration: ['none'],
+  decoration: ['none', 'tape', 'pushpin', 'planets', 'chalk-smudge'],
   icons: ['thin', 'regular', 'bold'],
 } as const
 

@@ -313,7 +313,11 @@
           "description": "Small drawings on the flash card and dialogs.",
           "type": "string",
           "enum": [
-            "none"
+            "none",
+            "tape",
+            "pushpin",
+            "planets",
+            "chalk-smudge"
           ]
         },
         "icons": {

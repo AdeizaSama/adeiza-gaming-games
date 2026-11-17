@@ -185,3 +185,122 @@
     transform: translateY(320px);
   }
 }
+
+/*
+ * Decorations: small drawings on elements marked data-feature (the flash card and dialogs). Each is a ::before or
+ * ::after that takes no space and no taps. A modal <dialog> is already positioned by the browser and clips what
+ * spills over its edge, so on dialogs decorations sit just inside the edge, in the padding; the flash card is made
+ * position: relative (which moves nothing) so they can sit over its top edge.
+ */
+[data-decoration]:not([data-decoration='none']) [data-feature]:not(dialog) {
+  position: relative;
+}
+
+/* Tape: a strip of see-through tape across the top. */
+[data-decoration='tape'] [data-feature]::before {
+  content: '';
+  position: absolute;
+  top: -0.6rem;
+  left: calc(50% - 2.25rem);
+  width: 4.5rem;
+  height: 1.4rem;
+  pointer-events: none;
+  background-color: color-mix(in oklch, var(--background) 65%, transparent);
+  background-image: var(--grain-dark);
+  box-shadow: 0 1px 2px color-mix(in oklch, black 12%, transparent);
+  rotate: -3deg;
+}
+[data-decoration='tape'] dialog[data-feature]::before {
+  position: absolute;
+  pointer-events: none;
+  top: 0.35rem;
+}
+
+/* Pushpin: a red pin with a highlight, at the top. */
+[data-decoration='pushpin'] [data-feature]::before {
+  content: '';
+  position: absolute;
+  top: -0.5rem;
+  left: calc(50% - 0.6rem);
+  width: 1.2rem;
+  height: 1.2rem;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, color-mix(in oklch, white 70%, var(--destructive)) 0 18%, var(--destructive) 26%, color-mix(in oklch, black 30%, var(--destructive)) 100%);
+  filter: drop-shadow(1px 2px 1px color-mix(in oklch, black 30%, transparent));
+}
+[data-decoration='pushpin'] dialog[data-feature]::before {
+  position: absolute;
+  pointer-events: none;
+  top: 0.4rem;
+}
+
+/* Planets: a small planet in the main color, with a tilted ring, in the top right corner. */
+[data-decoration='planets'] [data-feature]::before {
+  content: '';
+  position: absolute;
+  top: 0.6rem;
+  right: 1rem;
+  width: 1.6rem;
+  height: 1.6rem;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklch, white 35%, var(--primary)), var(--primary) 55%, color-mix(in oklch, black 35%, var(--primary)));
+}
+[data-decoration='planets'] [data-feature]::after {
+  content: '';
+  position: absolute;
+  top: 1.05rem;
+  right: 0.55rem;
+  width: 2.5rem;
+  height: 0.7rem;
+  pointer-events: none;
+  border: 2px solid color-mix(in oklch, var(--foreground) 55%, transparent);
+  border-radius: 50%;
+  rotate: -18deg;
+}
+
+/* In a dialog, the planet sits in the corner at 70%, clear of the title. */
+[data-decoration='planets'] dialog[data-feature]::before,
+[data-decoration='planets'] dialog[data-feature]::after {
+  position: absolute;
+  pointer-events: none;
+  scale: 0.7;
+  transform-origin: top right;
+}
+[data-decoration='planets'] dialog[data-feature]::before {
+  position: absolute;
+  pointer-events: none;
+  top: 0.2rem;
+  right: 0.4rem;
+}
+[data-decoration='planets'] dialog[data-feature]::after {
+  position: absolute;
+  pointer-events: none;
+  top: 0.5rem;
+  right: 0.1rem;
+}
+
+/* Chalk smudge: a rubbed-out patch and a stub of chalk in the top right corner, clear of text and buttons. */
+[data-decoration='chalk-smudge'] [data-feature]::before {
+  content: '';
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 5rem;
+  height: 2rem;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, color-mix(in oklch, var(--card-foreground) 12%, transparent), transparent 70%);
+}
+[data-decoration='chalk-smudge'] [data-feature]::after {
+  content: '';
+  position: absolute;
+  top: 1.1rem;
+  right: 1.25rem;
+  width: 1.75rem;
+  height: 0.45rem;
+  pointer-events: none;
+  border-radius: 0.2rem;
+  background: color-mix(in oklch, var(--card-foreground) 85%, transparent);
+  rotate: 24deg;
+}

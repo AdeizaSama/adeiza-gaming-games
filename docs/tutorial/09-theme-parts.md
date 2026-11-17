@@ -173,3 +173,38 @@ The obvious way to move stars is to animate `background-position`, but that make
 ### How to verify
 
 `pnpm test src/app/theme`: tests 335 and 336. Steps 7–10 put these on screen.
+
+---
+
+## Step 6: Decorations
+
+**What:** four decorations in `parts.css`: `tape`, `pushpin`, `planets` and `chalk-smudge`, added to the schema's menu. The menu is now complete.
+
+**Why:** a strip of tape on the flash card is a small thing, but it's what makes a theme feel made by hand.
+
+### Only on feature elements
+
+Decorations go on elements marked `data-feature`: the flash card and dialogs. Every card on screen getting tape (twenty pack choices, twenty strips) would be noise.
+
+### Drawn with CSS
+
+| Decoration | Drawn as |
+|---|---|
+| `tape` | A see-through strip, in the page color at 65% with paper grain, tilted 3° across the top |
+| `pushpin` | A circle with a radial gradient (highlight, red, shade) and a drop shadow |
+| `planets` | A shaded circle in the main color, and an ellipse with a border for the ring, tilted 18° |
+| `chalk-smudge` | A soft rubbed-out patch, and a small rounded stick of chalk |
+
+Each is a `::before` or `::after`: `position: absolute`, `pointer-events: none`. Test 335 enforces that, so a decoration can never take space or block a tap.
+
+### Dialogs are different
+
+A modal `<dialog>` is already fixed-positioned by the browser and clips anything that spills over its edge. So:
+
+- The flash card gets `position: relative` (allowed: it moves nothing), and its tape or pin can hang over its top edge.
+- On dialogs, decorations sit just inside the edge, within the 24px padding, so they never cover the title. The planet is also scaled to 70% (`scale`, paint only) and tucked into the corner.
+- The chalk sits top-right everywhere, clear of a dialog's buttons at the bottom.
+
+### How to verify
+
+`pnpm test src/app/theme`: tests 335 and 336 cover every decoration. Steps 7–10 put them on screen.
