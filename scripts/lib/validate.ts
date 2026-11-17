@@ -1,4 +1,5 @@
 import { checkPack, type PackProblem } from '../../src/sdk/content/loadPacks'
+import { checkContrast } from '../../src/sdk/theme/contrast'
 import { checkTheme } from '../../src/sdk/theme/loadThemes'
 import type { GameSchema } from './gameSchema'
 import { schemaFileName, themeSchemaFileName } from './jsonSchema'
@@ -66,7 +67,7 @@ export const expectedThemeSchemaLink = `../../schemas/${themeSchemaFileName}`
 
 /**
  * Checks one theme file's text, as the content check in CI does: valid JSON, the right `$schema` link if it has
- * one, and `checkTheme` from the SDK, the same check the app runs.
+ * one, `checkTheme` from the SDK (the same check the app runs), and, for a theme whose shape is right, contrast.
  */
 export function checkThemeFile(file: string, text: string): PackProblem[] {
   let data: unknown
@@ -83,5 +84,6 @@ export function checkThemeFile(file: string, text: string): PackProblem[] {
   }
   const result = checkTheme(file, data)
   if (!result.ok) problems.push(...result.problems)
+  else problems.push(...checkContrast(result.theme))
   return problems
 }

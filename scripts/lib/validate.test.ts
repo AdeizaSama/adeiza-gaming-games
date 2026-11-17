@@ -80,4 +80,11 @@ describe('checkThemeFile', () => {
       expect.objectContaining({ path: 'radius' }),
     ])
   })
+
+  it('reports colors that are hard to read, once the theme’s shape is right', () => {
+    const colors = { ...themeData().colors, muted: '#555555' }
+    expect(checkThemeFile('src/themes/paper.json', theme({ colors }))).toEqual([
+      expect.objectContaining({ path: 'colors.muted-foreground', message: expect.stringContaining('muted-foreground on muted') }),
+    ])
+  })
 })

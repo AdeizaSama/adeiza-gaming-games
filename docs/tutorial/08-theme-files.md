@@ -75,3 +75,40 @@ Only the identity fields, `scheme` and `colors` are required; everything after `
 
 - `pnpm test src/sdk/theme scripts`: tests 303–312.
 - `pnpm validate-content` now ends with a "Checking themes" section. It says "(no themes yet)": the first two arrive in step 4.
+
+---
+
+## Step 3: Checking contrast
+
+**What:** `src/sdk/theme/contrast.ts`: `contrastRatio` and `checkContrast`. The content check runs it on every theme whose shape is right. The pull request template gets a Themes section.
+
+**Why:** a designer can make a theme that looks lovely in a design tool and is unreadable on a phone at arm's length. The check turns "is this readable?" into a number, so CI can answer it.
+
+### The math, in three steps
+
+1. **Color to light.** Hex colors are gamma-encoded, so each channel is converted to linear light. An oklch color goes through OKLab to linear sRGB, using the same published matrices browsers use. A color outside what a screen can show is clipped to it, as a screen would.
+2. **Light to luminance.** `0.2126 R + 0.7152 G + 0.0722 B`: green looks brightest to our eyes, blue darkest.
+3. **Two luminances to a ratio.** `(lighter + 0.05) / (darker + 0.05)`, from 1 (the same color) to 21 (black on white).
+
+Test 313 pins the math to known values: #777 on white is 4.48 : 1, and pure red is 5.25 : 1 against black, whether written as `#ff0000` or in oklch.
+
+### Which pairs
+
+`contrastPairs` lists every pair the app draws, found by searching the components for text classes: each `-foreground` on its color, muted text on the page, on cards and on muted panels, primary text such as links, error messages, the timer's warning color (large text: 3 : 1), and the focus ring (3 : 1).
+
+### Today's light colors fail
+
+Running the check on the colors from chapter 04 finds four problems in the light set:
+
+| Pair | Ratio | Needs |
+|---|---|---|
+| white on primary (buttons) | 3.52 : 1 | 4.5 : 1 |
+| white on success (Got it) | 3.60 : 1 | 4.5 : 1 |
+| primary on the page (links) | 3.48 : 1 | 4.5 : 1 |
+| warning on the page (the timer) | 1.95 : 1 | 3 : 1 |
+
+The dark set passes. Step 4 fixes the light set by lowering lightness only, keeping each hue: the orange and green get a little deeper, and the warning amber turns burnt orange.
+
+### How to verify
+
+`pnpm test src/sdk/theme scripts`: tests 313–317. To see a message, give a theme in step 4 a pale `primary` and run `pnpm validate-content`.

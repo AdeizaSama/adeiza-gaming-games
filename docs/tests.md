@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 312 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
+**Counts:** 317 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -23,8 +23,9 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
 | [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 9 | |
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
-| [Content check (scripts)](#content-check-scripts) | `scripts/lib/validate.test.ts` | 8 | |
+| [Content check (scripts)](#content-check-scripts) | `scripts/lib/validate.test.ts` | 9 | |
 | [Themes](#themes) | `src/sdk/theme/theme.test.ts` | 7 | |
+| [Contrast](#contrast) | `src/sdk/theme/contrast.test.ts` | 4 | |
 | [Team-turns config](#team-turns-config) | `src/sdk/formats/team-turns/config.test.ts` | 11 | |
 | [Item pool](#item-pool) | `src/sdk/formats/team-turns/pool.test.ts` | 13 | |
 | [Team-turns guards and actions](#team-turns-guards-and-actions) | `src/sdk/formats/team-turns/rules.test.ts` | 9 | |
@@ -336,10 +337,11 @@ Each row is a mistake TypeScript must reject.
 | 118 | runs the same checks as the app, such as the id matching the file name | Same as the app | id `zoo` in `animals.json` | Problem at `id` | CI and the app use the same `checkPack`, so they agree. |
 | 311 | finds nothing wrong with a valid theme | `checkThemeFile` | A valid theme with the right `$schema` | No problems | The content check passes good themes. |
 | 312 | reports text that isn't JSON, a wrong $schema link, and problems from the theme check | `checkThemeFile` | Broken JSON; `$schema: "theme.schema.json"` with radius 9 | "Not valid JSON…"; `$schema` should be `../../schemas/theme.schema.json`, and a `radius` problem | Same as for packs: a wrong link silently switches off editor help. |
+| 317 | reports colors that are hard to read, once the theme's shape is right | `checkThemeFile`, contrast | The valid theme with `muted: "#555555"` | One problem at `colors.muted-foreground`, naming "muted-foreground on muted" | CI catches an unreadable theme, not only a malformed one (ADR 0010). |
 
 ## Themes
 
-`src/sdk/theme/theme.test.ts`, testing `color.ts`, `schema.ts` and `loadThemes.ts` in `src/sdk/theme/` (ADR 0010). The theme used is `themeData()` from `testTheme.ts`: `paper`, light, every color white or black.
+`src/sdk/theme/theme.test.ts`, testing `color.ts`, `schema.ts` and `loadThemes.ts` in `src/sdk/theme/` (ADR 0010). The theme used is `themeData()` from `testTheme.ts`: `paper`, light, in black and white only (white surfaces with black text; black accents with white text), so it passes every contrast pair.
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
@@ -350,6 +352,17 @@ Each row is a mistake TypeScript must reject.
 | 307 | reports an id that isn't the file name, and a gradient from a color that isn't a token | `checkTheme` | Id `card` in `paper.json`; gradient to `sky` | The id problem; a `gradient.to` problem | Same id rule as packs. A gradient can only use the theme's own colors. |
 | 308 | returns the themes sorted by id | `loadThemes` | `paper` and `ink` | `ink`, `paper` | The picker lists themes in the same order everywhere. |
 | 309 | throws one error listing every problem in every file, and throws when there are no themes | `loadThemes` | Radius 5 in `paper.json`, a wrong id in `ink.json`; then no files | One error naming both files; "No themes found" | A broken theme is loud while it's being edited, and the app never starts without one. |
+
+## Contrast
+
+`src/sdk/theme/contrast.test.ts`, testing `src/sdk/theme/contrast.ts`: the contrast check every theme passes in CI (ADR 0010). Ratios use WCAG 2.2's formula; minimums are level AA.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 313 | matches WCAG's published values, in either order and in either color format | `contrastRatio` | Black and white; #777 on white; both orders; `oklch(1 0 0)` on black; pure red in hex and in oklch, on black; one color on itself | 21; 4.48; the same both ways; 21; 5.25 both times; 1 | The math matches the published numbers, and oklch colors (lightness, chroma and hue) come out the same as their hex twins. |
+| 314 | passes black and white everywhere | `checkContrast` | The test theme | No problems | The pair list has no impossible pair. |
+| 315 | reports each pair under its minimum at the color to change, with what it's for, its ratio and the minimum | `checkContrast` | Primary #999 with white text on it | Two problems: white on primary, and primary on the page, each 2.84 : 1, needing 4.5 : 1 | The message tells a designer exactly which color to change and by how much, without running the app. |
+| 316 | lets large text and the focus ring pass at 3 : 1, but not below | `checkContrast` | Warning and ring #949494 (3.03 : 1); then warning #aaaaaa (2.32 : 1) | No problems; then one at `colors.warning` | WCAG allows less contrast for big text (the timer) and outlines than for body text. |
 
 ## Team-turns config
 
