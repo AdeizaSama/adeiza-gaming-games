@@ -67,3 +67,45 @@
   outline: 5px solid var(--border);
   outline-offset: -5px;
 }
+
+/*
+ * Buttons: the Button component, by variant. "Filled" means primary, secondary, success and destructive. Ghost
+ * buttons (icons) stay plain. Outline buttons keep the theme's shadow (shadow-sm), so these rules never set their
+ * box-shadow. Highlights stay at 12% or less, so text keeps the contrast measured on the button's own color.
+ */
+
+/* Chunky: a darker lip along the bottom that the button sinks into when pressed. */
+[data-button='chunky'] button[data-variant]:not([data-variant='outline'], [data-variant='ghost']) {
+  background-image: linear-gradient(to bottom, color-mix(in oklch, white 10%, transparent), transparent 55%);
+  box-shadow: inset 0 -4px 0 color-mix(in oklch, black 25%, transparent);
+}
+[data-button='chunky'] button[data-variant]:not([data-variant='outline'], [data-variant='ghost']):active {
+  box-shadow: inset 0 -1px 0 color-mix(in oklch, black 25%, transparent);
+  translate: 0 2px;
+}
+
+/* Sticker: a thick rim in the card color, the theme's shadow, and a slight tilt. */
+[data-button='sticker'] button[data-variant]:not([data-variant='outline'], [data-variant='ghost']) {
+  box-shadow: var(--elevation-sm);
+  rotate: -1deg;
+}
+[data-button='sticker'] button[data-variant]:not([data-variant='ghost']):not(:focus-visible) {
+  outline: 3px solid var(--card);
+}
+
+/* Glass: a sheen across the top half and a bright inner rim; the page behind outline buttons is blurred. */
+[data-button='glass'] button[data-variant]:not([data-variant='outline'], [data-variant='ghost']) {
+  background-image: linear-gradient(to bottom, color-mix(in oklch, white 12%, transparent), transparent 50%);
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, white 22%, transparent);
+}
+[data-button='glass'] button[data-variant='outline'] {
+  backdrop-filter: blur(8px);
+}
+
+/* Chalk: chalk dust over filled buttons, and outlines drawn as broken chalk lines. */
+[data-button='chalk'] button[data-variant]:not([data-variant='outline'], [data-variant='ghost']) {
+  background-image: var(--grain-light);
+}
+[data-button='chalk'] button[data-variant='outline'] {
+  border-style: dashed;
+}

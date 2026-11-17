@@ -112,3 +112,36 @@ A glass card shows the page through it, so the text on it has to read against th
 
 - `pnpm test src/sdk/theme src/app/theme`: tests 335, 336 and 339.
 - No theme uses these yet: step 7 dresses Sticky Notes.
+
+---
+
+## Step 4: Buttons
+
+**What:** four looks for buttons in `parts.css`: `chunky`, `sticker`, `glass` and `chalk`, added to the schema's menu.
+
+**Why:** buttons are what players touch most. A look that matches the cards makes a theme feel whole.
+
+### Filled, outline and ghost
+
+Rules pick buttons by the `data-variant` that step 2 added:
+
+- **Filled** (primary, secondary, success, destructive) get the full look. The selector is `button[data-variant]:not([data-variant='outline'], [data-variant='ghost'])`.
+- **Outline** buttons get small touches only, and never a `box-shadow`, because they already carry the theme's shadow (chapter 08's fix).
+- **Ghost** buttons are icons (the theme palette, remove a team), and stay plain.
+
+### The looks
+
+| Button | Filled | Outline |
+|---|---|---|
+| `chunky` | A darker lip along the bottom; pressed, it sinks 2px (`translate`) and the lip shrinks | — |
+| `sticker` | A 3px rim in the card color, the theme's shadow, tilted 1° | The same rim |
+| `glass` | A sheen across the top half and a bright inner rim | The page behind is blurred |
+| `chalk` | Chalk dust over the color | A dashed outline, like broken chalk lines |
+
+**Highlights stay faint.** A white sheen over a button lightens its color a little where the label sits. Keeping highlights at 12% or less keeps the label's contrast close to what the theme check measured on the solid color.
+
+**Rims are outlines.** As with surfaces, they're switched off while the button shows keyboard focus, so the focus ring always shows.
+
+### How to verify
+
+`pnpm test src/app/theme`: test 336 now requires CSS for every button look, and test 335 checks it only paints (`translate` and `rotate` move nothing else on the page).

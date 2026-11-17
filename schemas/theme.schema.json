@@ -289,7 +289,11 @@
           "description": "How buttons look.",
           "type": "string",
           "enum": [
-            "solid"
+            "solid",
+            "chunky",
+            "sticker",
+            "glass",
+            "chalk"
           ]
         },
         "background": {

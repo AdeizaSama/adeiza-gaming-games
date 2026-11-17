@@ -36,7 +36,7 @@ const ColorTokenName = z.enum(colorTokens)
  */
 export const themeParts = {
   surface: ['plain', 'paper', 'sticky-note', 'glass', 'chalkboard'],
-  button: ['solid'],
+  button: ['solid', 'chunky', 'sticker', 'glass', 'chalk'],
   background: ['flat'],
   decoration: ['none'],
   icons: ['thin', 'regular', 'bold'],
