@@ -266,6 +266,56 @@
       "type": "integer",
       "minimum": 0,
       "maximum": 400
+    },
+    "parts": {
+      "description": "Looks to pick from a menu (ADR 0011). Leave out any you don't want; each defaults to the plain look.",
+      "default": {},
+      "type": "object",
+      "properties": {
+        "surface": {
+          "default": "plain",
+          "description": "How cards and dialogs look.",
+          "type": "string",
+          "enum": [
+            "plain"
+          ]
+        },
+        "button": {
+          "default": "solid",
+          "description": "How buttons look.",
+          "type": "string",
+          "enum": [
+            "solid"
+          ]
+        },
+        "background": {
+          "default": "flat",
+          "description": "The page behind everything.",
+          "type": "string",
+          "enum": [
+            "flat"
+          ]
+        },
+        "decoration": {
+          "default": "none",
+          "description": "Small drawings on the flash card and dialogs.",
+          "type": "string",
+          "enum": [
+            "none"
+          ]
+        },
+        "icons": {
+          "default": "regular",
+          "description": "How heavy icon lines are.",
+          "type": "string",
+          "enum": [
+            "thin",
+            "regular",
+            "bold"
+          ]
+        }
+      },
+      "additionalProperties": false
     }
   },
   "required": [

@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 332 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
+**Counts:** 338 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -26,7 +26,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Content check (scripts)](#content-check-scripts) | `scripts/lib/validate.test.ts` | 9 | |
 | [Themes](#themes) | `src/sdk/theme/theme.test.ts` | 7 | |
 | [Contrast](#contrast) | `src/sdk/theme/contrast.test.ts` | 5 | |
-| [Theme variables](#theme-variables) | `src/sdk/theme/apply.test.ts` | 3 | |
+| [Theme variables](#theme-variables) | `src/sdk/theme/apply.test.ts` | 4 | |
 | [Team-turns config](#team-turns-config) | `src/sdk/formats/team-turns/config.test.ts` | 11 | |
 | [Item pool](#item-pool) | `src/sdk/formats/team-turns/pool.test.ts` | 13 | |
 | [Team-turns guards and actions](#team-turns-guards-and-actions) | `src/sdk/formats/team-turns/rules.test.ts` | 9 | |
@@ -40,7 +40,8 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Applying a theme](#applying-a-theme) | `src/app/theme/themes.test.tsx` | 4 | |
 | [Bundled fonts](#bundled-fonts) | `src/app/theme/fonts.test.ts` | 2 | |
 | [Theme picker](#theme-picker) | `src/app/theme/picker.test.tsx` | 2 | |
-| [UI components](#ui-components) | `src/ui/ui.test.tsx` | 7 | |
+| [Theme parts](#theme-parts) | `src/app/theme/parts.test.ts` | 4 | |
+| [UI components](#ui-components) | `src/ui/ui.test.tsx` | 8 | |
 | [Game session](#game-session) | `src/sdk/game/useGameSession.test.ts` | 9 | |
 | [Interaction primitives](#interaction-primitives) | `src/sdk/interactions/interactions.test.tsx` | 8 | |
 | [Summary and Leaderboard](#summary-and-leaderboard) | `src/sdk/interactions/summary.test.tsx` | 4 | |
@@ -351,7 +352,7 @@ Each row is a mistake TypeScript must reject.
 |---|---|---|---|---|---|
 | 303 | reads #rrggbb and oklch(L C H), with lightness as a number or a percentage | `parseColor` | `#ff8000`; `oklch(0.64 0.19 42)`; `oklch(64% .19 42)` | Red, green, blue 0–1; then lightness 0.64, chroma 0.19, hue 42, twice | Designers write hex or oklch; the contrast check needs numbers. |
 | 304 | rejects other formats and values out of range | `parseColor` | `#f80`, `orange`, `rgb(…)`, lightness 1.2, chroma 0.6, hue 400, commas | Nothing read, every time | Only colors the contrast check can work out are allowed. |
-| 305 | fills in every optional field with its default | `checkTheme` | A theme with only the required fields | System rounded fonts, radius 1, soft shadows, thin borders, 200 ms, no gradient | A first theme can be just colors. |
+| 305 | fills in every optional field with its default | `checkTheme` | A theme with only the required fields | System rounded fonts, radius 1, soft shadows, thin borders, 200 ms, no gradient, and every part plain (plain cards, solid buttons, flat page, no decorations, regular icons) | A first theme can be just colors. |
 | 306 | reports a missing or unreadable color, an unknown field, a font not on the list and a scheme that isn't light or dark | `checkTheme` | No `ring`; `primary: "orange"`; font `comic-sans`; scheme `both`; a `colour` field | A problem at each, the color one saying how to write a color | Every mistake at once, where it is. |
 | 307 | reports an id that isn't the file name, and a gradient from a color that isn't a token | `checkTheme` | Id `card` in `paper.json`; gradient to `sky` | The id problem; a `gradient.to` problem | Same id rule as packs. A gradient can only use the theme's own colors. |
 | 308 | returns the themes sorted by id | `loadThemes` | `paper` and `ink` | `ink`, `paper` | The picker lists themes in the same order everywhere. |
@@ -377,6 +378,7 @@ Each row is a mistake TypeScript must reject.
 |---|---|---|---|---|---|
 | 324 | writes every color under its token's name, and the fonts as their families with fallbacks | Colors, fonts | Body Nunito, headings Caveat | `--primary` and `--card-foreground` as written; `"Nunito Variable", ui-rounded…` and `"Caveat Variable", ui-rounded…`; radius 1rem | Text shows in a system font while a bundled one loads, never in nothing. |
 | 325 | turns shadow and border styles into CSS: none, soft or bold shadows, and 2px or 3px outlines | Shadows, outlines | Flat; the default (soft); bold; thin; thick | `none`; Tailwind's soft shadow; a hard offset shadow in the text color; 2px; 3px | Designers pick a word; the CSS is ours, so every theme's shadows stay in proportion. |
+| 337 | names the theme's parts as attributes, and sets the icon line weight | `themeAttributes`, icons | Thin icons; the default; bold | `data-theme` and one attribute per part, all plain; icon stroke 1.5, 2, 2.75 | `parts.css` styles by these attributes, and every icon's weight follows the theme (ADR 0011). |
 | 326 | fades the page from one color token to another, or leaves it plain | Gradient | No gradient; background to muted | `none`; `linear-gradient(to bottom, var(--background), var(--muted))` | A gradient can only use the theme's own colors, so it can't break contrast with anything off the list. |
 
 ## Team-turns config
@@ -580,7 +582,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 318 | writes the theme's variables, color scheme, name and address-bar color on the page | `applyTheme` | Apply Sunset, then Sunrise | Sunset's primary, radius 1rem, 200ms, scheme dark, `data-theme="sunset"`, its background as `theme-color`; then Sunrise's values and scheme light, still one `theme-color` tag | Every token reaches the page, and a new theme replaces the old one completely. |
 | 319 | starts a first visit on Sunrise or Sunset by the phone's setting, and after that on the theme picked | `startingTheme` | Nothing saved, phone dark; phone light; Sunrise picked, phone dark; a saved theme that no longer exists, phone dark | Sunset; Sunrise; Sunrise; Sunset | The phone's setting is read once; after that the theme never changes on its own. A removed theme falls back instead of breaking. |
 | 320 | opens on the phone's setting when storage is switched off | `startingTheme` | Storage that throws, phone dark | Sunset | Private browsing mustn't stop the app opening. |
-| 321 | remembers the style, and index.html puts it back before the app starts | No flash | Pick Sunset; clear the page's style; run the script in `index.html` | The saved style equals the page's; after the script, Sunset's primary is back | The first paint already has the right colors, before the app's code has loaded. |
+| 321 | remembers the look, and index.html puts it back before the app starts | No flash | A chapter 08 style left in storage; pick Sunset; clear every attribute on the page; run the script in `index.html` | The saved look is the page's style and its attributes (theme, surface, button, background, decoration); the old key is gone; after the script, Sunset's primary, `data-theme` and `data-surface` are back | The first paint already has the right colors and parts, before the app's code has loaded. |
 
 ## Bundled fonts
 
@@ -599,6 +601,17 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 |---|---|---|---|---|---|
 | 329 | opens from the library header and lists every theme, with the one in use picked | Picker | Sunset picked; open the library; tap Theme | A "Theme" dialog listing Sticky Notes, Sunrise and Sunset with their descriptions, in id order; Sunset picked | Players see every theme by name, and which one they're on. |
 | 330 | applies a theme as soon as it's tapped, and remembers it | Picker | Sunrise in use; tap Theme, then Sunset, then Done; open the library again and tap Theme | The page is Sunset (dark) straight away; the dialog closes; Sunset still picked | The theme shows behind the dialog, so players see it before they decide, and it stays picked. |
+
+## Theme parts
+
+`src/app/theme/parts.test.ts`, testing `paintOnlyProblems` (`src/app/theme/paintOnly.ts`) and the theme parts CSS (`src/app/theme/parts.css`, read as text) against ADR 0011.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 333 | passes paint: colors, gradients, edges, shadows, tilt, and decorations that take no space | `paintOnlyProblems` | A card with a gradient, border color, shadow, tilt and `position: relative`; a sized, absolute decoration; a fixed background layer animated inside the reduced-motion query; keyframes moving background and opacity | No problems | Everything a part needs to look like paper or glass is allowed. |
+| 334 | reports layout changes, decorations that could take space or taps, and motion that ignores reduced motion | `paintOnlyProblems` | A card setting padding, font size, border width and absolute position; a decoration that isn't absolute and takes taps; an animation outside the query; keyframes animating width | One message for each, in order | Each rule of ADR 0011 is checked, so the check on `parts.css` means something. |
+| 335 | only paints | `parts.css` | The file | No problems | A theme can't move, resize or crowd anything, or animate for players who asked their phone not to. |
+| 336 | has CSS for every option a theme can pick, except each part's plain default | `parts.css`, `themeParts` | Every option of surface, button, background and decoration | A selector like `[data-surface='paper']` for each | An option in the schema without CSS would let a theme pick a look that does nothing. |
 
 ## Theme tokens
 
@@ -622,9 +635,10 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 331 | knows our own utilities: keeps the theme's outline width next to a border color, on outline buttons and text fields | `cn`, Button, Input | `border-line border-border`; `border-2` then `border-line`; `font-sans` then `font-heading font-bold`; an outline Button and an Input | Both border classes kept; `border-line` wins; `font-heading font-bold`; the button has `border-line` and `shadow-sm`, the field `border-line` | tailwind-merge didn't know `border-line`, took it for a color and dropped it, so outline buttons and fields lost their borders in chapter 08. |
 | 185 | is a button that does not submit forms unless asked to | Button | `<Button>Start</Button>` | A button named Start with `type="button"` | A plain `<button>` inside a form submits it; the setup screen has a form. |
 | 186 | calls onClick when tapped, and not when disabled | Button | Tap; then tap while disabled | Called once in total | Start must do nothing while setup is invalid. |
+| 338 | marks its variant, so theme parts can style filled and outline buttons differently | Button | A default button and an outline one | `data-variant` primary and outline | A sticker or glass look belongs on filled buttons, not on ghost ones (ADR 0011). |
 | 187 | uses theme colors for its variant, and lets the caller adjust it | Button | `variant="success"`, `className="w-full"` | Classes include `bg-success` and `w-full` | Variants come from tokens; screens can still size buttons. |
 | 188 | is a text field that can be found by its label and typed into | Input | Labelled "Team 1", type `Lions` | Found by its label; value `Lions` | Team names are typed here; a field without a usable label is invisible to screen readers. |
-| 242 | opens as a modal with its title and buttons, and asks to close on a tap outside it | Dialog | Closed; then open, titled "Quit this game?"; tap its button; tap outside | No dialog; then a dialog by that name, with a description; `onClose` not called for the button, called once for the outside tap | The browser's `<dialog>` is opened by a method, not an attribute: the component must turn the `open` prop into calls. A tap outside is a natural "never mind". |
+| 242 | opens as a modal with its title and buttons, and asks to close on a tap outside it | Dialog | Closed; then open, titled "Quit this game?"; tap its button; tap outside | No dialog; then a dialog by that name, with a description and marked `data-feature` for decorations; `onClose` not called for the button, called once for the outside tap | The browser's `<dialog>` is opened by a method, not an attribute: the component must turn the `open` prop into calls. A tap outside is a natural "never mind". |
 
 ## Game session
 
@@ -649,7 +663,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 195 | names who gets the phone, and calls onReady when they tap Start | Handoff | To Lions, "Round 2 of 3"; tap Start | Heading Lions, the detail line, onReady called once | The gate between turns: right team, one tap to begin. |
-| 196 | shows the item and reports Got it and Skip | FlashCard | Puff puff, hint "Describe it"; tap Got it once, Skip twice | Text and hint shown; onGot once, onSkip twice | Each tap reports exactly one event. |
+| 196 | shows the item and reports Got it and Skip | FlashCard | Puff puff, hint "Describe it"; tap Got it once, Skip twice | Text and hint shown, on a card marked `data-feature`; onGot once, onSkip twice | Each tap reports exactly one event. The card is where a theme's decorations go (ADR 0011). |
 | 213 | shrinks the whole text when its longest word is long | FlashCard, `textSize` | Longest word 9, 14 and 20 letters; a card with a 17-letter word | `text-5xl`, `text-3xl`, `text-2xl`; the card drawn at `text-2xl` | A word can't wrap: too big, it would be broken mid-word on a small phone. The whole text shrinks, so one item never mixes sizes. |
 | 197 | shows whole seconds left, rounded up, and counts down | Countdown | Ends at 60 s; after 1 s; after 59.5 s | 60, 59, 1 | Rounded up, it shows 0 only when time is really up. |
 | 198 | calls onTimeUp once, when time runs out | Countdown | Ends at 3 s; check at 2.9 s, then at 7.9 s | Not called, then called once; shows 0 | `time_up` must be sent once, not on every tick after the end. |

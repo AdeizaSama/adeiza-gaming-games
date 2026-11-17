@@ -45,6 +45,17 @@ describe('Button', () => {
     expect(onClick).toHaveBeenCalledTimes(1)
   })
 
+  it('marks its variant, so theme parts can style filled and outline buttons differently', () => {
+    render(
+      <>
+        <Button>Start</Button>
+        <Button variant="outline">Add team</Button>
+      </>,
+    )
+    expect(screen.getByRole('button', { name: 'Start' }).dataset.variant).toBe('primary')
+    expect(screen.getByRole('button', { name: 'Add team' }).dataset.variant).toBe('outline')
+  })
+
   it('uses theme colors for its variant, and lets the caller adjust it', () => {
     render(<Button variant="success" className="w-full">Got it</Button>)
     const button = screen.getByRole('button', { name: 'Got it' })
@@ -86,6 +97,7 @@ describe('Dialog', () => {
     )
     const dialog = screen.getByRole('dialog', { name: 'Quit this game?' })
     expect(dialog.getAttribute('aria-describedby')).toBeTruthy()
+    expect(dialog.hasAttribute('data-feature')).toBe(true) // where a theme's decorations go (ADR 0011)
     await user.click(screen.getByRole('button', { name: 'Quit game' }))
     expect(onClose).not.toHaveBeenCalled()
 

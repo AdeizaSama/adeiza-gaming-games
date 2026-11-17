@@ -13,6 +13,9 @@ const elevations: Record<Theme['shadow'], { sm: string; lg: string }> = {
   bold: { sm: '3px 3px 0 0 var(--foreground)', lg: '6px 6px 0 0 var(--foreground)' },
 }
 
+/** Icon line weights, by the theme's `parts.icons`. Lucide draws at 2. */
+const iconStrokes: Record<Theme['parts']['icons'], string> = { thin: '1.5', regular: '2', bold: '2.75' }
+
 /** Outline widths (`border-line`), by the theme's `border`. */
 const lines: Record<Theme['border'], string> = { thin: '2px', thick: '3px' }
 
@@ -32,21 +35,38 @@ export function themeVariables(theme: Theme): Record<string, string> {
     '--elevation-lg': elevations[theme.shadow].lg,
     '--line': lines[theme.border],
     '--page-gradient': gradient ? `linear-gradient(to bottom, var(--${gradient.from}), var(--${gradient.to}))` : 'none',
+    '--icon-stroke': iconStrokes[theme.parts.icons],
     '--duration': `${theme.duration}ms`,
   }
 }
 
 /**
+ * The attributes a theme puts on `<html>`: its id, and the part it picked for each kind (ADR 0011), which
+ * `parts.css` styles by, e.g. `[data-surface='paper'] .bg-card`.
+ */
+export function themeAttributes(theme: Theme): Record<string, string> {
+  const { surface, button, background, decoration } = theme.parts
+  return { 'data-theme': theme.id, 'data-surface': surface, 'data-button': button, 'data-background': background, 'data-decoration': decoration }
+}
+
+/** What `applyTheme` wrote: enough to put the same look back before the first paint. */
+export interface AppliedLook {
+  style: string
+  attributes: Record<string, string>
+}
+
+/**
  * Applies a theme to the page: its variables and `color-scheme` (so scrollbars and form controls match) as the
- * `<html>` element's inline style, which replaces any theme applied before. Also sets `data-theme`, and the
- * browser's `theme-color`, which colors the address bar on phones. Returns the style text, so it can be saved and
+ * `<html>` element's inline style, which replaces any theme applied before, and its attributes. Also sets the
+ * browser's `theme-color`, which colors the address bar on phones. Returns what it wrote, so it can be saved and
  * put back before the first paint next time.
  */
-export function applyTheme(theme: Theme, document: Document = globalThis.document): string {
+export function applyTheme(theme: Theme, document: Document = globalThis.document): AppliedLook {
   const style = [...Object.entries(themeVariables(theme)), ['color-scheme', theme.scheme]].map(([name, value]) => `${name}: ${value}`).join('; ')
+  const attributes = themeAttributes(theme)
   const root = document.documentElement
   root.setAttribute('style', style)
-  root.dataset.theme = theme.id
+  for (const [name, value] of Object.entries(attributes)) root.setAttribute(name, value)
 
   let meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
   if (!meta) {
@@ -55,5 +75,5 @@ export function applyTheme(theme: Theme, document: Document = globalThis.documen
     document.head.append(meta)
   }
   meta.content = theme.colors.background
-  return style
+  return { style, attributes }
 }

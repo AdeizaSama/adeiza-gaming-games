@@ -32,7 +32,11 @@ export function textSize(text: string): string {
 export function FlashCard({ text, hint, onGot, onSkip, gotLabel = 'Got it', skipLabel = 'Skip' }: FlashCardProps) {
   return (
     <div className="flex w-full flex-1 flex-col gap-6">
-      <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-xl bg-card p-6 text-center text-card-foreground shadow-sm">
+      {/* data-feature: the theme's decorations (tape, pins…) go on this card (ADR 0011). */}
+      <div
+        data-feature
+        className="flex flex-1 flex-col items-center justify-center gap-3 rounded-xl bg-card p-6 text-center text-card-foreground shadow-sm"
+      >
         {hint && <p className="text-base font-medium tracking-wide text-muted-foreground uppercase">{hint}</p>}
         <p className={cn(textSize(text), 'font-heading leading-tight font-bold text-balance break-words')}>{text}</p>
       </div>

@@ -29,3 +29,48 @@ Backgrounds stay faint, glass cards get an extra contrast check, and every anima
 ### How to verify
 
 Read the ADR. Steps 2 to 6 build the menu; steps 7 to 10 use it.
+
+---
+
+## Step 2: How parts reach the page
+
+**What:**
+
+- `parts` in the theme schema, with one option per part for now: the plain look.
+- `applyTheme` writes the picks as attributes on `<html>`, plus `--icon-stroke`.
+- `Button` marks its variant; the flash card and dialogs are marked `data-feature`.
+- `src/app/theme/parts.css`, imported by `index.css`, starting with the icon rule.
+- `paintOnly.ts` and its test.
+
+**Why:** the mechanism and its guard come before any look. The menu grows step by step: steps 3 to 6 each add options to `themeParts` together with their CSS, and test 336 fails if an option has no CSS.
+
+### Attributes on `<html>`
+
+```html
+<html data-theme="sticky-notes" data-surface="sticky-note" data-button="sticker" …>
+```
+
+CSS then styles by them: `[data-surface='paper'] .bg-card:not(input) { … }`. Cards are found by their `bg-card` class, so a card added later gets the theme's surface without anyone remembering to add it. The rules aren't in a Tailwind layer, so they win over utility classes.
+
+### The saved look includes the attributes
+
+Chapter 08's script in `index.html` put back the style text before the first paint. Now it puts back the attributes too, from one saved JSON value (`ku-zo-wasa:theme-look`). The old key is removed when a theme is next applied.
+
+### Icons
+
+Every lucide icon has the class `lucide`. One rule, `.lucide { stroke-width: var(--icon-stroke); }`, sets every icon's line weight; CSS wins over the icon's own `stroke-width` attribute.
+
+### Checking paint only
+
+`paintOnly.ts` is a small reader for the CSS we write (rules, `@media`, `@keyframes`, comments). For each declaration it checks:
+
+- On an element: no size, spacing, flow, font size, border width or position (except `position: relative`, which moves nothing).
+- On a `::before` or `::after`: it must be `position: absolute` or `fixed`, and `pointer-events: none`. Then it may size and place itself, because it takes no space and catches no taps.
+- `animation` and `transition` only inside `@media (prefers-reduced-motion: no-preference)`.
+- Keyframes only move `transform`, `opacity` or `background-position`.
+
+Test 334 feeds it a file breaking each rule, so we know the check on `parts.css` (test 335) can fail.
+
+### How to verify
+
+`pnpm test src/app/theme src/sdk/theme src/ui`: tests 333–338. Nothing changes on screen: every theme is still plain.

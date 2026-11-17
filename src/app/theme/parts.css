@@ -1,0 +1,17 @@
+/*
+ * Theme parts (ADR 0011): the looks a theme picks by name under "parts" in its file. The app writes the picks on
+ * <html> (data-surface, data-button, data-background, data-decoration), and these rules style what's inside by them.
+ *
+ * Paint only. A rule here may change colors, textures, edges, shadows, filters and tilt, never size, spacing or
+ * position: parts.test.ts reads this file and fails on anything else. In short:
+ * - Cards are any `.bg-card` that isn't a text field. Buttons are the Button component: `button[data-variant]`.
+ * - Decorations are ::before / ::after layers with position absolute or fixed and pointer-events none.
+ * - Animations (and transitions) live only inside @media (prefers-reduced-motion: no-preference), and keyframes move
+ *   only transform, opacity or background-position.
+ * - Rules here aren't in a Tailwind layer, so they win over utility classes such as bg-card.
+ */
+
+/* Icons: every lucide icon's line weight, by the theme's parts.icons. CSS beats the icon's stroke-width attribute. */
+.lucide {
+  stroke-width: var(--icon-stroke);
+}

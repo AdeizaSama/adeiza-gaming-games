@@ -33,6 +33,8 @@ export function Dialog({ open, onClose, title, description, children }: DialogPr
       aria-labelledby={`${id}-title`}
       aria-describedby={description ? `${id}-description` : undefined}
       onClose={onClose}
+      // The theme's decorations (tape, pins…) go on dialogs (ADR 0011).
+      data-feature
       // A tap on the dimmed area outside lands on the <dialog> itself; a tap inside lands on its content.
       onClick={(event) => event.target === event.currentTarget && onClose()}
       className="m-auto w-[calc(100%-3rem)] max-w-sm rounded-xl bg-card p-0 text-card-foreground shadow-lg backdrop:bg-background/80"
