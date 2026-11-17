@@ -6,7 +6,7 @@ An open-source library of **single-device party games**: charades, name ten, tri
 
 The library is built to be extended. Developers can add games, designers can add themes, and anyone can add or improve the words, categories and questions the games use.
 
-> **Status: early development.** Charades is complete: two modes, points you can change, presets, rules, a review after every turn, and games that survive a refresh, a locked phone or a closed tab. The other games are planned. Expect breaking changes until the first release.
+> **Status: early development.** Charades is complete: two modes, points you can change, presets, rules, a review after every turn, and games that survive a refresh, a locked phone or a closed tab. Three themes to pick from, and anyone can add one as a JSON file. The other games are planned. Expect breaking changes until the first release.
 
 ---
 
@@ -52,8 +52,8 @@ pnpm dev        # start the dev server (add --host to open it on a phone on the 
 pnpm test       # run the tests once (pnpm test:watch re-runs on save)
 pnpm typecheck  # check types without building
 pnpm lint       # check code style and folder boundaries
-pnpm validate-content  # check every content pack, as CI does
-pnpm generate-schemas  # rebuild schemas/ after changing a game's schema.ts
+pnpm validate-content  # check every content pack and theme (including contrast), as CI does
+pnpm generate-schemas  # rebuild schemas/ after changing a game's schema.ts or the theme format
 pnpm build      # type-check and build to dist/
 pnpm preview    # serve the production build locally
 ```

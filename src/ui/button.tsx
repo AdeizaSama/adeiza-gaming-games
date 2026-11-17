@@ -7,7 +7,8 @@ const variants = {
   secondary: 'bg-secondary text-secondary-foreground',
   success: 'bg-success text-success-foreground',
   destructive: 'bg-destructive text-destructive-foreground',
-  outline: 'border-2 border-border bg-transparent text-foreground',
+  // The outline, and the theme's shadow, show it's a button even on a page of the same color.
+  outline: 'border-line border-border bg-transparent text-foreground shadow-sm',
   ghost: 'bg-transparent text-foreground',
 }
 

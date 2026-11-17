@@ -1,13 +1,14 @@
 /**
- * Checks every content pack in src/games, the same way the app does, and prints what's wrong in plain words.
+ * Checks every content pack in src/games and every theme in src/themes, the same way the app does, and prints what's
+ * wrong in plain words.
  * Run with `pnpm validate-content`. CI runs it on every pull request; it exits with code 1 if anything is wrong.
  */
-import { readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { loadGameSchema, type GameSchema } from './lib/gameSchema'
 import { findGames } from './lib/games'
-import { checkPackFile } from './lib/validate'
+import { checkPackFile, checkThemeFile } from './lib/validate'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const games = findGames(join(root, 'src', 'games'))
@@ -56,10 +57,23 @@ for (const game of games) {
 
 if (games.length === 0) console.log('No games found.')
 
+console.log('\nChecking themes\n')
+
+const themesDir = join(root, 'src', 'themes')
+const themeFiles = existsSync(themesDir)
+  ? readdirSync(themesDir).filter((name) => name.endsWith('.json')).sort().map((name) => join(themesDir, name))
+  : []
+for (const file of themeFiles) {
+  const problems = checkThemeFile(file, readFileSync(file, 'utf8'))
+  if (problems.length > 0) report(file, problems)
+  else console.log(`  ✓ ${shown(file)}`)
+}
+if (themeFiles.length === 0) console.log('  (no themes yet)')
+
 if (problemCount > 0) {
   console.log(`\n${problemCount} problem${problemCount === 1 ? '' : 's'} in ${badFiles} file${badFiles === 1 ? '' : 's'}.`)
-  console.log('The rules for packs are in CONTRIBUTING.md, under "Add or improve content".')
+  console.log('The rules for packs and themes are in CONTRIBUTING.md, under "Add or improve content" and "Add a theme".')
   process.exitCode = 1
 } else {
-  console.log('\nAll packs are valid.')
+  console.log('\nAll packs and themes are valid.')
 }

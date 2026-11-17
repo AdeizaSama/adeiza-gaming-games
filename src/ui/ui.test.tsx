@@ -11,6 +11,20 @@ describe('cn', () => {
   it('drops empty values and lets a later class win over an earlier one that sets the same thing', () => {
     expect(cn('bg-primary px-4', false, undefined, 'bg-secondary')).toBe('px-4 bg-secondary')
   })
+
+  it('knows our own utilities: keeps the theme’s outline width next to a border color, on outline buttons and text fields', () => {
+    expect(cn('border-line border-border')).toBe('border-line border-border')
+    expect(cn('border-2', 'border-line')).toBe('border-line')
+    expect(cn('font-sans', 'font-heading font-bold')).toBe('font-heading font-bold')
+    render(
+      <>
+        <Button variant="outline">Add team</Button>
+        <Input aria-label="Team 1" />
+      </>,
+    )
+    expect(screen.getByRole('button', { name: 'Add team' }).className).toMatch(/\bborder-line\b.*\bshadow-sm\b/)
+    expect(screen.getByRole('textbox', { name: 'Team 1' }).className).toContain('border-line')
+  })
 })
 
 describe('Button', () => {

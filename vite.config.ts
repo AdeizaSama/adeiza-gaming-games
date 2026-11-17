@@ -10,7 +10,8 @@ export default defineConfig({
     // Runs before every test file. Tests run in Node by default; files that render React opt into a fake browser
     // with a `// @vitest-environment happy-dom` comment on their first line.
     setupFiles: ['src/testSetup.ts'],
-    // Vitest skips CSS files by default, so importing one gives an empty string. The theme tests read index.css.
-    css: { include: [/\/app\/index\.css/] },
+    // Vitest skips CSS files by default, so importing one gives an empty string. The theme tests read index.css, and
+    // the font test reads each bundled font's CSS.
+    css: { include: [/\/app\/index\.css/, /@fontsource-variable\/[^/]+\/index\.css/] },
   },
 })

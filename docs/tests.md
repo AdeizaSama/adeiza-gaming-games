@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 302 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
+**Counts:** 332 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -21,9 +21,12 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Finding games (scripts)](#finding-games-scripts) | `scripts/lib/games.test.ts` | 6 | |
 | [Charades content](#charades-content) | `src/games/charades/schema.test.ts` | 8 | |
 | [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
-| [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 8 | |
+| [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 9 | |
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
-| [Content check (scripts)](#content-check-scripts) | `scripts/lib/validate.test.ts` | 6 | |
+| [Content check (scripts)](#content-check-scripts) | `scripts/lib/validate.test.ts` | 9 | |
+| [Themes](#themes) | `src/sdk/theme/theme.test.ts` | 7 | |
+| [Contrast](#contrast) | `src/sdk/theme/contrast.test.ts` | 5 | |
+| [Theme variables](#theme-variables) | `src/sdk/theme/apply.test.ts` | 3 | |
 | [Team-turns config](#team-turns-config) | `src/sdk/formats/team-turns/config.test.ts` | 11 | |
 | [Item pool](#item-pool) | `src/sdk/formats/team-turns/pool.test.ts` | 13 | |
 | [Team-turns guards and actions](#team-turns-guards-and-actions) | `src/sdk/formats/team-turns/rules.test.ts` | 9 | |
@@ -33,8 +36,11 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 22 | |
 | [Charades views](#charades-views) | `src/games/charades/views/views.test.tsx` | 6 | |
 | [App](#app) | `src/app/App.test.tsx` | 4 | |
-| [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 3 | |
-| [UI components](#ui-components) | `src/ui/ui.test.tsx` | 6 | |
+| [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 5 | |
+| [Applying a theme](#applying-a-theme) | `src/app/theme/themes.test.tsx` | 4 | |
+| [Bundled fonts](#bundled-fonts) | `src/app/theme/fonts.test.ts` | 2 | |
+| [Theme picker](#theme-picker) | `src/app/theme/picker.test.tsx` | 2 | |
+| [UI components](#ui-components) | `src/ui/ui.test.tsx` | 7 | |
 | [Game session](#game-session) | `src/sdk/game/useGameSession.test.ts` | 9 | |
 | [Interaction primitives](#interaction-primitives) | `src/sdk/interactions/interactions.test.tsx` | 8 | |
 | [Summary and Leaderboard](#summary-and-leaderboard) | `src/sdk/interactions/summary.test.tsx` | 4 | |
@@ -287,10 +293,11 @@ Each row is a mistake TypeScript must reject.
 | 92 | rejects unknown fields in packs and items, as the zod schema does | `packJsonSchema` | The stand-in item schema | `additionalProperties: false` on the pack and on items | Editors underline typos like `maturty`, matching what CI rejects. |
 | 93 | makes item fields with a default optional, since contributors can leave them out | `packJsonSchema` | An item with `text` and a defaulted `modes` | Only `text` required | Editors must not demand `modes`, which contributors are told they can leave out. |
 | 94 | names the game in its title | `packJsonSchema` | Game id `test` | Title `Ku Zo Wasa content pack: test` | Editors show which schema a file is using. |
+| 310 | requires what a theme must say, and makes fields with a default optional | `themeJsonSchema` | The theme schema | Required: id, name, description, contributors, scheme, colors; no unknown fields; all 19 colors required | Editors ask for what CI demands and no more: fonts, radius and the rest can be left out. |
 | 95 | are named after the game | `schemaFileName` | `charades` | `charades.pack.schema.json` | Packs point at this exact name in `$schema`. |
 | 96 | are written with 2-space indents and a final newline | `schemaFileText` | `{ a: 1 }` | Two-space indented JSON ending in a newline | Readable files whose changes show cleanly in pull requests. |
-| 97 | matches the zod schemas (run `pnpm generate-schemas` if not) | Up-to-date check | Every game's `schema.ts`, and its file in `schemas/` | Each committed file equals a freshly generated one | If someone changes a schema without regenerating, editors would show old rules. This failing test names the fix. |
-| 98 | has no schemas for games that no longer exist | Up-to-date check | The files in `schemas/` | Exactly one per game that has a `schema.ts` | Stops leftover files from a renamed or removed game. |
+| 97 | matches the zod schemas (run `pnpm generate-schemas` if not) | Up-to-date check | Every game's `schema.ts` and the theme schema, and their files in `schemas/` | Each committed file equals a freshly generated one | If someone changes a schema without regenerating, editors would show old rules. This failing test names the fix. |
+| 98 | has no schemas for games that no longer exist | Up-to-date check | The files in `schemas/` | Exactly one per game that has a `schema.ts`, plus `theme.schema.json` | Stops leftover files from a renamed or removed game. |
 
 ## Loading game schemas (scripts)
 
@@ -332,6 +339,45 @@ Each row is a mistake TypeScript must reject.
 | 116 | names the item in a problem, using the game's item key | Item names | Second item `Penguin` with an extra field | Problem at `items.1 ("Penguin")` | Contributors can search for the word instead of counting items from 0. |
 | 117 | keeps the plain position when the item has no usable text | Item names | Second item with empty text | Problem at `items.1.text` | An item too broken to name still gets a clear position. |
 | 118 | runs the same checks as the app, such as the id matching the file name | Same as the app | id `zoo` in `animals.json` | Problem at `id` | CI and the app use the same `checkPack`, so they agree. |
+| 311 | finds nothing wrong with a valid theme | `checkThemeFile` | A valid theme with the right `$schema` | No problems | The content check passes good themes. |
+| 312 | reports text that isn't JSON, a wrong $schema link, and problems from the theme check | `checkThemeFile` | Broken JSON; `$schema: "theme.schema.json"` with radius 9 | "Not valid JSON…"; `$schema` should be `../../schemas/theme.schema.json`, and a `radius` problem | Same as for packs: a wrong link silently switches off editor help. |
+| 317 | reports colors that are hard to read, once the theme's shape is right | `checkThemeFile`, contrast | The valid theme with `muted: "#555555"` | One problem at `colors.muted-foreground`, naming "muted-foreground on muted" | CI catches an unreadable theme, not only a malformed one (ADR 0010). |
+
+## Themes
+
+`src/sdk/theme/theme.test.ts`, testing `color.ts`, `schema.ts` and `loadThemes.ts` in `src/sdk/theme/` (ADR 0010). The theme used is `themeData()` from `testTheme.ts`: `paper`, light, in black and white only (white surfaces with black text; black accents with white text), so it passes every contrast pair.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 303 | reads #rrggbb and oklch(L C H), with lightness as a number or a percentage | `parseColor` | `#ff8000`; `oklch(0.64 0.19 42)`; `oklch(64% .19 42)` | Red, green, blue 0–1; then lightness 0.64, chroma 0.19, hue 42, twice | Designers write hex or oklch; the contrast check needs numbers. |
+| 304 | rejects other formats and values out of range | `parseColor` | `#f80`, `orange`, `rgb(…)`, lightness 1.2, chroma 0.6, hue 400, commas | Nothing read, every time | Only colors the contrast check can work out are allowed. |
+| 305 | fills in every optional field with its default | `checkTheme` | A theme with only the required fields | System rounded fonts, radius 1, soft shadows, thin borders, 200 ms, no gradient | A first theme can be just colors. |
+| 306 | reports a missing or unreadable color, an unknown field, a font not on the list and a scheme that isn't light or dark | `checkTheme` | No `ring`; `primary: "orange"`; font `comic-sans`; scheme `both`; a `colour` field | A problem at each, the color one saying how to write a color | Every mistake at once, where it is. |
+| 307 | reports an id that isn't the file name, and a gradient from a color that isn't a token | `checkTheme` | Id `card` in `paper.json`; gradient to `sky` | The id problem; a `gradient.to` problem | Same id rule as packs. A gradient can only use the theme's own colors. |
+| 308 | returns the themes sorted by id | `loadThemes` | `paper` and `ink` | `ink`, `paper` | The picker lists themes in the same order everywhere. |
+| 309 | throws one error listing every problem in every file, and throws when there are no themes | `loadThemes` | Radius 5 in `paper.json`, a wrong id in `ink.json`; then no files | One error naming both files; "No themes found" | A broken theme is loud while it's being edited, and the app never starts without one. |
+
+## Contrast
+
+`src/sdk/theme/contrast.test.ts`, testing `src/sdk/theme/contrast.ts`: the contrast check every theme passes in CI (ADR 0010). Ratios use WCAG 2.2's formula; minimums are level AA.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 313 | matches WCAG's published values, in either order and in either color format | `contrastRatio` | Black and white; #777 on white; both orders; `oklch(1 0 0)` on black; pure red in hex and in oklch, on black; one color on itself | 21; 4.48; the same both ways; 21; 5.25 both times; 1 | The math matches the published numbers, and oklch colors (lightness, chroma and hue) come out the same as their hex twins. |
+| 314 | passes black and white everywhere | `checkContrast` | The test theme | No problems | The pair list has no impossible pair. |
+| 315 | reports each pair under its minimum at the color to change, with what it's for, its ratio and the minimum | `checkContrast` | Primary #999 with white text on it | Two problems: white on primary, and primary on the page, each 2.84 : 1, needing 4.5 : 1 | The message tells a designer exactly which color to change and by how much, without running the app. |
+| 332 | checks the outlines of buttons against the page and dialogs, and of text fields against the page | `checkContrast`, outlines | Border and input #ddd on white | Three problems, each 1.35 : 1 needing 3 : 1: border on the page, border on a card, input on the page | An outline that's barely darker than the page doesn't show where the button is (WCAG's 3 : 1 for control edges). |
+| 316 | lets large text and the focus ring pass at 3 : 1, but not below | `checkContrast` | Warning and ring #949494 (3.03 : 1); then warning #aaaaaa (2.32 : 1) | No problems; then one at `colors.warning` | WCAG allows less contrast for big text (the timer) and outlines than for body text. |
+
+## Theme variables
+
+`src/sdk/theme/apply.test.ts`, testing `themeVariables` in `src/sdk/theme/apply.ts`: the CSS variables a theme becomes (ADR 0010). Uses the test theme from `testTheme.ts`, with defaults filled in by `checkTheme`.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 324 | writes every color under its token's name, and the fonts as their families with fallbacks | Colors, fonts | Body Nunito, headings Caveat | `--primary` and `--card-foreground` as written; `"Nunito Variable", ui-rounded…` and `"Caveat Variable", ui-rounded…`; radius 1rem | Text shows in a system font while a bundled one loads, never in nothing. |
+| 325 | turns shadow and border styles into CSS: none, soft or bold shadows, and 2px or 3px outlines | Shadows, outlines | Flat; the default (soft); bold; thin; thick | `none`; Tailwind's soft shadow; a hard offset shadow in the text color; 2px; 3px | Designers pick a word; the CSS is ours, so every theme's shadows stay in proportion. |
+| 326 | fades the page from one color token to another, or leaves it plain | Gradient | No gradient; background to muted | `none`; `linear-gradient(to bottom, var(--background), var(--muted))` | A gradient can only use the theme's own colors, so it can't break contrast with anything off the list. |
 
 ## Team-turns config
 
@@ -525,15 +571,46 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 214, 215 | says "Page not found" at /chess and /charades/nope/extra, with a way back | Not-found page | A game that doesn't exist; an address with too many parts | "Page not found"; Back to games returns to the library | A mistyped or old link never shows a blank page. Runs once per address (`it.each`). |
 | 216 | has an icon for every game in the registry | `gameIcons` | Every registered game's `meta.icon` | Listed in `gameIcons` | An unlisted icon would quietly show the fallback controller. |
 
-## Theme tokens
+## Applying a theme
 
-`src/app/theme.test.ts`, testing the theme tokens in `src/app/index.css`. Reads the CSS file and every `.ts`/`.tsx` file in `src/` as text.
+`src/app/theme/themes.test.tsx`, testing `applyTheme` (`src/sdk/theme/apply.ts`) and `startingTheme` and `pickTheme` (`src/app/theme/themes.ts`), with the shipped Sunrise and Sunset themes. Screen tests (happy-dom); storage and the page's style are cleared before each.
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 181 | gives every color a value in both light and dark mode | Light and dark | The light and dark token lists | Every dark color is also set in light; light adds only `--radius`, `--font-body` and `--duration` | A color missing from dark mode would show the light value on a dark background. |
-| 182 | makes every color token available to Tailwind classes | `@theme` | Each color token | A matching `--color-<name>: var(--<name>);` line | A token Tailwind doesn't know can't be used as a class. |
+| 318 | writes the theme's variables, color scheme, name and address-bar color on the page | `applyTheme` | Apply Sunset, then Sunrise | Sunset's primary, radius 1rem, 200ms, scheme dark, `data-theme="sunset"`, its background as `theme-color`; then Sunrise's values and scheme light, still one `theme-color` tag | Every token reaches the page, and a new theme replaces the old one completely. |
+| 319 | starts a first visit on Sunrise or Sunset by the phone's setting, and after that on the theme picked | `startingTheme` | Nothing saved, phone dark; phone light; Sunrise picked, phone dark; a saved theme that no longer exists, phone dark | Sunset; Sunrise; Sunrise; Sunset | The phone's setting is read once; after that the theme never changes on its own. A removed theme falls back instead of breaking. |
+| 320 | opens on the phone's setting when storage is switched off | `startingTheme` | Storage that throws, phone dark | Sunset | Private browsing mustn't stop the app opening. |
+| 321 | remembers the style, and index.html puts it back before the app starts | No flash | Pick Sunset; clear the page's style; run the script in `index.html` | The saved style equals the page's; after the script, Sunset's primary is back | The first paint already has the right colors, before the app's code has loaded. |
+
+## Bundled fonts
+
+`src/app/theme/fonts.test.ts`, testing the font list (`src/sdk/theme/fonts.ts`) against `src/app/theme/fonts.ts` and each font's own files in `node_modules/@fontsource-variable/` (ADR 0010).
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 322 | are each imported, so their files are served | Font imports | Every bundled font in the list | An `import '<package>'` line for each in `src/app/theme/fonts.ts` | A font on the list but not imported would silently fall back to a system font. |
+| 323 | use the family name their CSS declares, and are under the license the font states | Font names, licenses | Each bundled font's `index.css` and `metadata.json` | Our `family` starts with the declared name (e.g. `"Caveat Variable"`); the font's license is `OFL-1.1` | A one-letter typo in a family name falls back silently too. Only fonts whose own license allows bundling can be on the list. |
+
+## Theme picker
+
+`src/app/theme/picker.test.tsx`, testing `src/app/theme/ThemePicker.tsx` in the library header. Screen tests (happy-dom), starting the app at `/`; storage and the page's style are cleared before each.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 329 | opens from the library header and lists every theme, with the one in use picked | Picker | Sunset picked; open the library; tap Theme | A "Theme" dialog listing Sticky Notes, Sunrise and Sunset with their descriptions, in id order; Sunset picked | Players see every theme by name, and which one they're on. |
+| 330 | applies a theme as soon as it's tapped, and remembers it | Picker | Sunrise in use; tap Theme, then Sunset, then Done; open the library again and tap Theme | The page is Sunset (dark) straight away; the dialog closes; Sunset still picked | The theme shows behind the dialog, so players see it before they decide, and it stays picked. |
+
+## Theme tokens
+
+`src/app/theme.test.ts`, testing how `src/app/index.css` maps the theme tokens to Tailwind, and the themes that ship (`src/themes/`). Reads the CSS file and every `.ts`/`.tsx` file in `src/` as text.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 181 | declares no values of its own, and makes every color token available to Tailwind classes | `@theme`, no values | `index.css`; each color token in the theme schema | No oklch or hex color and no dark-mode query; a `--color-<name>: var(--<name>);` line for every token | Values come only from theme files (ADR 0010); a token Tailwind doesn't know can't be used as a class. |
+| 182 | ships themes that pass the contrast check, and first-visit themes that are light and dark | Shipped themes | Every file in `src/themes/`; the first-visit ids | No contrast problems; Sunrise is light, Sunset is dark | The app's own themes meet the same bar as contributed ones, and a first visit can follow the phone's setting. |
+| 327 | maps the theme's fonts, shadows and outline width to classes, and puts headings in the heading font | `@theme`, utilities | `index.css` | `shadow-sm`/`shadow-lg` read `--elevation-sm`/`-lg`; `border-line` reads `--line`; `font-heading` reads `--font-heading`; h1–h5 use it; the body has `--page-gradient` | Each new token reaches the classes components already use, so components didn't need to learn about themes. |
 | 183 | is the only source of colors: no file uses a built-in Tailwind color | No raw colors | Every source file | No class like `bg-red-500` or `text-white` | Tailwind's palette is switched off, so such a class would silently do nothing; and themes (phase 2) can only change colors that come from tokens. |
+| 328 | leaves outline widths to the theme: no file uses a fixed width like border-2 | No fixed widths | Every `.tsx` component in `src/` (not tests) | No `border-2`, `border-t-4` or the like | A fixed width would ignore a thick-outline theme. `border-line` is the one to use. |
 
 ## UI components
 
@@ -542,6 +619,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 184 | drops empty values and lets a later class win over an earlier one that sets the same thing | `cn` | `'bg-primary px-4'`, `false`, `undefined`, `'bg-secondary'` | `'px-4 bg-secondary'` | A caller's `className` can adjust a component without both colors fighting. |
+| 331 | knows our own utilities: keeps the theme's outline width next to a border color, on outline buttons and text fields | `cn`, Button, Input | `border-line border-border`; `border-2` then `border-line`; `font-sans` then `font-heading font-bold`; an outline Button and an Input | Both border classes kept; `border-line` wins; `font-heading font-bold`; the button has `border-line` and `shadow-sm`, the field `border-line` | tailwind-merge didn't know `border-line`, took it for a color and dropped it, so outline buttons and fields lost their borders in chapter 08. |
 | 185 | is a button that does not submit forms unless asked to | Button | `<Button>Start</Button>` | A button named Start with `type="button"` | A plain `<button>` inside a form submits it; the setup screen has a form. |
 | 186 | calls onClick when tapped, and not when disabled | Button | Tap; then tap while disabled | Called once in total | Start must do nothing while setup is invalid. |
 | 187 | uses theme colors for its variant, and lets the caller adjust it | Button | `variant="success"`, `className="w-full"` | Classes include `bg-success` and `w-full` | Variants come from tokens; screens can still size buttons. |

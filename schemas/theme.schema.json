@@ -1,0 +1,281 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "description": "Lets your editor check this file and suggest fields. Leave it as it is.",
+      "type": "string"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Must match the file name: \"sticky-notes\" for sticky-notes.json."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The theme name players see, e.g. \"Sticky Notes\"."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "One sentence describing the look."
+    },
+    "contributors": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 39,
+        "pattern": "^[A-Za-z0-9]+(-[A-Za-z0-9]+)*$"
+      },
+      "description": "GitHub usernames of the people who made the theme. Add yours."
+    },
+    "scheme": {
+      "type": "string",
+      "enum": [
+        "light",
+        "dark"
+      ],
+      "description": "Whether the theme is light or dark. A theme is always one or the other."
+    },
+    "colors": {
+      "type": "object",
+      "properties": {
+        "background": {
+          "type": "string",
+          "description": "A color: \"#rrggbb\", or \"oklch(lightness chroma hue)\" with lightness 0–1, chroma 0–0.5, hue 0–360."
+        },
+        "foreground": {
+          "type": "string",
+          "description": "A color: \"#rrggbb\", or \"oklch(lightness chroma hue)\" with lightness 0–1, chroma 0–0.5, hue 0–360."
+        },
+        "card": {
+          "type": "string",
+          "description": "A color: \"#rrggbb\", or \"oklch(lightness chroma hue)\" with lightness 0–1, chroma 0–0.5, hue 0–360."
+        },
+        "card-foreground": {
+          "type": "string",
+          "description": "A color: \"#rrggbb\", or \"oklch(lightness chroma hue)\" with lightness 0–1, chroma 0–0.5, hue 0–360."
+        },
+        "primary": {
+          "type": "string",
+          "description": "A color: \"#rrggbb\", or \"oklch(lightness chroma hue)\" with lightness 0–1, chroma 0–0.5, hue 0–360."
+        },
+        "primary-foreground": {
+          "type": "string",
+          "description": "A color: \"#rrggbb\", or \"oklch(lightness chroma hue)\" with lightness 0–1, chroma 0–0.5, hue 0–360."
+        },
+        "secondary": {
+          "type": "string",
+          "description": "A color: \"#rrggbb\", or \"oklch(lightness chroma hue)\" with lightness 0–1, chroma 0–0.5, hue 0–360."
+        },
+        "secondary-foreground": {
+          "type": "string",
+          "description": "A color: \"#rrggbb\", or \"oklch(lightness chroma hue)\" with lightness 0–1, chroma 0–0.5, hue 0–360."
+        },
+        "muted": {
+          "type": "string",
+          "description": "A color: \"#rrggbb\", or \"oklch(lightness chroma hue)\" with lightness 0–1, chroma 0–0.5, hue 0–360."
+        },
+        "muted-foreground": {
+          "type": "string",
+          "description": "A color: \"#rrggbb\", or \"oklch(lightness chroma hue)\" with lightness 0–1, chroma 0–0.5, hue 0–360."
+        },
+        "success": {
+          "type": "string",
+          "description": "A color: \"#rrggbb\", or \"oklch(lightness chroma hue)\" with lightness 0–1, chroma 0–0.5, hue 0–360."
+        },
+        "success-foreground": {
+          "type": "string",
+          "description": "A color: \"#rrggbb\", or \"oklch(lightness chroma hue)\" with lightness 0–1, chroma 0–0.5, hue 0–360."
+        },
+        "warning": {
+          "type": "string",
+          "description": "A color: \"#rrggbb\", or \"oklch(lightness chroma hue)\" with lightness 0–1, chroma 0–0.5, hue 0–360."
+        },
+        "warning-foreground": {
+          "type": "string",
+          "description": "A color: \"#rrggbb\", or \"oklch(lightness chroma hue)\" with lightness 0–1, chroma 0–0.5, hue 0–360."
+        },
+        "destructive": {
+          "type": "string",
+          "description": "A color: \"#rrggbb\", or \"oklch(lightness chroma hue)\" with lightness 0–1, chroma 0–0.5, hue 0–360."
+        },
+        "destructive-foreground": {
+          "type": "string",
+          "description": "A color: \"#rrggbb\", or \"oklch(lightness chroma hue)\" with lightness 0–1, chroma 0–0.5, hue 0–360."
+        },
+        "border": {
+          "type": "string",
+          "description": "A color: \"#rrggbb\", or \"oklch(lightness chroma hue)\" with lightness 0–1, chroma 0–0.5, hue 0–360."
+        },
+        "input": {
+          "type": "string",
+          "description": "A color: \"#rrggbb\", or \"oklch(lightness chroma hue)\" with lightness 0–1, chroma 0–0.5, hue 0–360."
+        },
+        "ring": {
+          "type": "string",
+          "description": "A color: \"#rrggbb\", or \"oklch(lightness chroma hue)\" with lightness 0–1, chroma 0–0.5, hue 0–360."
+        }
+      },
+      "required": [
+        "background",
+        "foreground",
+        "card",
+        "card-foreground",
+        "primary",
+        "primary-foreground",
+        "secondary",
+        "secondary-foreground",
+        "muted",
+        "muted-foreground",
+        "success",
+        "success-foreground",
+        "warning",
+        "warning-foreground",
+        "destructive",
+        "destructive-foreground",
+        "border",
+        "input",
+        "ring"
+      ],
+      "additionalProperties": false,
+      "description": "Every color token. Each \"-foreground\" color is for text on the color it is named after."
+    },
+    "fonts": {
+      "description": "The font for text, and the font for headings and the big words on cards.",
+      "default": {},
+      "type": "object",
+      "properties": {
+        "body": {
+          "default": "system-rounded",
+          "type": "string",
+          "enum": [
+            "system-rounded",
+            "system-sans",
+            "system-serif",
+            "caveat",
+            "nunito"
+          ],
+          "description": "A font from the list in src/sdk/theme/fonts.ts."
+        },
+        "heading": {
+          "default": "system-rounded",
+          "type": "string",
+          "enum": [
+            "system-rounded",
+            "system-sans",
+            "system-serif",
+            "caveat",
+            "nunito"
+          ],
+          "description": "A font from the list in src/sdk/theme/fonts.ts."
+        }
+      },
+      "additionalProperties": false
+    },
+    "radius": {
+      "default": 1,
+      "description": "Corner rounding in rem: 0 is square, 2 is very round.",
+      "type": "number",
+      "minimum": 0,
+      "maximum": 2
+    },
+    "shadow": {
+      "default": "soft",
+      "description": "Shadows under cards and buttons: none, soft, or bold and sharp.",
+      "type": "string",
+      "enum": [
+        "flat",
+        "soft",
+        "bold"
+      ]
+    },
+    "border": {
+      "default": "thin",
+      "description": "How heavy outlines are.",
+      "type": "string",
+      "enum": [
+        "thin",
+        "thick"
+      ]
+    },
+    "gradient": {
+      "description": "Fades the page background from one color token to another, top to bottom. Leave out for a plain background.",
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string",
+          "enum": [
+            "background",
+            "foreground",
+            "card",
+            "card-foreground",
+            "primary",
+            "primary-foreground",
+            "secondary",
+            "secondary-foreground",
+            "muted",
+            "muted-foreground",
+            "success",
+            "success-foreground",
+            "warning",
+            "warning-foreground",
+            "destructive",
+            "destructive-foreground",
+            "border",
+            "input",
+            "ring"
+          ]
+        },
+        "to": {
+          "type": "string",
+          "enum": [
+            "background",
+            "foreground",
+            "card",
+            "card-foreground",
+            "primary",
+            "primary-foreground",
+            "secondary",
+            "secondary-foreground",
+            "muted",
+            "muted-foreground",
+            "success",
+            "success-foreground",
+            "warning",
+            "warning-foreground",
+            "destructive",
+            "destructive-foreground",
+            "border",
+            "input",
+            "ring"
+          ]
+        }
+      },
+      "required": [
+        "from",
+        "to"
+      ],
+      "additionalProperties": false
+    },
+    "duration": {
+      "default": 200,
+      "description": "How long animations take, in milliseconds.",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 400
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "description",
+    "contributors",
+    "scheme",
+    "colors"
+  ],
+  "additionalProperties": false,
+  "title": "Ku Zo Wasa theme"
+}

@@ -304,6 +304,7 @@ docs/decisions/        decision records
 | `ui/` | `ui/` only. |
 | `app/` | `app/`, `app/registry/`, `sdk/`, `ui/`. Never a game directly. |
 | `app/registry/` | `games/`, `sdk/`. |
+| `themes/` | Nothing: theme files are data (JSON). The app loads them; the SDK checks them. |
 | `scripts/` (outside `src/`) | `scripts/`, `sdk/`, and `games/<id>/schema.ts`. Never a game's other files or `app/`. |
 
 Packages from npm (React, zod, …) are allowed everywhere, except React in `schema.ts`.
@@ -365,9 +366,11 @@ One file per pack: `src/games/<id>/content/<pack-id>.json`.
 
 ## 11. Themes
 
-`src/themes/<id>.json` holds design tokens only (colors for light/dark, fonts, radius, motion). The app maps them to CSS variables; components use variables, never raw colors.
+`src/themes/<id>.json` holds design tokens only (colors, fonts, radius, motion). Each theme is **light or dark**, never both: picking a theme picks exactly what players see, whatever the phone's dark-mode setting ([ADR 0010](decisions/0010-theme-files.md)). The app writes the chosen theme's tokens as CSS variables on `<html>`; components use variables, never raw colors. Three themes ship: Sunrise (light), Sunset (dark) and Sticky Notes (light). A first visit opens on Sunrise or Sunset by the phone's dark-mode setting; after that the theme changes only when a player picks one.
 
-**The tokens** (one default theme, in `src/app/index.css`, until theme files land):
+**Contrast** ([ADR 0010](decisions/0010-theme-files.md)): `pnpm validate-content` checks every pair of colors the app draws text in (the list is `contrastPairs` in `src/sdk/theme/contrast.ts`) against WCAG 2.2 level AA: at least 4.5 : 1 for text, 3 : 1 for large text, the focus outline and the outlines of buttons and text fields. A component that starts drawing a new pair adds it to the list.
+
+**The tokens:**
 
 | Token | Used for |
 |---|---|
@@ -379,10 +382,13 @@ One file per pack: `src/games/<id>/content/<pack-id>.json`.
 | `success`, `warning`, `destructive` (each with `-foreground`) | Got it, time running out, skip or quit |
 | `border`, `input`, `ring` | Borders, form fields, the keyboard focus outline |
 | `radius` | Corner rounding (`rounded-sm` to `rounded-xl` scale from it) |
-| `font-body` | The font |
+| `fonts.body`, `fonts.heading` | The text font, and the font for headings and the word on a card (`font-heading`), each from the font list in `src/sdk/theme/fonts.ts` |
+| `shadow` | `flat`, `soft` or `bold` shadows under cards (`shadow-sm`) and dialogs (`shadow-lg`) |
+| `border` | `thin` (2px) or `thick` (3px) outlines. Components use `border-line`, never a fixed width like `border-2` |
+| `gradient` | Optional: the page fades from one color token to another |
 | `duration` | How long transitions take |
 
-Every color has a light and a dark value; dark mode follows the phone's setting. Tailwind's built-in palette is switched off, so classes like `bg-red-500` produce nothing; a test fails if any file uses one. A theme pull request touches one JSON file plus an optional font import. Game-specific skins (e.g. Mafia's werewolf names) are **content**, not themes.
+Tailwind's built-in palette is switched off, so classes like `bg-red-500` produce nothing; a test fails if any file uses one. A theme pull request is one JSON file. **Fonts** come from a list of system fonts and open-licensed (OFL) fonts bundled from npm; a font downloads only when text on the page uses it. Adding a font to the list is a code change. Game-specific skins (e.g. Mafia's werewolf names) are **content**, not themes.
 
 ## 12. Engineering rules
 
@@ -406,5 +412,5 @@ Every color has a light and a dark value; dark mode follows the phone's setting.
 - [ ] At least one content pack passing validation
 - [ ] Views use interaction primitives (custom UI justified)
 - [ ] Works through setup → turns → results on a phone, including resume after refresh
-- [ ] Looks right under every shipped theme, light and dark
+- [ ] Looks right under every shipped theme
 - [ ] `README.md` for the game: rules summary, content guidelines, how to add a pack

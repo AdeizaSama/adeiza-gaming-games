@@ -1,6 +1,8 @@
 import { checkPack, type PackProblem } from '../../src/sdk/content/loadPacks'
+import { checkContrast } from '../../src/sdk/theme/contrast'
+import { checkTheme } from '../../src/sdk/theme/loadThemes'
 import type { GameSchema } from './gameSchema'
-import { schemaFileName } from './jsonSchema'
+import { schemaFileName, themeSchemaFileName } from './jsonSchema'
 
 /** What checking one pack file found: how many items it has (when it's valid) and what's wrong with it. */
 export interface PackFileReport {
@@ -58,4 +60,30 @@ export function checkPackFile(gameId: string, file: string, text: string, schema
     items: problems.length === 0 && result.ok ? result.pack.items.length : null,
     problems: problems.map((problem) => ({ ...problem, path: withItemName(problem.path, data, schema) })),
   }
+}
+
+/** The `$schema` value a theme in `src/themes/` must have, if it has one. */
+export const expectedThemeSchemaLink = `../../schemas/${themeSchemaFileName}`
+
+/**
+ * Checks one theme file's text, as the content check in CI does: valid JSON, the right `$schema` link if it has
+ * one, `checkTheme` from the SDK (the same check the app runs), and, for a theme whose shape is right, contrast.
+ */
+export function checkThemeFile(file: string, text: string): PackProblem[] {
+  let data: unknown
+  try {
+    data = JSON.parse(text)
+  } catch (error) {
+    return [{ path: '', message: `Not valid JSON: ${(error as Error).message}` }]
+  }
+
+  const problems: PackProblem[] = []
+  const link = (data as { $schema?: unknown } | null)?.$schema
+  if (link !== undefined && link !== expectedThemeSchemaLink) {
+    problems.push({ path: '$schema', message: `Should be "${expectedThemeSchemaLink}"` })
+  }
+  const result = checkTheme(file, data)
+  if (!result.ok) problems.push(...result.problems)
+  else problems.push(...checkContrast(result.theme))
+  return problems
 }

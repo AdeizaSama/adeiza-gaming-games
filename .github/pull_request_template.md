@@ -27,6 +27,11 @@ Delete the sections that don't apply.
 - [ ] `maturity` is set correctly
 - [ ] Nothing about private individuals, nothing hateful, text only
 
+**Themes**
+
+- [ ] One file in `src/themes/`, passing `pnpm validate-content` (its shape, and contrast for every text color)
+- [ ] Checked on a phone: setup, a turn, review and results
+
 **Games** (see the [Definition of Done](https://github.com/AdeizaSama/adeiza-gaming-games/blob/main/docs/game-standard.md#13-definition-of-done-per-game))
 
 - [ ] Fits an existing format

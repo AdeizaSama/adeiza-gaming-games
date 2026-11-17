@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { loadGameSchema } from './gameSchema'
 import { findGames } from './games'
-import { packJsonSchema, schemaFileName, schemaFileText } from './jsonSchema'
+import { packJsonSchema, schemaFileName, schemaFileText, themeJsonSchema, themeSchemaFileName } from './jsonSchema'
 
 // A stand-in item schema with one required field and one with a default, like Charades' `text` and `modes`.
 const TestItem = z.strictObject({ text: z.string(), modes: z.array(z.string()).default(['describe']) })
@@ -32,6 +32,16 @@ describe('packJsonSchema', () => {
   })
 })
 
+describe('themeJsonSchema', () => {
+  const schema = themeJsonSchema()
+
+  it('requires what a theme must say, and makes fields with a default optional', () => {
+    expect(schema.required).toEqual(['id', 'name', 'description', 'contributors', 'scheme', 'colors'])
+    expect(schema.additionalProperties).toBe(false)
+    expect((schema.properties as Record<string, { required?: string[] }>).colors.required).toHaveLength(19)
+  })
+})
+
 describe('schema files', () => {
   it('are named after the game', () => {
     expect(schemaFileName('charades')).toBe('charades.pack.schema.json')
@@ -55,10 +65,13 @@ describe('the committed schemas/ folder', () => {
       const committed = existsSync(file) ? readFileSync(file, 'utf8').replace(/\r\n/g, '\n') : '(missing)'
       expect(committed, file).toBe(schemaFileText(packJsonSchema(game.id, itemSchema)))
     }
+    const themeFile = join(schemasDir, themeSchemaFileName)
+    const committedTheme = existsSync(themeFile) ? readFileSync(themeFile, 'utf8').replace(/\r\n/g, '\n') : '(missing)'
+    expect(committedTheme, themeFile).toBe(schemaFileText(themeJsonSchema()))
   })
 
   it('has no schemas for games that no longer exist', () => {
-    const expected = games.map((game) => schemaFileName(game.id)).sort()
+    const expected = [...games.map((game) => schemaFileName(game.id)), themeSchemaFileName].sort()
     expect(readdirSync(schemasDir).sort()).toEqual(expected)
   })
 })
