@@ -30,7 +30,7 @@ describe('theme picker', () => {
     await user.click(screen.getByRole('button', { name: 'Theme' }))
     const dialog = within(screen.getByRole('dialog', { name: 'Theme' }))
     expect(dialog.getAllByRole('radio').map((input) => input.closest('label')?.textContent)).toEqual([
-      'AaSticky NotesYellow notes on paper, written in marker.',
+      'AaSticky NotesYellow notes taped to lined paper, written in marker.',
       'AaSunriseWarm cream and orange, bright and friendly.',
       'AaSunsetSunrise after dark: warm browns with a glowing orange.',
     ])

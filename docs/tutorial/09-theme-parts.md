@@ -208,3 +208,28 @@ A modal `<dialog>` is already fixed-positioned by the browser and clips anything
 ### How to verify
 
 `pnpm test src/app/theme`: tests 335 and 336 cover every decoration. Steps 7–10 put them on screen.
+
+---
+
+## Step 7: Sticky Notes, dressed
+
+**What:** a `parts` section in `src/themes/sticky-notes.json`. No code.
+
+```json
+"parts": {
+  "surface": "sticky-note",
+  "button": "sticker",
+  "background": "lined-paper",
+  "decoration": "tape",
+  "icons": "bold"
+}
+```
+
+**Why:** the first theme to use the menu, and proof that a theme pull request is still one JSON file.
+
+What players see: the page is ruled paper with a margin line. Cards are notes with a sticky strip, tilted a little, alternating down a list. The flash card and dialogs are taped on. Filled buttons are stickers with a rim, and icons are drawn in heavier lines.
+
+### How to verify
+
+- `pnpm validate-content`: Sticky Notes passes.
+- On a phone, pick Sticky Notes and go through setup, a turn, review and results.

@@ -2,7 +2,7 @@
   "$schema": "../../schemas/theme.schema.json",
   "id": "sticky-notes",
   "name": "Sticky Notes",
-  "description": "Yellow notes on paper, written in marker.",
+  "description": "Yellow notes taped to lined paper, written in marker.",
   "contributors": ["AdeizaSama"],
   "scheme": "light",
   "colors": {
@@ -30,5 +30,12 @@
   "radius": 0.25,
   "shadow": "bold",
   "border": "thick",
-  "duration": 200
+  "duration": 200,
+  "parts": {
+    "surface": "sticky-note",
+    "button": "sticker",
+    "background": "lined-paper",
+    "decoration": "tape",
+    "icons": "bold"
+  }
 }
