@@ -366,7 +366,7 @@ One file per pack: `src/games/<id>/content/<pack-id>.json`.
 
 ## 11. Themes
 
-`src/themes/<id>.json` holds design tokens only (colors, fonts, radius, motion). Each theme is **light or dark**, never both: picking a theme picks exactly what players see, whatever the phone's dark-mode setting ([ADR 0010](decisions/0010-theme-files.md)). The app writes the chosen theme's tokens as CSS variables on `<html>`; components use variables, never raw colors. Two themes ship: Sunrise (light) and Sunset (dark).
+`src/themes/<id>.json` holds design tokens only (colors, fonts, radius, motion). Each theme is **light or dark**, never both: picking a theme picks exactly what players see, whatever the phone's dark-mode setting ([ADR 0010](decisions/0010-theme-files.md)). The app writes the chosen theme's tokens as CSS variables on `<html>`; components use variables, never raw colors. Three themes ship: Sunrise (light), Sunset (dark) and Sticky Notes (light). A first visit opens on Sunrise or Sunset by the phone's dark-mode setting; after that the theme changes only when a player picks one.
 
 **Contrast** ([ADR 0010](decisions/0010-theme-files.md)): `pnpm validate-content` checks every pair of colors the app draws text in (the list is `contrastPairs` in `src/sdk/theme/contrast.ts`) against WCAG 2.2 level AA: at least 4.5 : 1 for text, 3 : 1 for large text and the focus outline. A component that starts drawing a new pair adds it to the list.
 
@@ -388,7 +388,7 @@ One file per pack: `src/games/<id>/content/<pack-id>.json`.
 | `gradient` | Optional: the page fades from one color token to another |
 | `duration` | How long transitions take |
 
-Every color has a light and a dark value; dark mode follows the phone's setting. Tailwind's built-in palette is switched off, so classes like `bg-red-500` produce nothing; a test fails if any file uses one. A theme pull request touches one JSON file plus an optional font import. Game-specific skins (e.g. Mafia's werewolf names) are **content**, not themes.
+Tailwind's built-in palette is switched off, so classes like `bg-red-500` produce nothing; a test fails if any file uses one. A theme pull request is one JSON file. **Fonts** come from a list of system fonts and open-licensed (OFL) fonts bundled from npm; a font downloads only when text on the page uses it. Adding a font to the list is a code change. Game-specific skins (e.g. Mafia's werewolf names) are **content**, not themes.
 
 ## 12. Engineering rules
 
@@ -412,5 +412,5 @@ Every color has a light and a dark value; dark mode follows the phone's setting.
 - [ ] At least one content pack passing validation
 - [ ] Views use interaction primitives (custom UI justified)
 - [ ] Works through setup → turns → results on a phone, including resume after refresh
-- [ ] Looks right under every shipped theme, light and dark
+- [ ] Looks right under every shipped theme
 - [ ] `README.md` for the game: rules summary, content guidelines, how to add a pack

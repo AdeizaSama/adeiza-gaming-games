@@ -50,7 +50,25 @@ Each game's rules are in `src/games/<game>/rules.md`, shown on its How to play s
 
 ## 2. Add a theme (no code)
 
-Themes are JSON files of design tokens (colors for light and dark mode, fonts, corner radius, motion) in `src/themes/`. *Theme support is planned; the token format will be documented here when it lands.*
+A theme is one JSON file in `src/themes/`: its colors, fonts, corner rounding, shadows and outlines. Players pick it with the palette button on the home page.
+
+1. **Copy a theme** that's close to your idea (`sunrise.json` for light, `sunset.json` for dark) and rename it. The file name is the theme's `id`: `ocean.json` has `"id": "ocean"`.
+2. **Choose `"scheme"`**: `"light"` or `"dark"`. A theme is always one or the other: it doesn't change with the phone's dark mode. For both versions of an idea, make two themes.
+3. **Set every color.** Each `-foreground` color is for text on the color it's named after: `primary-foreground` is the label on a `primary` button. Write colors as `"#ff8800"` or `"oklch(0.64 0.19 42)"` (lightness 0–1, chroma 0–0.5, hue 0–360).
+4. **Pick the rest** (all optional):
+   - `fonts.body` and `fonts.heading`: ids from the font list in `src/sdk/theme/fonts.ts`, such as `nunito` or `caveat`.
+   - `radius`: corner rounding in rem, from 0 (square) to 2.
+   - `shadow`: `flat`, `soft` or `bold`.
+   - `border`: `thin` or `thick`.
+   - `gradient`: `{ "from": "background", "to": "muted" }` fades the page between two of your colors.
+   - `duration`: animation speed in milliseconds.
+5. **Credit yourself** in `contributors`, and keep the `$schema` line: with it, your editor suggests fields and explains each one.
+
+**Contrast is checked for you.** When you open a pull request, the "Validate content" check also measures every text color against its background and fails if one is too hard to read, e.g. `primary-foreground on primary (text) has a contrast of 3.52 : 1; it needs at least 4.5 : 1`. Make one of the two colors lighter or darker until it passes. `pnpm validate-content` runs the same check locally.
+
+A font that isn't on the list needs a code change (it has to be open-licensed and bundled): open an issue asking for it.
+
+Full rules: [Game Standard §11](docs/game-standard.md#11-themes).
 
 ## 3. Add a game (code)
 

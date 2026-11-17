@@ -286,3 +286,48 @@ It passed the contrast check on the first run. Had it not, `pnpm validate-conten
 
 - `pnpm validate-content` lists `src/themes/sticky-notes.json` with a ✓.
 - On a phone, pick Sticky Notes in the theme picker, then go through setup and a turn: handwritten headings, yellow cards with hard shadows, square-ish corners.
+
+---
+
+## Step 9: Docs
+
+**What:**
+
+- CONTRIBUTING's "Add a theme" section, with real steps.
+- The Game Standard's §11: three themes, the first visit, fonts.
+- The Definition of Done: "every shipped theme", without "light and dark".
+- The README's status.
+
+**Why:** a designer's first stop is CONTRIBUTING, and until now it said themes were planned. It now walks through copying a theme, choosing a scheme, setting colors and reading a contrast message.
+
+### How to verify
+
+Follow CONTRIBUTING's steps to make a theme: copy `sunrise.json` to `ocean.json`, change `id`, `name` and a few colors, run `pnpm validate-content`, and pick it in the theme picker with `pnpm dev`.
+
+---
+
+## Chapter summary
+
+The look of the app is now data. A designer adds a theme as one JSON file, and CI checks both its shape and whether it can be read.
+
+| Step | What | Contract |
+|---|---|---|
+| 1 | ADR 0010: theme files | Yes |
+| 2 | The theme schema, colors in hex or oklch, `loadThemes`; themes in the content check and JSON Schemas | Yes: theme format |
+| 3 | The contrast check (WCAG 2.2 AA) in CI | Yes |
+| 4 | Sunrise and Sunset; `applyTheme`; no flash on open; the first visit follows the phone once | |
+| 5 | Bundled fonts: Caveat and Nunito, licenses checked | |
+| 6 | Heading font, shadows, outline width and gradient on screen; `border-line` | |
+| 7 | The theme picker | |
+| 8 | Sticky Notes | |
+| 9 | CONTRIBUTING, the standard, README | |
+
+**What we learned:**
+
+- Measure before trusting. The light colors we'd used since chapter 04 failed four contrast pairs; nobody had noticed, because nothing measured them.
+- A first paint happens before the app's JavaScript runs. Saving the applied style and putting it back from a few lines in `index.html` costs nothing and needs no theme data there.
+- A variable can't point at itself. Tailwind's own names (`--shadow-sm`) and the theme's (`--elevation-sm`) have to differ.
+
+**Tests:** 330 runtime tests and 32 compile-time checks.
+
+**Next:** chapter 09 adds theme parts (paper, glass, chalk, animated backgrounds, decorations) and two more themes, Space Travel and Chalkboard.
