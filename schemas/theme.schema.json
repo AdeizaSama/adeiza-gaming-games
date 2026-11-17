@@ -277,7 +277,11 @@
           "description": "How cards and dialogs look.",
           "type": "string",
           "enum": [
-            "plain"
+            "plain",
+            "paper",
+            "sticky-note",
+            "glass",
+            "chalkboard"
           ]
         },
         "button": {

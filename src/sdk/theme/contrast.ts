@@ -69,12 +69,17 @@ export const contrastPairs: Pair[] = [
   { text: 'input', on: 'background', minimum: large, what: 'the outline of a text field' },
 ]
 
+/** Pairs that only some parts draw (ADR 0011). */
+const glassPairs: Pair[] = [{ text: 'card-foreground', on: 'background', minimum: text, what: 'text on see-through glass cards' }]
+
 /**
  * Checks that every pair of colors the app draws can be read (ADR 0010). One problem per pair under its minimum,
- * at the color to change, saying what it's used for, its ratio and the minimum.
+ * at the color to change, saying what it's used for, its ratio and the minimum. A theme with glass cards also has
+ * their text checked against the page behind them (ADR 0011).
  */
-export function checkContrast(theme: Pick<Theme, 'colors'>): PackProblem[] {
-  return contrastPairs.flatMap(({ text: front, on, minimum, what }) => {
+export function checkContrast(theme: Pick<Theme, 'colors'> & { parts?: Pick<Theme['parts'], 'surface'> }): PackProblem[] {
+  const pairs = theme.parts?.surface === 'glass' ? [...contrastPairs, ...glassPairs] : contrastPairs
+  return pairs.flatMap(({ text: front, on, minimum, what }) => {
     const ratio = contrastRatio(theme.colors[front], theme.colors[on])
     // Rounded down, so a ratio shown as 4.5 always passes a 4.5 minimum.
     const shown = Math.floor(ratio * 100) / 100

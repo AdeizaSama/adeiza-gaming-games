@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 338 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
+**Counts:** 339 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -25,7 +25,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
 | [Content check (scripts)](#content-check-scripts) | `scripts/lib/validate.test.ts` | 9 | |
 | [Themes](#themes) | `src/sdk/theme/theme.test.ts` | 7 | |
-| [Contrast](#contrast) | `src/sdk/theme/contrast.test.ts` | 5 | |
+| [Contrast](#contrast) | `src/sdk/theme/contrast.test.ts` | 6 | |
 | [Theme variables](#theme-variables) | `src/sdk/theme/apply.test.ts` | 4 | |
 | [Team-turns config](#team-turns-config) | `src/sdk/formats/team-turns/config.test.ts` | 11 | |
 | [Item pool](#item-pool) | `src/sdk/formats/team-turns/pool.test.ts` | 13 | |
@@ -368,6 +368,7 @@ Each row is a mistake TypeScript must reject.
 | 314 | passes black and white everywhere | `checkContrast` | The test theme | No problems | The pair list has no impossible pair. |
 | 315 | reports each pair under its minimum at the color to change, with what it's for, its ratio and the minimum | `checkContrast` | Primary #999 with white text on it | Two problems: white on primary, and primary on the page, each 2.84 : 1, needing 4.5 : 1 | The message tells a designer exactly which color to change and by how much, without running the app. |
 | 332 | checks the outlines of buttons against the page and dialogs, and of text fields against the page | `checkContrast`, outlines | Border and input #ddd on white | Three problems, each 1.35 : 1 needing 3 : 1: border on the page, border on a card, input on the page | An outline that's barely darker than the page doesn't show where the button is (WCAG's 3 : 1 for control edges). |
+| 339 | checks the text on glass cards against the page behind them, and only for glass | `checkContrast`, glass | White text on black cards, on a white page; once with plain cards, once with glass | Glass adds exactly one problem: card-foreground on background, 1 : 1 | A glass card lets the page show through, so its text has to read against the page as well as the card (ADR 0011). |
 | 316 | lets large text and the focus ring pass at 3 : 1, but not below | `checkContrast` | Warning and ring #949494 (3.03 : 1); then warning #aaaaaa (2.32 : 1) | No problems; then one at `colors.warning` | WCAG allows less contrast for big text (the timer) and outlines than for body text. |
 
 ## Theme variables

@@ -74,3 +74,41 @@ Test 334 feeds it a file breaking each rule, so we know the check on `parts.css`
 ### How to verify
 
 `pnpm test src/app/theme src/sdk/theme src/ui`: tests 333–338. Nothing changes on screen: every theme is still plain.
+
+---
+
+## Step 3: Surfaces
+
+**What:** four looks for cards and dialogs in `parts.css`: `paper`, `sticky-note`, `glass` and `chalkboard`, added to the schema's menu. Glass cards get an extra contrast pair.
+
+**Why:** cards are where most of a theme's character shows: the flash card, the game cards, the pack and mode choices, the dialogs.
+
+### The looks
+
+| Surface | How it's drawn |
+|---|---|
+| `paper` | A fine grain, and the bottom edge a shade darker |
+| `sticky-note` | A darker sticky strip across the top, and a slight tilt that alternates down a list |
+| `glass` | The card color at 72%, the page blurred behind it (`backdrop-filter`), a sheen across the top and a thin bright rim |
+| `chalkboard` | Chalk dust over the board, inside a 5px frame in the theme's border color |
+
+Every color comes from the theme's tokens, mixed with `color-mix(in oklch, …)`, so each look suits any palette.
+
+### Three rules that shaped the CSS
+
+1. **Tilt with `rotate`, not `transform`.** In Tailwind 4, `active:scale-[0.98]` (the press effect on game cards) sets the separate `scale` property. `rotate` adds to it; a `transform` would have replaced it.
+2. **Never set `box-shadow` on a surface.** Shadows come from the theme's `shadow` token, and the review list's unlocked rows draw their ring with box-shadow. Setting it here would have erased both.
+3. **Edges as `outline`, but not while focused.** An outline takes no space, so it can draw a frame. But keyboard focus is also an outline, so frames use `:not(:focus-visible)` and the focus ring always shows.
+
+### Textures without image files
+
+`--grain-dark` and `--grain-light` are tiny SVGs written into the CSS as data URLs. `feTurbulence` makes noise and `feColorMatrix` turns it into one color at 7–9% opacity: grain for paper, dust for chalk. They're ours, under the MIT license, so there are no image licenses to track.
+
+### Glass and contrast
+
+A glass card shows the page through it, so the text on it has to read against the page too. When a theme picks `glass`, `checkContrast` adds `card-foreground` on `background` (test 339).
+
+### How to verify
+
+- `pnpm test src/sdk/theme src/app/theme`: tests 335, 336 and 339.
+- No theme uses these yet: step 7 dresses Sticky Notes.

@@ -35,7 +35,7 @@ const ColorTokenName = z.enum(colorTokens)
  * default: the app's plain look. Adding an option here means adding its CSS there.
  */
 export const themeParts = {
-  surface: ['plain'],
+  surface: ['plain', 'paper', 'sticky-note', 'glass', 'chalkboard'],
   button: ['solid'],
   background: ['flat'],
   decoration: ['none'],

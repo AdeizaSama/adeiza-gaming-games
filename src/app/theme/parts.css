@@ -15,3 +15,55 @@
 .lucide {
   stroke-width: var(--icon-stroke);
 }
+
+/*
+ * Textures, drawn here as tiny SVG noise (MIT, no image files): dark grain for paper, light dust for chalk.
+ * feTurbulence makes the noise; feColorMatrix turns it into one color at a low opacity.
+ */
+:root {
+  --grain-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --grain-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/*
+ * Surfaces: cards and dialogs, found by their bg-card class (text fields use it too, so they're left out).
+ * Tilt uses the rotate property, which adds to Tailwind's press effect (the scale property) instead of replacing it.
+ * Surfaces never set box-shadow: the theme's shadow token owns it, and rings drawn with it must survive.
+ * Edges use outline, which takes no space, except while the element shows keyboard focus.
+ */
+
+/* Paper: a fine grain, and the bottom edge a shade darker, like a sheet catching the light. */
+[data-surface='paper'] .bg-card:not(input) {
+  background-image:
+    var(--grain-dark),
+    linear-gradient(to bottom, transparent 80%, color-mix(in oklch, var(--foreground) 6%, transparent));
+}
+
+/* Sticky note: the sticky strip across the top a shade darker, and a slight tilt, alternating down a list. */
+[data-surface='sticky-note'] .bg-card:not(input) {
+  background-image: linear-gradient(to bottom, color-mix(in oklch, var(--foreground) 7%, transparent) 0 0.9rem, transparent 0.9rem);
+  rotate: -0.6deg;
+}
+[data-surface='sticky-note'] .bg-card:not(input):nth-of-type(even) {
+  rotate: 0.5deg;
+}
+
+/* Glass: the page shows through, blurred, with a sheen across the top and a thin bright rim. */
+[data-surface='glass'] .bg-card:not(input) {
+  background-color: color-mix(in oklch, var(--card) 72%, transparent);
+  background-image: linear-gradient(to bottom, color-mix(in oklch, var(--card-foreground) 10%, transparent), transparent 45%);
+  backdrop-filter: blur(12px) saturate(1.2);
+}
+[data-surface='glass'] .bg-card:not(input):not(:focus-visible) {
+  outline: 1px solid color-mix(in oklch, var(--card-foreground) 22%, transparent);
+  outline-offset: -1px;
+}
+
+/* Chalkboard: chalk dust over the board, inside a frame in the theme's border color. */
+[data-surface='chalkboard'] .bg-card:not(input) {
+  background-image: var(--grain-light);
+}
+[data-surface='chalkboard'] .bg-card:not(input):not(:focus-visible) {
+  outline: 5px solid var(--border);
+  outline-offset: -5px;
+}
