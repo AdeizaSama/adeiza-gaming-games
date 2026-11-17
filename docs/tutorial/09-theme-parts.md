@@ -233,3 +233,29 @@ What players see: the page is ruled paper with a margin line. Cards are notes wi
 
 - `pnpm validate-content`: Sticky Notes passes.
 - On a phone, pick Sticky Notes and go through setup, a turn, review and results.
+
+---
+
+## Step 8: Fonts for space and chalk
+
+**What:** three more fonts on the list, all SIL Open Font License:
+
+| Font | For | Latin file |
+|---|---|---|
+| Orbitron | Space Travel's headings: wide and futuristic | 12 KB |
+| Exo 2 | Space Travel's text: clean, slightly technical | 41 KB |
+| Gochi Hand | Chalkboard's headings: handwriting like chalk | 20 KB |
+
+**Why:** a theme's headings carry most of its personality.
+
+### A font we didn't take
+
+The first pick for Chalkboard was Playpen Sans. Its Latin file is 196 KB, which a phone would download just to draw titles. Gochi Hand does the job in 20 KB. The comment on the font list now says to check the size before adding a font.
+
+### Not every font comes in one variable file
+
+Gochi Hand has a single weight, so it's in `@fontsource/gochi-hand`, not `@fontsource-variable/…`. The font test now reads both kinds of package, and `vite.config.ts` lets Vitest read both kinds of CSS. Bold headings in Gochi Hand are drawn bolder by the browser, which suits chalk.
+
+### How to verify
+
+`pnpm test src/app/theme`: tests 322 and 323 cover the new fonts. `pnpm build` lists their files in `dist/assets/`.

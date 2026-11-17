@@ -156,7 +156,10 @@
             "system-sans",
             "system-serif",
             "caveat",
-            "nunito"
+            "exo2",
+            "gochi-hand",
+            "nunito",
+            "orbitron"
           ],
           "description": "A font from the list in src/sdk/theme/fonts.ts."
         },
@@ -168,7 +171,10 @@
             "system-sans",
             "system-serif",
             "caveat",
-            "nunito"
+            "exo2",
+            "gochi-hand",
+            "nunito",
+            "orbitron"
           ],
           "description": "A font from the list in src/sdk/theme/fonts.ts."
         }

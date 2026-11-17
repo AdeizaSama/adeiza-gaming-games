@@ -587,7 +587,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 ## Bundled fonts
 
-`src/app/theme/fonts.test.ts`, testing the font list (`src/sdk/theme/fonts.ts`) against `src/app/theme/fonts.ts` and each font's own files in `node_modules/@fontsource-variable/` (ADR 0010).
+`src/app/theme/fonts.test.ts`, testing the font list (`src/sdk/theme/fonts.ts`) against `src/app/theme/fonts.ts` and each font's own files in `node_modules/@fontsource-variable/` or `node_modules/@fontsource/` (ADR 0010).
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|

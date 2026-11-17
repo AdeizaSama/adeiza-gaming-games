@@ -4,4 +4,7 @@
  * So a font no theme picks costs a few lines of CSS, not a download.
  */
 import '@fontsource-variable/caveat'
+import '@fontsource-variable/exo-2'
+import '@fontsource/gochi-hand'
 import '@fontsource-variable/nunito'
+import '@fontsource-variable/orbitron'
