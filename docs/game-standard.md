@@ -366,11 +366,11 @@ One file per pack: `src/games/<id>/content/<pack-id>.json`.
 
 ## 11. Themes
 
-`src/themes/<id>.json` holds design tokens only (colors for light/dark, fonts, radius, motion). The app maps them to CSS variables; components use variables, never raw colors.
+`src/themes/<id>.json` holds design tokens only (colors, fonts, radius, motion). Each theme is **light or dark**, never both: picking a theme picks exactly what players see, whatever the phone's dark-mode setting ([ADR 0010](decisions/0010-theme-files.md)). The app writes the chosen theme's tokens as CSS variables on `<html>`; components use variables, never raw colors. Two themes ship: Sunrise (light) and Sunset (dark).
 
 **Contrast** ([ADR 0010](decisions/0010-theme-files.md)): `pnpm validate-content` checks every pair of colors the app draws text in (the list is `contrastPairs` in `src/sdk/theme/contrast.ts`) against WCAG 2.2 level AA: at least 4.5 : 1 for text, 3 : 1 for large text and the focus outline. A component that starts drawing a new pair adds it to the list.
 
-**The tokens** (one default theme, in `src/app/index.css`, until theme files land):
+**The tokens:**
 
 | Token | Used for |
 |---|---|

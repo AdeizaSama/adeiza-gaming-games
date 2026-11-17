@@ -112,3 +112,58 @@ The dark set passes. Step 4 fixes the light set by lowering lightness only, keep
 ### How to verify
 
 `pnpm test src/sdk/theme scripts`: tests 313–317. To see a message, give a theme in step 4 a pale `primary` and run `pnpm validate-content`.
+
+---
+
+## Step 4: Today's look as two themes
+
+**What:**
+
+- `src/themes/sunrise.json` (light) and `src/themes/sunset.json` (dark): the values that were in `index.css`.
+- `src/sdk/theme/apply.ts`: `applyTheme`.
+- `src/app/theme/themes.ts`: the shipped themes, `startingTheme` and `pickTheme`.
+- A few lines of script in `index.html`.
+- `index.css` loses its values and its dark-mode query.
+
+**Why:** ADR 0010. The values move into files a designer can edit, and the app applies whichever file is picked.
+
+### The light colors changed
+
+Step 3 showed four light pairs failing. Sunrise fixes them by lowering lightness only:
+
+| Token | Before | Sunrise |
+|---|---|---|
+| `primary`, `ring` | `oklch(0.64 0.19 42)` | `oklch(0.57 0.19 42)` |
+| `success` | `oklch(0.6 0.15 150)` | `oklch(0.54 0.15 150)` |
+| `warning` | `oklch(0.78 0.16 80)` | `oklch(0.66 0.16 65)` |
+| `warning-foreground` | `oklch(0.25 0.04 60)` | `oklch(0.2 0.04 60)` |
+
+The orange and green are a little deeper; the warning color is now burnt orange rather than yellow. Sunset is the old dark values, unchanged.
+
+### Applying a theme
+
+`applyTheme` writes every token as a variable in the `<html>` element's `style` attribute, with `color-scheme` (so the browser draws scrollbars and form controls to match) and a `theme-color` meta tag (the address bar color on phones). Setting the whole attribute at once means nothing from the previous theme is left behind.
+
+### No flash on open
+
+The app's JavaScript runs after the browser has painted the page once. Without help, that first paint has no colors at all. So `pickTheme` also saves the style text, and a few lines in `index.html`'s `<head>` put it back:
+
+```html
+<script>
+  try {
+    var style = localStorage.getItem('ku-zo-wasa:theme-style')
+    if (style) document.documentElement.setAttribute('style', style)
+  } catch (error) {}
+</script>
+```
+
+It runs before anything is painted, because a plain `<script>` in the head blocks the page until it's done. It holds no theme data, only what the app saved, so it never needs updating when themes change.
+
+### The first visit
+
+With nothing saved, `startingTheme` reads the phone's dark-mode setting and picks Sunset or Sunrise. `main.tsx` then calls `pickTheme`, which saves the choice, so the phone's setting is never read again.
+
+### How to verify
+
+- `pnpm test src/app`: tests 181, 182 and 318–321.
+- On a phone with dark mode on, open the site in a private tab: it opens in Sunset. Turn dark mode off and reload: it stays Sunset.

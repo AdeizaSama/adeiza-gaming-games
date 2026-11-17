@@ -1,31 +1,25 @@
 import { describe, expect, it } from 'vitest'
+import { checkContrast } from '../sdk/theme/contrast'
+import { colorTokens } from '../sdk/theme/schema'
 import css from './index.css?raw'
+import { findTheme, firstThemes, themes } from './theme/themes'
 
-// Reads the theme in index.css as text (`?raw` asks Vite for a file's contents instead of applying it): the tokens
-// are CSS, and these tests check how they fit together.
-
-/** The variables declared inside the first block that starts with `opening`, e.g. `:root {`. */
-function variablesIn(opening: string, from = 0): string[] {
-  const start = css.indexOf(opening, from)
-  const end = css.indexOf('}', start)
-  return [...css.slice(start, end).matchAll(/(--[\w-]+):/g)].map((match) => match[1])
-}
-
-const light = variablesIn(':root {')
-const dark = variablesIn(':root {', css.indexOf('prefers-color-scheme: dark'))
-const colors = dark // dark mode changes colors only, so its list is exactly the color tokens
+// Reads index.css as text (`?raw` asks Vite for a file's contents instead of applying it): it maps the theme
+// tokens to Tailwind, and these tests check that the mapping and the theme files fit together.
 
 describe('theme tokens', () => {
-  it('gives every color a value in both light and dark mode', () => {
-    expect(colors.length).toBeGreaterThan(0)
-    expect(light).toEqual(expect.arrayContaining(colors))
-    expect(light.filter((name) => !colors.includes(name))).toEqual(['--radius', '--font-body', '--duration'])
+  it('declares no values of its own, and makes every color token available to Tailwind classes', () => {
+    // Values come from theme files (ADR 0010). A value here would be a second source that themes can't change.
+    expect(css).not.toMatch(/oklch\(|#[0-9a-f]{3,8}\b|prefers-color-scheme/i)
+    for (const token of colorTokens) {
+      expect(css, token).toContain(`--color-${token}: var(--${token});`)
+    }
   })
 
-  it('makes every color token available to Tailwind classes', () => {
-    for (const name of colors) {
-      expect(css, name).toContain(`--color-${name.slice(2)}: var(${name});`)
-    }
+  it('ships themes that pass the contrast check, and first-visit themes that are light and dark', () => {
+    for (const theme of themes) expect(checkContrast(theme), theme.id).toEqual([])
+    expect(findTheme(firstThemes.light)?.scheme).toBe('light')
+    expect(findTheme(firstThemes.dark)?.scheme).toBe('dark')
   })
 
   it('is the only source of colors: no file uses a built-in Tailwind color', () => {

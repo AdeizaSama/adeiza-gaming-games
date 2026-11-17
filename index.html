@@ -4,6 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Ku Zo Wasa</title>
+    <script>
+      // Puts the last theme back before the first paint, so the page never flashes the wrong colors (ADR 0010).
+      // The app applies the theme properly once it starts (src/app/theme/themes.ts).
+      try {
+        var style = localStorage.getItem('ku-zo-wasa:theme-style')
+        if (style) document.documentElement.setAttribute('style', style)
+      } catch (error) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

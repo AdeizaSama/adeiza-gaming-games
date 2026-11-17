@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 317 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
+**Counts:** 321 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -36,6 +36,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Charades views](#charades-views) | `src/games/charades/views/views.test.tsx` | 6 | |
 | [App](#app) | `src/app/App.test.tsx` | 4 | |
 | [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 3 | |
+| [Applying a theme](#applying-a-theme) | `src/app/theme/themes.test.tsx` | 4 | |
 | [UI components](#ui-components) | `src/ui/ui.test.tsx` | 6 | |
 | [Game session](#game-session) | `src/sdk/game/useGameSession.test.ts` | 9 | |
 | [Interaction primitives](#interaction-primitives) | `src/sdk/interactions/interactions.test.tsx` | 8 | |
@@ -556,14 +557,25 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 214, 215 | says "Page not found" at /chess and /charades/nope/extra, with a way back | Not-found page | A game that doesn't exist; an address with too many parts | "Page not found"; Back to games returns to the library | A mistyped or old link never shows a blank page. Runs once per address (`it.each`). |
 | 216 | has an icon for every game in the registry | `gameIcons` | Every registered game's `meta.icon` | Listed in `gameIcons` | An unlisted icon would quietly show the fallback controller. |
 
-## Theme tokens
+## Applying a theme
 
-`src/app/theme.test.ts`, testing the theme tokens in `src/app/index.css`. Reads the CSS file and every `.ts`/`.tsx` file in `src/` as text.
+`src/app/theme/themes.test.tsx`, testing `applyTheme` (`src/sdk/theme/apply.ts`) and `startingTheme` and `pickTheme` (`src/app/theme/themes.ts`), with the shipped Sunrise and Sunset themes. Screen tests (happy-dom); storage and the page's style are cleared before each.
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 181 | gives every color a value in both light and dark mode | Light and dark | The light and dark token lists | Every dark color is also set in light; light adds only `--radius`, `--font-body` and `--duration` | A color missing from dark mode would show the light value on a dark background. |
-| 182 | makes every color token available to Tailwind classes | `@theme` | Each color token | A matching `--color-<name>: var(--<name>);` line | A token Tailwind doesn't know can't be used as a class. |
+| 318 | writes the theme's variables, color scheme, name and address-bar color on the page | `applyTheme` | Apply Sunset, then Sunrise | Sunset's primary, radius 1rem, 200ms, scheme dark, `data-theme="sunset"`, its background as `theme-color`; then Sunrise's values and scheme light, still one `theme-color` tag | Every token reaches the page, and a new theme replaces the old one completely. |
+| 319 | starts a first visit on Sunrise or Sunset by the phone's setting, and after that on the theme picked | `startingTheme` | Nothing saved, phone dark; phone light; Sunrise picked, phone dark; a saved theme that no longer exists, phone dark | Sunset; Sunrise; Sunrise; Sunset | The phone's setting is read once; after that the theme never changes on its own. A removed theme falls back instead of breaking. |
+| 320 | opens on the phone's setting when storage is switched off | `startingTheme` | Storage that throws, phone dark | Sunset | Private browsing mustn't stop the app opening. |
+| 321 | remembers the style, and index.html puts it back before the app starts | No flash | Pick Sunset; clear the page's style; run the script in `index.html` | The saved style equals the page's; after the script, Sunset's primary is back | The first paint already has the right colors, before the app's code has loaded. |
+
+## Theme tokens
+
+`src/app/theme.test.ts`, testing how `src/app/index.css` maps the theme tokens to Tailwind, and the themes that ship (`src/themes/`). Reads the CSS file and every `.ts`/`.tsx` file in `src/` as text.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 181 | declares no values of its own, and makes every color token available to Tailwind classes | `@theme`, no values | `index.css`; each color token in the theme schema | No oklch or hex color and no dark-mode query; a `--color-<name>: var(--<name>);` line for every token | Values come only from theme files (ADR 0010); a token Tailwind doesn't know can't be used as a class. |
+| 182 | ships themes that pass the contrast check, and first-visit themes that are light and dark | Shipped themes | Every file in `src/themes/`; the first-visit ids | No contrast problems; Sunrise is light, Sunset is dark | The app's own themes meet the same bar as contributed ones, and a first visit can follow the phone's setting. |
 | 183 | is the only source of colors: no file uses a built-in Tailwind color | No raw colors | Every source file | No class like `bg-red-500` or `text-white` | Tailwind's palette is switched off, so such a class would silently do nothing; and themes (phase 2) can only change colors that come from tokens. |
 
 ## UI components
