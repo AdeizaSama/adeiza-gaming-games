@@ -304,6 +304,7 @@ docs/decisions/        decision records
 | `ui/` | `ui/` only. |
 | `app/` | `app/`, `app/registry/`, `sdk/`, `ui/`. Never a game directly. |
 | `app/registry/` | `games/`, `sdk/`. |
+| `themes/` | Nothing: theme files are data (JSON). The app loads them; the SDK checks them. |
 | `scripts/` (outside `src/`) | `scripts/`, `sdk/`, and `games/<id>/schema.ts`. Never a game's other files or `app/`. |
 
 Packages from npm (React, zod, …) are allowed everywhere, except React in `schema.ts`.

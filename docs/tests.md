@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 302 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
+**Counts:** 312 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -21,9 +21,10 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Finding games (scripts)](#finding-games-scripts) | `scripts/lib/games.test.ts` | 6 | |
 | [Charades content](#charades-content) | `src/games/charades/schema.test.ts` | 8 | |
 | [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
-| [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 8 | |
+| [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 9 | |
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
-| [Content check (scripts)](#content-check-scripts) | `scripts/lib/validate.test.ts` | 6 | |
+| [Content check (scripts)](#content-check-scripts) | `scripts/lib/validate.test.ts` | 8 | |
+| [Themes](#themes) | `src/sdk/theme/theme.test.ts` | 7 | |
 | [Team-turns config](#team-turns-config) | `src/sdk/formats/team-turns/config.test.ts` | 11 | |
 | [Item pool](#item-pool) | `src/sdk/formats/team-turns/pool.test.ts` | 13 | |
 | [Team-turns guards and actions](#team-turns-guards-and-actions) | `src/sdk/formats/team-turns/rules.test.ts` | 9 | |
@@ -287,10 +288,11 @@ Each row is a mistake TypeScript must reject.
 | 92 | rejects unknown fields in packs and items, as the zod schema does | `packJsonSchema` | The stand-in item schema | `additionalProperties: false` on the pack and on items | Editors underline typos like `maturty`, matching what CI rejects. |
 | 93 | makes item fields with a default optional, since contributors can leave them out | `packJsonSchema` | An item with `text` and a defaulted `modes` | Only `text` required | Editors must not demand `modes`, which contributors are told they can leave out. |
 | 94 | names the game in its title | `packJsonSchema` | Game id `test` | Title `Ku Zo Wasa content pack: test` | Editors show which schema a file is using. |
+| 310 | requires what a theme must say, and makes fields with a default optional | `themeJsonSchema` | The theme schema | Required: id, name, description, contributors, scheme, colors; no unknown fields; all 19 colors required | Editors ask for what CI demands and no more: fonts, radius and the rest can be left out. |
 | 95 | are named after the game | `schemaFileName` | `charades` | `charades.pack.schema.json` | Packs point at this exact name in `$schema`. |
 | 96 | are written with 2-space indents and a final newline | `schemaFileText` | `{ a: 1 }` | Two-space indented JSON ending in a newline | Readable files whose changes show cleanly in pull requests. |
-| 97 | matches the zod schemas (run `pnpm generate-schemas` if not) | Up-to-date check | Every game's `schema.ts`, and its file in `schemas/` | Each committed file equals a freshly generated one | If someone changes a schema without regenerating, editors would show old rules. This failing test names the fix. |
-| 98 | has no schemas for games that no longer exist | Up-to-date check | The files in `schemas/` | Exactly one per game that has a `schema.ts` | Stops leftover files from a renamed or removed game. |
+| 97 | matches the zod schemas (run `pnpm generate-schemas` if not) | Up-to-date check | Every game's `schema.ts` and the theme schema, and their files in `schemas/` | Each committed file equals a freshly generated one | If someone changes a schema without regenerating, editors would show old rules. This failing test names the fix. |
+| 98 | has no schemas for games that no longer exist | Up-to-date check | The files in `schemas/` | Exactly one per game that has a `schema.ts`, plus `theme.schema.json` | Stops leftover files from a renamed or removed game. |
 
 ## Loading game schemas (scripts)
 
@@ -332,6 +334,22 @@ Each row is a mistake TypeScript must reject.
 | 116 | names the item in a problem, using the game's item key | Item names | Second item `Penguin` with an extra field | Problem at `items.1 ("Penguin")` | Contributors can search for the word instead of counting items from 0. |
 | 117 | keeps the plain position when the item has no usable text | Item names | Second item with empty text | Problem at `items.1.text` | An item too broken to name still gets a clear position. |
 | 118 | runs the same checks as the app, such as the id matching the file name | Same as the app | id `zoo` in `animals.json` | Problem at `id` | CI and the app use the same `checkPack`, so they agree. |
+| 311 | finds nothing wrong with a valid theme | `checkThemeFile` | A valid theme with the right `$schema` | No problems | The content check passes good themes. |
+| 312 | reports text that isn't JSON, a wrong $schema link, and problems from the theme check | `checkThemeFile` | Broken JSON; `$schema: "theme.schema.json"` with radius 9 | "Not valid JSON…"; `$schema` should be `../../schemas/theme.schema.json`, and a `radius` problem | Same as for packs: a wrong link silently switches off editor help. |
+
+## Themes
+
+`src/sdk/theme/theme.test.ts`, testing `color.ts`, `schema.ts` and `loadThemes.ts` in `src/sdk/theme/` (ADR 0010). The theme used is `themeData()` from `testTheme.ts`: `paper`, light, every color white or black.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 303 | reads #rrggbb and oklch(L C H), with lightness as a number or a percentage | `parseColor` | `#ff8000`; `oklch(0.64 0.19 42)`; `oklch(64% .19 42)` | Red, green, blue 0–1; then lightness 0.64, chroma 0.19, hue 42, twice | Designers write hex or oklch; the contrast check needs numbers. |
+| 304 | rejects other formats and values out of range | `parseColor` | `#f80`, `orange`, `rgb(…)`, lightness 1.2, chroma 0.6, hue 400, commas | Nothing read, every time | Only colors the contrast check can work out are allowed. |
+| 305 | fills in every optional field with its default | `checkTheme` | A theme with only the required fields | System rounded fonts, radius 1, soft shadows, thin borders, 200 ms, no gradient | A first theme can be just colors. |
+| 306 | reports a missing or unreadable color, an unknown field, a font not on the list and a scheme that isn't light or dark | `checkTheme` | No `ring`; `primary: "orange"`; font `comic-sans`; scheme `both`; a `colour` field | A problem at each, the color one saying how to write a color | Every mistake at once, where it is. |
+| 307 | reports an id that isn't the file name, and a gradient from a color that isn't a token | `checkTheme` | Id `card` in `paper.json`; gradient to `sky` | The id problem; a `gradient.to` problem | Same id rule as packs. A gradient can only use the theme's own colors. |
+| 308 | returns the themes sorted by id | `loadThemes` | `paper` and `ink` | `ink`, `paper` | The picker lists themes in the same order everywhere. |
+| 309 | throws one error listing every problem in every file, and throws when there are no themes | `loadThemes` | Radius 5 in `paper.json`, a wrong id in `ink.json`; then no files | One error naming both files; "No themes found" | A broken theme is loud while it's being edited, and the app never starts without one. |
 
 ## Team-turns config
 

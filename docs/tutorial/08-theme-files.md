@@ -29,3 +29,49 @@ A designer may never run the app. So the content check computes the contrast of 
 ### How to verify
 
 Read the ADR. Steps 2 to 7 build it in order.
+
+---
+
+## Step 2: The theme schema
+
+**What:**
+
+- `src/sdk/theme/`: `schema.ts` (the theme file format), `color.ts` (reading a color), `fonts.ts` (the fonts a theme can pick; system fonts for now) and `loadThemes.ts` (`checkTheme`, `loadThemes`).
+- `pnpm validate-content` checks `src/themes/*.json`.
+- `pnpm generate-schemas` writes `schemas/theme.schema.json`.
+
+**Why:** the format comes first, and it gets the same treatment as packs: one check used by both the app and CI, a JSON Schema so editors help while you type, and messages written for people who don't code.
+
+### What a theme file looks like
+
+```json
+{
+  "$schema": "../../schemas/theme.schema.json",
+  "id": "sunrise",
+  "name": "Sunrise",
+  "description": "Warm and bright.",
+  "contributors": ["AdeizaSama"],
+  "scheme": "light",
+  "colors": { "background": "oklch(0.985 0.006 75)", "foreground": "#2b2118", "…": "every color token" },
+  "fonts": { "body": "system-rounded", "heading": "system-rounded" },
+  "radius": 1,
+  "shadow": "soft",
+  "border": "thin",
+  "duration": 200
+}
+```
+
+Only the identity fields, `scheme` and `colors` are required; everything after `colors` has a default.
+
+### Two color formats, both readable by code
+
+`#rrggbb` is what most design tools copy. `oklch(L C H)` is what our tokens have used since chapter 04: lightness, how colorful, and hue. `parseColor` reads both into numbers. Anything else (`orange`, `rgb(…)`, three-digit hex) is rejected, so step 3's contrast check can always work out every color.
+
+### The same loader shape as packs
+
+`checkTheme(file, data)` returns the theme or its problems; `loadThemes(files)` takes what `import.meta.glob` finds and throws one error listing everything. A theme's id must be its file name, like a pack's.
+
+### How to verify
+
+- `pnpm test src/sdk/theme scripts`: tests 303–312.
+- `pnpm validate-content` now ends with a "Checking themes" section. It says "(no themes yet)": the first two arrive in step 4.

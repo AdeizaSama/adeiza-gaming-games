@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import type { GameSchema } from './gameSchema'
-import { checkPackFile, expectedSchemaLink } from './validate'
+import { themeData } from '../../src/sdk/theme/testTheme'
+import { checkPackFile, checkThemeFile, expectedSchemaLink, expectedThemeSchemaLink } from './validate'
 
 // A stand-in game schema, shaped like Charades': items are `{ text }` and the key is the text.
 const schema: GameSchema = {
@@ -62,5 +63,21 @@ describe('checkPackFile', () => {
 
   it('runs the same checks as the app, such as the id matching the file name', () => {
     expect(checkPackFile('test', file, packText({ id: 'zoo' }), schema).problems.map((problem) => problem.path)).toEqual(['id'])
+  })
+})
+
+describe('checkThemeFile', () => {
+  const theme = (changes: Record<string, unknown> = {}) => JSON.stringify(themeData({ $schema: expectedThemeSchemaLink, ...changes }))
+
+  it('finds nothing wrong with a valid theme', () => {
+    expect(checkThemeFile('src/themes/paper.json', theme())).toEqual([])
+  })
+
+  it('reports text that isn’t JSON, a wrong $schema link, and problems from the theme check', () => {
+    expect(checkThemeFile('src/themes/paper.json', '{ "id": ')[0].message).toMatch(/^Not valid JSON/)
+    expect(checkThemeFile('src/themes/paper.json', theme({ $schema: 'theme.schema.json', radius: 9 }))).toEqual([
+      { path: '$schema', message: 'Should be "../../schemas/theme.schema.json"' },
+      expect.objectContaining({ path: 'radius' }),
+    ])
   })
 })

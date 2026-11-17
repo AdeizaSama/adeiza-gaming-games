@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { packSchema } from '../../src/sdk/content/pack'
+import { themeSchema } from '../../src/sdk/theme/schema'
 
 /** The file a game's pack JSON Schema is written to, inside `schemas/`. */
 export function schemaFileName(gameId: string): string {
@@ -18,6 +19,14 @@ export function packJsonSchema(gameId: string, itemSchema: z.ZodType): Record<st
     ...z.toJSONSchema(packSchema(itemSchema), { io: 'input', target: 'draft-7' }),
     title: `Ku Zo Wasa content pack: ${gameId}`,
   }
+}
+
+/** The file the theme JSON Schema is written to, inside `schemas/`. */
+export const themeSchemaFileName = 'theme.schema.json'
+
+/** The JSON Schema for theme files (ADR 0010), built from the zod schema the app and CI use, like a pack's. */
+export function themeJsonSchema(): Record<string, unknown> {
+  return { ...z.toJSONSchema(themeSchema, { io: 'input', target: 'draft-7' }), title: 'Ku Zo Wasa theme' }
 }
 
 /** The text written to the file: 2-space indents and a final newline, so it reads well and diffs cleanly. */
