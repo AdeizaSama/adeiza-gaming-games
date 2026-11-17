@@ -314,3 +314,48 @@ The chalkboard surface draws its frame in the theme's `border` color, so here th
 
 - `pnpm validate-content`: Chalkboard passes.
 - On a phone, pick Chalkboard: the flash card is a framed board with chalk in the corner.
+
+---
+
+## Step 11: Docs
+
+**What:**
+
+- CONTRIBUTING's "Add a theme" gets the parts menu as step 5.
+- The Game Standard's §11 gets the parts table and the rules for components (cards use `bg-card`, the focus of a screen gets `data-feature`, buttons use `Button`).
+- The README lists five themes.
+
+**Why:** a designer should be able to pick parts from CONTRIBUTING alone, and a developer adding a screen should know what makes it themeable.
+
+### How to verify
+
+Follow CONTRIBUTING to make a theme with parts: copy `chalkboard.json`, change its colors and pick `"surface": "paper"`, run `pnpm validate-content`, then pick it with `pnpm dev`.
+
+---
+
+## Chapter summary
+
+Themes can now be places: sticky notes on lined paper, glass over a starfield, a chalkboard. A theme is still one JSON file; the looks are a menu we build, check and maintain.
+
+| Step | What | Contract |
+|---|---|---|
+| 1 | ADR 0011: theme parts | Yes |
+| 2 | Parts as attributes on `<html>`; markers on buttons, the flash card and dialogs; the paint-only test | Yes: theme format |
+| 3 | Surfaces: paper, sticky note, glass, chalkboard; glass contrast | |
+| 4 | Buttons: chunky, sticker, glass, chalk | |
+| 5 | Backgrounds: lined paper, dot grid, chalk dust, starfield | |
+| 6 | Decorations: tape, pushpin, planets, chalk smudge | |
+| 7 | Sticky Notes, dressed | |
+| 8 | Fonts: Orbitron, Exo 2, Gochi Hand | |
+| 9 | Space Travel; contrast on both ends of a gradient | |
+| 10 | Chalkboard | |
+| 11 | CONTRIBUTING, the standard, README | |
+
+**What we learned:**
+
+- Rules beat review for CSS. "Parts only paint" is a test, so nobody has to remember it when adding a look.
+- The menu grows with its CSS. Each option joined the schema in the same step as its CSS, and a test fails if an option has no CSS.
+- Moving things cheaply: `transform` on an oversized layer, not `background-position`, and tile sizes that divide the distance so the loop has no seam.
+- Making a real theme finds gaps in the checks. Space Travel's gradient showed that page text was only checked against the top of the page.
+
+**Tests:** 340 runtime tests and 32 compile-time checks.

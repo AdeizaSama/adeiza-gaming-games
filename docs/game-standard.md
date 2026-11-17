@@ -366,7 +366,7 @@ One file per pack: `src/games/<id>/content/<pack-id>.json`.
 
 ## 11. Themes
 
-`src/themes/<id>.json` holds design tokens only (colors, fonts, radius, motion). Each theme is **light or dark**, never both: picking a theme picks exactly what players see, whatever the phone's dark-mode setting ([ADR 0010](decisions/0010-theme-files.md)). The app writes the chosen theme's tokens as CSS variables on `<html>`; components use variables, never raw colors. Three themes ship: Sunrise (light), Sunset (dark) and Sticky Notes (light). A first visit opens on Sunrise or Sunset by the phone's dark-mode setting; after that the theme changes only when a player picks one.
+`src/themes/<id>.json` holds design tokens only (colors, fonts, radius, motion). Each theme is **light or dark**, never both: picking a theme picks exactly what players see, whatever the phone's dark-mode setting ([ADR 0010](decisions/0010-theme-files.md)). The app writes the chosen theme's tokens as CSS variables on `<html>`; components use variables, never raw colors. Five themes ship: Sunrise (light), Sunset (dark), Sticky Notes (light), Space Travel (dark) and Chalkboard (dark). A first visit opens on Sunrise or Sunset by the phone's dark-mode setting; after that the theme changes only when a player picks one.
 
 **Contrast** ([ADR 0010](decisions/0010-theme-files.md)): `pnpm validate-content` checks every pair of colors the app draws text in (the list is `contrastPairs` in `src/sdk/theme/contrast.ts`) against WCAG 2.2 level AA: at least 4.5 : 1 for text, 3 : 1 for large text, the focus outline and the outlines of buttons and text fields. A component that starts drawing a new pair adds it to the list. A theme with a `gradient` also has its page text checked on each end of the gradient.
 
@@ -387,6 +387,18 @@ One file per pack: `src/games/<id>/content/<pack-id>.json`.
 | `border` | `thin` (2px) or `thick` (3px) outlines. Components use `border-line`, never a fixed width like `border-2` |
 | `gradient` | Optional: the page fades from one color token to another |
 | `duration` | How long transitions take |
+
+**Parts** ([ADR 0011](decisions/0011-theme-parts.md)): looks a theme picks by name, built in `src/app/theme/parts.css`. Each defaults to the plain look.
+
+| Part | Options | Applies to |
+|---|---|---|
+| `surface` | `plain`, `paper`, `sticky-note`, `glass`, `chalkboard` | Every element with `bg-card` except text fields |
+| `button` | `solid`, `chunky`, `sticker`, `glass`, `chalk` | The `Button` component, by `data-variant`; ghost buttons stay plain |
+| `background` | `flat`, `lined-paper`, `dot-grid`, `chalk-dust`, `starfield` | A fixed layer behind the page |
+| `decoration` | `none`, `tape`, `pushpin`, `planets`, `chalk-smudge` | Elements marked `data-feature`: the flash card and dialogs |
+| `icons` | `thin`, `regular`, `bold` | Every icon's line weight |
+
+Parts only paint: a test fails on any parts CSS that changes size, spacing or position, on decorations that could take space or taps, and on animation outside `prefers-reduced-motion: no-preference`. **For components:** a card uses `bg-card` so it gets the theme's surface; a card that's the focus of a screen gets `data-feature` for decorations; buttons use `Button`.
 
 Tailwind's built-in palette is switched off, so classes like `bg-red-500` produce nothing; a test fails if any file uses one. A theme pull request is one JSON file. **Fonts** come from a list of system fonts and open-licensed (OFL) fonts bundled from npm; a font downloads only when text on the page uses it. Adding a font to the list is a code change. Game-specific skins (e.g. Mafia's werewolf names) are **content**, not themes.
 
