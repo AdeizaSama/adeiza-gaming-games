@@ -72,13 +72,25 @@ export const contrastPairs: Pair[] = [
 /** Pairs that only some parts draw (ADR 0011). */
 const glassPairs: Pair[] = [{ text: 'card-foreground', on: 'background', minimum: text, what: 'text on see-through glass cards' }]
 
+/** The text drawn straight on the page, checked again on each end of a gradient (where the page isn't `background`). */
+const pageText = contrastPairs.filter((pair) => pair.on === 'background')
+
 /**
  * Checks that every pair of colors the app draws can be read (ADR 0010). One problem per pair under its minimum,
- * at the color to change, saying what it's used for, its ratio and the minimum. A theme with glass cards also has
- * their text checked against the page behind them (ADR 0011).
+ * at the color to change, saying what it's used for, its ratio and the minimum. Some choices add pairs:
+ *
+ * - a gradient: the page is also each end's color, so text on the page is checked on both ends too;
+ * - glass cards: the page shows through, so their text is also checked against the page (ADR 0011).
  */
-export function checkContrast(theme: Pick<Theme, 'colors'> & { parts?: Pick<Theme['parts'], 'surface'> }): PackProblem[] {
-  const pairs = theme.parts?.surface === 'glass' ? [...contrastPairs, ...glassPairs] : contrastPairs
+export function checkContrast(
+  theme: Pick<Theme, 'colors'> & { gradient?: Theme['gradient']; parts?: Pick<Theme['parts'], 'surface'> },
+): PackProblem[] {
+  const ends = theme.gradient ? [theme.gradient.from, theme.gradient.to].filter((end) => end !== 'background') : []
+  const pairs = [
+    ...contrastPairs,
+    ...ends.flatMap((end) => pageText.map((pair) => ({ ...pair, on: end, what: `${pair.what}, where the page fades to ${end}` }))),
+    ...(theme.parts?.surface === 'glass' ? glassPairs : []),
+  ]
   return pairs.flatMap(({ text: front, on, minimum, what }) => {
     const ratio = contrastRatio(theme.colors[front], theme.colors[on])
     // Rounded down, so a ratio shown as 4.5 always passes a 4.5 minimum.

@@ -259,3 +259,33 @@ Gochi Hand has a single weight, so it's in `@fontsource/gochi-hand`, not `@fonts
 ### How to verify
 
 `pnpm test src/app/theme`: tests 322 and 323 cover the new fonts. `pnpm build` lists their files in `dist/assets/`.
+
+---
+
+## Step 9: Space Travel
+
+**What:** `src/themes/space-travel.json`, and a gap in the contrast check closed.
+
+**Why:** a dark theme that uses the moving parts: the starfield, glass, planets.
+
+### The design
+
+| Choice | |
+|---|---|
+| `scheme` | dark |
+| Colors | Deep navy page, cyan glow for the main color, violet secondary |
+| `fonts` | Orbitron headings, Exo 2 text |
+| `gradient` | Navy at the top fading to `muted` at the bottom, behind the stars |
+| `parts` | Glass cards and buttons, a starfield, a ringed planet on the flash card and dialogs, thin icons |
+| `shadow` | `flat`: black shadows don't show on navy anyway; the glass rims do the work |
+
+### A gap the theme found
+
+The first version faded the page to `secondary`. It passed the contrast check, but only because the check measured page text against `background`, the top of the gradient. At the bottom of the page, error text, outlines and text fields sit on `secondary`.
+
+`checkContrast` now checks everything drawn on the page against each end of a gradient too. That found three problems: error text at 4.26 : 1, and button and text-field outlines at 2.9 : 1. Fading to the darker `muted` fixes all three without changing a color. Sunrise, Sunset and Sticky Notes have no gradient, so nothing changed for them.
+
+### How to verify
+
+- `pnpm validate-content`: Space Travel passes; test 340 covers the gradient pairs.
+- On a phone, pick Space Travel. The stars drift slowly; with the phone set to reduce motion, they stay still.

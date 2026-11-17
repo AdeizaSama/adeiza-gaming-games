@@ -49,6 +49,23 @@ describe('checkContrast', () => {
     ])
   })
 
+  it('checks text on the page against both ends of a gradient', () => {
+    const colors = theme({ muted: '#222222' }).colors
+    const fades = (gradient?: { from: 'background'; to: 'muted' }) =>
+      checkContrast({ colors, gradient }).filter((problem) => problem.message.includes('where the page fades to muted'))
+    expect(fades()).toEqual([])
+    expect(fades({ from: 'background', to: 'muted' }).map((problem) => problem.path)).toEqual([
+      'colors.foreground',
+      'colors.muted-foreground',
+      'colors.primary',
+      'colors.destructive',
+      'colors.warning',
+      'colors.ring',
+      'colors.border',
+      'colors.input',
+    ])
+  })
+
   it('lets large text and the focus ring pass at 3 : 1, but not below', () => {
     expect(checkContrast(theme({ warning: '#949494', 'warning-foreground': '#000000', ring: '#949494' }))).toEqual([])
     expect(checkContrast(theme({ warning: '#aaaaaa', 'warning-foreground': '#000000' })).map((problem) => problem.path)).toEqual(['colors.warning'])
