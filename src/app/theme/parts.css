@@ -109,3 +109,79 @@
 [data-button='chalk'] button[data-variant='outline'] {
   border-style: dashed;
 }
+
+/*
+ * Backgrounds: a layer fixed behind the whole page (body::before, z-index -1). Patterns stay faint and sparse, drawn
+ * in the theme's own colors, because most text sits straight on the page (ADR 0011).
+ */
+
+/* Lined paper: faint ruled lines in the main color, and a red margin line down the left. */
+[data-background='lined-paper'] body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, transparent 1.75rem, color-mix(in oklch, var(--destructive) 35%, transparent) 1.75rem calc(1.75rem + 1.5px), transparent calc(1.75rem + 1.5px)),
+    repeating-linear-gradient(to bottom, transparent 0 1.75rem, color-mix(in oklch, var(--primary) 16%, transparent) 1.75rem calc(1.75rem + 1px));
+}
+
+/* Dot grid: small dots in the text color, like graph paper. */
+[data-background='dot-grid'] body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: radial-gradient(circle, color-mix(in oklch, var(--foreground) 16%, transparent) 1px, transparent 1.5px);
+  background-size: 1.25rem 1.25rem;
+}
+
+/* Chalk dust: dust over the whole board, and a few soft smudges where something was rubbed out. */
+[data-background='chalk-dust'] body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    var(--grain-light),
+    radial-gradient(ellipse 40% 18% at 22% 28%, color-mix(in oklch, var(--foreground) 7%, transparent), transparent),
+    radial-gradient(ellipse 35% 14% at 78% 64%, color-mix(in oklch, var(--foreground) 6%, transparent), transparent),
+    radial-gradient(ellipse 30% 12% at 40% 88%, color-mix(in oklch, var(--foreground) 5%, transparent), transparent);
+}
+
+/*
+ * Starfield: three layers of stars, small and far, larger and near. The layer starts 320px above the screen and
+ * drifts down by 320px, then starts again: every tile size divides 320, so the loop has no seam. It moves with
+ * transform, which phones handle without repainting the page.
+ */
+[data-background='starfield'] body::before {
+  content: '';
+  position: fixed;
+  inset: -320px 0 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 20% 30%, color-mix(in oklch, var(--foreground) 70%, transparent) 0.6px, transparent 1.2px),
+    radial-gradient(circle at 70% 60%, color-mix(in oklch, var(--foreground) 55%, transparent) 0.8px, transparent 1.4px),
+    radial-gradient(circle at 45% 80%, color-mix(in oklch, var(--foreground) 85%, transparent) 1px, transparent 1.8px);
+  background-size: 80px 80px, 160px 160px, 320px 320px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-background='starfield'] body::before {
+    position: fixed;
+    pointer-events: none;
+    animation: starfield-drift 60s linear infinite;
+    will-change: transform;
+  }
+}
+@keyframes starfield-drift {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(320px);
+  }
+}

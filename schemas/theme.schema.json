@@ -301,7 +301,11 @@
           "description": "The page behind everything.",
           "type": "string",
           "enum": [
-            "flat"
+            "flat",
+            "lined-paper",
+            "dot-grid",
+            "chalk-dust",
+            "starfield"
           ]
         },
         "decoration": {

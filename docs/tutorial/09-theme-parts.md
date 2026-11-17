@@ -145,3 +145,31 @@ Rules pick buttons by the `data-variant` that step 2 added:
 ### How to verify
 
 `pnpm test src/app/theme`: test 336 now requires CSS for every button look, and test 335 checks it only paints (`translate` and `rotate` move nothing else on the page).
+
+---
+
+## Step 5: Backgrounds
+
+**What:** four page backgrounds in `parts.css`: `lined-paper`, `dot-grid`, `chalk-dust` and `starfield` (moving), added to the schema's menu.
+
+**Why:** the page is the largest thing on screen. A background is what makes a theme feel like a place.
+
+### A layer behind everything
+
+Each background is `body::before`: `position: fixed; inset: 0; z-index: -1; pointer-events: none`. It covers the screen behind the content, never scrolls, takes no space and never catches a tap. The theme's page color (and gradient, if it has one) still sits under it.
+
+### Faint, because text sits on the page
+
+Most of our text is straight on the page: headings, hints, team names on the handoff screen. So every pattern is thin lines, small dots or soft smudges, in the theme's own colors at 5–16% (stars are brighter, but tiny and far apart). Contrast is still measured against the theme's `background`, the color between the marks.
+
+### The starfield moves cheaply
+
+The obvious way to move stars is to animate `background-position`, but that makes the phone repaint the whole screen 60 times a second. Instead:
+
+- The layer starts 320px above the screen (`inset: -320px 0 0`), and the animation moves it down 320px with `transform`, which the phone's graphics chip handles without repainting.
+- The three star tiles are 80, 160 and 320px, all of which divide 320. So when the animation jumps back to the start, every star is exactly where a star was: no seam.
+- The `animation` is inside `@media (prefers-reduced-motion: no-preference)`, so phones set to reduce motion get still stars. Test 335 fails any animation outside it.
+
+### How to verify
+
+`pnpm test src/app/theme`: tests 335 and 336. Steps 7–10 put these on screen.
