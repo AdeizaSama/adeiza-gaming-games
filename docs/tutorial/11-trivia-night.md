@@ -253,6 +253,25 @@ Read `src/games/trivia-night/README.md` as someone adding a question: it should 
 
 ---
 
+## Step 10: Options as tiles
+
+**What:** `MultipleChoice` lays its options out two to a row instead of one per row: 2x1 for two, 2x2 for four. With three or five, the last tile takes the whole row (`spansRow`). ADR 0015 and the standard's §6 row say so.
+
+**Why:** playing it showed a list of four reads like a form; tiles read like a quiz, and each one is taller to hit.
+
+```tsx
+<ul className="grid flex-[7_0_0%] auto-rows-[minmax(2.75rem,1fr)] grid-cols-2 gap-2">
+  <li className={cn('flex', spansRow(index, options.length) && 'col-span-2')}>
+```
+
+The same grid rule as Name Ten's board (ADR 0013): rows share the height, never under 44px. The flex sharing with the question (13 : 7) is unchanged.
+
+### How to verify
+
+`pnpm test src/sdk/interactions/multiplechoice.test.tsx`: 5 tests. Make `spansRow` always false, and the odd-number test fails. On a phone, a four-option question is a 2x2 grid; a true-or-false one is two tiles side by side.
+
+---
+
 ## Chapter summary
 
 | Step | What | SDK change? |
@@ -266,6 +285,7 @@ Read `src/games/trivia-night/README.md` as someone adding a question: it should 
 | 7 | The turn and result view; settings on setup | |
 | 8 | The game, registered, with rules and three presets | |
 | 9 | Docs | |
+| 10 | Options as tiles, two to a row | Yes: `MultipleChoice` |
 
 **What we learned:**
 
@@ -273,4 +293,4 @@ Read `src/games/trivia-night/README.md` as someone adding a question: it should 
 - A setting that changes how a turn ends (one question, a set number, the clock) is one guard, `moreQuestions`, not three machines. The view asks the same function, so the screen and the rules can't disagree about the last question.
 - Content ported from an older set still needs checking. Four of 149 questions had a second defensible answer or couldn't be confirmed.
 
-**Tests:** 423 runtime tests and 33 compile-time checks.
+**Tests:** 424 runtime tests and 33 compile-time checks.

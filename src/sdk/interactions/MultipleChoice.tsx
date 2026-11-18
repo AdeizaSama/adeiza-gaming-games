@@ -22,6 +22,11 @@ export function resultText(options: readonly string[], answer: number, picked: n
   return picked === answer ? 'Right!' : `Not quite: it's ${options[answer]}.`
 }
 
+/** True for the last of an odd number of options: it takes the whole row, so the grid has no gap (3 is 2 + 1). */
+export function spansRow(index: number, count: number): boolean {
+  return count % 2 === 1 && index === count - 1
+}
+
 /** How an option looks: before a tap, an outline; after it, green for the answer, red for a wrong pick, faded otherwise. */
 function look(index: number, answer: number, picked: number | null) {
   if (picked === null) return { variant: 'outline' as const, icon: null, faded: false }
@@ -35,9 +40,10 @@ function look(index: number, answer: number, picked: number | null) {
  * Trivia Night, a true-or-false quiz, a this-or-that drill. It knows nothing about scoring: the view reports the tap,
  * and the machine decides what it's worth.
  *
- * The question takes about two thirds of the height it's given and the options the rest, one per row. Options never
- * shrink below 44px; when five don't fit in a third (a small phone), the question gives up space instead. Give it a
- * parent with a fixed height, like the play screen.
+ * The question takes about two thirds of the height it's given and the options the rest, as tiles two to a row: 2x1
+ * for two, 2x2 for four. With an odd number, the last tile takes the whole row. Tiles never shrink below 44px; when
+ * they don't fit in a third (a small phone, long options), the question gives up space instead. Give it a parent with
+ * a fixed height, like the play screen.
  */
 export function MultipleChoice({ label = 'Question', question, options, answer, picked, onPick }: MultipleChoiceProps) {
   const answered = picked !== null
@@ -55,16 +61,17 @@ export function MultipleChoice({ label = 'Question', question, options, answer, 
           {answered && resultText(options, answer, picked)}
         </p>
       </div>
-      <ul aria-label="Options" className="flex flex-[7_0_0%] flex-col gap-2">
+      {/* Two columns of tiles; rows share the height, each at least 44px. */}
+      <ul aria-label="Options" className="grid flex-[7_0_0%] auto-rows-[minmax(2.75rem,1fr)] grid-cols-2 gap-2">
         {options.map((option, index) => {
           const { variant, icon: Icon, faded } = look(index, answer, picked)
           return (
-            <li key={index} className="flex min-h-11 flex-1">
+            <li key={index} className={cn('flex', spansRow(index, options.length) && 'col-span-2')}>
               <Button
                 variant={variant}
                 // Not `disabled`: that would fade the result too. A tap after the result does nothing.
                 aria-disabled={answered}
-                className={cn('h-auto min-h-11 w-full justify-between gap-2 px-4 py-2 text-left leading-tight', faded && 'opacity-50')}
+                className={cn('h-full min-h-11 w-full gap-2 px-3 py-2 text-center leading-tight', faded && 'opacity-50')}
                 onClick={() => !answered && onPick(index)}
               >
                 <span className="min-w-0 break-words">{option}</span>

@@ -17,8 +17,8 @@ Other games will want the same card. A language drill ("masculin or féminin?") 
 
 A new SDK primitive (`src/sdk/interactions/MultipleChoice.tsx`):
 
-- **The question takes most of the screen**, about two thirds, and the options the rest. The options never get smaller than a 44px tap target (standard §12): five options need about 250px, more than a third of a small phone, so there the question gives up space instead. The split is a target, not a rule.
-- **2 to 5 options**, one per row, full width, so long options wrap rather than shrink.
+- **The question takes most of the screen**, about two thirds, and the options the rest. The options never get smaller than a 44px tap target (standard §12): when they need more than a third (a small phone, long options), the question gives up space instead. The split is a target, not a rule.
+- **2 to 5 options, as tiles two to a row:** 2x1 for two, 2x2 for four. With three or five, the last tile takes the whole row, so the grid has no empty cell. A list, one option per row, was tried first; tiles are the shape players expect from a quiz, and leave each one taller. The cost: at half width, a long option wraps to several lines.
 - **After a tap**, the options lock, the right one turns green with a tick, a wrong pick turns red with a cross, and a line says which: "Right!" or "Not quite: it's Lagos." The primitive only shows this; the machine decides what it's worth.
 
 ### Choices: the item rules, shared

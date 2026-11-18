@@ -3,7 +3,7 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
-import { MultipleChoice, resultText } from './MultipleChoice'
+import { MultipleChoice, resultText, spansRow } from './MultipleChoice'
 
 const options = ['Lagos', 'Abuja', 'Kano', 'Ibadan']
 
@@ -71,6 +71,17 @@ describe('MultipleChoice layout', () => {
     expect(card.className).toContain('min-h-0')
     const list = screen.getByRole('list', { name: 'Options' })
     expect(list.className).toContain('flex-[7_0_0%]')
-    expect(within(list).getAllByRole('listitem').every((item) => item.className.includes('min-h-11'))).toBe(true)
+    expect(list.className).toMatch(/\bgrid-cols-2\b/)
+    expect(list.className).toContain('auto-rows-[minmax(2.75rem,1fr)]')
+    expect(within(list).getAllByRole('listitem').some((item) => item.className.includes('col-span-2'))).toBe(false) // 2x2
+  })
+
+  it('lays out 2 as 2x1, and gives the last of an odd number the whole row', () => {
+    expect([0, 1].map((index) => spansRow(index, 2))).toEqual([false, false])
+    expect([0, 1, 2].map((index) => spansRow(index, 3))).toEqual([false, false, true])
+    expect([0, 1, 2, 3, 4].map((index) => spansRow(index, 5))).toEqual([false, false, false, false, true])
+    render(<MultipleChoice question="Pick" options={['A', 'B', 'C']} answer={0} picked={null} onPick={() => {}} />)
+    const items = within(screen.getByRole('list', { name: 'Options' })).getAllByRole('listitem')
+    expect(items.map((item) => item.className.includes('col-span-2'))).toEqual([false, false, true])
   })
 })

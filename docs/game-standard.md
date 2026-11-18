@@ -184,7 +184,7 @@ A primitive takes plain props (text, callbacks) and knows nothing about machines
 | `Handoff` | Pass-the-device screen; hides the previous turn's secret info. Its line above the name can change (Name Ten: "Hand the phone to a judge from") | Built |
 | `FlashCard` | Big term with got/skip (charades) | Built |
 | `PromptCard` | A prompt with a running count and a board of answers that tick when tapped (Name Ten's judge, [ADR 0012](decisions/0012-name-ten.md)). Two columns of tiles that fill the screen's height, each at least 44px ([ADR 0013](decisions/0013-fit-the-screen-and-standings.md)) | Built |
-| `MultipleChoice` | A question over 2 to 5 options; after a tap, the answer in green and a wrong pick in red (Trivia Night, [ADR 0015](decisions/0015-trivia-night.md)). The question takes about two thirds of the height, the options the rest, each at least 44px | Built |
+| `MultipleChoice` | A question over 2 to 5 options, as tiles two to a row (2x1, 2x2; the last of an odd number takes the whole row); after a tap, the answer in green and a wrong pick in red (Trivia Night, [ADR 0015](decisions/0015-trivia-night.md)). The question takes about two thirds of the height, the options the rest, each at least 44px | Built |
 | `Countdown` | Shared timer display with warnings; reports when time is up (it reads the clock only to show it) | Built |
 | `Summary` | Turn/round recap: who played, what they scored, and every team's score so far with the rounds played ([ADR 0013](decisions/0013-fit-the-screen-and-standings.md)) | Built |
 | `Review` | A turn card by card, locked until the host taps Adjust, to fix mis-taps before they count ([ADR 0007](decisions/0007-turn-review.md)) | Built |
