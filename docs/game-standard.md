@@ -186,7 +186,7 @@ A primitive takes plain props (text, callbacks) and knows nothing about machines
 | `PromptCard` | A prompt with a running count and a board of answers that tick when tapped (Name Ten's judge, [ADR 0012](decisions/0012-name-ten.md)). Two columns of tiles that fill the screen's height, each at least 44px ([ADR 0013](decisions/0013-fit-the-screen-and-standings.md)) | Built |
 | `MultipleChoice` | Question, options, reveal (trivia) | Planned |
 | `Countdown` | Shared timer display with warnings; reports when time is up (it reads the clock only to show it) | Built |
-| `Summary` | Turn/round recap: who played, what they scored | Built |
+| `Summary` | Turn/round recap: who played, what they scored, and every team's score so far with the rounds played ([ADR 0013](decisions/0013-fit-the-screen-and-standings.md)) | Built |
 | `Review` | A turn card by card, locked until the host taps Adjust, to fix mis-taps before they count ([ADR 0007](decisions/0007-turn-review.md)) | Built |
 | `Leaderboard` | Team/player standings; tied scores share a place | Built |
 | `SecretReveal` | One-player-at-a-time private reveal (future: Mafia roles) | Planned |

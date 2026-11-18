@@ -45,5 +45,7 @@ describe('playing Name Ten', () => {
     await user.click(screen.getByRole('button', { name: 'Done' }))
 
     expect(screen.getByText(/scored/).textContent).toContain('3')
+    const standings = within(screen.getByRole('list', { name: 'Scores so far' })).getAllByRole('listitem')
+    expect(standings.map((row) => row.textContent)).toEqual(['Team 13', 'Team 20'])
   })
 })

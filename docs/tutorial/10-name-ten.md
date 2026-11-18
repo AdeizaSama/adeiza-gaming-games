@@ -289,3 +289,30 @@ Every row gets an equal share of the height left (`1fr`) but never less than 44p
 
 - `pnpm test`: tests 374–375.
 - On a phone: a Name Ten turn shows all ten answers without scrolling.
+
+---
+
+## Step 10: Standings after every turn
+
+**What:** [ADR 0013](../decisions/0013-fit-the-screen-and-standings.md), second half. `Summary` takes `standings`; the format's turn summary passes every team's score so far and the rounds it has played.
+
+**Why:** after review, the summary said "Lions scored 4 points" and nothing about the game. Now it also shows:
+
+```
+Lions     13   ● ○ ○
+Eagles     0   ○ ○ ○
+```
+
+The turn summary is the format's, so Charades gets the same standings.
+
+### Two details
+
+- **This turn counts.** The format adds a turn's points to the team's score when players leave the summary (chapter 03), but showing the old score next to "scored 4 points" would read as a mistake. `standingsOf` adds the turn's points for the team that just played.
+- **Rounds played.** Teams play in order, so in round 2 the team that just played, and everyone before it, has played 2 rounds; everyone after has played 1. The dots use the theme's `border-line` for their outline (a fixed `border-2` failed chapter 08's test, which is the test doing its job).
+
+Each row of dots has a screen-reader label, "1 of 3 rounds played"; the team that just played is marked with `aria-current`.
+
+### How to verify
+
+- `pnpm test`: tests 376–377, and test 373 now checks Name Ten's summary shows both teams.
+- On a phone: after a turn's review, the summary lists every team with dots for the rounds played.
