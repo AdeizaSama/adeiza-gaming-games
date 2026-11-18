@@ -205,3 +205,34 @@ Mode (Set questions or Against the clock, with Questions per turn only for the f
 ### How to verify
 
 `pnpm test src/games/trivia-night/views`: 6 tests. Always show the clock, and the "without the clock" test fails.
+
+---
+
+## Step 8: The game, registered
+
+**What:**
+
+- `src/games/trivia-night/index.ts`: the `defineGame` call: meta, content, settings and presets, rules, machine, and `TurnView` for both `turn` and `reveal`.
+- `src/games/trivia-night/rules.md`: How to play.
+- `src/app/registry/index.ts` lists it; `src/app/library/gameIcon.ts` adds the `lightbulb` icon.
+- Tests: the game definition, the library listing, and a tap-through from setup to the summary.
+
+**Why:** a game in the registry is a game players can open.
+
+### A preset per way to play
+
+| Preset | Settings |
+|---|---|
+| One question | The defaults: 1 question, 30 seconds, 3 rounds |
+| Five questions | 5 a turn, 120 seconds |
+| Against the clock | `mode: 'clock'`, 60 seconds |
+
+A preset applies the game's defaults plus its own changes (ADR 0008), so tapping Against the clock after Five questions doesn't leave 5 questions behind (unused against the clock anyway).
+
+### No handoff of its own
+
+Name Ten needed its own handoff, because a judge holds the phone. Trivia Night doesn't: the team plays on its own phone, and nothing on screen shows the answer until they pick. The format's handoff is enough.
+
+### How to verify
+
+`pnpm test`: 423 tests. Then `pnpm dev --host`, open Trivia Night on a phone, and play a turn in each preset.

@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 420 runtime tests (`pnpm test`) and 33 compile-time checks (`pnpm typecheck`).
+**Counts:** 423 runtime tests (`pnpm test`) and 33 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -30,6 +30,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Trivia Night settings](#trivia-night-settings) | `src/games/trivia-night/config.test.ts` | 2 | |
 | [Trivia Night machine](#trivia-night-machine) | `src/games/trivia-night/machine.test.ts` | 12 | |
 | [Trivia Night views](#trivia-night-views) | `src/games/trivia-night/views/views.test.tsx` | 6 | |
+| [Trivia Night game](#trivia-night-game) | `src/games/trivia-night/game.test.ts` | 1 | |
 | [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
 | [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 9 | |
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
@@ -45,7 +46,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Settings and presets](#settings-and-presets) | `src/sdk/game/settings.test.ts` | 5 | |
 | [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 22 | |
 | [Charades views](#charades-views) | `src/games/charades/views/views.test.tsx` | 6 | |
-| [App](#app) | `src/app/App.test.tsx` | 5 | |
+| [App](#app) | `src/app/App.test.tsx` | 6 | |
 | [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 6 | |
 | [Applying a theme](#applying-a-theme) | `src/app/theme/themes.test.tsx` | 4 | |
 | [Bundled fonts](#bundled-fonts) | `src/app/theme/fonts.test.ts` | 2 | |
@@ -63,6 +64,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Team-turns views](#team-turns-views) | `src/sdk/formats/team-turns/views/views.test.tsx` | 4 | |
 | [Game screen](#game-screen) | `src/app/play/GameScreen.test.tsx` | 3 | |
 | [Playing Name Ten](#playing-name-ten) | `src/app/play/nameTen.test.tsx` | 1 | |
+| [Playing Trivia Night](#playing-trivia-night) | `src/app/play/triviaNight.test.tsx` | 1 | |
 | [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 15 | |
 | [Saved game](#saved-game) | `src/app/play/savedGame.test.ts` | 12 | |
 | [Play page](#play-page) | `src/app/play/PlayPage.test.tsx` | 3 | |
@@ -713,6 +715,14 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 419 | picks the mode, with questions per turn only for a set number, 1 to 10 | Settings view | Tap More 12 times; then Against the clock | 1, then 10 at most; the stepper gone | The count only means something for a set number. |
 | 420 | sets points from 1 to 5, and the order of the options | Settings view | Tap More 6 times on points; tap A to Z | "1 point", then "5 points" at most; Shuffled checked, then A to Z | Every setting can be set on setup. |
 
+## Trivia Night game
+
+`src/games/trivia-night/game.test.ts`, testing `src/games/trivia-night/index.ts`: the game's single `defineGame` export.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 421 | is a valid game with the Back to School pack, its settings, a preset per way to play, and one view for turn and result | `index.ts` | The game's default export; each preset applied | Id `trivia-night`; Back to School; its machine and settings; `TurnView` for `turn` and `reveal`; rules with "## Ways to play"; One question (1, 30 s), Five questions (5, 120 s), Against the clock (clock, 60 s) | `defineGame` checked the parts when the file loaded; this checks each preset is the way to play it's named for. |
+
 ## App
 
 `src/app/App.test.tsx`, testing the pages in `src/app/` and which address shows which. Screen tests (happy-dom), each starting the app at an address with a `MemoryRouter`.
@@ -721,6 +731,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 |---|---|---|---|---|---|
 | 180 | shows the library at /, and a game opens at its own address | Library, routing | Start at `/`; tap Charades | Heading Ku Zo Wasa; a Charades link to `/charades` showing "2–20 players"; after the tap, Charades' setup screen | The library lists the registry's games, and each link reaches its game. |
 | 372 | lists Name Ten too, with its own icon, players and setup | Library, registry | Open `/`; tap Name Ten | A link to `/name-ten` with its tagline and the list-checks icon; then Name Ten's setup, with "Answers on the board" and "38 items to play" | A game added to the registry appears in the library and gets the shared setup screen with its own settings. |
+| 422 | lists Trivia Night too, with its own icon, presets and setup | Library, registry | Open `/`; tap Trivia Night | A link to `/trivia-night` with the lightbulb icon; then its setup, with an Against the clock preset, Questions per turn, a 30-second turn and "148 items to play" | The third game reaches the library and the shared setup, with its own default turn length. |
 | 214, 215 | says "Page not found" at /chess and /charades/nope/extra, with a way back | Not-found page | A game that doesn't exist; an address with too many parts | "Page not found"; Back to games returns to the library | A mistyped or old link never shows a blank page. Runs once per address (`it.each`). |
 | 216 | has an icon for every game in the registry | `gameIcons` | Every registered game's `meta.icon` | Listed in `gameIcons` | An unlisted icon would quietly show the fallback controller. |
 
@@ -907,6 +918,14 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 373 | goes from setup to a judge, a board, review and the summary, by tapping | Name Ten, end to end | Start; Start; Skip; Play this; tick two answers; End turn early; Adjust; tick a third; Done | "Hand the phone to a judge from" Team 2, "Team 1 are up · Round 1 of 3"; after Skip "2 skips left" and a different category; ten answers, "2 of 10"; review in answers' words; the summary says 3, with scores so far Team 1: 3, Team 2: 0 | Every Name Ten screen in order, through the shared setup, save and play pages. |
+
+## Playing Trivia Night
+
+`src/app/play/triviaNight.test.tsx`, the whole app at `/trivia-night` with nothing saved, the way a player taps through it (ADR 0015). Fake clock and intervals, as in the game screen tests.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 423 | goes from setup to a question, its result and the summary, by tapping | Trivia Night, end to end | 2 questions a turn; Start; Start; tap the first option, Next question; tap the first option, End turn | Team 1's handoff; "Question 1 of 2", a result line, then "Question 2 of 2" and a result; the summary with both teams' scores | Every Trivia Night screen in order, through the shared setup, save and play pages. |
 
 ## Game screen
 
