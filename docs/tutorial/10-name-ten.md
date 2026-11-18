@@ -60,3 +60,17 @@ The content check and `pnpm generate-schemas` found the new game folder by thems
 
 - `pnpm test src/games/name-ten`: tests 344–349.
 - `pnpm validate-content` lists `src/games/name-ten/content/back-to-school.json (38 items)`.
+
+---
+
+## Step 3: Settings
+
+**What:** `src/games/name-ten/config.ts`: `TeamTurnsConfig` plus `shown`, the answers on the board (10–15, default 10).
+
+**Why:** the board's size is the one setting Name Ten adds. Turn length, rounds, packs and tags come from the format, as they did for Charades.
+
+The minimum of 10 matches the content rule from step 2: every category has at least 10 answers, so a board is never short. The maximum of 15 keeps the board scannable in a minute.
+
+### How to verify
+
+`pnpm test src/games/name-ten`: tests 350–351.

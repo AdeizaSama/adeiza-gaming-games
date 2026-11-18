@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 349 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
+**Counts:** 351 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -21,6 +21,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Finding games (scripts)](#finding-games-scripts) | `scripts/lib/games.test.ts` | 6 | |
 | [Charades content](#charades-content) | `src/games/charades/schema.test.ts` | 8 | |
 | [Name Ten content](#name-ten-content) | `src/games/name-ten/schema.test.ts` | 6 | |
+| [Name Ten settings](#name-ten-settings) | `src/games/name-ten/config.test.ts` | 2 | |
 | [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
 | [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 9 | |
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
@@ -578,6 +579,15 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 347 | checks tags, and rejects an unknown field | Tags, strict | Tag `Maths`; an `items` field | A problem at `tags.0`; one problem | Same rules as every game's items. |
 | 348 | names a category by its name | `itemKey` | Numbers | `Numbers` | Two categories with the same name are duplicates in a pack. |
 | 349 | ships a valid Back to School pack, every category with 10 to 20 answers | Content | The pack files | Back to School loads, with at least 30 categories, each with 10+ answers | The game has content that passes its own rules. |
+
+## Name Ten settings
+
+`src/games/name-ten/config.test.ts`, testing `src/games/name-ten/config.ts`: the format's settings plus `shown`, the number of answers on the judge's board. Starts from the least setup sends: teams Lions and Eagles, pack `back-to-school`.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 350 | puts 10 answers on the board unless asked, with the format's defaults for the rest | Defaults | The least setup | 3 rounds, 60 seconds, no tags, 10 answers shown | Ten is the game's name. |
+| 351 | takes 10 to 15 answers on the board, in whole numbers | `shown` | 15; then 9, 16 and 12.5 | Accepted; then rejected, each | Every category has at least 10 answers, so a board of 10 is never short; more than 15 is too long to scan in a minute. |
 
 ## App
 
