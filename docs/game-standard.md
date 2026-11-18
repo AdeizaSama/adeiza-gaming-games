@@ -206,11 +206,11 @@ A format is the outer loop shared by several games: setup, turn order, rounds, s
 | Area | Provided |
 |---|---|
 | Setup | `TeamTurnsConfig` (`src/sdk/formats/team-turns/config.ts`): team names (2–10, in playing order), rounds (1–10, default 3), seconds per turn (10–300, default 60), packs, and tags (default: none, which plays every item). Games extend it with their own settings. Shown on one shared setup screen (`src/app/setup/`), which offers turn lengths in 15-second steps and fills in the team names last used on the device. |
-| Phases | `handoff → turn → turn_summary → results`, including the loop and the end. `turn` is the game's. An optional `round_summary` is added when a game needs it. |
+| Phases | `handoff → turn → turn_summary → results`, including the loop and the end. `turn` is the game's. A game may add phases after its turn (Charades' and Name Ten's `review`, [ADR 0007](decisions/0007-turn-review.md)) and one before it, named `beforeTurn` (Name Ten's `category`, [ADR 0014](decisions/0014-a-phase-before-the-turn.md)). An optional `round_summary` is added when a game needs it. |
 | Context | `TeamTurnsContext`: `config` (the settings), `scores`, `current` (whose turn), `round`, `turnEndsAt`, `pool`, `item` (the card on screen), and `turn` (the game's record of the current turn) |
 | Item pool | The chosen packs' items, each item once (an item in two packs is kept from the first pack chosen), filtered to the chosen tags if any. Drawn in a shuffled order without repeats. When every item has been drawn, they're shuffled back in and drawing continues, with the item just shown placed last. |
-| Guards/actions | `turnsRemaining`; `startTurn` (fresh turn record and timer), `drawItem`, `bankPoints` (adds the turn's points to the team's score), `advanceTeam`. A game's turn may use them, usually `drawItem`. |
-| Views | Default views for `handoff`, `turn_summary` and `results` in `src/sdk/formats/team-turns/views/` (a game may replace any of them). The turn summary is read-only for now; correcting a mis-tap on it is being built. |
+| Guards/actions | `turnsRemaining`; `resetTurn` (fresh turn record), `startTimer` (the turn ends `seconds` from now; a phase before the turn must run it on its way into `turn`), `drawItem`, `bankPoints` (adds the turn's points to the team's score), `advanceTeam`. A game's phases may use them, usually `drawItem`. |
+| Views | Default views for `handoff`, `turn_summary` and `results` in `src/sdk/formats/team-turns/views/` (a game may replace any of them). The turn summary is read-only, with every team's score so far ([ADR 0013](decisions/0013-fit-the-screen-and-standings.md)); mis-taps are fixed before it, in a game's review. |
 
 **team-turns: how a game plugs in** ([ADR 0004](decisions/0004-team-turns-builder.md)). A game passes its turn to `teamTurns` (`src/sdk/formats/team-turns/teamTurns.ts`), which returns the whole machine:
 

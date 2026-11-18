@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 377 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
+**Counts:** 380 runtime tests (`pnpm test`) and 33 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -34,8 +34,8 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Theme variables](#theme-variables) | `src/sdk/theme/apply.test.ts` | 4 | |
 | [Team-turns config](#team-turns-config) | `src/sdk/formats/team-turns/config.test.ts` | 11 | |
 | [Item pool](#item-pool) | `src/sdk/formats/team-turns/pool.test.ts` | 13 | |
-| [Team-turns guards and actions](#team-turns-guards-and-actions) | `src/sdk/formats/team-turns/rules.test.ts` | 9 | |
-| [teamTurns (Word Duel)](#teamturns-word-duel) | `src/sdk/formats/team-turns/teamTurns.test.ts` | 14 | 10 |
+| [Team-turns guards and actions](#team-turns-guards-and-actions) | `src/sdk/formats/team-turns/rules.test.ts` | 10 | |
+| [teamTurns (Word Duel)](#teamturns-word-duel) | `src/sdk/formats/team-turns/teamTurns.test.ts` | 16 | 11 |
 | [defineGame](#definegame) | `src/sdk/game/defineGame.test.ts` | 12 | 8 |
 | [Settings and presets](#settings-and-presets) | `src/sdk/game/settings.test.ts` | 5 | |
 | [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 22 | |
@@ -436,7 +436,8 @@ Each row is a mistake TypeScript must reject.
 |---|---|---|---|---|---|
 | 143 | is true while teams are still to play this round, or rounds are left | `turnsRemaining` | Team 0 in round 1; team 2 in round 1; team 1 in round 2 | True for all three | The game goes on until every team has had every turn. |
 | 144 | is false once the last team has played in the last round | `turnsRemaining` | Team 2 in round 2 | False | This is what sends the game to results. Off by one here would end a game a turn early or late. |
-| 145 | starts a fresh turn record and sets the timer from now | `startTurn` | Last turn's record `['old']`, now = 1000 ms | Record empty; `turnEndsAt` 61000; the original unchanged | Each turn starts clean; the timer comes from the runner's `now`, never the clock. |
+| 145 | resetTurn starts a fresh turn record, leaving the timer alone | `resetTurn` | Last turn's record `['old']`, timer at 5 | Record empty; timer still 5; the original unchanged | A phase before the turn starts a turn record without starting the clock (ADR 0014). |
+| 378 | startTimer sets the turn to end the turn length from now, leaving the turn record alone | `startTimer` | Record `['kept']`, now = 1000 ms, 60-second turns | `turnEndsAt` 61 000; the record unchanged | The timer starts when the turn does, whoever starts it. |
 | 146 | puts the next item from the pool on screen | `drawItem` | Pool `a`, `b` | Item `a`; pool `b` remaining, `a` drawn; the original unchanged | The card on screen and the pool move together. |
 | 147 | adds the turn's points to the current team only | `bankPoints` | Eagles (team 1) playing, scores 4, 2, 7, three words guessed | Scores 4, 5, 7; the original unchanged | Points go to the team that earned them. |
 | 260 | scores the turn under the game's settings | `bankPoints` | A made-up rule worth one point per word per round; two words, 2 rounds | Lions score 4 | `points` receives the settings (ADR 0007), so a game can make its scoring a setting. |
@@ -458,6 +459,8 @@ Each row is a mistake TypeScript must reject.
 | 153 | starts at the first team's handoff with scores at zero and the items shuffled | Starting context | Seed 1 | `handoff`, scores 0 and 0, team 0, round 1, nothing on screen, all five words in the pool | The format builds the starting context from the settings and items. |
 | 154 | refuses to start with no items | Starting context | No items | Error | A game with nothing to draw can't be played; failing at the start is clearer than failing on the first draw. |
 | 155 | starts a turn with the timer set and the first item on screen | `start` event | `start` at 5000 ms | Phase `turn`, `turnEndsAt` 35000, the first drawn word on screen | The handoff's `start` runs `startTurn` then `drawItem`. |
+| 379 | goes there from the handoff with the first item drawn and onStart run, but no timer, until the game starts it | `beforeTurn` | Ready Duel (a `ready` phase before the turn): start at 5 s; pass at 6 s; go at 7 s | `ready`, no timer, the onStart action run; a new word, the old one drawn for good; `turn`, ending at 37 s; no `validateMachine` problems | A game can show something before the clock runs (ADR 0014). |
+| 380 | refuses a phase that could start the turn without its timer, or a phase the game doesn't have | `checkBeforeTurn` | `go` to `turn` without `startTimer`; `beforeTurn: 'steady'` | Errors naming the phase and event, and the missing phase | A turn that never ends would be a silent bug at a party; it fails when the machine is built instead. |
 | 261 | runs the game's onStart actions after the first item is drawn | `onStart` (ADR 0007) | A game whose `onStart` marks the first word as got | After `start`, the word on screen is already in `got`; `validateMachine` finds nothing | The format's `start` draws the first item, so `onStart` is the only way a game can react to it (Charades picks its mode). |
 | 156 | records the turn as it goes and banks its points only when leaving the summary | Points (ADR 0004) | start, got, skip, time up, then next | In the summary: the turn record lists the word got and the word skipped, scores still 0 and 0. After next: scores 1 and 0, Eagles to play | Points are worked out from the turn record when players leave the summary, so a correction there (chapter 04) changes the score. |
 | 157 | plays from the first handoff to the results | Full playthrough | Seed 2026, play until the game ends | 4 turns (2 teams × 2 rounds), back at the handoff between turns, ends in `results` with scores 4 and 4 | Proves the whole format loop works with a game plugged in. |
@@ -483,6 +486,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | C22 | A final game phase | `final: true` | Only the format's `results` ends the game. |
 | C23 | An event the game doesn't have | `on: { jump: … }` | As C12, inside a format game. |
 | C30 | An unknown action in `onStart` | `onStart: ['pickMode']` with no `pickMode` | As C16, for the actions a turn starts with. |
+| C33 | A phase before the turn that the game doesn't have | `beforeTurn: 'steady'` | The handoff would lead nowhere. |
 
 ## defineGame
 

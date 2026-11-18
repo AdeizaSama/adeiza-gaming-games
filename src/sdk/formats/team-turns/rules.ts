@@ -43,19 +43,18 @@ export const teamTurnsGuards = {
 } satisfies Record<string, Guard<AnyContext, MachineEvent>>
 
 /**
- * The format's actions, built for one game: `startTurn` needs the game's `newTurn`, and `bankPoints` its `points`.
+ * The format's actions, built for one game: `resetTurn` needs the game's `newTurn`, and `bankPoints` its `points`.
  * Each does one thing, so the format's phases (step 6) list them in order.
  */
 export function teamTurnsActions<Item, Turn, Config extends TeamTurnsConfig>({ newTurn, points }: TurnRecord<Turn, Config>) {
   type Context = TeamTurnsContext<Item, Turn, Config>
 
   return {
-    /** A fresh turn record, and the timer set to end `config.seconds` from now. */
-    startTurn: ({ context, now }) => ({
-      ...context,
-      turn: newTurn(),
-      turnEndsAt: now + context.config.seconds * 1000,
-    }),
+    /** A fresh turn record. */
+    resetTurn: ({ context }) => ({ ...context, turn: newTurn() }),
+
+    /** The timer: the turn ends `config.seconds` from now. A phase before the turn runs it on the way in (ADR 0014). */
+    startTimer: ({ context, now }) => ({ ...context, turnEndsAt: now + context.config.seconds * 1000 }),
 
     /** Puts the next item from the pool on screen. */
     drawItem: ({ context, rng }) => {

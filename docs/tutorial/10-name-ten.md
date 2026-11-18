@@ -315,3 +315,34 @@ Each row of dots has a screen-reader label, "1 of 3 rounds played"; the team tha
 
 - `pnpm test`: tests 376–377, and test 373 now checks Name Ten's summary shows both teams.
 - On a phone: after a turn's review, the summary lists every team with dots for the rounds played.
+
+---
+
+## Step 11: A phase before the turn
+
+**What:** [ADR 0014](../decisions/0014-a-phase-before-the-turn.md). `teamTurns` takes an optional `beforeTurn`, and the format's `startTurn` splits into `resetTurn` and `startTimer`.
+
+**Why:** Name Ten lets a team skip a category before its minute starts. That's a screen between the handoff and the turn, which the format didn't allow: Start went straight into the turn and started the clock in one step.
+
+### What changes
+
+```ts
+// The handoff's Start, as the format writes it:
+start: beforeTurn
+  ? { to: beforeTurn, actions: ['resetTurn', 'drawItem', ...onStart] }
+  : { to: 'turn', actions: ['resetTurn', 'startTimer', 'drawItem', ...onStart] },
+```
+
+With no `beforeTurn` it's the same as before, so Charades doesn't change. With one, the first item is drawn but the clock doesn't start; the game's phase runs `startTimer` on its way into `turn`.
+
+### A turn that could never end
+
+Forgetting `startTimer` in a pre-turn phase would make a turn with no end: no error, just a game stuck at a party. So `teamTurns` checks the phase when the machine is built, and throws if any transition to `turn` leaves it out (test 380). It's the same idea as `defineGame` refusing a phase without a view: mistakes fail the game's own tests, not players.
+
+### Saves
+
+Only phase names and the context are saved, never action names. Renaming `startTurn` and adding `beforeTurn` changes neither for Charades, so saved games are unaffected and `saveVersion` stays at 2.
+
+### How to verify
+
+`pnpm test src/sdk/formats`: tests 145 and 378–380, and compile-time check C33.
