@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 400 runtime tests (`pnpm test`) and 33 compile-time checks (`pnpm typecheck`).
+**Counts:** 402 runtime tests (`pnpm test`) and 33 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -27,6 +27,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Name Ten views](#name-ten-views) | `src/games/name-ten/views/views.test.tsx` | 7 | |
 | [Name Ten game](#name-ten-game) | `src/games/name-ten/game.test.ts` | 1 | |
 | [Trivia Night content](#trivia-night-content) | `src/games/trivia-night/schema.test.ts` | 5 | |
+| [Trivia Night settings](#trivia-night-settings) | `src/games/trivia-night/config.test.ts` | 2 | |
 | [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
 | [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 9 | |
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
@@ -668,6 +669,15 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 398 | keeps the question to 150 characters, checks tags, and rejects an unknown field | Item schema | 151 characters; tag `Maths`; a `difficulty` field | Problems at `question`, `tags.0`; one problem | A question has to fit above its options; `difficulty` isn't a field yet (ADR 0015). |
 | 399 | names a question by its wording | `itemKey` | The question | Its wording | Two packs with the same question play it once. |
 | 400 | ships a valid Back to School pack, every question tagged with its subject | The shipped pack | `content/*.json` | Back to School loads, with at least 100 questions, each with exactly one of maths, science, social-studies, entertainment, general | Players filter by subject. |
+
+## Trivia Night settings
+
+`src/games/trivia-night/config.test.ts`, testing `src/games/trivia-night/config.ts` (ADR 0015). The least settings: teams Lions and Eagles, pack Back to School.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 401 | plays one question a 30-second turn for 1 point, options shuffled, unless asked | Defaults | The least settings | 3 rounds, 30 seconds, no tags, `questions` mode, 1 question, 1 point, `shuffle` | One question a turn is the default way to play, with 30 seconds for it. |
+| 402 | takes against the clock, 1 to 10 questions, 1 to 5 points and A to Z, and keeps the format's turn limits | Limits | Clock, 10, 5, alphabetical, 300 s; then 0 and 11 questions, 0, 6 and 1.5 points, `random`, `steal`, 5 and 301 seconds | The first kept as given; every other refused | Only the default turn changes, not the format's 10–300 second limits. |
 
 ## App
 

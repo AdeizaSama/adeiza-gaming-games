@@ -128,3 +128,31 @@ The pack started from an older Back to School set, and each question was checked
 ### How to verify
 
 `pnpm test src/games/trivia-night/schema.test.ts`: 5 tests. `pnpm validate-content` lists `trivia-night` with 148 items.
+
+---
+
+## Step 5: Settings
+
+**What:** `src/games/trivia-night/config.ts` and its tests.
+
+**Why:** the three ways to play are settings, so a preset can pick one.
+
+| Setting | Values | Default |
+|---|---|---|
+| `mode` | `questions`, `clock` | `questions` |
+| `questions` | 1–10 a turn (ignored against the clock) | 1 |
+| `points` | 1–5 for a right answer | 1 |
+| `order` | `shuffle`, `alphabetical` | `shuffle` |
+| `seconds` (the format's) | 10–300 | **30**, not the format's 60 |
+
+Changing a format setting's default without copying its limits:
+
+```ts
+seconds: TeamTurnsConfig.shape.seconds.unwrap().default(30),
+```
+
+`.unwrap()` takes the default off the format's field, leaving its `min(10).max(300)`, and `.default(30)` puts Trivia Night's on.
+
+### How to verify
+
+`pnpm test src/games/trivia-night/config.test.ts`: 2 tests.
