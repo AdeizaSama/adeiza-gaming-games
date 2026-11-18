@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 386 runtime tests (`pnpm test`) and 33 compile-time checks (`pnpm typecheck`).
+**Counts:** 427 runtime tests (`pnpm test`) and 33 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -17,6 +17,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Content packs](#content-packs) | `src/sdk/content/pack.test.ts` | 12 | |
 | [Friendly messages](#friendly-messages) | `src/sdk/content/messages.test.ts` | 10 | |
 | [Duplicate items](#duplicate-items) | `src/sdk/content/duplicates.test.ts` | 10 | |
+| [Multiple-choice options](#multiple-choice-options) | `src/sdk/content/choices.test.ts` | 5 | |
 | [Loading packs](#loading-packs) | `src/sdk/content/loadPacks.test.ts` | 12 | |
 | [Finding games (scripts)](#finding-games-scripts) | `scripts/lib/games.test.ts` | 6 | |
 | [Charades content](#charades-content) | `src/games/charades/schema.test.ts` | 8 | |
@@ -25,6 +26,11 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Name Ten machine](#name-ten-machine) | `src/games/name-ten/machine.test.ts` | 15 | |
 | [Name Ten views](#name-ten-views) | `src/games/name-ten/views/views.test.tsx` | 7 | |
 | [Name Ten game](#name-ten-game) | `src/games/name-ten/game.test.ts` | 1 | |
+| [Trivia Night content](#trivia-night-content) | `src/games/trivia-night/schema.test.ts` | 5 | |
+| [Trivia Night settings](#trivia-night-settings) | `src/games/trivia-night/config.test.ts` | 2 | |
+| [Trivia Night machine](#trivia-night-machine) | `src/games/trivia-night/machine.test.ts` | 12 | |
+| [Trivia Night views](#trivia-night-views) | `src/games/trivia-night/views/views.test.tsx` | 6 | |
+| [Trivia Night game](#trivia-night-game) | `src/games/trivia-night/game.test.ts` | 1 | |
 | [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
 | [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 9 | |
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
@@ -40,7 +46,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Settings and presets](#settings-and-presets) | `src/sdk/game/settings.test.ts` | 5 | |
 | [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 22 | |
 | [Charades views](#charades-views) | `src/games/charades/views/views.test.tsx` | 6 | |
-| [App](#app) | `src/app/App.test.tsx` | 5 | |
+| [App](#app) | `src/app/App.test.tsx` | 6 | |
 | [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 6 | |
 | [Applying a theme](#applying-a-theme) | `src/app/theme/themes.test.tsx` | 4 | |
 | [Bundled fonts](#bundled-fonts) | `src/app/theme/fonts.test.ts` | 2 | |
@@ -52,11 +58,14 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Summary and Leaderboard](#summary-and-leaderboard) | `src/sdk/interactions/summary.test.tsx` | 5 | |
 | [Review](#review) | `src/sdk/interactions/review.test.tsx` | 3 | |
 | [PromptCard](#promptcard) | `src/sdk/interactions/promptcard.test.tsx` | 3 | |
+| [MultipleChoice](#multiplechoice) | `src/sdk/interactions/multiplechoice.test.tsx` | 5 | |
+| [A pause after time runs out](#a-pause-after-time-runs-out) | `src/sdk/interactions/settle.test.tsx` | 3 | |
 | [Markdown](#markdown) | `src/sdk/interactions/markdown.test.ts` | 5 | |
 | [Instruction](#instruction) | `src/sdk/interactions/instruction.test.tsx` | 3 | |
 | [Team-turns views](#team-turns-views) | `src/sdk/formats/team-turns/views/views.test.tsx` | 4 | |
 | [Game screen](#game-screen) | `src/app/play/GameScreen.test.tsx` | 3 | |
 | [Playing Name Ten](#playing-name-ten) | `src/app/play/nameTen.test.tsx` | 1 | |
+| [Playing Trivia Night](#playing-trivia-night) | `src/app/play/triviaNight.test.tsx` | 1 | |
 | [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 15 | |
 | [Saved game](#saved-game) | `src/app/play/savedGame.test.ts` | 12 | |
 | [Play page](#play-page) | `src/app/play/PlayPage.test.tsx` | 3 | |
@@ -231,6 +240,18 @@ Each row is a mistake TypeScript must reject.
 | 62 | keeps the first copy of each item, in the original order | `uniqueBy` | Goku (act), Naruto, goku (describe) | Goku (act), Naruto | When players pick two packs that share a word, it appears once, taken from the first pack picked. |
 | 63 | returns every item when there are no duplicates, without changing the original | `uniqueBy` | Goku, Naruto | A new list with both; the original unchanged | Game data is never changed in place (the same rule as actions). |
 | 64 | handles an empty list | `uniqueBy` | An empty list | An empty list | Edge case that must not crash. |
+
+## Multiple-choice options
+
+`src/sdk/content/choices.test.ts`, testing `src/sdk/content/choices.ts` (ADR 0015). The rules any multiple-choice game's questions follow, and the order options are shown in.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 387 | takes 2 to 5 options, and refuses 1 or 6 | `Options` | 2, 5, 1 and 6 options | The first two pass; the others fail | Two is a this-or-that; five is the most that fits under a question on a small phone. |
+| 388 | refuses an empty option, one over 80 characters, and a repeat that differs only in capitals | `Options` | `Lagos` with a blank; with 81 characters; `Lagos, Abuja, LAGOS` | A problem at the bad option's position each time | Two options that only differ in capitals look like the same answer to players. |
+| 389 | passes an answer that is one of the options, and refuses one that isn't or is written differently | `checkAnswer` | Answer `Abuja`, `Kano`, `abuja` with options Lagos, Abuja | Passes; then a problem at `answer` twice | The machine compares a pick with the answer as written, so `abuja` would never be right. |
+| 390 | shuffle: a new order from the machine's random numbers, the same for the same seed, the original unchanged | `orderOptions` | Six options, seed 7, twice | The same options; the same order both times; the original list unchanged | A saved game shows a question's options in the same order after a refresh. |
+| 391 | alphabetical: A to Z ignoring capitals, numbers in number order | `orderOptions` | `Year 10, banana, Year 9, Apple, 12, 8` | `8, 12, Apple, banana, Year 9, Year 10` | A plain text sort puts 12 before 8 and Year 10 before Year 9. |
 
 ## Loading packs
 
@@ -642,6 +663,67 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 |---|---|---|---|---|---|
 | 371 | is a valid game with the Back to School pack, its own settings and presets, and its own handoff | `index.ts` | The game's default export | Id `name-ten`; Back to School; its machine and settings; presets Quick and Classic; its own handoff view; rules with "## A turn" | `defineGame` checked everything (meta, packs, presets, rules, a view per phase) when the file loaded; this checks Name Ten wired its own parts in. |
 
+## Trivia Night content
+
+`src/games/trivia-night/schema.test.ts`, testing `src/games/trivia-night/schema.ts` and its packs (ADR 0015). The question in most tests is "What is the capital of Nigeria?" with Abuja, Lagos, Kano, Ibadan; the answer is Abuja.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 396 | needs a question, its options and the answer, filling in no tags | Item schema | The question, no tags | The same, with `tags: []` | Tags are optional for contributors. |
+| 397 | checks the options with the SDK's rules, and the answer is one of them | `Options`, `checkAnswer` | One option; `abuja` repeated; answer Port Harcourt | Problems at `options`, `options.2`, `answer` | The game uses the shared rules, so every multiple-choice game checks the same way. |
+| 398 | keeps the question to 150 characters, checks tags, and rejects an unknown field | Item schema | 151 characters; tag `Maths`; a `difficulty` field | Problems at `question`, `tags.0`; one problem | A question has to fit above its options; `difficulty` isn't a field yet (ADR 0015). |
+| 399 | names a question by its wording | `itemKey` | The question | Its wording | Two packs with the same question play it once. |
+| 400 | ships a valid Back to School pack, every question tagged with its subject | The shipped pack | `content/*.json` | Back to School loads, with at least 100 questions, each with exactly one of maths, science, social-studies, entertainment, general | Players filter by subject. |
+
+## Trivia Night settings
+
+`src/games/trivia-night/config.test.ts`, testing `src/games/trivia-night/config.ts` (ADR 0015). The least settings: teams Lions and Eagles, pack Back to School.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 401 | plays one question a 30-second turn for 1 point, options shuffled, unless asked | Defaults | The least settings | 3 rounds, 30 seconds, no tags, `questions` mode, 1 question, 1 point, `shuffle` | One question a turn is the default way to play, with 30 seconds for it. |
+| 402 | takes against the clock, 1 to 10 questions, 1 to 5 points and A to Z, and keeps the format's turn limits | Limits | Clock, 10, 5, alphabetical, 300 s; then 0 and 11 questions, 0, 6 and 1.5 points, `random`, `steal`, 5 and 301 seconds | The first kept as given; every other refused | Only the default turn changes, not the format's 10–300 second limits. |
+
+## Trivia Night machine
+
+`src/games/trivia-night/machine.test.ts`, testing `src/games/trivia-night/machine.ts` (ADR 0015) with the real Back to School pack. Teams Lions and Eagles; the defaults unless a test says otherwise (one question a 30-second turn, 1 point, shuffled). "Answer it" taps the right option on screen, or a wrong one.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 403 | has no mistakes validateMachine can find | Machine | The machine | No mistakes | Every phase, guard and action it names exists. |
+| 404 | start: shows the first question with its options shuffled, nothing picked, and a 30-second clock | `start`, `dealOptions` | Start at 1 s; seeds 1 to 5 | `turn` ending at 31 s; the question's own options; nothing picked, no results; more than one option order across seeds | The clock starts with the question, and the order changes each game. |
+| 405 | answer: a right pick is worth the points setting, a wrong one nothing, and both show the result | `answer`, points | Answer right; wrong; right with 3 points | `reveal`, the pick kept, `[true]` and 1 point; `[false]` and 0; 3 | Scoring by the setting, and a wrong answer costs nothing. |
+| 406 | ignores an answer for no option, a second answer, and an answer outside the turn | `isOption` | Positions −1, 4, 1.5; an answer in `reveal`; one in the turn summary | Nothing changes each time | Events come from views; a team can't change its pick after the result. |
+| 407 | one question a turn: continue after the result ends the turn | `continue` | Answer, continue | `turn_summary` | The default way to play. |
+| 408 | a set number: continue draws the next question until that many are answered, then ends the turn | `moreQuestions`, `drawItem` | 3 a turn: right, wrong, right | Back to `turn` twice with nothing picked; 3 different questions; `[true, false, true]`, 2 points; then `turn_summary` | Questions mode with more than one. |
+| 409 | against the clock: questions keep coming, and time_up ends the turn from a question or a result | Clock mode, `time_up` | 12 right answers with `questions: 1` set; then `time_up` on a question and on a result | Still in `turn`, 12 points; `turn_summary` both times | Against the clock ignores the question count; only time ends the turn. |
+| 410 | A to Z: the options in alphabetical order | `order` | Alphabetical | The options sorted A to Z, numbers in number order | The setting reaches the card. |
+| 411 | plays a full game from the first handoff to the results | Whole game | Seed 2026; 6 turns of one question, Lions right, Eagles wrong | Final; scores 3 and 0; 6 different questions drawn | The format and the game work together end to end. |
+| 412 | dealOptions puts the options in the order set, nothing picked, keeping the results, without changing the context passed in | `dealOptions` | Capital? Lagos, Abuja, Kano, with option 1 picked; shuffled and A to Z | The same three, nothing picked, results kept; Abuja, Kano, Lagos; the original unchanged | A test per action (standard §12). |
+| 413 | pick records the option and whether it was the answer, without changing the context passed in | `pick` | Answer 1 (Abuja), answer 0 (Kano), after one right | Picked 1, `[true, true]`; `[true, false]`; the original unchanged | Right is decided by the answer as written. |
+| 414 | isOption is true only for an answer naming an option; moreQuestions follows the mode and the count | Guards | Positions 0, 2, 3, −1, 0.5; one answered with 1, 2 a turn, and against the clock | true, true, false, false, false; false, true, true | A test per guard. |
+
+## Trivia Night views
+
+`src/games/trivia-night/views/views.test.tsx`, testing `TurnView.tsx` and `SettingsView.tsx` in `src/games/trivia-night/views/` (ADR 0015). Screen tests (happy-dom), with real states from the machine on one question: "What is the capital of Nigeria?" (Lagos, Abuja, Kano, Ibadan; the answer is Abuja). `questionCount` is a plain function.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 415 | shows the team, the clock and the question with its options in the order dealt, and reports the pick | Turn view | The first question; tap the third option | Lions, a timer, the question, the options in the turn's order; `answer` with index 2; the turn's button hidden | The team sees what to answer, and the machine gets the position tapped. |
+| 416 | after a pick, shows the result and ends the turn on its last question, without the clock | Result | Lagos picked, one question a turn; tap End turn | "Not quite: it's Abuja.", no timer; `continue` sent | Time running out mustn't cut the last result short (ADR 0015). |
+| 417 | with more to come, keeps the clock and offers the next question | Result | Abuja picked, 3 a turn | `reveal`; "Right!", a timer, Next question | The clock still matters while questions are left. |
+| 418 | counts questions: of a set, against the clock, and not at all for one | `questionCount` | One answered, open, 5 a turn; one answered and picked; against the clock; one a turn | "Question 2 of 5", "Question 1 of 5", "Question 2", nothing | The team knows how far into the turn it is. |
+| 419 | picks the mode, with questions per turn only for a set number, 1 to 10 | Settings view | Tap More 12 times; then Against the clock | 1, then 10 at most; the stepper gone | The count only means something for a set number. |
+| 420 | sets points from 1 to 5, and the order of the options | Settings view | Tap More 6 times on points; tap A to Z | "1 point", then "5 points" at most; Shuffled checked, then A to Z | Every setting can be set on setup. |
+
+## Trivia Night game
+
+`src/games/trivia-night/game.test.ts`, testing `src/games/trivia-night/index.ts`: the game's single `defineGame` export.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 421 | is a valid game with the Back to School pack, its settings, a preset per way to play, and one view for turn and result | `index.ts` | The game's default export; each preset applied | Id `trivia-night`; Back to School; its machine and settings; `TurnView` for `turn` and `reveal`; rules with "## Ways to play"; One question (1, 30 s), Five questions (5, 120 s), Against the clock (clock, 60 s) | `defineGame` checked the parts when the file loaded; this checks each preset is the way to play it's named for. |
+
 ## App
 
 `src/app/App.test.tsx`, testing the pages in `src/app/` and which address shows which. Screen tests (happy-dom), each starting the app at an address with a `MemoryRouter`.
@@ -650,6 +732,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 |---|---|---|---|---|---|
 | 180 | shows the library at /, and a game opens at its own address | Library, routing | Start at `/`; tap Charades | Heading Ku Zo Wasa; a Charades link to `/charades` showing "2–20 players"; after the tap, Charades' setup screen | The library lists the registry's games, and each link reaches its game. |
 | 372 | lists Name Ten too, with its own icon, players and setup | Library, registry | Open `/`; tap Name Ten | A link to `/name-ten` with its tagline and the list-checks icon; then Name Ten's setup, with "Answers on the board" and "38 items to play" | A game added to the registry appears in the library and gets the shared setup screen with its own settings. |
+| 422 | lists Trivia Night too, with its own icon, presets and setup | Library, registry | Open `/`; tap Trivia Night | A link to `/trivia-night` with the lightbulb icon; then its setup, with an Against the clock preset, Questions per turn, a 30-second turn and "148 items to play" | The third game reaches the library and the shared setup, with its own default turn length. |
 | 214, 215 | says "Page not found" at /chess and /charades/nope/extra, with a way back | Not-found page | A game that doesn't exist; an address with too many parts | "Page not found"; Back to games returns to the library | A mistyped or old link never shows a blank page. Runs once per address (`it.each`). |
 | 216 | has an icon for every game in the registry | `gameIcons` | Every registered game's `meta.icon` | Listed in `gameIcons` | An unlisted icon would quietly show the fallback controller. |
 
@@ -775,6 +858,28 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 365 | reports which answer was tapped, and the count follows | Taps | Tap Biro, Eraser, then Ruler; then a card labelled "Question" with one answer, tapped | "3 of 3", then "2 of 3", Ruler unpressed; then "Question" shown and `onToggle(0)` | A tap is reported by position; the count always matches the ticks. |
 | 374 | lays the board out as two columns of tiles that share the height, never under 44px, scrolling only then | Layout | The board | A two-column grid, rows `minmax(2.75rem, 1fr)`, scrolling when full | Ten answers fit on a phone without scrolling, and no tile is too small to tap (ADR 0013). Class names, because happy-dom doesn't lay pages out. |
 
+## MultipleChoice
+
+`src/sdk/interactions/multiplechoice.test.tsx`, testing `src/sdk/interactions/MultipleChoice.tsx` (ADR 0015). Screen tests (happy-dom), except `resultText`, a plain function. The machine's part is played by a bit of state: the first tap is the pick.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 392 | shows the question with its label on the card, and every option in order, none marked | `MultipleChoice` | "What is the capital of Nigeria?", Lagos, Abuja, Kano, Ibadan | The label Question; the question on the theme's card; four outlined options in order | Nothing gives the answer away before a tap. |
+| 393 | reports the tap, then shows the answer in green and a wrong pick in red, and ignores later taps | Picking | Tap Lagos; then Abuja | `onPick(0)`; "Not quite: it's Abuja."; Abuja green with "The answer", Lagos red with "Your pick", Kano plain; the second tap not reported | A team sees at once what the answer was, and can't change its pick. |
+| 394 | says Right! when the pick is the answer, and takes 2 or 5 options | `resultText`; two options | Answer 1 picked 1, and picked 3; Masculin or Féminin with Féminin picked | "Right!", "Not quite: it's Abuja."; the label Gender, Right!, two options | The same card serves a this-or-that game. |
+| 395 | shares the height about 65 : 35, with options at least 44px and the question giving way | Layout | The card, four options | The question `flex-[13_1_0%] min-h-0`; the options `flex-[7_0_0%]`, two columns, rows `minmax(2.75rem,1fr)`; no tile spanning a row | Pins the layout ADR 0015 chose: 2x2 for four (happy-dom doesn't lay pages out). |
+| 424 | lays out 2 as 2x1, and gives the last of an odd number the whole row | `spansRow`, layout | 2, 3 and 5 options; the card with A, B, C | Only the last of 3 and of 5 spans; C's tile has `col-span-2` | An odd number of tiles leaves no empty cell. |
+
+## A pause after time runs out
+
+`src/sdk/interactions/settle.test.tsx`, testing `useSettled.ts`, and its use in `Summary.tsx` and `Review.tsx`, in `src/sdk/interactions/` (ADR 0016). The delay is 0 in every other test (`src/testSetup.ts`); here it's 2000 ms, with a fake clock.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 425 | is false for the delay after the component first shows, then true; with no delay, true at once | `useSettled` | Shown; after 1999 ms; after 2000 ms; with 0 | false, false, true; true | The pause ends exactly when set, and a delay of 0 means none. |
+| 426 | keeps the turn summary's Next off for 2 seconds | `Summary` | Shown; after 2 s | Next off; then on | A tap aimed at the last second of a turn doesn't skip the score. |
+| 427 | keeps review's Adjust and Done off for 2 seconds | `Review` | One row; shown; after 2 s | Adjust and Done off; then on | A late tap doesn't count a turn before it's checked. |
+
 ## Review
 
 `src/sdk/interactions/review.test.tsx`, testing `src/sdk/interactions/Review.tsx`: the turn card by card, before its points count (ADR 0007). Screen tests (happy-dom) with three cards: Gala (acted, got), Zobo (skipped, changed), Assembly (not counted).
@@ -825,6 +930,14 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 373 | goes from setup to a judge, a board, review and the summary, by tapping | Name Ten, end to end | Start; Start; Skip; Play this; tick two answers; End turn early; Adjust; tick a third; Done | "Hand the phone to a judge from" Team 2, "Team 1 are up · Round 1 of 3"; after Skip "2 skips left" and a different category; ten answers, "2 of 10"; review in answers' words; the summary says 3, with scores so far Team 1: 3, Team 2: 0 | Every Name Ten screen in order, through the shared setup, save and play pages. |
+
+## Playing Trivia Night
+
+`src/app/play/triviaNight.test.tsx`, the whole app at `/trivia-night` with nothing saved, the way a player taps through it (ADR 0015). Fake clock and intervals, as in the game screen tests.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 423 | goes from setup to a question, its result and the summary, by tapping | Trivia Night, end to end | 2 questions a turn; Start; Start; tap the first option, Next question; tap the first option, End turn | Team 1's handoff; "Question 1 of 2", a result line, then "Question 2 of 2" and a result; the summary with both teams' scores | Every Trivia Night screen in order, through the shared setup, save and play pages. |
 
 ## Game screen
 

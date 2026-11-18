@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
@@ -43,6 +43,21 @@ describe('App', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Name Ten' })).toBeDefined()
     expect(screen.getByRole('group', { name: 'Answers on the board' })).toBeDefined()
     expect(screen.getByText('38 items to play')).toBeDefined()
+  })
+
+  it('lists Trivia Night too, with its own icon, presets and setup', async () => {
+    const user = userEvent.setup()
+    renderAt('/')
+    const trivia = screen.getByRole('link', { name: /Trivia Night/ })
+    expect(trivia.getAttribute('href')).toBe('/trivia-night')
+    expect(trivia.querySelector('.lucide-lightbulb')).not.toBeNull()
+
+    await user.click(trivia)
+    expect(screen.getByRole('heading', { level: 1, name: 'Trivia Night' })).toBeDefined()
+    expect(screen.getByRole('button', { name: 'Against the clock' })).toBeDefined()
+    expect(screen.getByRole('group', { name: 'Questions per turn' })).toBeDefined()
+    expect(within(screen.getByRole('group', { name: 'Turn length' })).getByText('30 seconds')).toBeDefined()
+    expect(screen.getByText('148 items to play')).toBeDefined()
   })
 
   it.each(['/chess', '/charades/nope/extra'])('says "Page not found" at %s, with a way back', async (address) => {

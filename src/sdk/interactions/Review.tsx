@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Button } from '../../ui/button'
 import { cn } from '../../ui/cn'
+import { useSettled } from './useSettled'
 
 export interface ReviewRow {
   /** What was played, e.g. "Gala". */
@@ -38,9 +39,13 @@ const tones = {
  * The turn, card by card, before its points count (standard §6, ADR 0007). Results are locked until the host taps
  * Adjust, so a tap while the phone goes round changes nothing. Being unlocked is this screen's own state: it isn't
  * saved, so a refresh locks it again. What a tap changes is up to the game, through `onToggle`.
+ *
+ * Adjust and Done are off for a moment after the screen appears (ADR 0016): it comes up when time runs out, under a
+ * finger aimed at the turn.
  */
 export function Review({ title, rows, onToggle, onDone, doneLabel = 'Done', noun = { one: 'card', many: 'cards' } }: ReviewProps) {
   const [unlocked, setUnlocked] = useState(false)
+  const settled = useSettled()
   const article = /^[aeiou]/i.test(noun.one) ? 'an' : 'a'
   return (
     <section className="flex flex-1 flex-col gap-6 p-6">
@@ -82,13 +87,13 @@ export function Review({ title, rows, onToggle, onDone, doneLabel = 'Done', noun
       )}
       <div className="grid grid-cols-2 gap-4">
         {rows.length > 0 ? (
-          <Button size="lg" variant="outline" onClick={() => setUnlocked(!unlocked)}>
+          <Button size="lg" variant="outline" disabled={!settled} onClick={() => setUnlocked(!unlocked)}>
             {unlocked ? 'Lock' : 'Adjust'}
           </Button>
         ) : (
           <span />
         )}
-        <Button size="lg" onClick={onDone}>
+        <Button size="lg" disabled={!settled} onClick={onDone}>
           {doneLabel}
         </Button>
       </div>

@@ -6,7 +6,7 @@ An open-source library of **single-device party games**: charades, name ten, tri
 
 The library is built to be extended. Developers can add games, designers can add themes, and anyone can add or improve the words, categories and questions the games use.
 
-> **Status: early development.** Charades and Name Ten are complete: setup with presets, rules, a review after every turn, and games that survive a refresh, a locked phone or a closed tab. Five themes to pick from, from sticky notes on lined paper to glass panels over a starfield, and anyone can add one as a JSON file. The other games are planned. Expect breaking changes until the first release.
+> **Status: early development.** Charades, Name Ten and Trivia Night are complete: setup with presets, rules, a review after every turn, and games that survive a refresh, a locked phone or a closed tab. Five themes to pick from, from sticky notes on lined paper to glass panels over a starfield, and anyone can add one as a JSON file. The other games are planned. Expect breaking changes until the first release.
 
 ---
 
@@ -16,7 +16,7 @@ The library is built to be extended. Developers can add games, designers can add
 |---|---|---|
 | [Charades](src/games/charades/README.md) | team-turns | Complete |
 | [Name Ten](src/games/name-ten/README.md) | team-turns | Complete |
-| Trivia Night | team-turns | Planned |
+| [Trivia Night](src/games/trivia-night/README.md) | team-turns | Complete |
 | Mafia | host-led | Planned |
 
 ## Principles
@@ -31,7 +31,7 @@ The library is built to be extended. Developers can add games, designers can add
 | Level | What it decides | Example |
 |---|---|---|
 | **Format** | The outer loop: how turns, rounds and scoring flow | `team-turns`, `host-led` |
-| **Game** | What happens inside a turn: what's shown, what players can do, how points are scored | Charades, Name Ten |
+| **Game** | What happens inside a turn: what's shown, what players can do, how points are scored | Charades, Name Ten, Trivia Night |
 | **Variant** | Settings and content only. Same rules. | "Anime Charades with 90-second turns" |
 
 Each game is a small typed state machine (its flow), JSON content packs (its words, categories or questions), and React views built from shared building blocks. The full contract is in the **[Game Standard](docs/game-standard.md)**.
