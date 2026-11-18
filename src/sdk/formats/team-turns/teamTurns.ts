@@ -57,6 +57,12 @@ export interface TeamTurnsGame<
    * draws that item, so this is the only place a game can react to it, e.g. Charades picking how it's clued.
    */
   onStart?: readonly NoInfer<ActionName>[]
+  /**
+   * One of the game's phases to show before the turn, e.g. choosing a category (ADR 0014). The handoff's Start goes
+   * there, with the first item drawn but no timer; the phase must run the format's `startTimer` on every way into
+   * `turn`. Leave it out and Start goes straight to `turn`.
+   */
+  beforeTurn?: NoInfer<Phase>
   guards: Record<GuardName, Guard<TeamTurnsContext<Item, Turn, Config>, Event | TeamTurnsEvent>> & Taken<FormatGuardName>
   actions: Record<ActionName, Action<TeamTurnsContext<Item, Turn, Config>, Event | TeamTurnsEvent>> & Taken<FormatActionName>
 }
@@ -83,14 +89,19 @@ export type TeamTurnsMachine<
 > & { points: (turn: Turn, config: Config) => number }
 
 /**
- * The format's loop. `start` begins a turn: a fresh turn record, the timer, the first item. `next` on the turn
- * summary adds the turn's points to the team's score, then moves to the next team's handoff, or to the results
- * after the last turn. The game's phases go between `handoff` and `turn_summary`.
+ * The format's loop. `start` begins a turn: a fresh turn record, the first item, and the timer, unless the game has a
+ * phase before its turn, which starts the timer itself (ADR 0014). `next` on the turn summary adds the turn's points to
+ * the team's score, then moves to the next team's handoff, or to the results after the last turn. The game's phases
+ * go between `handoff` and `turn_summary`.
  */
-const formatPhases = (onStart: readonly string[] = []) => ({
+const formatPhases = (onStart: readonly string[] = [], beforeTurn?: string) => ({
   handoff: {
     interaction: 'handoff',
-    on: { start: { to: 'turn', actions: ['startTurn', 'drawItem', ...onStart] } },
+    on: {
+      start: beforeTurn
+        ? { to: beforeTurn, actions: ['resetTurn', 'drawItem', ...onStart] }
+        : { to: 'turn', actions: ['resetTurn', 'startTimer', 'drawItem', ...onStart] },
+    },
   },
   turn_summary: {
     interaction: 'summary',
@@ -123,6 +134,7 @@ export function teamTurns<Item, Turn, Event extends MachineEvent, Config extends
   return <Phase extends string, GuardName extends string = never, ActionName extends string = never>(
     game: TeamTurnsGame<Item, Turn, Event, Config, Phase, GuardName, ActionName>,
   ): TeamTurnsMachine<Item, Turn, Event, Config, Phase, GuardName, ActionName> => {
+    if (game.beforeTurn !== undefined) checkBeforeTurn(game.phases as Record<string, { on?: Record<string, unknown> }>, game.beforeTurn)
     const machine = {
       points: game.points,
       initial: 'handoff',
@@ -140,7 +152,7 @@ export function teamTurns<Item, Turn, Event extends MachineEvent, Config extends
         }
       },
       // The format's phases go last, so even untyped code can't replace them.
-      phases: { ...game.phases, ...formatPhases(game.onStart) },
+      phases: { ...game.phases, ...formatPhases(game.onStart, game.beforeTurn) },
       guards: { ...game.guards, ...teamTurnsGuards },
       actions: { ...game.actions, ...teamTurnsActions<Item, Turn, Config>(game) },
     }
@@ -150,4 +162,21 @@ export function teamTurns<Item, Turn, Event extends MachineEvent, Config extends
     // here. The parts are checked: the game's by `TeamTurnsGame` above, the format's by its tests.
     return machine as unknown as TeamTurnsMachine<Item, Turn, Event, Config, Phase, GuardName, ActionName>
   }
+}
+
+/**
+ * Checks a game's phase before the turn (ADR 0014): it must be one of the game's phases, and every way it goes into
+ * `turn` must start the timer, or that turn would never end. Throws one error naming each problem.
+ */
+function checkBeforeTurn(phases: Record<string, { on?: Record<string, unknown> }>, name: string): void {
+  const phase = phases[name]
+  if (!phase) throw new Error(`beforeTurn: the game has no phase "${name}"`)
+  const problems: string[] = []
+  for (const [event, transition] of Object.entries(phase.on ?? {})) {
+    const options = (Array.isArray(transition) ? transition : [transition]) as { to?: string; actions?: readonly string[] }[]
+    for (const option of options) {
+      if (option.to === 'turn' && !option.actions?.includes('startTimer')) problems.push(`"${event}" goes to turn without startTimer`)
+    }
+  }
+  if (problems.length > 0) throw new Error(`beforeTurn: phase "${name}": ${problems.join('; ')}, so the turn would never end`)
 }

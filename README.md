@@ -6,7 +6,7 @@ An open-source library of **single-device party games**: charades, name ten, tri
 
 The library is built to be extended. Developers can add games, designers can add themes, and anyone can add or improve the words, categories and questions the games use.
 
-> **Status: early development.** Charades is complete: two modes, points you can change, presets, rules, a review after every turn, and games that survive a refresh, a locked phone or a closed tab. Five themes to pick from, from sticky notes on lined paper to glass panels over a starfield, and anyone can add one as a JSON file. The other games are planned. Expect breaking changes until the first release.
+> **Status: early development.** Charades and Name Ten are complete: setup with presets, rules, a review after every turn, and games that survive a refresh, a locked phone or a closed tab. Five themes to pick from, from sticky notes on lined paper to glass panels over a starfield, and anyone can add one as a JSON file. The other games are planned. Expect breaking changes until the first release.
 
 ---
 
@@ -15,7 +15,7 @@ The library is built to be extended. Developers can add games, designers can add
 | Game | Format | Status |
 |---|---|---|
 | [Charades](src/games/charades/README.md) | team-turns | Complete |
-| Name Ten | team-turns | Planned |
+| [Name Ten](src/games/name-ten/README.md) | team-turns | Complete |
 | Trivia Night | team-turns | Planned |
 | Mafia | host-led | Planned |
 

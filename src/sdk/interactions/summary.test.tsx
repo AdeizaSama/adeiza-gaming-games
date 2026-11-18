@@ -29,6 +29,21 @@ describe('Summary', () => {
     expect(onNext).toHaveBeenCalledTimes(1)
   })
 
+  it('lists every team’s score so far, a dot per round filled for each played, and marks the team that just played', () => {
+    const standings = [
+      { name: 'Lions', score: 13, played: 1, of: 3, current: true },
+      { name: 'Eagles', score: 0, played: 0, of: 3 },
+    ]
+    render(<Summary title="Lions" points={13} standings={standings} onNext={() => {}} />)
+    const rows = within(screen.getByRole('list', { name: 'Scores so far' })).getAllByRole('listitem')
+    expect(rows.map((row) => row.textContent)).toEqual(['Lions13', 'Eagles0'])
+    expect(within(rows[0]).getByRole('img', { name: '1 of 3 rounds played' })).toBeDefined()
+    expect(within(rows[1]).getByRole('img', { name: '0 of 3 rounds played' })).toBeDefined()
+    expect(rows[0].querySelectorAll('.bg-current')).toHaveLength(1)
+    expect(rows[0].getAttribute('aria-current')).toBe('true')
+    expect(rows[1].hasAttribute('aria-current')).toBe(false)
+  })
+
   it('says "1 point", and leaves out empty lists', () => {
     render(<Summary title="Eagles" points={1} sections={[{ label: 'Skipped', items: [] }]} onNext={() => {}} />)
     expect(screen.getByText(/scored/).textContent).toBe('scored 1 point')

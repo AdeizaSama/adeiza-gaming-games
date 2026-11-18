@@ -31,6 +31,20 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: 'Start' })).toBeDefined()
   })
 
+  it('lists Name Ten too, with its own icon, players and setup', async () => {
+    const user = userEvent.setup()
+    renderAt('/')
+    const nameTen = screen.getByRole('link', { name: /Name Ten/ })
+    expect(nameTen.getAttribute('href')).toBe('/name-ten')
+    expect(nameTen.textContent).toContain('Name ten before the clock runs out.')
+    expect(nameTen.querySelector('.lucide-list-checks')).not.toBeNull()
+
+    await user.click(nameTen)
+    expect(screen.getByRole('heading', { level: 1, name: 'Name Ten' })).toBeDefined()
+    expect(screen.getByRole('group', { name: 'Answers on the board' })).toBeDefined()
+    expect(screen.getByText('38 items to play')).toBeDefined()
+  })
+
   it.each(['/chess', '/charades/nope/extra'])('says "Page not found" at %s, with a way back', async (address) => {
     const user = userEvent.setup()
     renderAt(address)

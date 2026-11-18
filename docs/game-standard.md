@@ -181,12 +181,12 @@ A primitive takes plain props (text, callbacks) and knows nothing about machines
 | Primitive | Used for | Status |
 |---|---|---|
 | `Instruction` | Rules or a step explanation with a continue action, in a small part of markdown ([ADR 0009](decisions/0009-rules.md)) | Built |
-| `Handoff` | Pass-the-device screen; hides the previous turn's secret info | Built |
+| `Handoff` | Pass-the-device screen; hides the previous turn's secret info. Its line above the name can change (Name Ten: "Hand the phone to a judge from") | Built |
 | `FlashCard` | Big term with got/skip (charades) | Built |
-| `PromptCard` | Category or prompt with a counter (name ten) | Planned |
+| `PromptCard` | A prompt with a running count and a board of answers that tick when tapped (Name Ten's judge, [ADR 0012](decisions/0012-name-ten.md)). Two columns of tiles that fill the screen's height, each at least 44px ([ADR 0013](decisions/0013-fit-the-screen-and-standings.md)) | Built |
 | `MultipleChoice` | Question, options, reveal (trivia) | Planned |
 | `Countdown` | Shared timer display with warnings; reports when time is up (it reads the clock only to show it) | Built |
-| `Summary` | Turn/round recap: who played, what they scored | Built |
+| `Summary` | Turn/round recap: who played, what they scored, and every team's score so far with the rounds played ([ADR 0013](decisions/0013-fit-the-screen-and-standings.md)) | Built |
 | `Review` | A turn card by card, locked until the host taps Adjust, to fix mis-taps before they count ([ADR 0007](decisions/0007-turn-review.md)) | Built |
 | `Leaderboard` | Team/player standings; tied scores share a place | Built |
 | `SecretReveal` | One-player-at-a-time private reveal (future: Mafia roles) | Planned |
@@ -206,11 +206,11 @@ A format is the outer loop shared by several games: setup, turn order, rounds, s
 | Area | Provided |
 |---|---|
 | Setup | `TeamTurnsConfig` (`src/sdk/formats/team-turns/config.ts`): team names (2–10, in playing order), rounds (1–10, default 3), seconds per turn (10–300, default 60), packs, and tags (default: none, which plays every item). Games extend it with their own settings. Shown on one shared setup screen (`src/app/setup/`), which offers turn lengths in 15-second steps and fills in the team names last used on the device. |
-| Phases | `handoff → turn → turn_summary → results`, including the loop and the end. `turn` is the game's. An optional `round_summary` is added when a game needs it. |
+| Phases | `handoff → turn → turn_summary → results`, including the loop and the end. `turn` is the game's. A game may add phases after its turn (Charades' and Name Ten's `review`, [ADR 0007](decisions/0007-turn-review.md)) and one before it, named `beforeTurn` (Name Ten's `category`, [ADR 0014](decisions/0014-a-phase-before-the-turn.md)). An optional `round_summary` is added when a game needs it. |
 | Context | `TeamTurnsContext`: `config` (the settings), `scores`, `current` (whose turn), `round`, `turnEndsAt`, `pool`, `item` (the card on screen), and `turn` (the game's record of the current turn) |
 | Item pool | The chosen packs' items, each item once (an item in two packs is kept from the first pack chosen), filtered to the chosen tags if any. Drawn in a shuffled order without repeats. When every item has been drawn, they're shuffled back in and drawing continues, with the item just shown placed last. |
-| Guards/actions | `turnsRemaining`; `startTurn` (fresh turn record and timer), `drawItem`, `bankPoints` (adds the turn's points to the team's score), `advanceTeam`. A game's turn may use them, usually `drawItem`. |
-| Views | Default views for `handoff`, `turn_summary` and `results` in `src/sdk/formats/team-turns/views/` (a game may replace any of them). The turn summary is read-only for now; correcting a mis-tap on it is being built. |
+| Guards/actions | `turnsRemaining`; `resetTurn` (fresh turn record), `startTimer` (the turn ends `seconds` from now; a phase before the turn must run it on its way into `turn`), `drawItem`, `bankPoints` (adds the turn's points to the team's score), `advanceTeam`. A game's phases may use them, usually `drawItem`. |
+| Views | Default views for `handoff`, `turn_summary` and `results` in `src/sdk/formats/team-turns/views/` (a game may replace any of them). The turn summary is read-only, with every team's score so far ([ADR 0013](decisions/0013-fit-the-screen-and-standings.md)); mis-taps are fixed before it, in a game's review. |
 
 **team-turns: how a game plugs in** ([ADR 0004](decisions/0004-team-turns-builder.md)). A game passes its turn to `teamTurns` (`src/sdk/formats/team-turns/teamTurns.ts`), which returns the whole machine:
 
@@ -245,12 +245,12 @@ export const machine = teamTurns<CharadesItem, CharadesTurn, CharadesEvent>()({
 
 | | Charades | Name Ten | Trivia Night |
 |---|---|---|---|
-| Turn interaction | FlashCard | PromptCard + counter | MultipleChoice |
+| Turn interaction | FlashCard | PromptCard (a board of answers) | MultipleChoice |
 | Items per turn | Many, until time runs out | One category | One question |
-| Events | `got`, `skip` | `count_up`, `count_down`, `done` | `answer(option)` |
-| Scoring | +1 per got (×2 if acted), optional skip penalty | Points = count reached | +N if correct |
-| Extra config | Modes (describe/act/sing), punish skips | Target count (default 10) | Difficulty, steals on/off |
-| Extra phases | None | None | `steal` after a wrong answer |
+| Events | `got`, `skip`; in review `toggle`, `done` | Before the turn `play`, `skip`; `toggle`, `lock_in`; in review `toggle`, `done` | `answer(option)` |
+| Scoring | Points per result by mode (default: describe 2, act and sing 3, skip −1), never below 0 per turn | 1 per answer on the board got | +N if correct |
+| Extra config | Mode (Describe or Mix it up), points per result | Answers on the board (10–15) | Difficulty, steals on/off |
+| Extra phases | `review` ([ADR 0007](decisions/0007-turn-review.md)) | `category` before the turn ([ADR 0014](decisions/0014-a-phase-before-the-turn.md)); `review`; its own handoff to a judge ([ADR 0012](decisions/0012-name-ten.md)) | `steal` after a wrong answer |
 
 **A proposed game that fits no existing format is deferred**, not shoehorned. Open an issue describing it, and it becomes the evidence for the next format.
 
@@ -261,7 +261,7 @@ These four are the whole v1 scope, built in this order:
 | # | Game | Format | Content item | Turn interaction | Notes |
 |---|---|---|---|---|---|
 | 1 | Charades | team-turns | `{ text, tags[], modes[] }` | FlashCard | Modes: describe / act / sing |
-| 2 | Name Ten | team-turns | `{ category, tags[] }` | PromptCard + counter | |
+| 2 | Name Ten | team-turns | `{ category, answers[], tags[] }` | PromptCard | A judge from another team holds the phone |
 | 3 | Trivia Night | team-turns | `{ question, options[], answer, difficulty }` | MultipleChoice | Steals need a format extension |
 | 4 | Mafia | host-led | roles + theme skins | SecretReveal, Vote | Needs the host-led format first |
 

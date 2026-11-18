@@ -55,7 +55,9 @@ export function GameScreen<
   useWakeLock()
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col">
+    // Exactly the screen's height (ADR 0013): a view can fill what's left under the quit bar, like Name Ten's board, and
+    // a taller one scrolls inside the area below, so the quit bar stays put.
+    <main className="mx-auto flex h-dvh w-full max-w-md flex-col">
       {/* Quit asks first: one stray tap mustn't end a game. Not on the results, which have their own buttons. */}
       {!ended && (
         <div className="flex px-2 pt-2">
@@ -73,21 +75,23 @@ export function GameScreen<
           Keep playing
         </Button>
       </Dialog>
-      <View context={state.context} send={send} points={game.machine.points} />
-      {/* After the game: the app's own buttons, not the game's. They leave the game rather than send it events. */}
-      {ended && (
-        <nav aria-label="After the game" className="flex flex-col gap-3 p-6">
-          <Button size="lg" onClick={() => restart(input)}>
-            Play again
-          </Button>
-          <Link
-            to="/"
-            className="flex h-12 items-center justify-center rounded-lg font-semibold text-foreground focus-visible:outline-3 focus-visible:outline-offset-2"
-          >
-            Back to games
-          </Link>
-        </nav>
-      )}
+      <div data-play-area className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <View context={state.context} send={send} points={game.machine.points} />
+        {/* After the game: the app's own buttons, not the game's. They leave the game rather than send it events. */}
+        {ended && (
+          <nav aria-label="After the game" className="flex flex-col gap-3 p-6">
+            <Button size="lg" onClick={() => restart(input)}>
+              Play again
+            </Button>
+            <Link
+              to="/"
+              className="flex h-12 items-center justify-center rounded-lg font-semibold text-foreground focus-visible:outline-3 focus-visible:outline-offset-2"
+            >
+              Back to games
+            </Link>
+          </nav>
+        )}
+      </div>
     </main>
   )
 }

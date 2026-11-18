@@ -7,7 +7,7 @@ Short documents that record a decision about the project's contracts: the Game S
 | [0001](0001-game-standard.md) | The Game Standard | Accepted; amended by 0002 |
 | [0002](0002-machine-runner.md) | The machine runner API | Accepted |
 | [0003](0003-content-packs.md) | The content pack format | Accepted |
-| [0004](0004-team-turns-builder.md) | How a game plugs its turn into the team-turns format | Accepted |
+| [0004](0004-team-turns-builder.md) | How a game plugs its turn into the team-turns format | Accepted; amended by 0014 |
 | [0005](0005-views.md) | Views: how each phase is shown | Accepted |
 | [0006](0006-save-and-resume.md) | Save and resume | Accepted |
 | [0007](0007-turn-review.md) | Turn review | Accepted |
@@ -15,6 +15,9 @@ Short documents that record a decision about the project's contracts: the Game S
 | [0009](0009-rules.md) | Rules | Accepted |
 | [0010](0010-theme-files.md) | Theme files | Accepted |
 | [0011](0011-theme-parts.md) | Theme parts | Accepted |
+| [0012](0012-name-ten.md) | Name Ten: an answer board and a judge | Accepted |
+| [0013](0013-fit-the-screen-and-standings.md) | A board that fits the screen, and standings after every turn | Accepted |
+| [0014](0014-a-phase-before-the-turn.md) | A phase before the turn | Accepted; amends 0004 |
 
 ## Writing one
 

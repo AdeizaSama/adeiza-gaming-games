@@ -10,6 +10,8 @@ export interface FlashCardProps {
   onSkip: () => void
   gotLabel?: string
   skipLabel?: string
+  /** Turns Skip off, e.g. when no skips are left (ADR 0014). */
+  skipDisabled?: boolean
 }
 
 /**
@@ -29,7 +31,7 @@ export function textSize(text: string): string {
  * A big card with the item to guess, and Got it / Skip underneath (standard §6, used by Charades).
  * Skip is on the left and Got it on the right, where a right thumb rests: the more common tap is the easier one.
  */
-export function FlashCard({ text, hint, onGot, onSkip, gotLabel = 'Got it', skipLabel = 'Skip' }: FlashCardProps) {
+export function FlashCard({ text, hint, onGot, onSkip, gotLabel = 'Got it', skipLabel = 'Skip', skipDisabled = false }: FlashCardProps) {
   return (
     <div className="flex w-full flex-1 flex-col gap-6">
       {/* data-feature: the theme's decorations (tape, pins…) go on this card (ADR 0011). */}
@@ -41,7 +43,7 @@ export function FlashCard({ text, hint, onGot, onSkip, gotLabel = 'Got it', skip
         <p className={cn(textSize(text), 'font-heading leading-tight font-bold text-balance break-words')}>{text}</p>
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <Button size="lg" variant="outline" onClick={onSkip}>
+        <Button size="lg" variant="outline" disabled={skipDisabled} onClick={onSkip}>
           {skipLabel}
         </Button>
         <Button size="lg" variant="success" onClick={onGot}>

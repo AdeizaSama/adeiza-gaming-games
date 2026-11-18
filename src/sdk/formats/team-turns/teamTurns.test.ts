@@ -86,7 +86,8 @@ describe('teamTurns: Word Duel, a full game', () => {
       'drawItem',
       'markGot',
       'markSkipped',
-      'startTurn',
+      'resetTurn',
+      'startTimer',
     ])
     expect(wordDuel.initial).toBe('handoff')
   })
@@ -190,7 +191,7 @@ describe('teamTurns: Word Duel, a full game', () => {
     expectTypeOf<keyof typeof wordDuel.phases>().toEqualTypeOf<'handoff' | 'turn' | 'turn_summary' | 'results'>()
     expectTypeOf<keyof typeof wordDuel.guards>().toEqualTypeOf<'turnsRemaining'>()
     expectTypeOf<keyof typeof wordDuel.actions>().toEqualTypeOf<
-      'markGot' | 'markSkipped' | 'startTurn' | 'drawItem' | 'bankPoints' | 'advanceTeam'
+      'markGot' | 'markSkipped' | 'resetTurn' | 'startTimer' | 'drawItem' | 'bankPoints' | 'advanceTeam'
     >()
   })
 })
@@ -270,4 +271,63 @@ export const mistakes = [
     guards: {},
     actions: {},
   }),
+]
+
+// Word Duel with a phase before the turn (ADR 0014): the team sees its first word, and can pass on it before the clock
+// starts, or go.
+type ReadyEvent = WordEvent | { type: 'go' } | { type: 'pass' }
+const defineReadyDuel = teamTurns<string, WordTurn, ReadyEvent>()
+const readyPhases = (go: { to: 'turn'; actions: ('startTimer' | 'drawItem')[] }) => ({
+  ready: { interaction: 'ready', on: { go, pass: { actions: ['drawItem' as const] } } },
+  turn: { interaction: 'flash_card', on: { time_up: { to: 'turn_summary' as const } } },
+})
+const readyDuel = defineReadyDuel({
+  newTurn: () => ({ got: [], skipped: [] }),
+  points: (turn) => turn.got.length,
+  beforeTurn: 'ready',
+  onStart: ['markGot'],
+  phases: readyPhases({ to: 'turn', actions: ['startTimer'] }),
+  guards: {},
+  actions: { markGot: ({ context }) => ({ ...context, turn: { ...context.turn, got: [context.item!] } }) },
+})
+
+describe('teamTurns: a phase before the turn', () => {
+  it('goes there from the handoff with the first item drawn and onStart run, but no timer, until the game starts it', () => {
+    const ready = send(readyDuel, start(readyDuel, { input, seed: 1 }), { type: 'start' }, { now: 5_000 })
+    expect(ready.phase).toBe('ready')
+    expect(ready.context.turnEndsAt).toBeNull()
+    expect(ready.context.turn.got).toEqual([ready.context.item])
+
+    const passed = send(readyDuel, ready, { type: 'pass' }, { now: 6_000 })
+    expect(passed.context.item).not.toBe(ready.context.item)
+    expect(passed.context.pool.drawn).toContain(ready.context.item) // passed on for good
+
+    const turn = send(readyDuel, passed, { type: 'go' }, { now: 7_000 })
+    expect(turn.phase).toBe('turn')
+    expect(turn.context.turnEndsAt).toBe(37_000)
+    expect(validateMachine(readyDuel)).toEqual([])
+  })
+
+  it('refuses a phase that could start the turn without its timer, or a phase the game doesn’t have', () => {
+    const base = { newTurn: () => ({ got: [], skipped: [] }), points: (turn: WordTurn) => turn.got.length, guards: {}, actions: {} }
+    expect(() => defineReadyDuel({ ...base, beforeTurn: 'ready', phases: readyPhases({ to: 'turn', actions: ['drawItem'] }) })).toThrow(
+      'beforeTurn: phase "ready": "go" goes to turn without startTimer, so the turn would never end',
+    )
+    expect(() => defineReadyDuel({ ...base, beforeTurn: 'steady' as 'ready', phases: readyPhases({ to: 'turn', actions: ['startTimer'] }) })).toThrow(
+      'beforeTurn: the game has no phase "steady"',
+    )
+  })
+})
+
+export const beforeTurnMistakes = [
+  () =>
+    defineReadyDuel({
+      newTurn: () => ({ got: [], skipped: [] }),
+      points: (turn) => turn.got.length,
+      // @ts-expect-error: 'steady' is not one of the game's phases
+      beforeTurn: 'steady',
+      phases: readyPhases({ to: 'turn', actions: ['startTimer'] }),
+      guards: {},
+      actions: {},
+    }),
 ]

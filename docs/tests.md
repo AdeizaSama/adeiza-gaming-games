@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 343 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
+**Counts:** 386 runtime tests (`pnpm test`) and 33 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -20,6 +20,11 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Loading packs](#loading-packs) | `src/sdk/content/loadPacks.test.ts` | 12 | |
 | [Finding games (scripts)](#finding-games-scripts) | `scripts/lib/games.test.ts` | 6 | |
 | [Charades content](#charades-content) | `src/games/charades/schema.test.ts` | 8 | |
+| [Name Ten content](#name-ten-content) | `src/games/name-ten/schema.test.ts` | 6 | |
+| [Name Ten settings](#name-ten-settings) | `src/games/name-ten/config.test.ts` | 2 | |
+| [Name Ten machine](#name-ten-machine) | `src/games/name-ten/machine.test.ts` | 15 | |
+| [Name Ten views](#name-ten-views) | `src/games/name-ten/views/views.test.tsx` | 7 | |
+| [Name Ten game](#name-ten-game) | `src/games/name-ten/game.test.ts` | 1 | |
 | [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
 | [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 9 | |
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
@@ -29,13 +34,13 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Theme variables](#theme-variables) | `src/sdk/theme/apply.test.ts` | 4 | |
 | [Team-turns config](#team-turns-config) | `src/sdk/formats/team-turns/config.test.ts` | 11 | |
 | [Item pool](#item-pool) | `src/sdk/formats/team-turns/pool.test.ts` | 13 | |
-| [Team-turns guards and actions](#team-turns-guards-and-actions) | `src/sdk/formats/team-turns/rules.test.ts` | 9 | |
-| [teamTurns (Word Duel)](#teamturns-word-duel) | `src/sdk/formats/team-turns/teamTurns.test.ts` | 14 | 10 |
+| [Team-turns guards and actions](#team-turns-guards-and-actions) | `src/sdk/formats/team-turns/rules.test.ts` | 10 | |
+| [teamTurns (Word Duel)](#teamturns-word-duel) | `src/sdk/formats/team-turns/teamTurns.test.ts` | 16 | 11 |
 | [defineGame](#definegame) | `src/sdk/game/defineGame.test.ts` | 12 | 8 |
 | [Settings and presets](#settings-and-presets) | `src/sdk/game/settings.test.ts` | 5 | |
 | [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 22 | |
 | [Charades views](#charades-views) | `src/games/charades/views/views.test.tsx` | 6 | |
-| [App](#app) | `src/app/App.test.tsx` | 4 | |
+| [App](#app) | `src/app/App.test.tsx` | 5 | |
 | [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 6 | |
 | [Applying a theme](#applying-a-theme) | `src/app/theme/themes.test.tsx` | 4 | |
 | [Bundled fonts](#bundled-fonts) | `src/app/theme/fonts.test.ts` | 2 | |
@@ -43,13 +48,15 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Theme parts](#theme-parts) | `src/app/theme/parts.test.ts` | 4 | |
 | [UI components](#ui-components) | `src/ui/ui.test.tsx` | 8 | |
 | [Game session](#game-session) | `src/sdk/game/useGameSession.test.ts` | 9 | |
-| [Interaction primitives](#interaction-primitives) | `src/sdk/interactions/interactions.test.tsx` | 8 | |
-| [Summary and Leaderboard](#summary-and-leaderboard) | `src/sdk/interactions/summary.test.tsx` | 4 | |
+| [Interaction primitives](#interaction-primitives) | `src/sdk/interactions/interactions.test.tsx` | 9 | |
+| [Summary and Leaderboard](#summary-and-leaderboard) | `src/sdk/interactions/summary.test.tsx` | 5 | |
 | [Review](#review) | `src/sdk/interactions/review.test.tsx` | 3 | |
+| [PromptCard](#promptcard) | `src/sdk/interactions/promptcard.test.tsx` | 3 | |
 | [Markdown](#markdown) | `src/sdk/interactions/markdown.test.ts` | 5 | |
 | [Instruction](#instruction) | `src/sdk/interactions/instruction.test.tsx` | 3 | |
-| [Team-turns views](#team-turns-views) | `src/sdk/formats/team-turns/views/views.test.tsx` | 3 | |
-| [Game screen](#game-screen) | `src/app/play/GameScreen.test.tsx` | 2 | |
+| [Team-turns views](#team-turns-views) | `src/sdk/formats/team-turns/views/views.test.tsx` | 4 | |
+| [Game screen](#game-screen) | `src/app/play/GameScreen.test.tsx` | 3 | |
+| [Playing Name Ten](#playing-name-ten) | `src/app/play/nameTen.test.tsx` | 1 | |
 | [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 15 | |
 | [Saved game](#saved-game) | `src/app/play/savedGame.test.ts` | 12 | |
 | [Play page](#play-page) | `src/app/play/PlayPage.test.tsx` | 3 | |
@@ -429,7 +436,8 @@ Each row is a mistake TypeScript must reject.
 |---|---|---|---|---|---|
 | 143 | is true while teams are still to play this round, or rounds are left | `turnsRemaining` | Team 0 in round 1; team 2 in round 1; team 1 in round 2 | True for all three | The game goes on until every team has had every turn. |
 | 144 | is false once the last team has played in the last round | `turnsRemaining` | Team 2 in round 2 | False | This is what sends the game to results. Off by one here would end a game a turn early or late. |
-| 145 | starts a fresh turn record and sets the timer from now | `startTurn` | Last turn's record `['old']`, now = 1000 ms | Record empty; `turnEndsAt` 61000; the original unchanged | Each turn starts clean; the timer comes from the runner's `now`, never the clock. |
+| 145 | resetTurn starts a fresh turn record, leaving the timer alone | `resetTurn` | Last turn's record `['old']`, timer at 5 | Record empty; timer still 5; the original unchanged | A phase before the turn starts a turn record without starting the clock (ADR 0014). |
+| 378 | startTimer sets the turn to end the turn length from now, leaving the turn record alone | `startTimer` | Record `['kept']`, now = 1000 ms, 60-second turns | `turnEndsAt` 61 000; the record unchanged | The timer starts when the turn does, whoever starts it. |
 | 146 | puts the next item from the pool on screen | `drawItem` | Pool `a`, `b` | Item `a`; pool `b` remaining, `a` drawn; the original unchanged | The card on screen and the pool move together. |
 | 147 | adds the turn's points to the current team only | `bankPoints` | Eagles (team 1) playing, scores 4, 2, 7, three words guessed | Scores 4, 5, 7; the original unchanged | Points go to the team that earned them. |
 | 260 | scores the turn under the game's settings | `bankPoints` | A made-up rule worth one point per word per round; two words, 2 rounds | Lions score 4 | `points` receives the settings (ADR 0007), so a game can make its scoring a setting. |
@@ -451,6 +459,8 @@ Each row is a mistake TypeScript must reject.
 | 153 | starts at the first team's handoff with scores at zero and the items shuffled | Starting context | Seed 1 | `handoff`, scores 0 and 0, team 0, round 1, nothing on screen, all five words in the pool | The format builds the starting context from the settings and items. |
 | 154 | refuses to start with no items | Starting context | No items | Error | A game with nothing to draw can't be played; failing at the start is clearer than failing on the first draw. |
 | 155 | starts a turn with the timer set and the first item on screen | `start` event | `start` at 5000 ms | Phase `turn`, `turnEndsAt` 35000, the first drawn word on screen | The handoff's `start` runs `startTurn` then `drawItem`. |
+| 379 | goes there from the handoff with the first item drawn and onStart run, but no timer, until the game starts it | `beforeTurn` | Ready Duel (a `ready` phase before the turn): start at 5 s; pass at 6 s; go at 7 s | `ready`, no timer, the onStart action run; a new word, the old one drawn for good; `turn`, ending at 37 s; no `validateMachine` problems | A game can show something before the clock runs (ADR 0014). |
+| 380 | refuses a phase that could start the turn without its timer, or a phase the game doesn't have | `checkBeforeTurn` | `go` to `turn` without `startTimer`; `beforeTurn: 'steady'` | Errors naming the phase and event, and the missing phase | A turn that never ends would be a silent bug at a party; it fails when the machine is built instead. |
 | 261 | runs the game's onStart actions after the first item is drawn | `onStart` (ADR 0007) | A game whose `onStart` marks the first word as got | After `start`, the word on screen is already in `got`; `validateMachine` finds nothing | The format's `start` draws the first item, so `onStart` is the only way a game can react to it (Charades picks its mode). |
 | 156 | records the turn as it goes and banks its points only when leaving the summary | Points (ADR 0004) | start, got, skip, time up, then next | In the summary: the turn record lists the word got and the word skipped, scores still 0 and 0. After next: scores 1 and 0, Eagles to play | Points are worked out from the turn record when players leave the summary, so a correction there (chapter 04) changes the score. |
 | 157 | plays from the first handoff to the results | Full playthrough | Seed 2026, play until the game ends | 4 turns (2 teams × 2 rounds), back at the handoff between turns, ends in `results` with scores 4 and 4 | Proves the whole format loop works with a game plugged in. |
@@ -476,6 +486,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | C22 | A final game phase | `final: true` | Only the format's `results` ends the game. |
 | C23 | An event the game doesn't have | `on: { jump: … }` | As C12, inside a format game. |
 | C30 | An unknown action in `onStart` | `onStart: ['pickMode']` with no `pickMode` | As C16, for the actions a turn starts with. |
+| C33 | A phase before the turn that the game doesn't have | `beforeTurn: 'steady'` | The handoff would lead nowhere. |
 
 ## defineGame
 
@@ -565,6 +576,72 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 284 | changes points in Advanced settings within their limits, and resets them | Advanced settings | Mix it up; open Advanced settings; Acted + twice; Skipped −; Reset to defaults; Done | Reset off at first; Acted "5 points" with + off; Skipped "No penalty" with − off; summary "Describe 2 · Act 5 · Sing 3 · Skip 0"; after Reset "… Act 3 … Skip −1"; the dialog closes | The steppers can't leave the schema's ranges (1–5, skip 0–5), and a host who got lost can get back to the defaults in one tap. |
 | 285 | says acted and sung points only count in Mix it up, when Describe is picked | Advanced settings | Describe; open Advanced settings; Done; pick Mix it up; open again | The note; then no note | In Describe mode the acted and sung points never apply, so a host changing them should know. |
 
+## Name Ten content
+
+`src/games/name-ten/schema.test.ts`, testing `src/games/name-ten/schema.ts` (a category and its answers, ADR 0012) and the packs in `src/games/name-ten/content/`. "Numbers" with the answers Zero to Nine stands in for a category.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 344 | needs a category and its answers, filling in no tags | Item schema | Numbers, ten answers | The same, with `tags: []` | Tags are optional. |
+| 345 | needs 10 to 20 answers, each 1 to 50 characters, and a category of at most 60 | Limits | 9 answers; 21; a blank answer; a 51-character one; a 61-character category | A problem at `answers` saying "at least 10", then "at most 20"; then at `answers.9` twice; then at `category` | A board deals up to 15, so fewer than 10 answers runs dry; more than 20 means the board will miss answers people say. |
+| 346 | reports an answer listed twice, ignoring case and spaces, where the copy is | Repeats | Zero to Eight, then " zero " | One problem at `answers.9` naming `answers.0` | The same answer twice would be two tiles on the board for one shout. |
+| 347 | checks tags, and rejects an unknown field | Tags, strict | Tag `Maths`; an `items` field | A problem at `tags.0`; one problem | Same rules as every game's items. |
+| 348 | names a category by its name | `itemKey` | Numbers | `Numbers` | Two categories with the same name are duplicates in a pack. |
+| 349 | ships a valid Back to School pack, every category with 10 to 20 answers | Content | The pack files | Back to School loads, with at least 30 categories, each with 10+ answers | The game has content that passes its own rules. |
+
+## Name Ten settings
+
+`src/games/name-ten/config.test.ts`, testing `src/games/name-ten/config.ts`: the format's settings plus `shown`, the number of answers on the judge's board. Starts from the least setup sends: teams Lions and Eagles, pack `back-to-school`.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 350 | puts 10 answers on the board unless asked, with the format's defaults for the rest | Defaults | The least setup | 3 rounds, 60 seconds, no tags, 10 answers shown | Ten is the game's name. |
+| 351 | takes 10 to 15 answers on the board, in whole numbers | `shown` | 15; then 9, 16 and 12.5 | Accepted; then rejected, each | Every category has at least 10 answers, so a board of 10 is never short; more than 15 is too long to scan in a minute. |
+
+## Name Ten machine
+
+`src/games/name-ten/machine.test.ts`, testing `src/games/name-ten/machine.ts` (ADR 0012). Games use the real Back to School pack and the default settings (Lions and Eagles, 3 rounds, 10 answers on the board). The unit tests use "Numbers", a category with twelve answers, 0 to 11.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 352 | has no mistakes validateMachine can find | `validateMachine` | The machine | No problems | Required for every game (standard §12). |
+| 353 | start: deals the setting's number of the category's answers onto the board (all of them if it has fewer), none ticked | `dealBoard` via `onStart` | Start a turn; then with 15 on the board | 10 different answers from the category, none ticked; then 15, or all of a shorter category's answers | A board is the setting's size where the category allows, and never invents answers. |
+| 354 | start: the same seed deals the same board, and another seed shuffles it differently | Determinism | Seed 7 twice; seeds 7 and 8 | The same turn twice; a different category or order | A saved game resumes on the same board (ADR 0006). |
+| 355 | toggle: ticks and unticks the answer named, and the turn is worth one point per tick | `toggle`, `points` | Tick answers 0, 3, 5, then 3 again | Ticked: 0 and 5; worth 2 | The judge can fix a mis-tap during the turn. |
+| 356 | lock_in and time_up both end the turn in review, where a correction counts and done goes on to the summary | Review | Tick 0, end early; or let time run out; in review tick 9 and untick 0; done; next | Review both ways; worth 1; the summary; Lions bank 1 | The judge can end early when the team gives up, and review fixes the last answers (ADR 0007). |
+| 357 | ignores a toggle for an answer not on the board, and toggles outside a turn or review | `isAnswer`, ignored events | Toggle 10, −1 and 2.5 in a turn; toggle at the handoff; toggle on the summary | The same state back each time | Bad indexes can't change a score, and a turn can't change after its review. |
+| 381 | category: shows the category with its board dealt but no clock, and play starts the turn on it | `category`, `play` | Start; play at 5 s | `category`, no timer, 10 answers dealt; then `turn` ending at 65 s, on the same category and board | The team chooses before the clock runs (ADR 0014). |
+| 382 | category: skip draws the next category and deals its board, three times at most, and a skipped one is gone for good | `skip` | Skip; two more; a fourth | A new category with its own board, 1 skip used; then 3; the fourth ignored; the first three categories in the pool's drawn list | Three skips a turn, and a skipped category doesn't come back. |
+| 383 | category: a new turn gets its skips back, and play and skip are ignored once the turn has started | Skips per turn | Skip, play; skip during the turn; finish and start the next turn | 1 skip used; the skip ignored; the next team's category with 0 skips used | Skips belong to a turn, and can't be used once the clock runs. |
+| 358 | plays a full game from the first handoff to the results | Full game | Seed 2026; each turn: skip a category, play the next, tick 3, end early, count a fourth in review, done, next | 6 turns, results, 12 points each, 12 different categories drawn | A whole game runs to the end with the format's loop (standard §12). |
+| 359 | deal: takes each answer at most once, in a shuffled order | `deal` | Numbers' 12 answers, 10 dealt, seed 3, twice | 10 different answers, not in the written order; the same both times | A fair, repeatable shuffle, with the machine's random numbers (`rng.shuffle`). |
+| 360 | dealBoard deals the setting's number of answers, none ticked, without changing the context passed in | `dealBoard` | Numbers, 2 skips used | 10 answers, none ticked, still 2 skips; the original unchanged | A test per action (standard §12); actions never change their input. |
+| 361 | toggleAnswer flips only the answer named, without changing the context passed in | `toggleAnswer` | Board 0, 1, 2 with 1 ticked, 2 skips used; toggle 1 | None ticked, still 2 skips; the original still has 1 ticked | As above. |
+| 384 | countSkip counts one more skip, and canSkip is true only while skips are left | `countSkip`, `canSkip` | 2 skips used; then 0, 2, 3 | 3, the original still 2; true, true, false | A test per guard and action (standard §12). |
+| 362 | isAnswer is true only for a toggle naming an answer on the board | `isAnswer` | Toggles for 0, 2, 3, −1 and 0.5; `lock_in` | True, true; false for the rest | A test per guard. Events come from views, so a bad index is checked, not trusted. |
+
+## Name Ten views
+
+`src/games/name-ten/views/views.test.tsx`, testing the views in `src/games/name-ten/views/`. Screen tests (happy-dom). Contexts come from the real machine: teams Lions, Eagles and Hawks, with "Numbers" (answers 0 to 11) as the only category.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 366 | names the next team as the judge, the first judging the last | `judgeOf` | Lions playing; Hawks playing | Eagles; Lions | Every team judges exactly one other team each round (ADR 0012). |
+| 367 | asks for the phone to go to a judge from the next team, and says who is up | Handoff | The first handoff; tap Start | "Hand the phone to a judge from", Eagles, "Lions are up · Round 1 of 3"; `start` sent | The guessing team mustn't see the board. |
+| 385 | shows the team its category, never the answers, and plays it or skips it | Category view | The first category; tap Skip; tap Play this | "Lions, here's your category", Numbers, no answer from the board, "3 skips left…"; `skip` sent; `play` sent | The judge can show the screen to the team: the board stays hidden until the turn. |
+| 386 | counts skips down, and turns Skip off when none are left | `skipsLeftText`, Skip button | 0, 2 and 3 skips used; the view with 3 used | "3 skips left…", "1 skip left…", "No skips left: play this one."; Skip off | Players see how many skips they have, and can't tap one they don't. |
+| 368 | shows the category and its board, reports taps by position, and can end early | Turn | A turn on Numbers; tap the fifth answer; tap End turn early | The category heading; the board's answers in order; `toggle` 4; `lock_in` | The judge ticks what's said and can stop when the team gives up. |
+| 369 | lists the board as got or missed, and talks about answers, not cards | Review | A board with Biro got and Ruler missed; the review view | Got it (good), Missed (neutral); "Check the answers before they count."; a list named "Answers this turn" | Review reuses Charades' screen, in Name Ten's words. |
+| 370 | sets the answers on the board from 10 to 15 | Settings | The default; More six times | Less off at 10; 15, with More off | The stepper can't leave the schema's range. |
+
+## Name Ten game
+
+`src/games/name-ten/game.test.ts`, testing `src/games/name-ten/index.ts`: the game's single `defineGame` export.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 371 | is a valid game with the Back to School pack, its own settings and presets, and its own handoff | `index.ts` | The game's default export | Id `name-ten`; Back to School; its machine and settings; presets Quick and Classic; its own handoff view; rules with "## A turn" | `defineGame` checked everything (meta, packs, presets, rules, a view per phase) when the file loaded; this checks Name Ten wired its own parts in. |
+
 ## App
 
 `src/app/App.test.tsx`, testing the pages in `src/app/` and which address shows which. Screen tests (happy-dom), each starting the app at an address with a `MemoryRouter`.
@@ -572,6 +649,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 180 | shows the library at /, and a game opens at its own address | Library, routing | Start at `/`; tap Charades | Heading Ku Zo Wasa; a Charades link to `/charades` showing "2–20 players"; after the tap, Charades' setup screen | The library lists the registry's games, and each link reaches its game. |
+| 372 | lists Name Ten too, with its own icon, players and setup | Library, registry | Open `/`; tap Name Ten | A link to `/name-ten` with its tagline and the list-checks icon; then Name Ten's setup, with "Answers on the board" and "38 items to play" | A game added to the registry appears in the library and gets the shared setup screen with its own settings. |
 | 214, 215 | says "Page not found" at /chess and /charades/nope/extra, with a way back | Not-found page | A game that doesn't exist; an address with too many parts | "Page not found"; Back to games returns to the library | A mistyped or old link never shows a blank page. Runs once per address (`it.each`). |
 | 216 | has an icon for every game in the registry | `gameIcons` | Every registered game's `meta.icon` | Listed in `gameIcons` | An unlisted icon would quietly show the fallback controller. |
 
@@ -666,6 +744,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 195 | names who gets the phone, and calls onReady when they tap Start | Handoff | To Lions, "Round 2 of 3"; tap Start | Heading Lions, the detail line, onReady called once | The gate between turns: right team, one tap to begin. |
+| 363 | says "Pass the phone to" above the name, unless given another line | Handoff `lead` | No lead; then "Hand the phone to a judge from" | The default line; then the given line, and not the default | Name Ten passes the phone to a judge, not to the team playing (ADR 0012). |
 | 196 | shows the item and reports Got it and Skip | FlashCard | Puff puff, hint "Describe it"; tap Got it once, Skip twice | Text and hint shown, on a card marked `data-feature`; onGot once, onSkip twice | Each tap reports exactly one event. The card is where a theme's decorations go (ADR 0011). |
 | 213 | shrinks the whole text when its longest word is long | FlashCard, `textSize` | Longest word 9, 14 and 20 letters; a card with a 17-letter word | `text-5xl`, `text-3xl`, `text-2xl`; the card drawn at `text-2xl` | A word can't wrap: too big, it would be broken mid-word on a small phone. The whole text shrinks, so one item never mixes sizes. |
 | 197 | shows whole seconds left, rounded up, and counts down | Countdown | Ends at 60 s; after 1 s; after 59.5 s | 60, 59, 1 | Rounded up, it shows 0 only when time is really up. |
@@ -681,9 +760,20 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 202 | shows who played, what they scored, and each list of items | Summary | Lions, 2 points, Got it: Gala, Zobo; Skipped: Assembly; tap Next | Heading Lions, "scored 2 points", both lists with their items, onNext once | Players see what happened in the turn before moving on. |
+| 376 | lists every team's score so far, a dot per round filled for each played, and marks the team that just played | `Summary` standings | Lions 13, 1 of 3 played, current; Eagles 0, 0 of 3 | Rows "Lions 13" and "Eagles 0"; dots labelled "1 of 3 rounds played" and "0 of 3", one filled for Lions; Lions marked current | Every turn ends with the state of the game (ADR 0013). |
 | 203 | says "1 point", and leaves out empty lists | Summary | Eagles, 1 point, an empty Skipped list | "scored 1 point"; no list shown | Small things players notice: grammar, and empty headings. |
 | 204 | orders by score, gives tied scores the same place and skips the next, keeping tied entries in order | `rank` | A 7, B 10, C 10, D 3 | 1 B, 1 C, 3 A, 4 D; the original list unchanged | Two teams with the same score both came first; the next team is third, not second. |
 | 205 | lists every team with its place and score, highest first, highlighting first place | Leaderboard | Lions 4, Eagles 9 | Eagles first (highlighted), then Lions | The results screen at a glance. |
+
+## PromptCard
+
+`src/sdk/interactions/promptcard.test.tsx`, testing `src/sdk/interactions/PromptCard.tsx` (ADR 0012). Screen tests (happy-dom). "Things Found in a School Bag" with Biro, Ruler and Eraser, Ruler ticked; a bit of state stands in for the machine.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 364 | shows the prompt with its label and a running count, and every answer with whether it's ticked | Board | The board | "Category"; the prompt as a heading on a `data-feature` card; "1 of 3"; Ruler pressed, the others not | The judge sees what to read out, how the team is doing, and what's been said. |
+| 365 | reports which answer was tapped, and the count follows | Taps | Tap Biro, Eraser, then Ruler; then a card labelled "Question" with one answer, tapped | "3 of 3", then "2 of 3", Ruler unpressed; then "Question" shown and `onToggle(0)` | A tap is reported by position; the count always matches the ticks. |
+| 374 | lays the board out as two columns of tiles that share the height, never under 44px, scrolling only then | Layout | The board | A two-column grid, rows `minmax(2.75rem, 1fr)`, scrolling when full | Ten answers fit on a phone without scrolling, and no tile is too small to tap (ADR 0013). Class names, because happy-dom doesn't lay pages out. |
 
 ## Review
 
@@ -691,7 +781,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 269 | lists every card with its result, locked: tapping a card does nothing | Locked list | Show the three cards; tap Gala | Heading Lions; each card with its detail, result and "changed" mark; no buttons on the cards; `onToggle` not called | Review is on screen while the phone goes round; a stray tap there must not change a score. |
+| 269 | lists every card with its result, locked: tapping a card does nothing | Locked list | Show the three cards; tap Gala | Heading Lions; each card with its detail, result and "changed" mark; no buttons on the cards; `onToggle` not called; the hint says "Check the cards before they count." (cards unless a game names its rows) | Review is on screen while the phone goes round; a stray tap there must not change a score. |
 | 270 | Adjust unlocks the cards, a tap reports which one, and Lock locks them again | Adjust | Adjust; tap the third card; Lock | The hint changes; `onToggle(2)`; after Lock, no buttons and no more calls | Changing a result is a deliberate two-step act, and the game decides what a tap means. |
 | 271 | Done finishes the review, locked or not, and an empty turn has nothing to adjust | Done | Done label "Count it": tap it locked and unlocked; then no cards | `onDone` twice; then "Nothing was played this turn." and no Adjust | Done never needs Adjust first; nothing to adjust means no Adjust button. |
 
@@ -725,7 +815,16 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 |---|---|---|---|---|---|
 | 209 | handoff: names the team and the round, and Start sends start | `HandoffView` | Round 1 of 2; tap Start | Heading Eagles, "Round 1 of 2"; sends `start` | The view connects the Handoff primitive to the machine. |
 | 210 | turn summary: shows the turn's points, and Next, or See results after the last turn | `TurnSummaryView` | Round 1; then round 2 (the last turn) | "scored 3 points" and Next (sends `next`); then See results | The button says where `next` will go, using the format's own `turnsRemaining`. |
+| 377 | turn summary: every team's score so far, this turn included, and the rounds each has played | `standingsOf` | Lions, Eagles, Hawks: round 2, Eagles just scored 4 on 5; then the first turn, 3 points | Lions 6 (2 played), Eagles 9 (2, current), Hawks 2 (1); then 3/1, 0/0, 0/0 | Teams play in order, so the round counts for the team that just played and everyone before it; this turn's points show before the format banks them (ADR 0013). |
 | 211 | results: names the winner, or says it's a tie | `ResultsView` | Scores 5 and 8; then 6 and 6 | "Eagles won!"; then "It's a tie!" | A draw needs its own headline. |
+
+## Playing Name Ten
+
+`src/app/play/nameTen.test.tsx`, the whole app at `/name-ten` with nothing saved, the way a player taps through it (ADR 0012). Fake clock and intervals, as in the game screen tests.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 373 | goes from setup to a judge, a board, review and the summary, by tapping | Name Ten, end to end | Start; Start; Skip; Play this; tick two answers; End turn early; Adjust; tick a third; Done | "Hand the phone to a judge from" Team 2, "Team 1 are up · Round 1 of 3"; after Skip "2 skips left" and a different category; ten answers, "2 of 10"; review in answers' words; the summary says 3, with scores so far Team 1: 3, Team 2: 0 | Every Name Ten screen in order, through the shared setup, save and play pages. |
 
 ## Game screen
 
@@ -733,6 +832,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
+| 375 | is exactly the screen's height, with a play area that scrolls on its own, so a view can fill the screen | Layout | The game screen | `main` is `h-dvh`; the play area scrolls (`overflow-y-auto`) | Name Ten's board fills what's left under the quit bar; a taller view scrolls without moving the quit bar (ADR 0013). |
 | 212 | plays a whole game of Charades by tapping, from the first handoff to the results | Every view, end to end | Lions: Start, Got it ×2, Skip, 30 s pass; in review Adjust, tap the last card, Done; Next. Eagles: Start, Got it, 30 s pass, Done, See results | Timer starts at 30; review shows 4 cards, the last not counted, then "Got it" and changed; Lions' summary: 5 points (2 + 2 − 1 + 2); Eagles' summary: 2 points; "Lions won!", standings Lions 5, Eagles 2 | Proves the whole chain: buttons send the right events, the machine moves, and each phase's view appears. A view sending the wrong event fails here. |
 | 224 | after the game, Play again starts over with the same teams, and Back to games leads to the library | Results actions | Two turns with nothing guessed, then tap Play again | No Play again during the game; "It's a tie!", no Quit, Back to games links to `/`; then Lions' handoff, "Round 1 of 1", no Play again | The app's own buttons appear only once the game has ended, and Play again really restarts. |
 

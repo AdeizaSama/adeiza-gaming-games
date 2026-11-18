@@ -46,13 +46,20 @@ describe('turnsRemaining', () => {
   })
 })
 
-describe('startTurn', () => {
-  it('starts a fresh turn record and sets the timer from now', () => {
-    const before = context({ turn: { got: ['old'] } })
-    const after = actions.startTurn({ context: before, event, rng: rng(), now: 1_000 })
+describe('resetTurn and startTimer', () => {
+  it('resetTurn starts a fresh turn record, leaving the timer alone', () => {
+    const before = context({ turn: { got: ['old'] }, turnEndsAt: 5 })
+    const after = actions.resetTurn({ context: before, event, rng: rng(), now: 1_000 })
     expect(after.turn).toEqual({ got: [] })
-    expect(after.turnEndsAt).toBe(61_000)
+    expect(after.turnEndsAt).toBe(5)
     expect(before.turn).toEqual({ got: ['old'] })
+  })
+
+  it('startTimer sets the turn to end the turn length from now, leaving the turn record alone', () => {
+    const before = context({ turn: { got: ['kept'] } })
+    const after = actions.startTimer({ context: before, event, rng: rng(), now: 1_000 })
+    expect(after.turnEndsAt).toBe(61_000)
+    expect(after.turn).toEqual({ got: ['kept'] })
   })
 })
 

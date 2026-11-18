@@ -17,6 +17,15 @@ describe('Handoff', () => {
     await user.click(screen.getByRole('button', { name: 'Start' }))
     expect(onReady).toHaveBeenCalledTimes(1)
   })
+
+  it('says “Pass the phone to” above the name, unless given another line', () => {
+    const { unmount } = render(<Handoff to="Lions" onReady={() => {}} />)
+    expect(screen.getByText('Pass the phone to')).toBeDefined()
+    unmount()
+    render(<Handoff lead="Hand the phone to a judge from" to="Eagles" onReady={() => {}} />)
+    expect(screen.getByText('Hand the phone to a judge from')).toBeDefined()
+    expect(screen.queryByText('Pass the phone to')).toBeNull()
+  })
 })
 
 describe('FlashCard', () => {
