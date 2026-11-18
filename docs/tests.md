@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 386 runtime tests (`pnpm test`) and 33 compile-time checks (`pnpm typecheck`).
+**Counts:** 391 runtime tests (`pnpm test`) and 33 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -17,6 +17,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Content packs](#content-packs) | `src/sdk/content/pack.test.ts` | 12 | |
 | [Friendly messages](#friendly-messages) | `src/sdk/content/messages.test.ts` | 10 | |
 | [Duplicate items](#duplicate-items) | `src/sdk/content/duplicates.test.ts` | 10 | |
+| [Multiple-choice options](#multiple-choice-options) | `src/sdk/content/choices.test.ts` | 5 | |
 | [Loading packs](#loading-packs) | `src/sdk/content/loadPacks.test.ts` | 12 | |
 | [Finding games (scripts)](#finding-games-scripts) | `scripts/lib/games.test.ts` | 6 | |
 | [Charades content](#charades-content) | `src/games/charades/schema.test.ts` | 8 | |
@@ -231,6 +232,18 @@ Each row is a mistake TypeScript must reject.
 | 62 | keeps the first copy of each item, in the original order | `uniqueBy` | Goku (act), Naruto, goku (describe) | Goku (act), Naruto | When players pick two packs that share a word, it appears once, taken from the first pack picked. |
 | 63 | returns every item when there are no duplicates, without changing the original | `uniqueBy` | Goku, Naruto | A new list with both; the original unchanged | Game data is never changed in place (the same rule as actions). |
 | 64 | handles an empty list | `uniqueBy` | An empty list | An empty list | Edge case that must not crash. |
+
+## Multiple-choice options
+
+`src/sdk/content/choices.test.ts`, testing `src/sdk/content/choices.ts` (ADR 0015). The rules any multiple-choice game's questions follow, and the order options are shown in.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 387 | takes 2 to 5 options, and refuses 1 or 6 | `Options` | 2, 5, 1 and 6 options | The first two pass; the others fail | Two is a this-or-that; five is the most that fits under a question on a small phone. |
+| 388 | refuses an empty option, one over 80 characters, and a repeat that differs only in capitals | `Options` | `Lagos` with a blank; with 81 characters; `Lagos, Abuja, LAGOS` | A problem at the bad option's position each time | Two options that only differ in capitals look like the same answer to players. |
+| 389 | passes an answer that is one of the options, and refuses one that isn't or is written differently | `checkAnswer` | Answer `Abuja`, `Kano`, `abuja` with options Lagos, Abuja | Passes; then a problem at `answer` twice | The machine compares a pick with the answer as written, so `abuja` would never be right. |
+| 390 | shuffle: a new order from the machine's random numbers, the same for the same seed, the original unchanged | `orderOptions` | Six options, seed 7, twice | The same options; the same order both times; the original list unchanged | A saved game shows a question's options in the same order after a refresh. |
+| 391 | alphabetical: A to Z ignoring capitals, numbers in number order | `orderOptions` | `Year 10, banana, Year 9, Apple, 12, 8` | `8, 12, Apple, banana, Year 9, Year 10` | A plain text sort puts 12 before 8 and Year 10 before Year 9. |
 
 ## Loading packs
 

@@ -39,3 +39,25 @@ Images (text only in v1, and an image needs a license we can check), steals (a q
 ### How to verify
 
 Read the ADR. The steps after it build it.
+
+---
+
+## Step 2: The rules for a question's options
+
+**What:** `src/sdk/content/choices.ts` and its tests.
+
+**Why:** every multiple-choice game checks options the same way, so the rules live in the SDK, next to `findDuplicates`, not in Trivia Night.
+
+| Export | What it does |
+|---|---|
+| `Options` | A zod schema: 2 to 5 options, each 1–80 characters, none repeated (ignoring capitals and spaces) |
+| `checkAnswer` | Used with `.superRefine` on a whole item: the answer must be one of the options, written the same way |
+| `OptionOrder`, `orderOptions` | `shuffle` (from the machine's `rng`, so a refresh shows the same order) or `alphabetical` |
+
+`checkAnswer` works on the whole item because it compares two fields; zod checks each field first, then runs it.
+
+The alphabetical order uses `Intl.Collator` with `numeric: true`. A plain `.sort()` compares character by character, so "12" comes before "8" and "Year 10" before "Year 9": wrong for a quiz about numbers.
+
+### How to verify
+
+`pnpm test src/sdk/content/choices.test.ts`: 5 tests. Break `checkAnswer` (make it never add an issue) and the answer test fails; replace the collator with a plain `.sort()` and the alphabetical test fails.
