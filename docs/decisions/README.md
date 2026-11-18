@@ -18,6 +18,7 @@ Short documents that record a decision about the project's contracts: the Game S
 | [0012](0012-name-ten.md) | Name Ten: an answer board and a judge | Accepted |
 | [0013](0013-fit-the-screen-and-standings.md) | A board that fits the screen, and standings after every turn | Accepted |
 | [0014](0014-a-phase-before-the-turn.md) | A phase before the turn | Accepted; amends 0004 |
+| [0015](0015-trivia-night.md) | Trivia Night: multiple choice, three ways to play | Accepted |
 
 ## Writing one
 
