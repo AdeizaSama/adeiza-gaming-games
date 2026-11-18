@@ -55,8 +55,8 @@ describe('theme tokens', () => {
     const offenders = Object.entries(files).flatMap(([file, text]) =>
       [...text.matchAll(/(?<![\w:-])bg-background(?![\w/-])/g)].map((match) => `${file}: ${match[0]}`),
     )
-    // A solid bg-background hides a theme's lined paper, stars or chalk dust behind it. Use bg-background/75 with
-    // backdrop-blur-md for a bar that must cover what scrolls under it.
+    // A solid bg-background hides a theme's lined paper, stars or chalk dust behind it, and shows as a box. Give a
+    // backdrop only to what must stay readable (like setup's item count): bg-background/75 with a blur.
     expect(offenders).toEqual([])
   })
 

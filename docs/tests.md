@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 341 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
+**Counts:** 343 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -47,10 +47,10 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Summary and Leaderboard](#summary-and-leaderboard) | `src/sdk/interactions/summary.test.tsx` | 4 | |
 | [Review](#review) | `src/sdk/interactions/review.test.tsx` | 3 | |
 | [Markdown](#markdown) | `src/sdk/interactions/markdown.test.ts` | 5 | |
-| [Instruction](#instruction) | `src/sdk/interactions/instruction.test.tsx` | 2 | |
+| [Instruction](#instruction) | `src/sdk/interactions/instruction.test.tsx` | 3 | |
 | [Team-turns views](#team-turns-views) | `src/sdk/formats/team-turns/views/views.test.tsx` | 3 | |
 | [Game screen](#game-screen) | `src/app/play/GameScreen.test.tsx` | 2 | |
-| [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 14 | |
+| [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 15 | |
 | [Saved game](#saved-game) | `src/app/play/savedGame.test.ts` | 12 | |
 | [Play page](#play-page) | `src/app/play/PlayPage.test.tsx` | 3 | |
 | [Continuing a saved game](#continuing-a-saved-game) | `src/app/library/continue.test.tsx` | 6 | |
@@ -626,7 +626,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 327 | maps the theme's fonts, shadows and outline width to classes, and puts headings in the heading font | `@theme`, utilities | `index.css` | `shadow-sm`/`shadow-lg` read `--elevation-sm`/`-lg`; `border-line` reads `--line`; `font-heading` reads `--font-heading`; h1–h5 use it; the body has `--page-gradient` | Each new token reaches the classes components already use, so components didn't need to learn about themes. |
 | 183 | is the only source of colors: no file uses a built-in Tailwind color | No raw colors | Every source file | No class like `bg-red-500` or `text-white` | Tailwind's palette is switched off, so such a class would silently do nothing; and themes (phase 2) can only change colors that come from tokens. |
 | 328 | leaves outline widths to the theme: no file uses a fixed width like border-2 | No fixed widths | Every `.tsx` component in `src/` (not tests) | No `border-2`, `border-t-4` or the like | A fixed width would ignore a thick-outline theme. `border-line` is the one to use. |
-| 341 | lets the page pattern show everywhere: no component paints a solid strip of page color | No solid page-color strips | Every `.tsx` component in `src/` (not tests) | No `bg-background` without an opacity (`bg-background/75` and `backdrop:bg-background/80` are fine) | A solid strip of page color hides lined paper, stars or chalk dust and shows as a box. Found in the look check of chapter 09. |
+| 341 | lets the page pattern show everywhere: no component paints a solid strip of page color | No solid page-color strips | Every `.tsx` component in `src/` (not tests) | No `bg-background` without an opacity (`bg-background/75` behind the item count and `backdrop:bg-background/80` are fine) | A solid strip of page color hides lined paper, stars or chalk dust and shows as a box. Found in the look check of chapter 09. |
 
 ## UI components
 
@@ -714,6 +714,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 298 | shows the title and the text as headings, paragraphs, lists and bold, and the button carries on | `Instruction` | Title "How to play"; a `##` heading, bold, a numbered list; tap Got it | Title as a level-2 heading, the `##` as level 4; bold in `<strong>`; a numbered list (`<ol>`) of two items; `onAction` called once | Each block becomes its own element, one heading level below the title, so screen readers can move through the rules. |
+| 342 | keeps its button at the bottom with nothing painted around it, so the page shows through | Bottom bar | An Instruction | The button's bar is sticky, with no background or blur | The space around the button is spacing, not a box: over a theme's pattern, a painted bar looks like a bug. |
 | 299 | never turns text into HTML | Safety | Text with `<b>` and an `<img onerror>` | No `<b>` or `<img>` on the page; the text shown as written | Rules come from files anyone can propose a change to. Nothing in them can become HTML on the page (ADR 0009). |
 
 ## Team-turns views
@@ -747,6 +748,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 220 | shows what's wrong with a team name next to it, and Start is off until it's fixed | Teams, errors | Empty Team 1; then "team 2"; then "team 2s" | "Give every team a name", field marked invalid, Start off; "Two teams have this name", Start off; Start on | The schema's own messages, shown where the problem is. |
 | 221 | changes rounds and turn length with − and +, within their limits | `Stepper` | Turn length −; rounds − twice | 45 seconds; 1 round, its − button off | Values stay in range without typing. |
 | 222 | counts the items a tag leaves, and needs at least one pack | Packs, tags | Pick snack; add song; untick Back to School | "5 items to play"; "7 items to play"; "Pick at least one pack", no tags offered, Start off | Players see what a filter leaves before they start. |
+| 343 | keeps Start at the bottom with nothing painted around it, and a backdrop only behind the item count | Bottom bar | Open `/charades` | Start's bar has no background or blur; "34 items to play" has its own `bg-background/75` | Only the words need covering to stay readable over cards scrolling under them. |
 | 301 | How to play opens the game's rules, and Back to setup returns to setup | Rules page | Tap How to play; tap Back to setup | "How to play Charades" with the rules' "A turn" heading; then Charades' setup | Players can read the rules before they start, and get back with one tap. |
 | 302 | opens the rules from a link too, where Back to setup goes to setup; a game that doesn't exist has no rules | Rules page | Open `/charades/rules` and tap Back to setup; open `/anime/rules` | Setup with its Start button; "Page not found" | A shared rules link has no setup to go back to, so the button goes to setup instead of leaving the site. |
 | 223 | sends the play page back to setup when there is no saved game, like a shared /charades/play link | Play page | Open `/charades/play` with nothing saved | Charades' setup screen | The play page only plays a save (ADR 0006): without one there's nothing to play. |

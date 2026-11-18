@@ -209,10 +209,13 @@ export function SetupScreen<
         </Section>
       )}
 
-      {/* See-through, so a theme's page pattern carries on behind it; what scrolls under it is blurred. */}
-      <div className="sticky bottom-0 mt-auto flex flex-col gap-2 bg-background/75 py-4 backdrop-blur-md">
+      {/*
+        No background: the space around Start is only spacing, and the page (with its theme pattern) shows through.
+        Only the item count has a backdrop, so it stays readable over cards scrolling under it.
+      */}
+      <div data-bar className="sticky bottom-0 mt-auto flex flex-col gap-2 py-4">
         {chosenPacks.length > 0 && (
-          <p className="text-center text-muted-foreground" aria-live="polite">
+          <p className="self-center rounded-full bg-background/75 px-3 py-1 text-center text-muted-foreground backdrop-blur-sm" aria-live="polite">
             {items.length === 0
               ? 'No items match. Pick another pack or kind.'
               : `${items.length} ${items.length === 1 ? 'item' : 'items'} to play`}

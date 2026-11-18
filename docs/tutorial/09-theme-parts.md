@@ -346,6 +346,26 @@ Follow CONTRIBUTING to make a theme with parts: copy `chalkboard.json`, change i
 
 `pnpm test src/app/theme.test.ts src/ui`: tests 341 and 242. On a phone: the Start and Back to setup bars show the page's pattern; dialogs in Space Travel don't scroll sideways; Sticky Notes' red line is left of the text.
 
+
+---
+
+## Step 13: Bottom bars with nothing painted around them
+
+**What:** the bars from step 12 lose their background and blur. On setup, only "34 items to play" keeps a backdrop: a small rounded one, the size of the words.
+
+**Why:** the maintainer looked again. The space around a button is spacing, but a translucent, blurred bar still drew a rectangle there. Over a moving starfield, the blur also smeared stars into lighter streaks at its edges. The bar needed a background for only one thing: keeping the item count readable over cards scrolling under it. The button is solid, so nothing reads through it; content passing through the gaps around it just looks like scrolling.
+
+| Bar | Before | Now |
+|---|---|---|
+| How to play's Back to setup | Page color at 75%, blurred | Nothing |
+| Setup's Start | Page color at 75%, blurred | Nothing; the item count has its own rounded backdrop |
+
+Tests 342 and 343 check the bars have no background, and test 341 still bans solid page-color strips.
+
+### How to verify
+
+`pnpm test src/sdk/interactions src/app/setup`. On a phone, in Chalkboard, Space Travel and Sticky Notes: no box around Start or Back to setup; the item count sits on a small backdrop of its own.
+
 ---
 
 ## Chapter summary
@@ -366,6 +386,7 @@ Themes can now be places: sticky notes on lined paper, glass over a starfield, a
 | 10 | Chalkboard | |
 | 11 | CONTRIBUTING, the standard, README | |
 | 12 | Fixes from the look check: see-through bottom bars, no sideways scroll in dialogs, the margin line moved | |
+| 13 | Bottom bars with nothing painted around the buttons; a backdrop only behind the item count | |
 
 **What we learned:**
 
@@ -375,4 +396,4 @@ Themes can now be places: sticky notes on lined paper, glass over a starfield, a
 - Looking finds what tests don't. A solid strip of page color was invisible in flat themes and obvious over a pattern; now a test knows.
 - Making a real theme finds gaps in the checks. Space Travel's gradient showed that page text was only checked against the top of the page.
 
-**Tests:** 341 runtime tests and 32 compile-time checks.
+**Tests:** 343 runtime tests and 32 compile-time checks.
