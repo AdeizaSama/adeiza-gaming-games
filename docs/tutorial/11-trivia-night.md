@@ -61,3 +61,33 @@ The alphabetical order uses `Intl.Collator` with `numeric: true`. A plain `.sort
 ### How to verify
 
 `pnpm test src/sdk/content/choices.test.ts`: 5 tests. Break `checkAnswer` (make it never add an issue) and the answer test fails; replace the collator with a plain `.sort()` and the alphabetical test fails.
+
+---
+
+## Step 3: The multiple-choice card
+
+**What:** `src/sdk/interactions/MultipleChoice.tsx` and its tests; the standard's §6 row for it says Built.
+
+**Why:** the card is the part every multiple-choice game shares. Trivia Night's view will be a header, this card, and a button.
+
+### Props
+
+`question`, `options` (in the order to show them), `answer` (the right option's position), `picked` (null while the question is open) and `onPick`. The card doesn't decide anything: it shows the result once `picked` is set, and the machine works out what it's worth.
+
+### Two thirds and one third, mostly
+
+```tsx
+<div className="flex min-h-0 flex-[13_1_0%] …">   {/* the question */}
+<ul className="flex flex-[7_0_0%] flex-col gap-2"> {/* the options */}
+  <li className="flex min-h-11 flex-1">
+```
+
+Both start from a basis of 0 and share the height 13 : 7 (about 65 : 35). A flex item can't get smaller than its content unless told to, and the options aren't told to, so when five 44px rows need more than a third, they take it. The question has `min-h-0`, so it's the one that gives way, and scrolls if it must.
+
+### After a tap
+
+The answer turns green with a tick, a wrong pick red with a cross, and the rest fade. The buttons use `aria-disabled`, not `disabled`: a disabled button is faded by the theme, which would fade the result too.
+
+### How to verify
+
+`pnpm test src/sdk/interactions/multiplechoice.test.tsx`: 4 tests. Let a tap through after the pick, and the "ignores later taps" test fails.

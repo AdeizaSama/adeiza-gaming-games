@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 391 runtime tests (`pnpm test`) and 33 compile-time checks (`pnpm typecheck`).
+**Counts:** 395 runtime tests (`pnpm test`) and 33 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -53,6 +53,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Summary and Leaderboard](#summary-and-leaderboard) | `src/sdk/interactions/summary.test.tsx` | 5 | |
 | [Review](#review) | `src/sdk/interactions/review.test.tsx` | 3 | |
 | [PromptCard](#promptcard) | `src/sdk/interactions/promptcard.test.tsx` | 3 | |
+| [MultipleChoice](#multiplechoice) | `src/sdk/interactions/multiplechoice.test.tsx` | 4 | |
 | [Markdown](#markdown) | `src/sdk/interactions/markdown.test.ts` | 5 | |
 | [Instruction](#instruction) | `src/sdk/interactions/instruction.test.tsx` | 3 | |
 | [Team-turns views](#team-turns-views) | `src/sdk/formats/team-turns/views/views.test.tsx` | 4 | |
@@ -787,6 +788,17 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 364 | shows the prompt with its label and a running count, and every answer with whether it's ticked | Board | The board | "Category"; the prompt as a heading on a `data-feature` card; "1 of 3"; Ruler pressed, the others not | The judge sees what to read out, how the team is doing, and what's been said. |
 | 365 | reports which answer was tapped, and the count follows | Taps | Tap Biro, Eraser, then Ruler; then a card labelled "Question" with one answer, tapped | "3 of 3", then "2 of 3", Ruler unpressed; then "Question" shown and `onToggle(0)` | A tap is reported by position; the count always matches the ticks. |
 | 374 | lays the board out as two columns of tiles that share the height, never under 44px, scrolling only then | Layout | The board | A two-column grid, rows `minmax(2.75rem, 1fr)`, scrolling when full | Ten answers fit on a phone without scrolling, and no tile is too small to tap (ADR 0013). Class names, because happy-dom doesn't lay pages out. |
+
+## MultipleChoice
+
+`src/sdk/interactions/multiplechoice.test.tsx`, testing `src/sdk/interactions/MultipleChoice.tsx` (ADR 0015). Screen tests (happy-dom), except `resultText`, a plain function. The machine's part is played by a bit of state: the first tap is the pick.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 392 | shows the question with its label on the card, and every option in order, none marked | `MultipleChoice` | "What is the capital of Nigeria?", Lagos, Abuja, Kano, Ibadan | The label Question; the question on the theme's card; four outlined options in order | Nothing gives the answer away before a tap. |
+| 393 | reports the tap, then shows the answer in green and a wrong pick in red, and ignores later taps | Picking | Tap Lagos; then Abuja | `onPick(0)`; "Not quite: it's Abuja."; Abuja green with "The answer", Lagos red with "Your pick", Kano plain; the second tap not reported | A team sees at once what the answer was, and can't change its pick. |
+| 394 | says Right! when the pick is the answer, and takes 2 or 5 options | `resultText`; two options | Answer 1 picked 1, and picked 3; Masculin or Féminin with Féminin picked | "Right!", "Not quite: it's Abuja."; the label Gender, Right!, two options | The same card serves a this-or-that game. |
+| 395 | shares the height about 65 : 35, with options at least 44px and the question giving way | Layout | The card | The question `flex-[13_1_0%] min-h-0`; the options `flex-[7_0_0%]`; every option `min-h-11` | Pins the layout ADR 0015 chose (happy-dom doesn't lay pages out). |
 
 ## Review
 
