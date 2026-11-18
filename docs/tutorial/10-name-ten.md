@@ -239,31 +239,6 @@ By hand, on a phone (`pnpm dev --host`):
 
 ---
 
-## Chapter summary
-
-Name Ten is the second game, and the first test of the SDK by a game it wasn't built for.
-
-| Step | What | Contract |
-|---|---|---|
-| 1 | ADR 0012: an answer board and a judge | Yes |
-| 2 | The item schema and the Back to School pack | Yes: Name Ten's content |
-| 3 | Settings: answers on the board | |
-| 4 | The machine: dealing, ticking, review, scoring | |
-| 5 | `PromptCard`; `Handoff`'s `lead` | Yes: SDK |
-| 6 | Views; `Review`'s `noun` | Yes: SDK |
-| 7 | The game definition and registry; `AnyGame` | |
-| 8 | README, CONTRIBUTING's guide, the standard | |
-
-**What we learned:**
-
-- A second user finds what the first one hid. Charades' words were written into a shared screen, the handoff assumed who holds the phone, and the registry only typed correctly with one game.
-- Fix the type problem where it starts. Wrapping one page in a generic component moved the error to the next page; forgetting game types once, at the registry, fixed every page.
-- A test for a board's size found a real case: most categories have 12 answers, so a board set to 15 shows all 12.
-
-**Tests:** 373 runtime tests and 32 compile-time checks.
-
----
-
 ## Step 9: A board that fits the screen
 
 **What:** [ADR 0013](../decisions/0013-fit-the-screen-and-standings.md), first half. The play screen is exactly the phone's height; `PromptCard`'s board is two columns of tiles that fill what's left.
@@ -382,3 +357,34 @@ The category view reuses `FlashCard`: the category on the card, **Skip** and **P
 
 - `pnpm test`: tests 381–386, and the full game and click-through tests now skip a category each turn.
 - On a phone: after the judge's handoff, skip a category or two, then play one. The clock starts only then.
+---
+
+## Chapter summary
+
+Name Ten is the second game, and the first test of the SDK by a game it wasn't built for.
+
+| Step | What | Contract |
+|---|---|---|
+| 1 | ADR 0012: an answer board and a judge | Yes |
+| 2 | The item schema and the Back to School pack | Yes: Name Ten's content |
+| 3 | Settings: answers on the board | |
+| 4 | The machine: dealing, ticking, review, scoring | |
+| 5 | `PromptCard`; `Handoff`'s `lead` | Yes: SDK |
+| 6 | Views; `Review`'s `noun` | Yes: SDK |
+| 7 | The game definition and registry; `AnyGame` | |
+| 8 | README, CONTRIBUTING's guide, the standard | |
+| 9 | The board fits the screen (ADR 0013) | Yes: `PromptCard`, the play screen |
+| 10 | Standings after every turn (ADR 0013) | Yes: `Summary`, the turn summary |
+| 11 | A phase before the turn (ADR 0014) | Yes: the team-turns format |
+| 12 | Choosing a category, with three skips | |
+
+**What we learned:**
+
+- A second user finds what the first one hid. Charades' words were written into a shared screen, the handoff assumed who holds the phone, and the registry only typed correctly with one game.
+- Fix the type problem where it starts. Wrapping one page in a generic component moved the error to the next page; forgetting game types once, at the registry, fixed every page.
+- A test for a board's size found a real case: most categories have 12 answers, so a board set to 15 shows all 12.
+
+- Playing it on a phone found what tests couldn't: a board that scrolled, a summary without the game's state, and a missing choice before the clock. The second game also led to the format's first change since chapter 03.
+- Read the whole interface before saying something is missing. `Rng` had `shuffle` all along; a grep that stopped two lines early said it didn't.
+
+**Tests:** 386 runtime tests and 33 compile-time checks.
