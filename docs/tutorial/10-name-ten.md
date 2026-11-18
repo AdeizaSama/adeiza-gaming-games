@@ -29,3 +29,34 @@ Review after the turn is Charades' review, reused. New to the SDK: `PromptCard` 
 ### How to verify
 
 Read the ADR. Steps 2–7 build it; step 8 writes the docs.
+
+---
+
+## Step 2: Categories and their answers
+
+**What:**
+
+- `src/games/name-ten/schema.ts`: a content item is a category, its answers and tags.
+- `src/games/name-ten/content/back-to-school.json`: 38 categories, each tagged school, food, games, home, culture, music, tv or tech.
+- `schemas/name-ten.pack.schema.json`, generated.
+
+**Why:** content comes first: it's what the machine deals and the board shows.
+
+### The rules a category must pass
+
+| Field | Rule | Why |
+|---|---|---|
+| `category` | 1–60 characters | It's read aloud and shown at the top of the board |
+| `answers` | 10–20, each 1–50 characters, no repeats (ignoring case and spaces) | A board deals up to 15; a list longer than 20 means people will shout answers that aren't there |
+| `tags` | Optional, kebab-case | Filtering, as in Charades |
+
+Repeats use the SDK's `findDuplicates`, the same comparison packs use for repeated items, so "Zero" and " zero " are the same answer.
+
+### What a contributor gets for free
+
+The content check and `pnpm generate-schemas` found the new game folder by themselves: no list to add it to. One answer in the original list was 42 characters; the limit is 50, the same as a Charades card.
+
+### How to verify
+
+- `pnpm test src/games/name-ten`: tests 344–349.
+- `pnpm validate-content` lists `src/games/name-ten/content/back-to-school.json (38 items)`.

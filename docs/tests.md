@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 343 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
+**Counts:** 349 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -20,6 +20,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Loading packs](#loading-packs) | `src/sdk/content/loadPacks.test.ts` | 12 | |
 | [Finding games (scripts)](#finding-games-scripts) | `scripts/lib/games.test.ts` | 6 | |
 | [Charades content](#charades-content) | `src/games/charades/schema.test.ts` | 8 | |
+| [Name Ten content](#name-ten-content) | `src/games/name-ten/schema.test.ts` | 6 | |
 | [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
 | [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 9 | |
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
@@ -564,6 +565,19 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 283 | picks the mode, Describe to start with | Mode | Default settings; tap Mix it up | Describe picked; then Mix it up | Describe is the game most people know; one tap changes it. |
 | 284 | changes points in Advanced settings within their limits, and resets them | Advanced settings | Mix it up; open Advanced settings; Acted + twice; Skipped −; Reset to defaults; Done | Reset off at first; Acted "5 points" with + off; Skipped "No penalty" with − off; summary "Describe 2 · Act 5 · Sing 3 · Skip 0"; after Reset "… Act 3 … Skip −1"; the dialog closes | The steppers can't leave the schema's ranges (1–5, skip 0–5), and a host who got lost can get back to the defaults in one tap. |
 | 285 | says acted and sung points only count in Mix it up, when Describe is picked | Advanced settings | Describe; open Advanced settings; Done; pick Mix it up; open again | The note; then no note | In Describe mode the acted and sung points never apply, so a host changing them should know. |
+
+## Name Ten content
+
+`src/games/name-ten/schema.test.ts`, testing `src/games/name-ten/schema.ts` (a category and its answers, ADR 0012) and the packs in `src/games/name-ten/content/`. "Numbers" with the answers Zero to Nine stands in for a category.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 344 | needs a category and its answers, filling in no tags | Item schema | Numbers, ten answers | The same, with `tags: []` | Tags are optional. |
+| 345 | needs 10 to 20 answers, each 1 to 50 characters, and a category of at most 60 | Limits | 9 answers; 21; a blank answer; a 51-character one; a 61-character category | A problem at `answers` saying "at least 10", then "at most 20"; then at `answers.9` twice; then at `category` | A board deals up to 15, so fewer than 10 answers runs dry; more than 20 means the board will miss answers people say. |
+| 346 | reports an answer listed twice, ignoring case and spaces, where the copy is | Repeats | Zero to Eight, then " zero " | One problem at `answers.9` naming `answers.0` | The same answer twice would be two tiles on the board for one shout. |
+| 347 | checks tags, and rejects an unknown field | Tags, strict | Tag `Maths`; an `items` field | A problem at `tags.0`; one problem | Same rules as every game's items. |
+| 348 | names a category by its name | `itemKey` | Numbers | `Numbers` | Two categories with the same name are duplicates in a pack. |
+| 349 | ships a valid Back to School pack, every category with 10 to 20 answers | Content | The pack files | Back to School loads, with at least 30 categories, each with 10+ answers | The game has content that passes its own rules. |
 
 ## App
 

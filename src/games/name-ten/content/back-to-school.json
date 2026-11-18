@@ -1,0 +1,203 @@
+{
+  "$schema": "../../../../schemas/name-ten.pack.schema.json",
+  "id": "back-to-school",
+  "name": "Back to School",
+  "description": "Nigerian school days from the 1990s to the 2010s: subjects, tuck-shop snacks, Nollywood, NEPA and everything your mum said.",
+  "language": "en-NG",
+  "maturity": "everyone",
+  "contributors": [
+    "AdeizaSama"
+  ],
+  "items": [
+    {
+      "category": "Secondary School Subjects",
+      "answers": ["Mathematics", "English Language", "Biology", "Chemistry", "Physics", "Government", "History", "Geography", "Civic Education", "Literature", "Agricultural Science", "Physical Education", "Computer Science", "Home Economics"],
+      "tags": ["school"]
+    },
+    {
+      "category": "Things Found in a School Bag",
+      "answers": ["Exercise Books", "Textbooks", "Bic Biro", "Pencil", "Eraser", "Ruler", "Mathematical Set", "Food Flask", "Handkerchief", "Provisions", "Sharpener", "Water Bottle"],
+      "tags": ["school"]
+    },
+    {
+      "category": "Nigerian Public Holidays",
+      "answers": ["New Year's Day", "Good Friday", "Easter Monday", "Workers' Day", "Children's Day", "Democracy Day", "Eid al-Fitr (Sallah)", "Eid al-Kabir (Big Sallah)", "Independence Day", "Christmas Day", "Boxing Day", "Id el-Maulud"],
+      "tags": ["culture"]
+    },
+    {
+      "category": "People You Studied in Social Studies",
+      "answers": ["Nnamdi Azikiwe", "Funmilayo Ransome-Kuti", "Wole Soyinka", "Nelson Mandela", "Chinua Achebe", "Obafemi Awolowo", "Mary Slessor", "Ahmadu Bello", "Dr. Ngozi Okonjo-Iweala", "Bola Ahmed Tinubu", "Fela Kuti", "Gani Fawehinmi"],
+      "tags": ["school"]
+    },
+    {
+      "category": "School Sports",
+      "answers": ["Football", "Basketball", "Athletics", "Long Jump", "High Jump", "Relay Race", "Table Tennis", "Volleyball", "Handball", "Swimming", "Tug of War", "Badminton"],
+      "tags": ["school"]
+    },
+    {
+      "category": "Things Teachers Confiscated",
+      "answers": ["Phone", "Romance Novel", "Game Boy / PSP", "Playing Cards (Whot)", "Comb & Mirror", "Chewing Gum", "Snacks", "Earrings", "Catapult", "Rubber Bands", "Love Letter", "Walkman / iPod"],
+      "tags": ["school"]
+    },
+    {
+      "category": "School Clubs",
+      "answers": ["Press Club", "Drama Club", "Science Club", "Debating Society", "School Choir", "Boys' Scout", "Girls' Guide", "Red Cross Society", "JETS Club", "Cultural Dance Troupe", "Man O' War", "Literary Club"],
+      "tags": ["school"]
+    },
+    {
+      "category": "Boarding-School Provisions List",
+      "answers": ["Milo", "Bournvita", "Golden Morn", "Peak Milk", "Garri", "Sugar", "Cornflakes", "Indomie", "Titus Sardine", "Geisha", "Cabin Biscuit", "Groundnut"],
+      "tags": ["school"]
+    },
+    {
+      "category": "Tuck-Shop Snacks",
+      "answers": ["Gala", "La Casera", "Buns", "Meat Pie", "Puff-Puff", "Chin Chin", "Fan Ice", "Okin Biscuit", "Sausage Roll", "Baba Dudu", "Goody Goody", "Suya"],
+      "tags": ["food"]
+    },
+    {
+      "category": "Playground Games",
+      "answers": ["Ten-Ten", "Suwe", "Boju-Boju", "Catcher", "Police and Thief", "Tinko Tinko", "Fire on the Mountain", "Skipping Rope", "Whot", "Ludo", "Draught", "Tyre Rolling"],
+      "tags": ["games"]
+    },
+    {
+      "category": "Things a Nigerian Mum Says When She's Angry",
+      "answers": ["Are you mad?", "I will slap you", "Wait till your father comes", "Am I your mate?", "Bring my slippers", "Go and kneel down", "Close your mouth", "Are you stupid?", "Come here!", "Is it me you're talking to?", "You this child", "God punish you"],
+      "tags": ["home"]
+    },
+    {
+      "category": "Soft Drinks and Minerals",
+      "answers": ["Coca-Cola", "Fanta", "Sprite", "7Up", "Mirinda", "Teem", "Krest", "Limca", "La Casera", "Maltina", "Five Alive", "Ribena"],
+      "tags": ["food"]
+    },
+    {
+      "category": "Nollywood Movies Everyone Watched",
+      "answers": ["Living in Bondage", "Osuofia in London", "Nneka the Pretty Serpent", "Aki na Ukwa", "Blood Money", "Igodo", "Glamour Girls", "Karishika", "Domitilla", "Issakaba", "End of the Wicked", "Rattlesnake"],
+      "tags": ["tv"]
+    },
+    {
+      "category": "Nigerian Musicians of the 2000s",
+      "answers": ["2Baba", "P-Square", "D'banj", "9ice", "Styl-Plus", "Timaya", "Wande Coal", "M.I Abaga", "Sound Sultan", "Tony Tetuila", "Olu Maintain", "Asa"],
+      "tags": ["music"]
+    },
+    {
+      "category": "Nigerian Dance Moves",
+      "answers": ["Galala", "Alanta", "Yahooze", "Azonto", "Etighi", "Alingo", "Skelewu", "Konto", "Suo", "Makossa", "Kukere", "Sekem"],
+      "tags": ["music"]
+    },
+    {
+      "category": "Punishments Teachers Gave",
+      "answers": ["Kneel Down", "Frog Jump", "Six Strokes of the Cane", "Cut Grass", "Pick Pin", "Raise Your Hands Up", "Angle 90 (Squat)", "Fetch Water", "Weeding", "Clean the Toilet", "Face the Wall", "Write Lines 100 Times"],
+      "tags": ["school"]
+    },
+    {
+      "category": "Chores Your Parents Gave You",
+      "answers": ["Sweep the House", "Mop the Floor", "Wash the Plates", "Fetch Water", "Wash Clothes", "Pound Yam", "Go to the Market", "Cut the Grass", "Wash the Car", "Empty the Dustbin", "Clean the Louvres", "Grind Pepper"],
+      "tags": ["home"]
+    },
+    {
+      "category": "Nigerian Slangs From Back Then",
+      "answers": ["Efiko", "Olodo", "Ajebutter", "Ajepako", "Amebo", "Maga", "Kolo", "Wahala", "Yawa", "Aristo", "Long Throat", "ITK"],
+      "tags": ["culture"]
+    },
+    {
+      "category": "Prefect and Monitor Positions",
+      "answers": ["Head Boy", "Head Girl", "Senior Prefect", "Labour Prefect", "Health Prefect", "Dining Hall Prefect", "Chapel Prefect", "Sports Prefect", "Library Prefect", "Social Prefect", "Time Keeper", "Class Monitor"],
+      "tags": ["school"]
+    },
+    {
+      "category": "Nigerian Exam Bodies and Exams",
+      "answers": ["WAEC", "NECO", "JAMB (UTME)", "GCE", "Common Entrance", "Post-UTME", "NABTEB", "First School Leaving Certificate", "Mock Exam", "WASSCE", "SSCE", "Promotion Exam"],
+      "tags": ["school"]
+    },
+    {
+      "category": "Ways Students Cheated in Exams",
+      "answers": ["Expo", "Writing on the palm", "Writing on the thigh", "Chit paper", "Giraffe-ing", "Coded whisper", "Formula on the ruler", "Toilet expo", "Sneaking in a textbook", "Sign language", "Swapping scripts", "Writing on the desk"],
+      "tags": ["school"]
+    },
+    {
+      "category": "Nollywood Actors of the 90s and 2000s",
+      "answers": ["Genevieve Nnaji", "Omotola Jalade", "Richard Mofe-Damijo", "Pete Edochie", "Patience Ozokwor", "Nkem Owoh", "Chinedu Ikedieze", "Osita Iheme", "Ramsey Nouah", "Jim Iyke", "Ini Edo", "Sam Loco Efe"],
+      "tags": ["tv"]
+    },
+    {
+      "category": "Nigerian Sitcoms and Comedies",
+      "answers": ["Papa Ajasco", "The New Masquerade", "Fuji House of Commotion", "Basi and Company", "Flatmates", "Icheoku", "Samanja", "Clinic Matters", "Everyday People", "Super Story", "Binta and Friends", "Doctor's Quarters"],
+      "tags": ["tv"]
+    },
+    {
+      "category": "DSTV Channels You Flipped Through",
+      "answers": ["Cartoon Network", "Nickelodeon", "Disney Channel", "K-TV", "Channel O", "MTV Base", "Africa Magic", "SuperSport", "National Geographic", "Discovery Channel", "Boomerang", "Animal Planet"],
+      "tags": ["tv"]
+    },
+    {
+      "category": "WWE/WWF Wrestlers",
+      "answers": ["The Rock", "John Cena", "The Undertaker", "Triple H", "Rey Mysterio", "Kane", "Batista", "Big Show", "Randy Orton", "Stone Cold Steve Austin", "Edge", "Kurt Angle"],
+      "tags": ["tv"]
+    },
+    {
+      "category": "Reality and Talent Shows",
+      "answers": ["Gulder Ultimate Search", "MTN Project Fame", "Big Brother Nigeria", "Idols West Africa", "Maltina Dance All", "Nigeria's Got Talent", "Star Quest", "Amstel Malta Box Office", "Glo Naija Sings", "Peak Talent Show", "The Next Movie Star", "Malta Guinness Street Dance"],
+      "tags": ["tv"]
+    },
+    {
+      "category": "Roadside Street Snacks",
+      "answers": ["Suya", "Boli", "Roasted Corn", "Groundnut", "Coconut", "Agbalumo", "Fried Yam", "Plantain Chips", "Sugarcane", "Roasted Yam", "Kokoro", "Garden Egg"],
+      "tags": ["food"]
+    },
+    {
+      "category": "Board and Card Games",
+      "answers": ["Whot", "Ludo", "Draught", "Snakes and Ladders", "Monopoly", "Scrabble", "Chess", "Ayo", "Dominoes", "Playing Cards", "Word Making Word Taking", "Checkers"],
+      "tags": ["games"]
+    },
+    {
+      "category": "Video Games and Consoles",
+      "answers": ["Super Mario", "Winning Eleven", "Mortal Kombat", "Street Fighter", "Contra", "PlayStation", "Sega", "Game Boy", "Nintendo", "FIFA", "Need for Speed", "GTA: Vice City"],
+      "tags": ["games"]
+    },
+    {
+      "category": "Things Your Parents Sent You to Buy",
+      "answers": ["Bread", "Milk", "Sugar", "Matches", "Kerosene", "Maggi", "Salt", "Recharge Card", "Newspaper", "Groundnut Oil", "Pepper and Tomatoes", "Sachet Water"],
+      "tags": ["home"]
+    },
+    {
+      "category": "Nigerian Home Remedies for Sickness",
+      "answers": ["Agbo", "Dogonyaro Leaves", "Hot Water and Salt Gargle", "Robb", "Alabukun", "Andrews Liver Salt", "Blackseed Oil", "Honey and Lime", "Ginger and Garlic", "Scent Leaf Tea", "Palm Oil", "Menthol Steam"],
+      "tags": ["home"]
+    },
+    {
+      "category": "Appliances That Needed NEPA or the Generator",
+      "answers": ["Television", "Refrigerator", "Pressing Iron", "Electric Cooker", "Standing Fan", "Deep Freezer", "Washing Machine", "Water Pump", "Air Conditioner", "Blender", "Microwave", "Electric Bulb"],
+      "tags": ["home"]
+    },
+    {
+      "category": "Cars You Saw on Nigerian Roads",
+      "answers": ["Peugeot 504", "Peugeot 505", "Volkswagen Beetle", "Mercedes V-Boot", "Toyota Camry (Big Daylight)", "Honda Accord (End of Discussion)", "Toyota Corolla", "Nissan Primera", "Volkswagen Golf", "Mazda 323", "Volvo 240", "Toyota Sienna"],
+      "tags": ["culture"]
+    },
+    {
+      "category": "Things in a Nigerian Sitting Room",
+      "answers": ["Television", "Wall Clock", "Family Portrait", "Plastic Flowers", "Center Table", "Cushion Settee", "Show Glass Cabinet", "Lace Doilies", "DSTV Decoder", "Standing Fan", "Wall Gecko", "\"Christ is the Head of This House\" Frame"],
+      "tags": ["home"]
+    },
+    {
+      "category": "Old Nokia and Phone Models",
+      "answers": ["Nokia 3310", "Nokia 3210", "Nokia 1100", "Nokia 8210", "Nokia N70", "Nokia E71", "Nokia 1600", "Nokia 6600", "Sagem", "Motorola Razr", "Sony Ericsson", "BlackBerry Curve"],
+      "tags": ["tech"]
+    },
+    {
+      "category": "Things You Did at a Cybercafé",
+      "answers": ["Browse", "Check Yahoo Mail", "Night Browsing", "Facebook", "Download Music", "Print Documents", "Scan Documents", "Yahoo Messenger Chat", "2go", "Check JAMB Result", "Burn a CD", "Hi5"],
+      "tags": ["tech"]
+    },
+    {
+      "category": "Superstitions Nigerian Kids Believed",
+      "answers": ["Whistling at night invites snakes", "Don't sweep at night", "Orange seed grows a tree in your belly", "Don't cut your nails at night", "Stepping over someone stunts their growth", "A cricket in the house means a visitor", "Don't give with your left hand", "Itchy palm means money is coming", "Black cat is bad luck", "Counting your teeth stops them growing", "Don't sit on the road", "Don't whistle indoors"],
+      "tags": ["culture"]
+    },
+    {
+      "category": "Things Hawked in Go-Slow Traffic",
+      "answers": ["Pure Water", "Gala", "Plantain Chips", "Groundnut", "Recharge Card", "Handkerchief", "Phone Chargers", "Newspapers", "Apples", "La Casera", "Sausage Roll", "Car Mats"],
+      "tags": ["culture"]
+    }
+  ]
+}
