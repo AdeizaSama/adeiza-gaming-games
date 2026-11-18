@@ -1,5 +1,6 @@
 import { Button } from '../../ui/button'
 import { cn } from '../../ui/cn'
+import { useSettled } from './useSettled'
 
 export interface SummarySection {
   /** e.g. "Got it" or "Skipped". */
@@ -35,9 +36,13 @@ export interface SummaryProps {
 /**
  * The end of a turn: who played, what they scored, and what happened (standard §6). Read-only: mis-taps are fixed
  * before it, on the review screen (`Review`, ADR 0007).
+ *
+ * Its button is off for a moment after the screen appears (ADR 0016): it can come up when time runs out, under a
+ * finger aimed at the turn.
  */
 export function Summary({ title, points, sections = [], standings = [], actionLabel = 'Next', onNext }: SummaryProps) {
   const shown = sections.filter((section) => section.items.length > 0)
+  const settled = useSettled()
   return (
     <section className="flex flex-1 flex-col gap-8 p-6">
       <header className="flex flex-col items-center gap-2 pt-8 text-center">
@@ -84,7 +89,7 @@ export function Summary({ title, points, sections = [], standings = [], actionLa
           </div>
         ))}
       </div>
-      <Button size="lg" className="w-full" onClick={onNext}>
+      <Button size="lg" className="w-full" disabled={!settled} onClick={onNext}>
         {actionLabel}
       </Button>
     </section>

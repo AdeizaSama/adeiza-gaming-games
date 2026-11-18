@@ -272,6 +272,26 @@ The same grid rule as Name Ten's board (ADR 0013): rows share the height, never 
 
 ---
 
+## Step 11: A pause after time runs out
+
+**What:** [ADR 0016](../decisions/0016-a-pause-after-time-runs-out.md); `src/sdk/interactions/useSettled.ts`; `Summary`'s Next and `Review`'s Adjust and Done are off for 2 seconds after the screen appears; `src/testSetup.ts` turns the delay off for tests.
+
+**Why:** playing Trivia Night, a pick aimed at the last second landed on the turn summary's Next. Charades and Name Ten have the same problem one screen earlier: time running out shows review, where a late tap hits Done.
+
+```ts
+export const settleDelay = { ms: 2000 }
+
+export function useSettled(ms = settleDelay.ms): boolean  // false for ms, then true
+```
+
+`settleDelay` is an object so the test setup can change it: about a dozen tests tap through these screens straight away, and a real 2-second wait would slow every one. The delay's own tests set it back to 2000 and move a fake clock.
+
+### How to verify
+
+`pnpm test src/sdk/interactions/settle.test.tsx`: 3 tests. Take `disabled={!settled}` off the buttons, and both screen tests fail. On a phone, let a turn's time run out: the buttons are faded for 2 seconds.
+
+---
+
 ## Chapter summary
 
 | Step | What | SDK change? |
@@ -286,6 +306,7 @@ The same grid rule as Name Ten's board (ADR 0013): rows share the height, never 
 | 8 | The game, registered, with rules and three presets | |
 | 9 | Docs | |
 | 10 | Options as tiles, two to a row | Yes: `MultipleChoice` |
+| 11 | A pause after time runs out (ADR 0016) | Yes: `useSettled`, `Summary`, `Review` |
 
 **What we learned:**
 
@@ -293,4 +314,4 @@ The same grid rule as Name Ten's board (ADR 0013): rows share the height, never 
 - A setting that changes how a turn ends (one question, a set number, the clock) is one guard, `moreQuestions`, not three machines. The view asks the same function, so the screen and the rules can't disagree about the last question.
 - Content ported from an older set still needs checking. Four of 149 questions had a second defensible answer or couldn't be confirmed.
 
-**Tests:** 424 runtime tests and 33 compile-time checks.
+**Tests:** 427 runtime tests and 33 compile-time checks.
