@@ -3,11 +3,15 @@ import { fonts, type Font } from '../../sdk/theme/fonts'
 import imports from './fonts.ts?raw'
 
 // Each bundled font's own CSS and metadata, read as files from node_modules.
-const css = import.meta.glob<string>('/node_modules/@fontsource-variable/*/index.css', { query: '?raw', import: 'default', eager: true })
-const metadata = import.meta.glob<{ license: { type: string } }>('/node_modules/@fontsource-variable/*/metadata.json', {
+const css = import.meta.glob<string>(['/node_modules/@fontsource-variable/*/index.css', '/node_modules/@fontsource/*/index.css'], {
+  query: '?raw',
   import: 'default',
   eager: true,
 })
+const metadata = import.meta.glob<{ license: { type: string } }>(
+  ['/node_modules/@fontsource-variable/*/metadata.json', '/node_modules/@fontsource/*/metadata.json'],
+  { import: 'default', eager: true },
+)
 
 const bundled = Object.entries(fonts as Record<string, Font>).filter(([, font]) => font.bundled)
 

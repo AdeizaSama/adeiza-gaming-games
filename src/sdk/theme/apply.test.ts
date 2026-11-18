@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { themeVariables } from './apply'
+import { themeAttributes, themeVariables } from './apply'
 import { checkTheme } from './loadThemes'
 import { themeData } from './testTheme'
 
@@ -26,6 +26,20 @@ describe('themeVariables', () => {
     expect(variables({ shadow: 'bold' })['--elevation-sm']).toBe('3px 3px 0 0 var(--foreground)')
     expect(variables()['--line']).toBe('2px')
     expect(variables({ border: 'thick' })['--line']).toBe('3px')
+  })
+
+  it('names the theme’s parts as attributes, and sets the icon line weight', () => {
+    const result = checkTheme('src/themes/paper.json', themeData({ parts: { icons: 'thin' } }))
+    expect(result.ok && themeAttributes(result.theme)).toEqual({
+      'data-theme': 'paper',
+      'data-surface': 'plain',
+      'data-button': 'solid',
+      'data-background': 'flat',
+      'data-decoration': 'none',
+    })
+    expect(variables({ parts: { icons: 'thin' } })['--icon-stroke']).toBe('1.5')
+    expect(variables()['--icon-stroke']).toBe('2')
+    expect(variables({ parts: { icons: 'bold' } })['--icon-stroke']).toBe('2.75')
   })
 
   it('fades the page from one color token to another, or leaves it plain', () => {

@@ -20,6 +20,13 @@ describe('Instruction', () => {
     expect(onAction).toHaveBeenCalledOnce()
   })
 
+  it('keeps its button at the bottom with nothing painted around it, so the page shows through', () => {
+    render(<Instruction title="Rules" text="Play." onAction={() => {}} />)
+    const bar = screen.getByRole('button', { name: 'Got it' }).closest('[data-bar]')!
+    expect(bar.className).toContain('sticky')
+    expect(bar.className).not.toMatch(/\b(bg|backdrop)-/)
+  })
+
   it('never turns text into HTML', () => {
     const { container } = render(<Instruction title="Rules" text={'A <b>tag</b> and <img src=x onerror=alert(1)>'} onAction={() => {}} />)
     expect(container.querySelector('b, img')).toBeNull()

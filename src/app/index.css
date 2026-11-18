@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* Looks a theme picks by name: paper cards, sticker buttons, a starfield… (ADR 0011). */
+@import "./theme/parts.css";
 
 /*
  * Theme tokens (standard §11). Every color, the corner radius, the fonts and the animation speed are CSS variables.

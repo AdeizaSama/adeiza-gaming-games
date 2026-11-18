@@ -30,6 +30,18 @@ export type ColorToken = (typeof colorTokens)[number]
 
 const ColorTokenName = z.enum(colorTokens)
 
+/**
+ * The looks a theme can pick for each part (ADR 0011), built in `src/app/theme/parts.css`. The first of each is the
+ * default: the app's plain look. Adding an option here means adding its CSS there.
+ */
+export const themeParts = {
+  surface: ['plain', 'paper', 'sticky-note', 'glass', 'chalkboard'],
+  button: ['solid', 'chunky', 'sticker', 'glass', 'chalk'],
+  background: ['flat', 'lined-paper', 'dot-grid', 'chalk-dust', 'starfield'],
+  decoration: ['none', 'tape', 'pushpin', 'planets', 'chalk-smudge'],
+  icons: ['thin', 'regular', 'bold'],
+} as const
+
 const Color = z
   .string()
   .refine((text) => parseColor(text) !== undefined, 'Use a color like "#ff8800" or "oklch(0.64 0.19 42)"')
@@ -66,6 +78,19 @@ export const themeSchema = z.strictObject({
     .optional()
     .meta({ description: 'Fades the page background from one color token to another, top to bottom. Leave out for a plain background.' }),
   duration: z.int().min(0).max(400).default(200).meta({ description: 'How long animations take, in milliseconds.' }),
+  parts: z
+    .strictObject({
+      surface: z
+        .enum(themeParts.surface)
+        .default('plain')
+        .meta({ description: 'How cards and dialogs look.' }),
+      button: z.enum(themeParts.button).default('solid').meta({ description: 'How buttons look.' }),
+      background: z.enum(themeParts.background).default('flat').meta({ description: 'The page behind everything.' }),
+      decoration: z.enum(themeParts.decoration).default('none').meta({ description: 'Small drawings on the flash card and dialogs.' }),
+      icons: z.enum(themeParts.icons).default('regular').meta({ description: 'How heavy icon lines are.' }),
+    })
+    .prefault({})
+    .meta({ description: 'Looks to pick from a menu (ADR 0011). Leave out any you don\'t want; each defaults to the plain look.' }),
 })
 
 export type Theme = z.output<typeof themeSchema>

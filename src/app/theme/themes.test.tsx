@@ -2,7 +2,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import html from '../../../index.html?raw'
 import { applyTheme } from '../../sdk/theme/apply'
-import { findTheme, pickTheme, startingTheme, styleKey } from './themes'
+import { findTheme, lookKey, pickTheme, startingTheme } from './themes'
 
 const sunrise = findTheme('sunrise')!
 const sunset = findTheme('sunset')!
@@ -12,7 +12,7 @@ const phone = (dark: boolean) => () => dark
 describe('applying a theme', () => {
   beforeEach(() => {
     localStorage.clear()
-    root().removeAttribute('style')
+    for (const name of root().getAttributeNames()) root().removeAttribute(name)
   })
 
   it('writes the theme’s variables, color scheme, name and address-bar color on the page', () => {
@@ -46,13 +46,20 @@ describe('applying a theme', () => {
     expect(startingTheme(off, phone(true)).id).toBe('sunset')
   })
 
-  it('remembers the style, and index.html puts it back before the app starts', () => {
+  it('remembers the look, and index.html puts it back before the app starts', () => {
+    localStorage.setItem('ku-zo-wasa:theme-style', 'left over from chapter 08')
     pickTheme(sunset)
-    expect(localStorage.getItem(styleKey)).toBe(root().getAttribute('style'))
+    expect(JSON.parse(localStorage.getItem(lookKey)!)).toEqual({
+      style: root().getAttribute('style'),
+      attributes: { 'data-theme': 'sunset', 'data-surface': 'plain', 'data-button': 'solid', 'data-background': 'flat', 'data-decoration': 'none' },
+    })
+    expect(localStorage.getItem('ku-zo-wasa:theme-style')).toBeNull()
 
-    root().removeAttribute('style') // a fresh page load, before the app's script
+    for (const name of root().getAttributeNames()) root().removeAttribute(name) // a fresh page load, before the app's script
     const script = /<script>([\s\S]*?)<\/script>/.exec(html)![1]
     new Function(script)()
     expect(root().style.getPropertyValue('--primary')).toBe(sunset.colors.primary)
+    expect(root().dataset.theme).toBe('sunset')
+    expect(root().dataset.surface).toBe('plain')
   })
 })

@@ -32,6 +32,8 @@ export function Button({ variant = 'primary', size = 'md', type = 'button', clas
   return (
     <button
       type={type}
+      // Theme parts style buttons by variant (ADR 0011): a sticker look for filled buttons, say, but not for ghosts.
+      data-variant={variant}
       className={cn(
         'inline-flex items-center justify-center gap-2 rounded-lg font-semibold select-none',
         'transition-[transform,opacity] active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100',

@@ -105,6 +105,13 @@ describe('setup screen', () => {
     expect(within(rounds).getByRole<HTMLButtonElement>('button', { name: 'Less: Rounds' }).disabled).toBe(true)
   })
 
+  it('keeps Start at the bottom with nothing painted around it, and a backdrop only behind the item count', () => {
+    renderAt('/charades')
+    const bar = start().closest('[data-bar]')!
+    expect(bar.className).not.toMatch(/\b(bg|backdrop)-/)
+    expect(screen.getByText('34 items to play').className).toContain('bg-background/75')
+  })
+
   it('counts the items a tag leaves, and needs at least one pack', async () => {
     const user = userEvent.setup()
     renderAt('/charades')

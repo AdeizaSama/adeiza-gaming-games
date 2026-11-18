@@ -14,6 +14,7 @@ Short documents that record a decision about the project's contracts: the Game S
 | [0008](0008-settings-and-presets.md) | Game settings and presets on setup | Accepted |
 | [0009](0009-rules.md) | Rules | Accepted |
 | [0010](0010-theme-files.md) | Theme files | Accepted |
+| [0011](0011-theme-parts.md) | Theme parts | Accepted |
 
 ## Writing one
 

@@ -32,6 +32,7 @@ describe('checkTheme', () => {
       shadow: 'soft',
       border: 'thin',
       duration: 200,
+      parts: { surface: 'plain', button: 'solid', background: 'flat', decoration: 'none', icons: 'regular' },
     })
     expect(result.ok && result.theme.gradient).toBeUndefined()
   })

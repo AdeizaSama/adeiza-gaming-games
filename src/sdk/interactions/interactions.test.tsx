@@ -28,6 +28,8 @@ describe('FlashCard', () => {
 
     expect(screen.getByText('Puff puff')).toBeDefined()
     expect(screen.getByText('Describe it')).toBeDefined()
+    // The card is where a theme's decorations go (ADR 0011).
+    expect(screen.getByText('Puff puff').closest('[data-feature]')).not.toBeNull()
     await user.click(screen.getByRole('button', { name: 'Got it' }))
     await user.click(screen.getByRole('button', { name: 'Skip' }))
     await user.click(screen.getByRole('button', { name: 'Skip' }))

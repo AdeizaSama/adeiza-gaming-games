@@ -50,9 +50,9 @@ Each game's rules are in `src/games/<game>/rules.md`, shown on its How to play s
 
 ## 2. Add a theme (no code)
 
-A theme is one JSON file in `src/themes/`: its colors, fonts, corner rounding, shadows and outlines. Players pick it with the palette button on the home page.
+A theme is one JSON file in `src/themes/`: its colors, fonts, corner rounding, shadows and outlines, and looks picked from a menu (paper cards, a starfield, tape…). Players pick it with the palette button on the home page.
 
-1. **Copy a theme** that's close to your idea (`sunrise.json` for light, `sunset.json` for dark) and rename it. The file name is the theme's `id`: `ocean.json` has `"id": "ocean"`.
+1. **Copy a theme** that's close to your idea (`sunrise.json` or `sticky-notes.json` for light, `sunset.json`, `space-travel.json` or `chalkboard.json` for dark) and rename it. The file name is the theme's `id`: `ocean.json` has `"id": "ocean"`.
 2. **Choose `"scheme"`**: `"light"` or `"dark"`. A theme is always one or the other: it doesn't change with the phone's dark mode. For both versions of an idea, make two themes.
 3. **Set every color.** Each `-foreground` color is for text on the color it's named after: `primary-foreground` is the label on a `primary` button. Write colors as `"#ff8800"` or `"oklch(0.64 0.19 42)"` (lightness 0–1, chroma 0–0.5, hue 0–360).
 4. **Pick the rest** (all optional):
@@ -62,9 +62,20 @@ A theme is one JSON file in `src/themes/`: its colors, fonts, corner rounding, s
    - `border`: `thin` or `thick`.
    - `gradient`: `{ "from": "background", "to": "muted" }` fades the page between two of your colors.
    - `duration`: animation speed in milliseconds.
-5. **Credit yourself** in `contributors`, and keep the `$schema` line: with it, your editor suggests fields and explains each one.
+5. **Pick parts** (all optional), under `"parts"`. Each is a look someone has already built, so it works on every screen:
 
-**Contrast is checked for you.** When you open a pull request, the "Validate content" check also measures every text color against its background and fails if one is too hard to read, e.g. `primary-foreground on primary (text) has a contrast of 3.52 : 1; it needs at least 4.5 : 1`. Make one of the two colors lighter or darker until it passes. `pnpm validate-content` runs the same check locally.
+   | Part | Options |
+   |---|---|
+   | `surface`: cards and dialogs | `plain`, `paper`, `sticky-note`, `glass`, `chalkboard` |
+   | `button` | `solid`, `chunky`, `sticker`, `glass`, `chalk` |
+   | `background`: the page | `flat`, `lined-paper`, `dot-grid`, `chalk-dust`, `starfield` (moves gently; still for players who turn motion off) |
+   | `decoration`: on the card being played and on dialogs | `none`, `tape`, `pushpin`, `planets`, `chalk-smudge` |
+   | `icons` | `thin`, `regular`, `bold` |
+
+   Parts use your colors: `chalkboard` cards are framed in your `border` color, `planets` are your `primary`. Want a look that isn't on the menu? Open an issue: a new part is a code change.
+6. **Credit yourself** in `contributors`, and keep the `$schema` line: with it, your editor suggests fields and explains each one.
+
+**Contrast is checked for you.** When you open a pull request, the "Validate content" check also measures every text color and outline against what it's drawn on (both ends of a gradient, and the page behind `glass` cards) and fails if one is too hard to read, e.g. `primary-foreground on primary (text) has a contrast of 3.52 : 1; it needs at least 4.5 : 1`. Make one of the two colors lighter or darker until it passes. `pnpm validate-content` runs the same check locally.
 
 A font that isn't on the list needs a code change (it has to be open-licensed and bundled): open an issue asking for it.
 

@@ -9,8 +9,8 @@ export const themes = loadThemes(import.meta.glob('../../themes/*.json', { eager
 export const firstThemes = { light: 'sunrise', dark: 'sunset' } as const
 
 const key = 'ku-zo-wasa:theme'
-/** The applied theme's style text, which `index.html` puts back before the first paint. */
-export const styleKey = 'ku-zo-wasa:theme-style'
+/** The applied theme's look (style text and attributes, as JSON), which `index.html` puts back before the first paint. */
+export const lookKey = 'ku-zo-wasa:theme-look'
 
 /** The theme with this id, or `undefined` if there's none (a theme can be removed while a phone remembers it). */
 export function findTheme(id: string | null | undefined): Theme | undefined {
@@ -31,12 +31,13 @@ export function startingTheme(storage: Storage = localStorage, prefersDark = () 
   return findTheme(saved) ?? findTheme(prefersDark() ? firstThemes.dark : firstThemes.light) ?? themes[0]
 }
 
-/** Applies a theme and remembers it on this device, with its style text for the next first paint. */
+/** Applies a theme and remembers it on this device, with its look for the next first paint. */
 export function pickTheme(theme: Theme, storage: Storage = localStorage, document: Document = globalThis.document): void {
-  const style = applyTheme(theme, document)
+  const look = applyTheme(theme, document)
   try {
     storage.setItem(key, theme.id)
-    storage.setItem(styleKey, style)
+    storage.setItem(lookKey, JSON.stringify(look))
+    storage.removeItem('ku-zo-wasa:theme-style') // the style alone, as chapter 08 saved it
   } catch {
     // Storage full or switched off: the theme still applies until the page closes.
   }

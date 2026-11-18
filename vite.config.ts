@@ -12,6 +12,6 @@ export default defineConfig({
     setupFiles: ['src/testSetup.ts'],
     // Vitest skips CSS files by default, so importing one gives an empty string. The theme tests read index.css, and
     // the font test reads each bundled font's CSS.
-    css: { include: [/\/app\/index\.css/, /@fontsource-variable\/[^/]+\/index\.css/] },
+    css: { include: [/\/app\/index\.css/, /\/app\/theme\/parts\.css/, /@fontsource(-variable)?\/[^/]+\/index\.css/] },
   },
 })

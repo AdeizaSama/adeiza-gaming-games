@@ -156,7 +156,10 @@
             "system-sans",
             "system-serif",
             "caveat",
-            "nunito"
+            "exo2",
+            "gochi-hand",
+            "nunito",
+            "orbitron"
           ],
           "description": "A font from the list in src/sdk/theme/fonts.ts."
         },
@@ -168,7 +171,10 @@
             "system-sans",
             "system-serif",
             "caveat",
-            "nunito"
+            "exo2",
+            "gochi-hand",
+            "nunito",
+            "orbitron"
           ],
           "description": "A font from the list in src/sdk/theme/fonts.ts."
         }
@@ -266,6 +272,72 @@
       "type": "integer",
       "minimum": 0,
       "maximum": 400
+    },
+    "parts": {
+      "description": "Looks to pick from a menu (ADR 0011). Leave out any you don't want; each defaults to the plain look.",
+      "default": {},
+      "type": "object",
+      "properties": {
+        "surface": {
+          "default": "plain",
+          "description": "How cards and dialogs look.",
+          "type": "string",
+          "enum": [
+            "plain",
+            "paper",
+            "sticky-note",
+            "glass",
+            "chalkboard"
+          ]
+        },
+        "button": {
+          "default": "solid",
+          "description": "How buttons look.",
+          "type": "string",
+          "enum": [
+            "solid",
+            "chunky",
+            "sticker",
+            "glass",
+            "chalk"
+          ]
+        },
+        "background": {
+          "default": "flat",
+          "description": "The page behind everything.",
+          "type": "string",
+          "enum": [
+            "flat",
+            "lined-paper",
+            "dot-grid",
+            "chalk-dust",
+            "starfield"
+          ]
+        },
+        "decoration": {
+          "default": "none",
+          "description": "Small drawings on the flash card and dialogs.",
+          "type": "string",
+          "enum": [
+            "none",
+            "tape",
+            "pushpin",
+            "planets",
+            "chalk-smudge"
+          ]
+        },
+        "icons": {
+          "default": "regular",
+          "description": "How heavy icon lines are.",
+          "type": "string",
+          "enum": [
+            "thin",
+            "regular",
+            "bold"
+          ]
+        }
+      },
+      "additionalProperties": false
     }
   },
   "required": [

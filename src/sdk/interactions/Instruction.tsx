@@ -20,7 +20,8 @@ export function Instruction({ title, text, actionLabel = 'Got it', onAction }: I
     <section className="flex flex-1 flex-col gap-6 p-6">
       <h2 className="text-4xl font-bold text-balance">{title}</h2>
       <Markdown text={text} />
-      <div className="sticky bottom-0 mt-auto bg-background py-4">
+      {/* No background: the space around the button is only spacing, and the page shows through. */}
+      <div data-bar className="sticky bottom-0 mt-auto py-4">
         <Button size="lg" className="w-full" onClick={onAction}>
           {actionLabel}
         </Button>
