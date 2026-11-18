@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 370 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
+**Counts:** 373 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -24,6 +24,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Name Ten settings](#name-ten-settings) | `src/games/name-ten/config.test.ts` | 2 | |
 | [Name Ten machine](#name-ten-machine) | `src/games/name-ten/machine.test.ts` | 11 | |
 | [Name Ten views](#name-ten-views) | `src/games/name-ten/views/views.test.tsx` | 5 | |
+| [Name Ten game](#name-ten-game) | `src/games/name-ten/game.test.ts` | 1 | |
 | [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
 | [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 9 | |
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
@@ -39,7 +40,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Settings and presets](#settings-and-presets) | `src/sdk/game/settings.test.ts` | 5 | |
 | [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 22 | |
 | [Charades views](#charades-views) | `src/games/charades/views/views.test.tsx` | 6 | |
-| [App](#app) | `src/app/App.test.tsx` | 4 | |
+| [App](#app) | `src/app/App.test.tsx` | 5 | |
 | [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 6 | |
 | [Applying a theme](#applying-a-theme) | `src/app/theme/themes.test.tsx` | 4 | |
 | [Bundled fonts](#bundled-fonts) | `src/app/theme/fonts.test.ts` | 2 | |
@@ -55,6 +56,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Instruction](#instruction) | `src/sdk/interactions/instruction.test.tsx` | 3 | |
 | [Team-turns views](#team-turns-views) | `src/sdk/formats/team-turns/views/views.test.tsx` | 3 | |
 | [Game screen](#game-screen) | `src/app/play/GameScreen.test.tsx` | 2 | |
+| [Playing Name Ten](#playing-name-ten) | `src/app/play/nameTen.test.tsx` | 1 | |
 | [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 15 | |
 | [Saved game](#saved-game) | `src/app/play/savedGame.test.ts` | 12 | |
 | [Play page](#play-page) | `src/app/play/PlayPage.test.tsx` | 3 | |
@@ -622,6 +624,14 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 369 | lists the board as got or missed, and talks about answers, not cards | Review | A board with Biro got and Ruler missed; the review view | Got it (good), Missed (neutral); "Check the answers before they count."; a list named "Answers this turn" | Review reuses Charades' screen, in Name Ten's words. |
 | 370 | sets the answers on the board from 10 to 15 | Settings | The default; More six times | Less off at 10; 15, with More off | The stepper can't leave the schema's range. |
 
+## Name Ten game
+
+`src/games/name-ten/game.test.ts`, testing `src/games/name-ten/index.ts`: the game's single `defineGame` export.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 371 | is a valid game with the Back to School pack, its own settings and presets, and its own handoff | `index.ts` | The game's default export | Id `name-ten`; Back to School; its machine and settings; presets Quick and Classic; its own handoff view; rules with "## A turn" | `defineGame` checked everything (meta, packs, presets, rules, a view per phase) when the file loaded; this checks Name Ten wired its own parts in. |
+
 ## App
 
 `src/app/App.test.tsx`, testing the pages in `src/app/` and which address shows which. Screen tests (happy-dom), each starting the app at an address with a `MemoryRouter`.
@@ -629,6 +639,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 180 | shows the library at /, and a game opens at its own address | Library, routing | Start at `/`; tap Charades | Heading Ku Zo Wasa; a Charades link to `/charades` showing "2–20 players"; after the tap, Charades' setup screen | The library lists the registry's games, and each link reaches its game. |
+| 372 | lists Name Ten too, with its own icon, players and setup | Library, registry | Open `/`; tap Name Ten | A link to `/name-ten` with its tagline and the list-checks icon; then Name Ten's setup, with "Answers on the board" and "38 items to play" | A game added to the registry appears in the library and gets the shared setup screen with its own settings. |
 | 214, 215 | says "Page not found" at /chess and /charades/nope/extra, with a way back | Not-found page | A game that doesn't exist; an address with too many parts | "Page not found"; Back to games returns to the library | A mistyped or old link never shows a blank page. Runs once per address (`it.each`). |
 | 216 | has an icon for every game in the registry | `gameIcons` | Every registered game's `meta.icon` | Listed in `gameIcons` | An unlisted icon would quietly show the fallback controller. |
 
@@ -793,6 +804,14 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 209 | handoff: names the team and the round, and Start sends start | `HandoffView` | Round 1 of 2; tap Start | Heading Eagles, "Round 1 of 2"; sends `start` | The view connects the Handoff primitive to the machine. |
 | 210 | turn summary: shows the turn's points, and Next, or See results after the last turn | `TurnSummaryView` | Round 1; then round 2 (the last turn) | "scored 3 points" and Next (sends `next`); then See results | The button says where `next` will go, using the format's own `turnsRemaining`. |
 | 211 | results: names the winner, or says it's a tie | `ResultsView` | Scores 5 and 8; then 6 and 6 | "Eagles won!"; then "It's a tie!" | A draw needs its own headline. |
+
+## Playing Name Ten
+
+`src/app/play/nameTen.test.tsx`, the whole app at `/name-ten` with nothing saved, the way a player taps through it (ADR 0012). Fake clock and intervals, as in the game screen tests.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 373 | goes from setup to a judge, a board, review and the summary, by tapping | Name Ten, end to end | Start; Start; tick two answers; End turn early; Adjust; tick a third; Done | "Hand the phone to a judge from" Team 2, "Team 1 are up · Round 1 of 3"; ten answers, "2 of 10"; review in answers' words; the summary says 3 | Every Name Ten screen in order, through the shared setup, save and play pages. |
 
 ## Game screen
 

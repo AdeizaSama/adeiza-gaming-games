@@ -158,3 +158,36 @@ The `Review` primitive said "Tap a card…" and "Cards this turn": Charades' wor
 ### How to verify
 
 `pnpm test src/games/name-ten src/sdk/interactions`: tests 366–370, and test 269 now checks Charades still says "cards".
+
+---
+
+## Step 7: The game, registered
+
+**What:**
+
+- `src/games/name-ten/rules.md`.
+- `src/games/name-ten/index.ts`: `defineGame` with meta, content, settings and presets (Quick, Classic), rules, the machine and views.
+- One line in `src/app/registry/index.ts`.
+- The `list-checks` icon in `src/app/library/gameIcon.ts`.
+
+**Why:** a game reaches players through the registry. Setup, saving, resuming, the rules page and the theme all work for it without changes.
+
+### The surprise: a registry of different games
+
+Adding the second game to the registry broke type checking in the app, not in Name Ten. `findGame` now returned "Charades or Name Ten". So when `PlayPage` called `choosePoolItems(game.content.packs, config, game.content.itemKey)`, TypeScript couldn't tell that the packs and the item key came from the *same* game: Charades' packs with Name Ten's key would be wrong. With one game, that question never came up.
+
+TypeScript has no way to say "some types, the same ones throughout" for a list of different games. The fix is to forget each game's types at the registry, the one place games are listed:
+
+```ts
+export type AnyGame = Game<any, any, any, any, any, any, any, any>
+export const games: readonly AnyGame[] = [charades, nameTen]
+```
+
+Nothing is lost where it matters. `defineGame` checks each game fully where it's written, and the app only ever handles a game as a whole: its packs with its key, its machine with its views, its save with its schema. It's the one `any` in the codebase, with a comment saying why.
+
+We first tried a typed wrapper component around `PlayPage`'s game (the way `SetupScreen` is generic). It fixed one page and broke the next: every place that used a game from the registry had the same problem.
+
+### How to verify
+
+- `pnpm test`: tests 371–373.
+- On a phone: the library lists Charades and Name Ten. Play a turn of Name Ten: setup, the judge's handoff, the board, End turn early, review, the summary.
