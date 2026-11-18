@@ -13,7 +13,8 @@ import type { NameTenItem } from '../schema'
 export function TurnView({ context, send }: TeamTurnsViewProps<NameTenItem, NameTenTurn, NameTenEvent, NameTenConfig>) {
   const { board, got } = context.turn
   return (
-    <section className="flex flex-1 flex-col gap-4 p-4">
+    // min-h-0: the board fills the play screen's height and no more (ADR 0013).
+    <section className="flex min-h-0 flex-1 flex-col gap-4 p-4">
       <header className="flex items-center justify-between">
         <p className="text-xl font-semibold">{context.config.teams[context.current]}</p>
         {context.turnEndsAt !== null && <Countdown endsAt={context.turnEndsAt} onTimeUp={() => send({ type: 'time_up' })} />}
@@ -25,7 +26,7 @@ export function TurnView({ context, send }: TeamTurnsViewProps<NameTenItem, Name
           onToggle={(index) => send({ type: 'toggle', index })}
         />
       )}
-      <Button variant="outline" className="mt-auto" onClick={() => send({ type: 'lock_in' })}>
+      <Button variant="outline" onClick={() => send({ type: 'lock_in' })}>
         End turn early
       </Button>
     </section>

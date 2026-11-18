@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 373 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
+**Counts:** 375 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -51,11 +51,11 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Interaction primitives](#interaction-primitives) | `src/sdk/interactions/interactions.test.tsx` | 9 | |
 | [Summary and Leaderboard](#summary-and-leaderboard) | `src/sdk/interactions/summary.test.tsx` | 4 | |
 | [Review](#review) | `src/sdk/interactions/review.test.tsx` | 3 | |
-| [PromptCard](#promptcard) | `src/sdk/interactions/promptcard.test.tsx` | 2 | |
+| [PromptCard](#promptcard) | `src/sdk/interactions/promptcard.test.tsx` | 3 | |
 | [Markdown](#markdown) | `src/sdk/interactions/markdown.test.ts` | 5 | |
 | [Instruction](#instruction) | `src/sdk/interactions/instruction.test.tsx` | 3 | |
 | [Team-turns views](#team-turns-views) | `src/sdk/formats/team-turns/views/views.test.tsx` | 3 | |
-| [Game screen](#game-screen) | `src/app/play/GameScreen.test.tsx` | 2 | |
+| [Game screen](#game-screen) | `src/app/play/GameScreen.test.tsx` | 3 | |
 | [Playing Name Ten](#playing-name-ten) | `src/app/play/nameTen.test.tsx` | 1 | |
 | [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 15 | |
 | [Saved game](#saved-game) | `src/app/play/savedGame.test.ts` | 12 | |
@@ -762,6 +762,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 |---|---|---|---|---|---|
 | 364 | shows the prompt with its label and a running count, and every answer with whether it's ticked | Board | The board | "Category"; the prompt as a heading on a `data-feature` card; "1 of 3"; Ruler pressed, the others not | The judge sees what to read out, how the team is doing, and what's been said. |
 | 365 | reports which answer was tapped, and the count follows | Taps | Tap Biro, Eraser, then Ruler; then a card labelled "Question" with one answer, tapped | "3 of 3", then "2 of 3", Ruler unpressed; then "Question" shown and `onToggle(0)` | A tap is reported by position; the count always matches the ticks. |
+| 374 | lays the board out as two columns of tiles that share the height, never under 44px, scrolling only then | Layout | The board | A two-column grid, rows `minmax(2.75rem, 1fr)`, scrolling when full | Ten answers fit on a phone without scrolling, and no tile is too small to tap (ADR 0013). Class names, because happy-dom doesn't lay pages out. |
 
 ## Review
 
@@ -819,6 +820,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
+| 375 | is exactly the screen's height, with a play area that scrolls on its own, so a view can fill the screen | Layout | The game screen | `main` is `h-dvh`; the play area scrolls (`overflow-y-auto`) | Name Ten's board fills what's left under the quit bar; a taller view scrolls without moving the quit bar (ADR 0013). |
 | 212 | plays a whole game of Charades by tapping, from the first handoff to the results | Every view, end to end | Lions: Start, Got it ×2, Skip, 30 s pass; in review Adjust, tap the last card, Done; Next. Eagles: Start, Got it, 30 s pass, Done, See results | Timer starts at 30; review shows 4 cards, the last not counted, then "Got it" and changed; Lions' summary: 5 points (2 + 2 − 1 + 2); Eagles' summary: 2 points; "Lions won!", standings Lions 5, Eagles 2 | Proves the whole chain: buttons send the right events, the machine moves, and each phase's view appears. A view sending the wrong event fails here. |
 | 224 | after the game, Play again starts over with the same teams, and Back to games leads to the library | Results actions | Two turns with nothing guessed, then tap Play again | No Play again during the game; "It's a tie!", no Quit, Back to games links to `/`; then Lions' handoff, "Round 1 of 1", no Play again | The app's own buttons appear only once the game has ended, and Play again really restarts. |
 

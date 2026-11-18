@@ -22,6 +22,13 @@ function renderGame() {
 }
 
 describe('GameScreen', () => {
+  it('is exactly the screen’s height, with a play area that scrolls on its own, so a view can fill the screen', () => {
+    renderGame()
+    const main = screen.getByRole('main')
+    expect(main.className).toMatch(/\bh-dvh\b/)
+    expect(main.querySelector('[data-play-area]')?.className).toContain('overflow-y-auto')
+  })
+
   // Fake clock and intervals, so the 30-second turns pass instantly. Only what the countdown uses is faked:
   // Testing Library waits on a real `setTimeout` between taps, which a fake one would never fire.
   beforeEach(() => {

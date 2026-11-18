@@ -47,3 +47,14 @@ describe('PromptCard', () => {
     expect(onToggle).toHaveBeenCalledWith(0)
   })
 })
+
+describe('PromptCard layout', () => {
+  it('lays the board out as two columns of tiles that share the height, never under 44px, scrolling only then', () => {
+    render(<Board />)
+    const board = screen.getByRole('list', { name: 'Answers' })
+    // Class names, because happy-dom doesn't lay pages out: this pins the layout ADR 0013 chose.
+    expect(board.className).toMatch(/\bgrid-cols-2\b/)
+    expect(board.className).toContain('auto-rows-[minmax(2.75rem,1fr)]')
+    expect(board.className).toContain('overflow-y-auto')
+  })
+})

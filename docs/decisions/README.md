@@ -16,6 +16,7 @@ Short documents that record a decision about the project's contracts: the Game S
 | [0010](0010-theme-files.md) | Theme files | Accepted |
 | [0011](0011-theme-parts.md) | Theme parts | Accepted |
 | [0012](0012-name-ten.md) | Name Ten: an answer board and a judge | Accepted |
+| [0013](0013-fit-the-screen-and-standings.md) | A board that fits the screen, and standings after every turn | Accepted |
 
 ## Writing one
 

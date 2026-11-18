@@ -262,3 +262,30 @@ Name Ten is the second game, and the first test of the SDK by a game it wasn't b
 - A test for a board's size found a real case: most categories have 12 answers, so a board set to 15 shows all 12.
 
 **Tests:** 373 runtime tests and 32 compile-time checks.
+
+---
+
+## Step 9: A board that fits the screen
+
+**What:** [ADR 0013](../decisions/0013-fit-the-screen-and-standings.md), first half. The play screen is exactly the phone's height; `PromptCard`'s board is two columns of tiles that fill what's left.
+
+**Why:** played on a phone, the board scrolled. Ten full-width rows of at least 44px each, plus the timer, category and End button, is about 760px, and a judge scrolling mid-turn misses answers.
+
+### A known height to fill
+
+`GameScreen` was `min-h-dvh`: at least the screen's height, growing with its content. A view had nothing to fill, only room to grow. It's now `h-dvh`, with the views in a play area (`flex-1 min-h-0 overflow-y-auto`) under the quit bar. A view can now fill exactly the space left, and a taller view (a long review) scrolls inside the area.
+
+`min-h-0` matters at every level: a flex child won't shrink below its content's height without it, so the board would push the page taller instead of fitting.
+
+### Two columns that share the height
+
+```tsx
+<ul className="grid min-h-0 flex-1 auto-rows-[minmax(2.75rem,1fr)] grid-cols-2 gap-2 overflow-y-auto">
+```
+
+Every row gets an equal share of the height left (`1fr`) but never less than 44px (`2.75rem`), the smallest tap target the standard allows. Ten answers are five rows, fifteen are eight. On a tall phone the tiles grow; on a small one they stay at 44px, and only then does the board scroll. The category card got smaller to leave the board more room.
+
+### How to verify
+
+- `pnpm test`: tests 374–375.
+- On a phone: a Name Ten turn shows all ten answers without scrolling.
