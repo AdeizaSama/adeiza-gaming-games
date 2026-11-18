@@ -30,10 +30,11 @@ The board shows the answers, so the guessing team mustn't see it. The phone goes
 
 When time runs out or the judge ends the turn, the turn goes to a review phase, like Charades (ADR 0007): the board's answers with Got it or Missed, locked until the host taps Adjust. A team that shouted an answer as the buzzer went can have it counted.
 
-### Two SDK changes
+### SDK changes
 
 - **`PromptCard`** (standard §6): a prompt (the category), a counter ("4 of 10"), and a list of answers that toggle when tapped. It knows nothing about Name Ten; Trivia Night or a later game can use it for any "tick what was said" board.
 - **`Handoff` gets an optional `lead`**: the line above the name, "Pass the phone to" by default. Name Ten's handoff passes "Hand the phone to a judge from".
+- **`Review` gets an optional `noun`**: its words said "cards". Name Ten reviews answers: "Tap an answer to change its result."
 
 ### Not in this version
 
@@ -43,4 +44,4 @@ The original design let a judge re-roll a category, or show an example answer, b
 
 - **Easier:** scoring is objective, and review fixes the rest. Content has a clear quality bar.
 - **Harder:** writing a category means writing its answers, and checking that the obvious ones are all there.
-- **SDK change:** `PromptCard` is built; `Handoff` takes `lead`. The standard's §6 and §8 change to match.
+- **SDK change:** `PromptCard` is built; `Handoff` takes `lead`; `Review` takes `noun`. The standard's §6 and §8 change to match.

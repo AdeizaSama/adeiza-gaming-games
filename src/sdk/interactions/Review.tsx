@@ -24,6 +24,8 @@ export interface ReviewProps {
   onToggle: (index: number) => void
   onDone: () => void
   doneLabel?: string
+  /** What a row is, for the words on screen: cards by default; Name Ten reviews answers. */
+  noun?: { one: string; many: string }
 }
 
 const tones = {
@@ -37,18 +39,19 @@ const tones = {
  * Adjust, so a tap while the phone goes round changes nothing. Being unlocked is this screen's own state: it isn't
  * saved, so a refresh locks it again. What a tap changes is up to the game, through `onToggle`.
  */
-export function Review({ title, rows, onToggle, onDone, doneLabel = 'Done' }: ReviewProps) {
+export function Review({ title, rows, onToggle, onDone, doneLabel = 'Done', noun = { one: 'card', many: 'cards' } }: ReviewProps) {
   const [unlocked, setUnlocked] = useState(false)
+  const article = /^[aeiou]/i.test(noun.one) ? 'an' : 'a'
   return (
     <section className="flex flex-1 flex-col gap-6 p-6">
       <header className="flex flex-col items-center gap-2 pt-4 text-center">
         <h2 className="text-4xl font-bold text-balance">{title}</h2>
-        <p className="text-muted-foreground">{unlocked ? 'Tap a card to change its result.' : 'Check the cards before they count.'}</p>
+        <p className="text-muted-foreground">{unlocked ? `Tap ${article} ${noun.one} to change its result.` : `Check the ${noun.many} before they count.`}</p>
       </header>
       {rows.length === 0 ? (
         <p className="flex-1 text-center text-muted-foreground">Nothing was played this turn.</p>
       ) : (
-        <ul aria-label="Cards this turn" className="flex flex-1 flex-col gap-2">
+        <ul aria-label={`${noun.many[0].toUpperCase()}${noun.many.slice(1)} this turn`} className="flex flex-1 flex-col gap-2">
           {rows.map((row, index) => {
             const content = (
               <>

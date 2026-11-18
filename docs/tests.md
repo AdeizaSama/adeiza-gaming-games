@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 365 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
+**Counts:** 370 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -23,6 +23,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Name Ten content](#name-ten-content) | `src/games/name-ten/schema.test.ts` | 6 | |
 | [Name Ten settings](#name-ten-settings) | `src/games/name-ten/config.test.ts` | 2 | |
 | [Name Ten machine](#name-ten-machine) | `src/games/name-ten/machine.test.ts` | 11 | |
+| [Name Ten views](#name-ten-views) | `src/games/name-ten/views/views.test.tsx` | 5 | |
 | [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
 | [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 9 | |
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
@@ -609,6 +610,18 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 361 | toggleAnswer flips only the answer named, without changing the context passed in | `toggleAnswer` | Board 0, 1, 2 with 1 ticked; toggle 1 | None ticked; the original still has 1 ticked | As above. |
 | 362 | isAnswer is true only for a toggle naming an answer on the board | `isAnswer` | Toggles for 0, 2, 3, −1 and 0.5; `lock_in` | True, true; false for the rest | A test per guard. Events come from views, so a bad index is checked, not trusted. |
 
+## Name Ten views
+
+`src/games/name-ten/views/views.test.tsx`, testing the views in `src/games/name-ten/views/`. Screen tests (happy-dom). Contexts come from the real machine: teams Lions, Eagles and Hawks, with "Numbers" (answers 0 to 11) as the only category.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 366 | names the next team as the judge, the first judging the last | `judgeOf` | Lions playing; Hawks playing | Eagles; Lions | Every team judges exactly one other team each round (ADR 0012). |
+| 367 | asks for the phone to go to a judge from the next team, and says who is up | Handoff | The first handoff; tap Start | "Hand the phone to a judge from", Eagles, "Lions are up · Round 1 of 3"; `start` sent | The guessing team mustn't see the board. |
+| 368 | shows the category and its board, reports taps by position, and can end early | Turn | A turn on Numbers; tap the fifth answer; tap End turn early | The category heading; the board's answers in order; `toggle` 4; `lock_in` | The judge ticks what's said and can stop when the team gives up. |
+| 369 | lists the board as got or missed, and talks about answers, not cards | Review | A board with Biro got and Ruler missed; the review view | Got it (good), Missed (neutral); "Check the answers before they count."; a list named "Answers this turn" | Review reuses Charades' screen, in Name Ten's words. |
+| 370 | sets the answers on the board from 10 to 15 | Settings | The default; More six times | Less off at 10; 15, with More off | The stepper can't leave the schema's range. |
+
 ## App
 
 `src/app/App.test.tsx`, testing the pages in `src/app/` and which address shows which. Screen tests (happy-dom), each starting the app at an address with a `MemoryRouter`.
@@ -745,7 +758,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 269 | lists every card with its result, locked: tapping a card does nothing | Locked list | Show the three cards; tap Gala | Heading Lions; each card with its detail, result and "changed" mark; no buttons on the cards; `onToggle` not called | Review is on screen while the phone goes round; a stray tap there must not change a score. |
+| 269 | lists every card with its result, locked: tapping a card does nothing | Locked list | Show the three cards; tap Gala | Heading Lions; each card with its detail, result and "changed" mark; no buttons on the cards; `onToggle` not called; the hint says "Check the cards before they count." (cards unless a game names its rows) | Review is on screen while the phone goes round; a stray tap there must not change a score. |
 | 270 | Adjust unlocks the cards, a tap reports which one, and Lock locks them again | Adjust | Adjust; tap the third card; Lock | The hint changes; `onToggle(2)`; after Lock, no buttons and no more calls | Changing a result is a deliberate two-step act, and the game decides what a tap means. |
 | 271 | Done finishes the review, locked or not, and an empty turn has nothing to adjust | Done | Done label "Count it": tap it locked and unlocked; then no cards | `onDone` twice; then "Nothing was played this turn." and no Adjust | Done never needs Adjust first; nothing to adjust means no Adjust button. |
 

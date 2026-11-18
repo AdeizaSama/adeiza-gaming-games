@@ -131,3 +131,30 @@ phases: {
 ### How to verify
 
 `pnpm test src/sdk/interactions`: tests 363–365.
+
+---
+
+## Step 6: The views
+
+**What:** four views in `src/games/name-ten/views/`, and one more SDK change: `Review` gets an optional `noun`.
+
+| View | Phase | Built from |
+|---|---|---|
+| `HandoffView` | `handoff` (replacing the format's) | `Handoff` with `lead="Hand the phone to a judge from"`, the judge team as the name, and "Lions are up · Round 1 of 3" |
+| `TurnView` | `turn` | The team and `Countdown`, `PromptCard` with the board, and an "End turn early" button |
+| `ReviewView` | `review` | `Review`, each answer Got it or Missed |
+| `SettingsView` | setup | `Section` and `Stepper` for the answers on the board |
+
+**Why:** each phase needs a view (ADR 0005), and a game replaces a format view only when the default can't say what it needs. The format's handoff says "Pass the phone to Lions", which is exactly wrong here.
+
+### Who judges
+
+`judgeOf(teams, current)` is the next team in playing order, and the last team is judged by the first. Each round, every team judges exactly once.
+
+### Review's words
+
+The `Review` primitive said "Tap a card…" and "Cards this turn": Charades' words, written into the SDK. It now takes `noun` (`{ one: 'card', many: 'cards' }` by default), and Name Ten passes answers. This is the kind of thing only a second game finds; it's added to ADR 0012's list of SDK changes.
+
+### How to verify
+
+`pnpm test src/games/name-ten src/sdk/interactions`: tests 366–370, and test 269 now checks Charades still says "cards".

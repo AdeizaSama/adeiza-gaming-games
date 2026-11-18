@@ -19,6 +19,7 @@ describe('Review', () => {
     render(<Review title="Lions" rows={rows} onToggle={onToggle} onDone={() => {}} />)
 
     expect(screen.getByRole('heading', { name: 'Lions' })).toBeDefined()
+    expect(screen.getByText('Check the cards before they count.')).toBeDefined() // cards, unless a game names its rows
     expect(items().map((item) => item.textContent)).toEqual(['GalaActedGot it', 'ZoboSkippedchanged', 'AssemblyNot counted'])
     expect(within(items()[0]).queryByRole('button')).toBeNull()
     await user.click(screen.getByText('Gala'))
