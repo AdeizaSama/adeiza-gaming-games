@@ -107,7 +107,7 @@ Full rules: [Game Standard §11](docs/game-standard.md#11-themes).
 10. **`README.md`:** the rules in short, content guidelines, and what each file is.
 11. **Check:** `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm validate-content` and `pnpm build`, then play it on a phone with `pnpm dev --host`, under every theme.
 
-If something your game needs isn't in the SDK (a primitive, or a word in a shared screen that only fits another game), change the SDK and write a short decision record in `docs/decisions/`. Name Ten needed a board primitive and new words on two shared screens ([ADR 0012](docs/decisions/0012-name-ten.md)), and a phase before its turn to choose a category ([ADR 0014](docs/decisions/0014-a-phase-before-the-turn.md)). A game can add phases after its turn (a review) and one before it (`beforeTurn`).
+If something your game needs isn't in the SDK (a primitive, or a word in a shared screen that only fits another game), change the SDK and write a short decision record in `docs/decisions/`. Name Ten needed a board primitive and new words on two shared screens ([ADR 0012](docs/decisions/0012-name-ten.md)), and a phase before its turn to choose a category ([ADR 0014](docs/decisions/0014-a-phase-before-the-turn.md)). Trivia Night added a multiple-choice card and the rules for a question's options (`src/sdk/content/choices.ts`), for any multiple-choice game to use ([ADR 0015](docs/decisions/0015-trivia-night.md)). A game can add phases after its turn (a review) and one before it (`beforeTurn`).
 
 ---
 

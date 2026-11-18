@@ -236,3 +236,41 @@ Name Ten needed its own handoff, because a judge holds the phone. Trivia Night d
 ### How to verify
 
 `pnpm test`: 423 tests. Then `pnpm dev --host`, open Trivia Night on a phone, and play a turn in each preset.
+
+---
+
+## Step 9: Docs
+
+**What:** Trivia Night's `README.md` (the rules in short, content guidelines, and the files); the standard's §7 and §8 rows for it; README's games table (Complete) and status; CONTRIBUTING's note on SDK changes.
+
+**Why:** a game isn't done until a contributor can add a question to it without reading its code.
+
+The content guidelines are built around one test: **could someone who knows the subject defend a different option?** Step 4 found four questions that failed it, in a set that had already been played.
+
+### How to verify
+
+Read `src/games/trivia-night/README.md` as someone adding a question: it should answer every question the schema's errors would raise.
+
+---
+
+## Chapter summary
+
+| Step | What | SDK change? |
+|---|---|---|
+| 1 | ADR 0015: the card, the question, three ways to play | |
+| 2 | The rules for a question's options (`choices.ts`) | Yes: `Options`, `checkAnswer`, `orderOptions` |
+| 3 | The multiple-choice card | Yes: `MultipleChoice` |
+| 4 | Questions, and the Back to School pack (148) | |
+| 5 | Settings: mode, questions a turn, points, option order | |
+| 6 | The machine: a question, its result, three ways to end a turn | |
+| 7 | The turn and result view; settings on setup | |
+| 8 | The game, registered, with rules and three presets | |
+| 9 | Docs | |
+
+**What we learned:**
+
+- A third game needed no change to the format. The new parts (a card and the option rules) went in the SDK because other games will use them, not because Trivia Night couldn't work without them there.
+- A setting that changes how a turn ends (one question, a set number, the clock) is one guard, `moreQuestions`, not three machines. The view asks the same function, so the screen and the rules can't disagree about the last question.
+- Content ported from an older set still needs checking. Four of 149 questions had a second defensible answer or couldn't be confirmed.
+
+**Tests:** 423 runtime tests and 33 compile-time checks.

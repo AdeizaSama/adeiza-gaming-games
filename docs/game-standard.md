@@ -194,7 +194,7 @@ A primitive takes plain props (text, callbacks) and knows nothing about machines
 
 ## 7. Formats
 
-A format is the outer loop shared by several games: setup, turn order, rounds, scoring, ending. A game picks one format and fills in what happens inside a turn. Formats live in `src/sdk/formats/` and provide shared phases, context, guards, actions and views. A game may **add** phases (e.g. Trivia's `steal`) but must not change the format's loop. If it needs to, it belongs in a different format.
+A format is the outer loop shared by several games: setup, turn order, rounds, scoring, ending. A game picks one format and fills in what happens inside a turn. Formats live in `src/sdk/formats/` and provide shared phases, context, guards, actions and views. A game may **add** phases (e.g. Trivia Night's `reveal`) but must not change the format's loop. If it needs to, it belongs in a different format.
 
 | Format | Shape | Games |
 |---|---|---|
@@ -234,7 +234,7 @@ export const machine = teamTurns<CharadesItem, CharadesTurn, CharadesEvent>()({
 ```
 
 - The game lists only its own events; `teamTurns` adds `start`, `time_up` and `next`.
-- `phases` must include `turn`, which `handoff` starts. A game may add phases (Trivia's `steal`). Its transitions go only to its own phases or to `turn_summary`; a game phase can't be final.
+- `phases` must include `turn`, which `handoff` starts. A game may add phases (Trivia Night's `reveal`). Its transitions go only to its own phases or to `turn_summary`; a game phase can't be final.
 - The game handles `time_up` in its turn, because what running out of time means depends on the game.
 - `onStart` (optional) lists game actions to run when a turn starts, right after the format draws its first item: the only point where a game can react to that draw (Charades picks the card's mode).
 - **Points come from the turn record and the settings.** The format adds `points(turn, config)` to the team's score when players leave `turn_summary`. A game that lets players fix mis-taps does it in its own phase before the summary, so corrections change the score (Charades' review, [ADR 0007](decisions/0007-turn-review.md)).
@@ -246,11 +246,11 @@ export const machine = teamTurns<CharadesItem, CharadesTurn, CharadesEvent>()({
 | | Charades | Name Ten | Trivia Night |
 |---|---|---|---|
 | Turn interaction | FlashCard | PromptCard (a board of answers) | MultipleChoice |
-| Items per turn | Many, until time runs out | One category | One question |
-| Events | `got`, `skip`; in review `toggle`, `done` | Before the turn `play`, `skip`; `toggle`, `lock_in`; in review `toggle`, `done` | `answer(option)` |
-| Scoring | Points per result by mode (default: describe 2, act and sing 3, skip −1), never below 0 per turn | 1 per answer on the board got | +N if correct |
-| Extra config | Mode (Describe or Mix it up), points per result | Answers on the board (10–15) | Difficulty, steals on/off |
-| Extra phases | `review` ([ADR 0007](decisions/0007-turn-review.md)) | `category` before the turn ([ADR 0014](decisions/0014-a-phase-before-the-turn.md)); `review`; its own handoff to a judge ([ADR 0012](decisions/0012-name-ten.md)) | `steal` after a wrong answer |
+| Items per turn | Many, until time runs out | One category | A set number (default 1), or many until time runs out |
+| Events | `got`, `skip`; in review `toggle`, `done` | Before the turn `play`, `skip`; `toggle`, `lock_in`; in review `toggle`, `done` | `answer(index)`; on the result `continue` |
+| Scoring | Points per result by mode (default: describe 2, act and sing 3, skip −1), never below 0 per turn | 1 per answer on the board got | Points per right answer (1–5, default 1); a wrong answer costs nothing |
+| Extra config | Mode (Describe or Mix it up), points per result | Answers on the board (10–15) | Mode (questions or against the clock), questions a turn (1–10), points, option order (shuffled or A to Z); a 30-second turn by default |
+| Extra phases | `review` ([ADR 0007](decisions/0007-turn-review.md)) | `category` before the turn ([ADR 0014](decisions/0014-a-phase-before-the-turn.md)); `review`; its own handoff to a judge ([ADR 0012](decisions/0012-name-ten.md)) | `reveal`, the result after each pick ([ADR 0015](decisions/0015-trivia-night.md)) |
 
 **A proposed game that fits no existing format is deferred**, not shoehorned. Open an issue describing it, and it becomes the evidence for the next format.
 
@@ -262,7 +262,7 @@ These four are the whole v1 scope, built in this order:
 |---|---|---|---|---|---|
 | 1 | Charades | team-turns | `{ text, tags[], modes[] }` | FlashCard | Modes: describe / act / sing |
 | 2 | Name Ten | team-turns | `{ category, answers[], tags[] }` | PromptCard | A judge from another team holds the phone |
-| 3 | Trivia Night | team-turns | `{ question, options[], answer, difficulty }` | MultipleChoice | Steals need a format extension |
+| 3 | Trivia Night | team-turns | `{ question, options[], answer, tags[] }` | MultipleChoice | One question a turn, a set number, or against the clock. Steals (a missed question passing to the next team) need a format extension |
 | 4 | Mafia | host-led | roles + theme skins | SecretReveal, Vote | Needs the host-led format first |
 
 Out of scope for v1: multiplayer or multi-device play; accounts, backends or any collection of personal data; image or media content.
