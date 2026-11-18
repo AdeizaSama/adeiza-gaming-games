@@ -38,7 +38,7 @@ When time runs out or the judge ends the turn, the turn goes to a review phase, 
 
 ### Not in this version
 
-The original design let a judge re-roll a category, or show an example answer, before the turn starts. Both need a screen between the handoff and the turn, which the team-turns format doesn't have (ADR 0004: games add phases after the turn, not before). They can come later with a format change and its own record.
+The original design let a judge re-roll a category, or show an example answer, before the turn starts. Both need a screen between the handoff and the turn, which the team-turns format didn't have. Skipping a category came in the same chapter, with that format change ([ADR 0014](0014-a-phase-before-the-turn.md)); example answers are still left out.
 
 ## Consequences
 

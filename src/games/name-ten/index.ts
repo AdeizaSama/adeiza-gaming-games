@@ -5,6 +5,7 @@ import { machine } from './machine'
 import rules from './rules.md?raw'
 import { itemKey, itemSchema } from './schema'
 import { HandoffView } from './views/HandoffView'
+import { CategoryView } from './views/CategoryView'
 import { ReviewView } from './views/ReviewView'
 import { SettingsView } from './views/SettingsView'
 import { TurnView } from './views/TurnView'
@@ -37,6 +38,7 @@ export default defineGame({
   },
   rules,
   machine,
-  // The handoff is Name Ten's own: the phone goes to a judge, not to the team playing (ADR 0012).
-  views: { handoff: HandoffView, turn: TurnView, review: ReviewView },
+  // The handoff is Name Ten's own: the phone goes to a judge, not to the team playing (ADR 0012). The category comes
+  // before the turn (ADR 0014).
+  views: { handoff: HandoffView, category: CategoryView, turn: TurnView, review: ReviewView },
 })

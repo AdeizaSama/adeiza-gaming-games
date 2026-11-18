@@ -29,6 +29,13 @@ describe('playing Name Ten', () => {
     expect(screen.getByText('Team 1 are up · Round 1 of 3')).toBeDefined()
     await user.click(screen.getByRole('button', { name: 'Start' }))
 
+    // The category: skip one, then play the next.
+    const first = screen.getByText('Category').nextElementSibling!.textContent
+    await user.click(screen.getByRole('button', { name: 'Skip' }))
+    expect(screen.getByText("2 skips left. A skipped category doesn't come back.")).toBeDefined()
+    expect(screen.getByText('Category').nextElementSibling!.textContent).not.toBe(first)
+    await user.click(screen.getByRole('button', { name: 'Play this' }))
+
     // The board: ten answers; the judge ticks two, then ends the turn early.
     const answers = within(screen.getByRole('list', { name: 'Answers' })).getAllByRole('button')
     expect(answers).toHaveLength(10)

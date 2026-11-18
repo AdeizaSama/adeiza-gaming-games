@@ -247,10 +247,10 @@ export const machine = teamTurns<CharadesItem, CharadesTurn, CharadesEvent>()({
 |---|---|---|---|
 | Turn interaction | FlashCard | PromptCard (a board of answers) | MultipleChoice |
 | Items per turn | Many, until time runs out | One category | One question |
-| Events | `got`, `skip`; in review `toggle`, `done` | `toggle`, `lock_in`; in review `toggle`, `done` | `answer(option)` |
+| Events | `got`, `skip`; in review `toggle`, `done` | Before the turn `play`, `skip`; `toggle`, `lock_in`; in review `toggle`, `done` | `answer(option)` |
 | Scoring | Points per result by mode (default: describe 2, act and sing 3, skip −1), never below 0 per turn | 1 per answer on the board got | +N if correct |
 | Extra config | Mode (Describe or Mix it up), points per result | Answers on the board (10–15) | Difficulty, steals on/off |
-| Extra phases | `review` ([ADR 0007](decisions/0007-turn-review.md)) | `review`; its own handoff to a judge ([ADR 0012](decisions/0012-name-ten.md)) | `steal` after a wrong answer |
+| Extra phases | `review` ([ADR 0007](decisions/0007-turn-review.md)) | `category` before the turn ([ADR 0014](decisions/0014-a-phase-before-the-turn.md)); `review`; its own handoff to a judge ([ADR 0012](decisions/0012-name-ten.md)) | `steal` after a wrong answer |
 
 **A proposed game that fits no existing format is deferred**, not shoehorned. Open an issue describing it, and it becomes the evidence for the next format.
 

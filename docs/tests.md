@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 380 runtime tests (`pnpm test`) and 33 compile-time checks (`pnpm typecheck`).
+**Counts:** 386 runtime tests (`pnpm test`) and 33 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -22,8 +22,8 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Charades content](#charades-content) | `src/games/charades/schema.test.ts` | 8 | |
 | [Name Ten content](#name-ten-content) | `src/games/name-ten/schema.test.ts` | 6 | |
 | [Name Ten settings](#name-ten-settings) | `src/games/name-ten/config.test.ts` | 2 | |
-| [Name Ten machine](#name-ten-machine) | `src/games/name-ten/machine.test.ts` | 11 | |
-| [Name Ten views](#name-ten-views) | `src/games/name-ten/views/views.test.tsx` | 5 | |
+| [Name Ten machine](#name-ten-machine) | `src/games/name-ten/machine.test.ts` | 15 | |
+| [Name Ten views](#name-ten-views) | `src/games/name-ten/views/views.test.tsx` | 7 | |
 | [Name Ten game](#name-ten-game) | `src/games/name-ten/game.test.ts` | 1 | |
 | [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
 | [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 9 | |
@@ -610,10 +610,14 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 355 | toggle: ticks and unticks the answer named, and the turn is worth one point per tick | `toggle`, `points` | Tick answers 0, 3, 5, then 3 again | Ticked: 0 and 5; worth 2 | The judge can fix a mis-tap during the turn. |
 | 356 | lock_in and time_up both end the turn in review, where a correction counts and done goes on to the summary | Review | Tick 0, end early; or let time run out; in review tick 9 and untick 0; done; next | Review both ways; worth 1; the summary; Lions bank 1 | The judge can end early when the team gives up, and review fixes the last answers (ADR 0007). |
 | 357 | ignores a toggle for an answer not on the board, and toggles outside a turn or review | `isAnswer`, ignored events | Toggle 10, −1 and 2.5 in a turn; toggle at the handoff; toggle on the summary | The same state back each time | Bad indexes can't change a score, and a turn can't change after its review. |
-| 358 | plays a full game from the first handoff to the results | Full game | Seed 2026; each turn: tick 3, end early, count a fourth in review, done, next | 6 turns, results, 12 points each, 6 different categories | A whole game runs to the end with the format's loop (standard §12). |
+| 381 | category: shows the category with its board dealt but no clock, and play starts the turn on it | `category`, `play` | Start; play at 5 s | `category`, no timer, 10 answers dealt; then `turn` ending at 65 s, on the same category and board | The team chooses before the clock runs (ADR 0014). |
+| 382 | category: skip draws the next category and deals its board, three times at most, and a skipped one is gone for good | `skip` | Skip; two more; a fourth | A new category with its own board, 1 skip used; then 3; the fourth ignored; the first three categories in the pool's drawn list | Three skips a turn, and a skipped category doesn't come back. |
+| 383 | category: a new turn gets its skips back, and play and skip are ignored once the turn has started | Skips per turn | Skip, play; skip during the turn; finish and start the next turn | 1 skip used; the skip ignored; the next team's category with 0 skips used | Skips belong to a turn, and can't be used once the clock runs. |
+| 358 | plays a full game from the first handoff to the results | Full game | Seed 2026; each turn: skip a category, play the next, tick 3, end early, count a fourth in review, done, next | 6 turns, results, 12 points each, 12 different categories drawn | A whole game runs to the end with the format's loop (standard §12). |
 | 359 | deal: takes each answer at most once, in a shuffled order | `deal` | Numbers' 12 answers, 10 dealt, seed 3, twice | 10 different answers, not in the written order; the same both times | A fair, repeatable shuffle, with the machine's random numbers (`rng.shuffle`). |
-| 360 | dealBoard deals the setting's number of answers, none ticked, without changing the context passed in | `dealBoard` | Numbers | 10 answers, none ticked; the original unchanged | A test per action (standard §12); actions never change their input. |
-| 361 | toggleAnswer flips only the answer named, without changing the context passed in | `toggleAnswer` | Board 0, 1, 2 with 1 ticked; toggle 1 | None ticked; the original still has 1 ticked | As above. |
+| 360 | dealBoard deals the setting's number of answers, none ticked, without changing the context passed in | `dealBoard` | Numbers, 2 skips used | 10 answers, none ticked, still 2 skips; the original unchanged | A test per action (standard §12); actions never change their input. |
+| 361 | toggleAnswer flips only the answer named, without changing the context passed in | `toggleAnswer` | Board 0, 1, 2 with 1 ticked, 2 skips used; toggle 1 | None ticked, still 2 skips; the original still has 1 ticked | As above. |
+| 384 | countSkip counts one more skip, and canSkip is true only while skips are left | `countSkip`, `canSkip` | 2 skips used; then 0, 2, 3 | 3, the original still 2; true, true, false | A test per guard and action (standard §12). |
 | 362 | isAnswer is true only for a toggle naming an answer on the board | `isAnswer` | Toggles for 0, 2, 3, −1 and 0.5; `lock_in` | True, true; false for the rest | A test per guard. Events come from views, so a bad index is checked, not trusted. |
 
 ## Name Ten views
@@ -624,6 +628,8 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 |---|---|---|---|---|---|
 | 366 | names the next team as the judge, the first judging the last | `judgeOf` | Lions playing; Hawks playing | Eagles; Lions | Every team judges exactly one other team each round (ADR 0012). |
 | 367 | asks for the phone to go to a judge from the next team, and says who is up | Handoff | The first handoff; tap Start | "Hand the phone to a judge from", Eagles, "Lions are up · Round 1 of 3"; `start` sent | The guessing team mustn't see the board. |
+| 385 | shows the team its category, never the answers, and plays it or skips it | Category view | The first category; tap Skip; tap Play this | "Lions, here's your category", Numbers, no answer from the board, "3 skips left…"; `skip` sent; `play` sent | The judge can show the screen to the team: the board stays hidden until the turn. |
+| 386 | counts skips down, and turns Skip off when none are left | `skipsLeftText`, Skip button | 0, 2 and 3 skips used; the view with 3 used | "3 skips left…", "1 skip left…", "No skips left: play this one."; Skip off | Players see how many skips they have, and can't tap one they don't. |
 | 368 | shows the category and its board, reports taps by position, and can end early | Turn | A turn on Numbers; tap the fifth answer; tap End turn early | The category heading; the board's answers in order; `toggle` 4; `lock_in` | The judge ticks what's said and can stop when the team gives up. |
 | 369 | lists the board as got or missed, and talks about answers, not cards | Review | A board with Biro got and Ruler missed; the review view | Got it (good), Missed (neutral); "Check the answers before they count."; a list named "Answers this turn" | Review reuses Charades' screen, in Name Ten's words. |
 | 370 | sets the answers on the board from 10 to 15 | Settings | The default; More six times | Less off at 10; 15, with More off | The stepper can't leave the schema's range. |
@@ -818,7 +824,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 373 | goes from setup to a judge, a board, review and the summary, by tapping | Name Ten, end to end | Start; Start; tick two answers; End turn early; Adjust; tick a third; Done | "Hand the phone to a judge from" Team 2, "Team 1 are up · Round 1 of 3"; ten answers, "2 of 10"; review in answers' words; the summary says 3, with scores so far Team 1: 3, Team 2: 0 | Every Name Ten screen in order, through the shared setup, save and play pages. |
+| 373 | goes from setup to a judge, a board, review and the summary, by tapping | Name Ten, end to end | Start; Start; Skip; Play this; tick two answers; End turn early; Adjust; tick a third; Done | "Hand the phone to a judge from" Team 2, "Team 1 are up · Round 1 of 3"; after Skip "2 skips left" and a different category; ten answers, "2 of 10"; review in answers' words; the summary says 3, with scores so far Team 1: 3, Team 2: 0 | Every Name Ten screen in order, through the shared setup, save and play pages. |
 
 ## Game screen
 

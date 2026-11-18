@@ -346,3 +346,39 @@ Only phase names and the context are saved, never action names. Renaming `startT
 ### How to verify
 
 `pnpm test src/sdk/formats`: tests 145 and 378–380, and compile-time check C33.
+
+---
+
+## Step 12: Choosing a category
+
+**What:** Name Ten's `category` phase before the turn, its view, and `FlashCard`'s `skipDisabled`.
+
+**Why:** a team that gets a category it doesn't like can skip to the next, up to three times a turn. A skipped category is gone for the game. Step 11 made the format allow a phase before the turn; this is the first one.
+
+### In the machine
+
+```ts
+beforeTurn: 'category',
+phases: {
+  category: {
+    interaction: 'flash_card',
+    on: {
+      play: { to: 'turn', actions: ['startTimer'] },
+      skip: { when: 'canSkip', actions: ['drawItem', 'dealBoard', 'countSkip'] },
+    },
+  },
+  …
+```
+
+- **Skips are part of the turn record** (`skips`), so they're saved: a refresh can't give a team its skips back. `resetTurn` gives each new turn three.
+- **A skipped category is gone for good** because `drawItem` moves it to the pool's drawn list, the same as a played one.
+- **The board is dealt for each category** (`dealBoard` after every draw), so when the team plays, the judge's board is ready and the clock can start at once.
+
+### On screen
+
+The category view reuses `FlashCard`: the category on the card, **Skip** and **Play this** as its buttons, and a line saying how many skips are left. It never shows the answers, so the judge can turn the phone to the team. `FlashCard` gained `skipDisabled`, so Skip turns off when none are left.
+
+### How to verify
+
+- `pnpm test`: tests 381–386, and the full game and click-through tests now skip a category each turn.
+- On a phone: after the judge's handoff, skip a category or two, then play one. The clock starts only then.

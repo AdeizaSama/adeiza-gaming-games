@@ -8,6 +8,7 @@ The full rules players see are in [rules.md](rules.md), on the game's How to pla
 
 - 2 to 10 teams, each playing one turn per round (2 to 20 players).
 - The phone goes to a **judge from the next team**: the board shows the answers, so the team guessing mustn't see it.
+- Before the clock starts, the team sees its category and can **skip** to the next one, up to three times a turn. A skipped category doesn't come back.
 - A turn deals 10 of the category's answers onto the board (a setting, 10 to 15). The judge taps each one the team says, and can end the turn early.
 - **1 point** per answer on the board the team said. A right answer that isn't on the board doesn't count.
 - After each turn, the board is checked in review, where a missed or mistaken answer can be fixed before the points count.
@@ -44,7 +45,7 @@ Packs are in [content/](content/), one JSON file each. [CONTRIBUTING.md](../../.
 | `index.ts` | The game's definition: meta, content, settings, presets, rules, machine and views |
 | `schema.ts` | What a content item is: a category, its answers and tags |
 | `config.ts` | The settings: the format's, plus how many answers go on the board |
-| `machine.ts` | Dealing the board, ticking answers, review, and scoring |
+| `machine.ts` | Choosing a category, dealing the board, ticking answers, review, and scoring |
 | `rules.md` | How to play, for players |
-| `views/` | The judge's handoff, the board, review and the setting on setup |
+| `views/` | The judge's handoff, the category, the board, review and the setting on setup |
 | `content/` | The packs |

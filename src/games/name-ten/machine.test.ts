@@ -8,7 +8,7 @@ import type { MachineState } from '../../sdk/machine/types'
 import { validateMachine } from '../../sdk/machine/validateMachine'
 import { createRng } from '../../sdk/rng'
 import { NameTenConfig } from './config'
-import { deal, machine, type NameTenEvent, type NameTenTurn } from './machine'
+import { deal, machine, maxSkips, type NameTenEvent, type NameTenTurn } from './machine'
 import { itemKey, itemSchema, type NameTenItem } from './schema'
 
 type Context = TeamTurnsContext<NameTenItem, NameTenTurn, NameTenConfig>
@@ -24,8 +24,10 @@ const input = { config, items }
 const play = (state: State, ...events: Event[]) => events.reduce((current, event) => send(machine, current, event, { now: 0 }), state)
 const toggle = (index: number): Event => ({ type: 'toggle', index })
 
-/** A game at the start of the first turn: a category drawn and its board dealt. */
-const firstTurn = (seed = 1, gameInput = input) => play(start(machine, { input: gameInput, seed }), { type: 'start' })
+/** A game at the category, before the first turn: a category drawn and its board dealt, no clock yet. */
+const firstCategory = (seed = 1, gameInput = input) => play(start(machine, { input: gameInput, seed }), { type: 'start' })
+/** A game at the start of the first turn: the first category played. */
+const firstTurn = (seed = 1, gameInput = input) => play(firstCategory(seed, gameInput), { type: 'play' })
 const points = (state: State) => machine.points(state.context.turn, state.context.config)
 
 describe('Name Ten machine', () => {
@@ -80,9 +82,47 @@ describe('Name Ten machine', () => {
     expect(play(summary, toggle(0))).toEqual(summary)
   })
 
+  it('category: shows the category with its board dealt but no clock, and play starts the turn on it', () => {
+    const category = firstCategory()
+    expect(category.phase).toBe('category')
+    expect(category.context.turnEndsAt).toBeNull()
+    expect(category.context.turn.board).toHaveLength(10)
+
+    const turn = send(machine, category, { type: 'play' }, { now: 5_000 })
+    expect(turn.phase).toBe('turn')
+    expect(turn.context.turnEndsAt).toBe(65_000)
+    expect(turn.context.item).toBe(category.context.item)
+    expect(turn.context.turn.board).toEqual(category.context.turn.board)
+  })
+
+  it('category: skip draws the next category and deals its board, three times at most, and a skipped one is gone for good', () => {
+    const first = firstCategory()
+    const skipped = play(first, { type: 'skip' })
+    expect(skipped.phase).toBe('category')
+    expect(skipped.context.item).not.toBe(first.context.item)
+    for (const answer of skipped.context.turn.board) expect(skipped.context.item!.answers).toContain(answer)
+    expect(skipped.context.turn.skips).toBe(1)
+
+    const out = play(skipped, { type: 'skip' }, { type: 'skip' })
+    expect(out.context.turn.skips).toBe(maxSkips)
+    expect(play(out, { type: 'skip' })).toEqual(out) // no skips left
+    expect(out.context.pool.drawn.slice(0, 3)).toEqual(
+      [first, skipped, play(skipped, { type: 'skip' })].map((state) => state.context.item),
+    )
+  })
+
+  it('category: a new turn gets its skips back, and play and skip are ignored once the turn has started', () => {
+    const turn = play(firstCategory(), { type: 'skip' }, { type: 'play' })
+    expect(turn.context.turn.skips).toBe(1)
+    expect(play(turn, { type: 'skip' })).toEqual(turn)
+    const next = play(turn, { type: 'lock_in' }, { type: 'done' }, { type: 'next' }, { type: 'start' })
+    expect(next.phase).toBe('category')
+    expect(next.context.turn.skips).toBe(0)
+  })
+
   it('plays a full game from the first handoff to the results', () => {
-    // Each turn: three ticks, the judge ends early, a fourth answer counted in review.
-    const turn: Event[] = [{ type: 'start' }, toggle(0), toggle(1), toggle(2), { type: 'lock_in' }, toggle(3), { type: 'done' }, { type: 'next' }]
+    // Each turn: one category skipped, three ticks, the judge ends early, a fourth answer counted in review.
+    const turn: Event[] = [{ type: 'start' }, { type: 'skip' }, { type: 'play' }, toggle(0), toggle(1), toggle(2), { type: 'lock_in' }, toggle(3), { type: 'done' }, { type: 'next' }]
     let state: State = start(machine, { input, seed: 2026 })
     let turns = 0
     while (!isFinal(machine, state)) {
@@ -94,14 +134,15 @@ describe('Name Ten machine', () => {
     expect(state.phase).toBe('results')
     expect(state.context.scores).toEqual([12, 12]) // 4 a turn, 3 turns each
     const drawn = state.context.pool.drawn.map((item) => item.category)
-    expect(new Set(drawn).size).toBe(6) // one category per turn, none repeated
+    expect(drawn).toHaveLength(12) // one skipped and one played each turn
+    expect(new Set(drawn).size).toBe(12) // none repeated
   })
 })
 
 describe('Name Ten guards and actions', () => {
   const category: NameTenItem = { category: 'Numbers', answers: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'], tags: [] }
   const base = firstTurn().context
-  const context: Context = { ...base, item: category, turn: { board: ['0', '1', '2'], got: [false, true, false] } }
+  const context: Context = { ...base, item: category, turn: { board: ['0', '1', '2'], got: [false, true, false], skips: 2 } }
   const rng = createRng(3)
 
   it('deal: takes each answer at most once, in a shuffled order', () => {
@@ -112,17 +153,26 @@ describe('Name Ten guards and actions', () => {
     expect(deal(category.answers, 10, createRng(3))).toEqual(dealt)
   })
 
-  it('dealBoard deals the setting’s number of answers, none ticked, without changing the context passed in', () => {
+  it('dealBoard deals the setting’s number of answers, none ticked, keeping the skips, without changing the context passed in', () => {
     const before = structuredClone(context)
     const after = machine.actions.dealBoard({ context, event: { type: 'start' }, rng, now: 0 })
     expect(after.turn.board).toHaveLength(10)
     expect(after.turn.got).toEqual(Array(10).fill(false))
+    expect(after.turn.skips).toBe(2)
     expect(context).toEqual(before)
+  })
+
+  it('countSkip counts one more skip, and canSkip is true only while skips are left', () => {
+    expect(machine.actions.countSkip({ context, event: { type: 'skip' }, rng, now: 0 }).turn.skips).toBe(3)
+    expect(context.turn.skips).toBe(2)
+    const canSkip = (skips: number) => machine.guards.canSkip({ context: { ...context, turn: { ...context.turn, skips } }, event: { type: 'skip' } })
+    expect([0, 2, 3].map(canSkip)).toEqual([true, true, false])
   })
 
   it('toggleAnswer flips only the answer named, without changing the context passed in', () => {
     const after = machine.actions.toggleAnswer({ context, event: toggle(1), rng, now: 0 })
     expect(after.turn.got).toEqual([false, false, false])
+    expect(after.turn.skips).toBe(2)
     expect(context.turn.got).toEqual([false, true, false])
   })
 

@@ -7,6 +7,7 @@ import { send as step, start } from '../../../sdk/machine/runner'
 import { NameTenConfig } from '../config'
 import { machine } from '../machine'
 import type { NameTenItem } from '../schema'
+import { CategoryView, skipsLeftText } from './CategoryView'
 import { HandoffView, judgeOf } from './HandoffView'
 import { ReviewView, reviewRows } from './ReviewView'
 import { SettingsView } from './SettingsView'
@@ -17,7 +18,8 @@ const config = NameTenConfig.parse({ teams: ['Lions', 'Eagles', 'Hawks'], packs:
 
 /** A real context from the machine: the handoff, or a turn on the Numbers board. */
 const handoff = () => start(machine, { input: { config, items: [category] }, seed: 1 }).context
-const turn = () => step(machine, start(machine, { input: { config, items: [category] }, seed: 1 }), { type: 'start' }, { now: 0 }).context
+const atCategory = () => step(machine, start(machine, { input: { config, items: [category] }, seed: 1 }), { type: 'start' }, { now: 0 })
+const turn = () => step(machine, atCategory(), { type: 'play' }, { now: 0 }).context
 
 describe('Name Ten handoff', () => {
   it('names the next team as the judge, the first judging the last', () => {
@@ -34,6 +36,34 @@ describe('Name Ten handoff', () => {
     expect(screen.getByText('Lions are up · Round 1 of 3')).toBeDefined()
     await user.click(screen.getByRole('button', { name: 'Start' }))
     expect(send).toHaveBeenCalledWith({ type: 'start' })
+  })
+})
+
+describe('Name Ten category', () => {
+  it('shows the team its category, never the answers, and plays it or skips it', async () => {
+    const user = userEvent.setup()
+    const send = vi.fn()
+    const { context } = atCategory()
+    render(<CategoryView context={context} send={send} points={machine.points} />)
+    expect(screen.getByText("Lions, here's your category")).toBeDefined()
+    expect(screen.getByText('Numbers')).toBeDefined()
+    expect(screen.queryByText(context.turn.board[0])).toBeNull()
+    expect(screen.getByText("3 skips left. A skipped category doesn't come back.")).toBeDefined()
+    await user.click(screen.getByRole('button', { name: 'Skip' }))
+    expect(send).toHaveBeenCalledWith({ type: 'skip' })
+    await user.click(screen.getByRole('button', { name: 'Play this' }))
+    expect(send).toHaveBeenCalledWith({ type: 'play' })
+  })
+
+  it('counts skips down, and turns Skip off when none are left', () => {
+    expect([0, 2, 3].map(skipsLeftText)).toEqual([
+      "3 skips left. A skipped category doesn't come back.",
+      "1 skip left. A skipped category doesn't come back.",
+      'No skips left: play this one.',
+    ])
+    const { context } = atCategory()
+    render(<CategoryView context={{ ...context, turn: { ...context.turn, skips: 3 } }} send={() => {}} points={machine.points} />)
+    expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Skip' }).disabled).toBe(true)
   })
 })
 
@@ -56,7 +86,7 @@ describe('Name Ten turn', () => {
 
 describe('Name Ten review', () => {
   it('lists the board as got or missed, and talks about answers, not cards', () => {
-    expect(reviewRows({ board: ['Biro', 'Ruler'], got: [true, false] })).toEqual([
+    expect(reviewRows({ board: ['Biro', 'Ruler'], got: [true, false], skips: 0 })).toEqual([
       { text: 'Biro', result: 'Got it', tone: 'good' },
       { text: 'Ruler', result: 'Missed', tone: 'none' },
     ])

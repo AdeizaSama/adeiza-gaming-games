@@ -3,9 +3,10 @@ Play in teams. On your team's turn, a judge from another team holds the phone. I
 ## A turn
 
 1. Hand the phone to a judge from the team named on screen, who taps **Start**.
-2. The judge reads out the category. Your team shouts answers.
-3. The judge taps each answer on the board as soon as someone says it, and taps it again to undo a mistake.
-4. When time runs out, or the judge taps **End turn early**, check the board together. If an answer was missed or ticked by mistake, tap **Adjust**, tap the answer to fix it, then tap **Done**.
+2. The judge shows your team its category. Don't like it? Tap **Skip** for the next one, up to three times. A skipped category doesn't come back.
+3. Tap **Play this** to start the clock. Your team shouts answers.
+4. The judge taps each answer on the board as soon as someone says it, and taps it again to undo a mistake.
+5. When time runs out, or the judge taps **End turn early**, check the board together. If an answer was missed or ticked by mistake, tap **Adjust**, tap the answer to fix it, then tap **Done**.
 
 Every team plays once a round. After the last round, the team with the most points wins.
 
