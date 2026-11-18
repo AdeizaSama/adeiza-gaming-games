@@ -331,6 +331,21 @@ The chalkboard surface draws its frame in the theme's `border` color, so here th
 
 Follow CONTRIBUTING to make a theme with parts: copy `chalkboard.json`, change its colors and pick `"surface": "paper"`, run `pnpm validate-content`, then pick it with `pnpm dev`.
 
+
+---
+
+## Step 12: Fixes from the look check
+
+**What:** three fixes after the maintainer looked at every theme on a phone.
+
+1. **Boxes around the bottom buttons** (Chalkboard, Space Travel, Sticky Notes). Setup's Start bar and How to play's bar stay at the bottom while the page scrolls, so they had a solid page-color background to cover what scrolls under them. On a flat page that's invisible; over chalk dust, stars or lined paper, the pattern stopped at the bar and it looked like a box with padding. They're now `bg-background/75 backdrop-blur-md`: the pattern shows through, softened, and anything under the bar is blurred. Test 341 fails on any solid `bg-background` in a component.
+2. **A sideways scrollbar on dialogs** (Space Travel). The planet's tilted ring stuck out past the dialog's right edge, and a modal `<dialog>` scrolls whatever overflows it. The planet now sits further inside, and dialogs have `overflow-x-hidden`, so no decoration can do it again.
+3. **The margin line ran through the text** (Sticky Notes). It moves from 1.75rem to 0.75rem: between the screen edge and the text, which starts at 1.5rem. We considered outlining text in the page color instead, but that blurs handwriting fonts, and moving the line removes the clash.
+
+### How to verify
+
+`pnpm test src/app/theme.test.ts src/ui`: tests 341 and 242. On a phone: the Start and Back to setup bars show the page's pattern; dialogs in Space Travel don't scroll sideways; Sticky Notes' red line is left of the text.
+
 ---
 
 ## Chapter summary
@@ -350,12 +365,14 @@ Themes can now be places: sticky notes on lined paper, glass over a starfield, a
 | 9 | Space Travel; contrast on both ends of a gradient | |
 | 10 | Chalkboard | |
 | 11 | CONTRIBUTING, the standard, README | |
+| 12 | Fixes from the look check: see-through bottom bars, no sideways scroll in dialogs, the margin line moved | |
 
 **What we learned:**
 
 - Rules beat review for CSS. "Parts only paint" is a test, so nobody has to remember it when adding a look.
 - The menu grows with its CSS. Each option joined the schema in the same step as its CSS, and a test fails if an option has no CSS.
 - Moving things cheaply: `transform` on an oversized layer, not `background-position`, and tile sizes that divide the distance so the loop has no seam.
+- Looking finds what tests don't. A solid strip of page color was invisible in flat themes and obvious over a pattern; now a test knows.
 - Making a real theme finds gaps in the checks. Space Travel's gradient showed that page text was only checked against the top of the page.
 
-**Tests:** 340 runtime tests and 32 compile-time checks.
+**Tests:** 341 runtime tests and 32 compile-time checks.

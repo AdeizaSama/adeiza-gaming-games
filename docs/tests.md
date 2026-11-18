@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 340 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
+**Counts:** 341 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -36,7 +36,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 22 | |
 | [Charades views](#charades-views) | `src/games/charades/views/views.test.tsx` | 6 | |
 | [App](#app) | `src/app/App.test.tsx` | 4 | |
-| [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 5 | |
+| [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 6 | |
 | [Applying a theme](#applying-a-theme) | `src/app/theme/themes.test.tsx` | 4 | |
 | [Bundled fonts](#bundled-fonts) | `src/app/theme/fonts.test.ts` | 2 | |
 | [Theme picker](#theme-picker) | `src/app/theme/picker.test.tsx` | 2 | |
@@ -626,6 +626,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 327 | maps the theme's fonts, shadows and outline width to classes, and puts headings in the heading font | `@theme`, utilities | `index.css` | `shadow-sm`/`shadow-lg` read `--elevation-sm`/`-lg`; `border-line` reads `--line`; `font-heading` reads `--font-heading`; h1–h5 use it; the body has `--page-gradient` | Each new token reaches the classes components already use, so components didn't need to learn about themes. |
 | 183 | is the only source of colors: no file uses a built-in Tailwind color | No raw colors | Every source file | No class like `bg-red-500` or `text-white` | Tailwind's palette is switched off, so such a class would silently do nothing; and themes (phase 2) can only change colors that come from tokens. |
 | 328 | leaves outline widths to the theme: no file uses a fixed width like border-2 | No fixed widths | Every `.tsx` component in `src/` (not tests) | No `border-2`, `border-t-4` or the like | A fixed width would ignore a thick-outline theme. `border-line` is the one to use. |
+| 341 | lets the page pattern show everywhere: no component paints a solid strip of page color | No solid page-color strips | Every `.tsx` component in `src/` (not tests) | No `bg-background` without an opacity (`bg-background/75` and `backdrop:bg-background/80` are fine) | A solid strip of page color hides lined paper, stars or chalk dust and shows as a box. Found in the look check of chapter 09. |
 
 ## UI components
 
@@ -640,7 +641,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 338 | marks its variant, so theme parts can style filled and outline buttons differently | Button | A default button and an outline one | `data-variant` primary and outline | A sticker or glass look belongs on filled buttons, not on ghost ones (ADR 0011). |
 | 187 | uses theme colors for its variant, and lets the caller adjust it | Button | `variant="success"`, `className="w-full"` | Classes include `bg-success` and `w-full` | Variants come from tokens; screens can still size buttons. |
 | 188 | is a text field that can be found by its label and typed into | Input | Labelled "Team 1", type `Lions` | Found by its label; value `Lions` | Team names are typed here; a field without a usable label is invisible to screen readers. |
-| 242 | opens as a modal with its title and buttons, and asks to close on a tap outside it | Dialog | Closed; then open, titled "Quit this game?"; tap its button; tap outside | No dialog; then a dialog by that name, with a description and marked `data-feature` for decorations; `onClose` not called for the button, called once for the outside tap | The browser's `<dialog>` is opened by a method, not an attribute: the component must turn the `open` prop into calls. A tap outside is a natural "never mind". |
+| 242 | opens as a modal with its title and buttons, and asks to close on a tap outside it | Dialog | Closed; then open, titled "Quit this game?"; tap its button; tap outside | No dialog; then a dialog by that name, with a description marked `data-feature` for decorations, and unable to scroll sideways; `onClose` not called for the button, called once for the outside tap | The browser's `<dialog>` is opened by a method, not an attribute: the component must turn the `open` prop into calls. A tap outside is a natural "never mind". |
 
 ## Game session
 

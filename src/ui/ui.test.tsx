@@ -98,6 +98,7 @@ describe('Dialog', () => {
     const dialog = screen.getByRole('dialog', { name: 'Quit this game?' })
     expect(dialog.getAttribute('aria-describedby')).toBeTruthy()
     expect(dialog.hasAttribute('data-feature')).toBe(true) // where a theme's decorations go (ADR 0011)
+    expect(dialog.className).toContain('overflow-x-hidden') // a decoration near the edge can't add a sideways scrollbar
     await user.click(screen.getByRole('button', { name: 'Quit game' }))
     expect(onClose).not.toHaveBeenCalled()
 

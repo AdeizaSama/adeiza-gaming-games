@@ -209,7 +209,8 @@ export function SetupScreen<
         </Section>
       )}
 
-      <div className="sticky bottom-0 mt-auto flex flex-col gap-2 bg-background py-4">
+      {/* See-through, so a theme's page pattern carries on behind it; what scrolls under it is blurred. */}
+      <div className="sticky bottom-0 mt-auto flex flex-col gap-2 bg-background/75 py-4 backdrop-blur-md">
         {chosenPacks.length > 0 && (
           <p className="text-center text-muted-foreground" aria-live="polite">
             {items.length === 0

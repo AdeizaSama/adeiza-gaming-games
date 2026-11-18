@@ -37,7 +37,8 @@ export function Dialog({ open, onClose, title, description, children }: DialogPr
       data-feature
       // A tap on the dimmed area outside lands on the <dialog> itself; a tap inside lands on its content.
       onClick={(event) => event.target === event.currentTarget && onClose()}
-      className="m-auto w-[calc(100%-3rem)] max-w-sm rounded-xl bg-card p-0 text-card-foreground shadow-lg backdrop:bg-background/80"
+      // overflow-x-hidden: a theme's decoration near the edge must never give the dialog a sideways scrollbar.
+      className="m-auto w-[calc(100%-3rem)] max-w-sm overflow-x-hidden rounded-xl bg-card p-0 text-card-foreground shadow-lg backdrop:bg-background/80"
     >
       <div className="flex flex-col gap-6 p-6">
         <div className="flex flex-col gap-2">

@@ -115,7 +115,7 @@
  * in the theme's own colors, because most text sits straight on the page (ADR 0011).
  */
 
-/* Lined paper: faint ruled lines in the main color, and a red margin line down the left. */
+/* Lined paper: faint ruled lines in the main color, and a red margin line down the left, outside the text's margin. */
 [data-background='lined-paper'] body::before {
   content: '';
   position: fixed;
@@ -123,7 +123,7 @@
   z-index: -1;
   pointer-events: none;
   background-image:
-    linear-gradient(to right, transparent 1.75rem, color-mix(in oklch, var(--destructive) 35%, transparent) 1.75rem calc(1.75rem + 1.5px), transparent calc(1.75rem + 1.5px)),
+    linear-gradient(to right, transparent 0.75rem, color-mix(in oklch, var(--destructive) 35%, transparent) 0.75rem calc(0.75rem + 1.5px), transparent calc(0.75rem + 1.5px)),
     repeating-linear-gradient(to bottom, transparent 0 1.75rem, color-mix(in oklch, var(--primary) 16%, transparent) 1.75rem calc(1.75rem + 1px));
 }
 
@@ -260,7 +260,7 @@
   rotate: -18deg;
 }
 
-/* In a dialog, the planet sits in the corner at 70%, clear of the title. */
+/* In a dialog, the planet sits in the corner at 70%, clear of the title and inside the edge (its ring is tilted). */
 [data-decoration='planets'] dialog[data-feature]::before,
 [data-decoration='planets'] dialog[data-feature]::after {
   position: absolute;
@@ -271,14 +271,14 @@
 [data-decoration='planets'] dialog[data-feature]::before {
   position: absolute;
   pointer-events: none;
-  top: 0.2rem;
-  right: 0.4rem;
+  top: 0.3rem;
+  right: 0.85rem;
 }
 [data-decoration='planets'] dialog[data-feature]::after {
   position: absolute;
   pointer-events: none;
-  top: 0.5rem;
-  right: 0.1rem;
+  top: 0.6rem;
+  right: 0.6rem;
 }
 
 /* Chalk smudge: a rubbed-out patch and a stub of chalk in the top right corner, clear of text and buttons. */
