@@ -91,3 +91,40 @@ The answer turns green with a tick, a wrong pick red with a cross, and the rest 
 ### How to verify
 
 `pnpm test src/sdk/interactions/multiplechoice.test.tsx`: 4 tests. Let a tap through after the pick, and the "ignores later taps" test fails.
+
+---
+
+## Step 4: Questions, and the Back to School pack
+
+**What:**
+
+- `src/games/trivia-night/schema.ts`: a question, 2 to 5 options, the answer, and tags.
+- `src/games/trivia-night/content/back-to-school.json`: 148 questions, each tagged with its subject: maths, science, social-studies, entertainment or general.
+- `schemas/trivia-night.pack.schema.json`, generated with `pnpm generate-schemas`.
+
+**Why:** content comes first: it's what the machine draws and the card shows.
+
+### Using the SDK's rules
+
+```ts
+export const itemSchema = z
+  .strictObject({ question, options: Options, answer, tags })
+  .superRefine(checkAnswer)
+```
+
+`Options` and `checkAnswer` come from step 2. The game adds only what's its own: a question of at most 150 characters, and tags.
+
+### Checking every question
+
+The pack started from an older Back to School set, and each question was checked against one test: **could someone who knows the subject defend a different option?** The app marks the pick, with nobody to overrule it, so a second defensible answer marks a right team wrong. Four failed:
+
+| Question | Problem | Fix |
+|---|---|---|
+| What is Ben 10's watch called? | Ultimatrix is an option, and is his watch in the later series | "In the original Ben 10 series…" |
+| What do you shout when you play your second-to-last card in Whot? | "Semi card!" is close to the real "semi-last card" | Ask about one card left |
+| As busy as a ___ | "Busy as a beaver" is a saying too | Beaver replaced by Goat |
+| 'Shine shine bobo' advertised which drink? | Couldn't be confirmed | Dropped |
+
+### How to verify
+
+`pnpm test src/games/trivia-night/schema.test.ts`: 5 tests. `pnpm validate-content` lists `trivia-night` with 148 items.
