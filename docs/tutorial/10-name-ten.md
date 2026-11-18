@@ -74,3 +74,39 @@ The minimum of 10 matches the content rule from step 2: every category has at le
 ### How to verify
 
 `pnpm test src/games/name-ten`: tests 350–351.
+
+---
+
+## Step 4: The machine
+
+**What:** `src/games/name-ten/machine.ts`: the turn, its review and its scoring, on the team-turns format.
+
+**Why:** the rules from ADR 0012, as a machine the tests can play.
+
+### What the format already does
+
+The handoff, the timer, drawing a category from the pool, the turn summary, banking points and the results all come from `teamTurns`. Name Ten writes only this:
+
+```ts
+newTurn: () => ({ board: [], got: [] }),
+points: (turn) => turn.got.filter(Boolean).length,
+onStart: ['dealBoard'],
+phases: {
+  turn: { interaction: 'prompt_card', on: { toggle: …, lock_in: { to: 'review' }, time_up: { to: 'review' } } },
+  review: { interaction: 'review', on: { toggle: …, done: { to: 'turn_summary' } } },
+},
+```
+
+`onStart` (from chapter 06) runs `dealBoard` after the format has drawn the category: it's what Charades used to give the first card a mode.
+
+### Dealing a board
+
+`deal` shuffles the answers (Fisher–Yates) using the machine's random numbers, not `Math.random`, then takes the first `shown`. So the same seed always deals the same board, and a resumed game shows the same answers. A category with fewer answers than the setting puts all of them on the board: test 353 found that, because most Back to School categories have 12 answers and a board can be set to 15.
+
+### One event for ticks and corrections
+
+`toggle` ticks an answer during the turn and corrects one in review. It's the same action in both phases; the review screen's Adjust lock (chapter 06) is what makes corrections deliberate.
+
+### How to verify
+
+`pnpm test src/games/name-ten`: tests 352–362.

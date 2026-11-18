@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 351 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
+**Counts:** 362 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -22,6 +22,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Charades content](#charades-content) | `src/games/charades/schema.test.ts` | 8 | |
 | [Name Ten content](#name-ten-content) | `src/games/name-ten/schema.test.ts` | 6 | |
 | [Name Ten settings](#name-ten-settings) | `src/games/name-ten/config.test.ts` | 2 | |
+| [Name Ten machine](#name-ten-machine) | `src/games/name-ten/machine.test.ts` | 11 | |
 | [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
 | [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 9 | |
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
@@ -588,6 +589,24 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 |---|---|---|---|---|---|
 | 350 | puts 10 answers on the board unless asked, with the format's defaults for the rest | Defaults | The least setup | 3 rounds, 60 seconds, no tags, 10 answers shown | Ten is the game's name. |
 | 351 | takes 10 to 15 answers on the board, in whole numbers | `shown` | 15; then 9, 16 and 12.5 | Accepted; then rejected, each | Every category has at least 10 answers, so a board of 10 is never short; more than 15 is too long to scan in a minute. |
+
+## Name Ten machine
+
+`src/games/name-ten/machine.test.ts`, testing `src/games/name-ten/machine.ts` (ADR 0012). Games use the real Back to School pack and the default settings (Lions and Eagles, 3 rounds, 10 answers on the board). The unit tests use "Numbers", a category with twelve answers, 0 to 11.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 352 | has no mistakes validateMachine can find | `validateMachine` | The machine | No problems | Required for every game (standard §12). |
+| 353 | start: deals the setting's number of the category's answers onto the board (all of them if it has fewer), none ticked | `dealBoard` via `onStart` | Start a turn; then with 15 on the board | 10 different answers from the category, none ticked; then 15, or all of a shorter category's answers | A board is the setting's size where the category allows, and never invents answers. |
+| 354 | start: the same seed deals the same board, and another seed shuffles it differently | Determinism | Seed 7 twice; seeds 7 and 8 | The same turn twice; a different category or order | A saved game resumes on the same board (ADR 0006). |
+| 355 | toggle: ticks and unticks the answer named, and the turn is worth one point per tick | `toggle`, `points` | Tick answers 0, 3, 5, then 3 again | Ticked: 0 and 5; worth 2 | The judge can fix a mis-tap during the turn. |
+| 356 | lock_in and time_up both end the turn in review, where a correction counts and done goes on to the summary | Review | Tick 0, end early; or let time run out; in review tick 9 and untick 0; done; next | Review both ways; worth 1; the summary; Lions bank 1 | The judge can end early when the team gives up, and review fixes the last answers (ADR 0007). |
+| 357 | ignores a toggle for an answer not on the board, and toggles outside a turn or review | `isAnswer`, ignored events | Toggle 10, −1 and 2.5 in a turn; toggle at the handoff; toggle on the summary | The same state back each time | Bad indexes can't change a score, and a turn can't change after its review. |
+| 358 | plays a full game from the first handoff to the results | Full game | Seed 2026; each turn: tick 3, end early, count a fourth in review, done, next | 6 turns, results, 12 points each, 6 different categories | A whole game runs to the end with the format's loop (standard §12). |
+| 359 | deal: takes each answer at most once, in a shuffled order | `deal` | Numbers' 12 answers, 10 dealt, seed 3, twice | 10 different answers, not in the written order; the same both times | A fair, repeatable shuffle (Fisher–Yates with the machine's random numbers). |
+| 360 | dealBoard deals the setting's number of answers, none ticked, without changing the context passed in | `dealBoard` | Numbers | 10 answers, none ticked; the original unchanged | A test per action (standard §12); actions never change their input. |
+| 361 | toggleAnswer flips only the answer named, without changing the context passed in | `toggleAnswer` | Board 0, 1, 2 with 1 ticked; toggle 1 | None ticked; the original still has 1 ticked | As above. |
+| 362 | isAnswer is true only for a toggle naming an answer on the board | `isAnswer` | Toggles for 0, 2, 3, −1 and 0.5; `lock_in` | True, true; false for the rest | A test per guard. Events come from views, so a bad index is checked, not trusted. |
 
 ## App
 
