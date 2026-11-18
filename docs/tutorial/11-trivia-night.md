@@ -181,3 +181,27 @@ The event is `continue`, not `next`: the format already uses `next` to leave the
 ### How to verify
 
 `pnpm test src/games/trivia-night/machine.test.ts`: 12 tests. Make `moreQuestions` always true, and the one-question and set-number tests fail; make every pick right, and the scoring tests fail.
+
+---
+
+## Step 7: The views
+
+**What:** in `src/games/trivia-night/views/`, `TurnView.tsx` (the turn, and the result), `SettingsView.tsx` (on setup), and their tests. `machine.ts` gets `moreToCome`, used by both the `moreQuestions` guard and the view.
+
+**Why:** the views are the machine's phases on screen.
+
+### One view for two phases
+
+`turn` and `reveal` both use `TurnView`: the card is the same, and `picked` says which it is. Under the card, a button appears after the pick: **Next question** while there's one to come, **End turn** after the last. It's in place but invisible before, so the card doesn't jump when it appears.
+
+The clock is hidden on the last question's result. Otherwise time running out while the team reads the result would skip it. Both the guard and the view ask `moreToCome`, so they can't disagree about which question is the last.
+
+The header says how far into the turn the team is: "Question 2 of 5", "Question 2" against the clock, and nothing when a turn is one question.
+
+### Settings
+
+Mode (Set questions or Against the clock, with Questions per turn only for the first), Points for a right answer, and Order of the options.
+
+### How to verify
+
+`pnpm test src/games/trivia-night/views`: 6 tests. Always show the clock, and the "without the clock" test fails.

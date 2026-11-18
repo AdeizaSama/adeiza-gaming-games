@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 414 runtime tests (`pnpm test`) and 33 compile-time checks (`pnpm typecheck`).
+**Counts:** 420 runtime tests (`pnpm test`) and 33 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -29,6 +29,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Trivia Night content](#trivia-night-content) | `src/games/trivia-night/schema.test.ts` | 5 | |
 | [Trivia Night settings](#trivia-night-settings) | `src/games/trivia-night/config.test.ts` | 2 | |
 | [Trivia Night machine](#trivia-night-machine) | `src/games/trivia-night/machine.test.ts` | 12 | |
+| [Trivia Night views](#trivia-night-views) | `src/games/trivia-night/views/views.test.tsx` | 6 | |
 | [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
 | [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 9 | |
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
@@ -698,6 +699,19 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 412 | dealOptions puts the options in the order set, nothing picked, keeping the results, without changing the context passed in | `dealOptions` | Capital? Lagos, Abuja, Kano, with option 1 picked; shuffled and A to Z | The same three, nothing picked, results kept; Abuja, Kano, Lagos; the original unchanged | A test per action (standard §12). |
 | 413 | pick records the option and whether it was the answer, without changing the context passed in | `pick` | Answer 1 (Abuja), answer 0 (Kano), after one right | Picked 1, `[true, true]`; `[true, false]`; the original unchanged | Right is decided by the answer as written. |
 | 414 | isOption is true only for an answer naming an option; moreQuestions follows the mode and the count | Guards | Positions 0, 2, 3, −1, 0.5; one answered with 1, 2 a turn, and against the clock | true, true, false, false, false; false, true, true | A test per guard. |
+
+## Trivia Night views
+
+`src/games/trivia-night/views/views.test.tsx`, testing `TurnView.tsx` and `SettingsView.tsx` in `src/games/trivia-night/views/` (ADR 0015). Screen tests (happy-dom), with real states from the machine on one question: "What is the capital of Nigeria?" (Lagos, Abuja, Kano, Ibadan; the answer is Abuja). `questionCount` is a plain function.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 415 | shows the team, the clock and the question with its options in the order dealt, and reports the pick | Turn view | The first question; tap the third option | Lions, a timer, the question, the options in the turn's order; `answer` with index 2; the turn's button hidden | The team sees what to answer, and the machine gets the position tapped. |
+| 416 | after a pick, shows the result and ends the turn on its last question, without the clock | Result | Lagos picked, one question a turn; tap End turn | "Not quite: it's Abuja.", no timer; `continue` sent | Time running out mustn't cut the last result short (ADR 0015). |
+| 417 | with more to come, keeps the clock and offers the next question | Result | Abuja picked, 3 a turn | `reveal`; "Right!", a timer, Next question | The clock still matters while questions are left. |
+| 418 | counts questions: of a set, against the clock, and not at all for one | `questionCount` | One answered, open, 5 a turn; one answered and picked; against the clock; one a turn | "Question 2 of 5", "Question 1 of 5", "Question 2", nothing | The team knows how far into the turn it is. |
+| 419 | picks the mode, with questions per turn only for a set number, 1 to 10 | Settings view | Tap More 12 times; then Against the clock | 1, then 10 at most; the stepper gone | The count only means something for a set number. |
+| 420 | sets points from 1 to 5, and the order of the options | Settings view | Tap More 6 times on points; tap A to Z | "1 point", then "5 points" at most; Shuffled checked, then A to Z | Every setting can be set on setup. |
 
 ## App
 

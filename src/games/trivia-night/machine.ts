@@ -14,6 +14,11 @@ export interface TriviaTurn {
   results: boolean[]
 }
 
+/** True while the turn has another question to come: always against the clock, else until `questions` are answered. */
+export function moreToCome(turn: TriviaTurn, config: TriviaConfig): boolean {
+  return config.mode === 'clock' || turn.results.length < config.questions
+}
+
 /** Sent by the views: the team picks the option at `index`; after the result, the team goes on. */
 export type TriviaEvent = { type: 'answer'; index: number } | { type: 'continue' }
 
@@ -51,8 +56,8 @@ export const machine = teamTurns<TriviaItem, TriviaTurn, TriviaEvent, TriviaConf
     /** True when an `answer` names one of the options. Events come from views, so the index is checked. */
     isOption: ({ context, event }) =>
       event.type === 'answer' && Number.isInteger(event.index) && event.index >= 0 && event.index < context.turn.options.length,
-    /** True while the turn has another question to come: always against the clock, else until `questions` are answered. */
-    moreQuestions: ({ context }) => context.config.mode === 'clock' || context.turn.results.length < context.config.questions,
+    /** True while the turn has another question to come (`moreToCome`). */
+    moreQuestions: ({ context }) => moreToCome(context.turn, context.config),
   },
   actions: {
     /** Puts the question's options in the order chosen in the settings, with nothing picked. */
