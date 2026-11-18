@@ -181,9 +181,9 @@ A primitive takes plain props (text, callbacks) and knows nothing about machines
 | Primitive | Used for | Status |
 |---|---|---|
 | `Instruction` | Rules or a step explanation with a continue action, in a small part of markdown ([ADR 0009](decisions/0009-rules.md)) | Built |
-| `Handoff` | Pass-the-device screen; hides the previous turn's secret info | Built |
+| `Handoff` | Pass-the-device screen; hides the previous turn's secret info. Its line above the name can change (Name Ten: "Hand the phone to a judge from") | Built |
 | `FlashCard` | Big term with got/skip (charades) | Built |
-| `PromptCard` | Category or prompt with a counter (name ten) | Planned |
+| `PromptCard` | A prompt with a running count and a board of answers that tick when tapped (Name Ten's judge, [ADR 0012](decisions/0012-name-ten.md)) | Built |
 | `MultipleChoice` | Question, options, reveal (trivia) | Planned |
 | `Countdown` | Shared timer display with warnings; reports when time is up (it reads the clock only to show it) | Built |
 | `Summary` | Turn/round recap: who played, what they scored | Built |

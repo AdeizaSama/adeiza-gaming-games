@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 362 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
+**Counts:** 365 runtime tests (`pnpm test`) and 32 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -46,9 +46,10 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Theme parts](#theme-parts) | `src/app/theme/parts.test.ts` | 4 | |
 | [UI components](#ui-components) | `src/ui/ui.test.tsx` | 8 | |
 | [Game session](#game-session) | `src/sdk/game/useGameSession.test.ts` | 9 | |
-| [Interaction primitives](#interaction-primitives) | `src/sdk/interactions/interactions.test.tsx` | 8 | |
+| [Interaction primitives](#interaction-primitives) | `src/sdk/interactions/interactions.test.tsx` | 9 | |
 | [Summary and Leaderboard](#summary-and-leaderboard) | `src/sdk/interactions/summary.test.tsx` | 4 | |
 | [Review](#review) | `src/sdk/interactions/review.test.tsx` | 3 | |
+| [PromptCard](#promptcard) | `src/sdk/interactions/promptcard.test.tsx` | 2 | |
 | [Markdown](#markdown) | `src/sdk/interactions/markdown.test.ts` | 5 | |
 | [Instruction](#instruction) | `src/sdk/interactions/instruction.test.tsx` | 3 | |
 | [Team-turns views](#team-turns-views) | `src/sdk/formats/team-turns/views/views.test.tsx` | 3 | |
@@ -709,6 +710,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 195 | names who gets the phone, and calls onReady when they tap Start | Handoff | To Lions, "Round 2 of 3"; tap Start | Heading Lions, the detail line, onReady called once | The gate between turns: right team, one tap to begin. |
+| 363 | says "Pass the phone to" above the name, unless given another line | Handoff `lead` | No lead; then "Hand the phone to a judge from" | The default line; then the given line, and not the default | Name Ten passes the phone to a judge, not to the team playing (ADR 0012). |
 | 196 | shows the item and reports Got it and Skip | FlashCard | Puff puff, hint "Describe it"; tap Got it once, Skip twice | Text and hint shown, on a card marked `data-feature`; onGot once, onSkip twice | Each tap reports exactly one event. The card is where a theme's decorations go (ADR 0011). |
 | 213 | shrinks the whole text when its longest word is long | FlashCard, `textSize` | Longest word 9, 14 and 20 letters; a card with a 17-letter word | `text-5xl`, `text-3xl`, `text-2xl`; the card drawn at `text-2xl` | A word can't wrap: too big, it would be broken mid-word on a small phone. The whole text shrinks, so one item never mixes sizes. |
 | 197 | shows whole seconds left, rounded up, and counts down | Countdown | Ends at 60 s; after 1 s; after 59.5 s | 60, 59, 1 | Rounded up, it shows 0 only when time is really up. |
@@ -727,6 +729,15 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 203 | says "1 point", and leaves out empty lists | Summary | Eagles, 1 point, an empty Skipped list | "scored 1 point"; no list shown | Small things players notice: grammar, and empty headings. |
 | 204 | orders by score, gives tied scores the same place and skips the next, keeping tied entries in order | `rank` | A 7, B 10, C 10, D 3 | 1 B, 1 C, 3 A, 4 D; the original list unchanged | Two teams with the same score both came first; the next team is third, not second. |
 | 205 | lists every team with its place and score, highest first, highlighting first place | Leaderboard | Lions 4, Eagles 9 | Eagles first (highlighted), then Lions | The results screen at a glance. |
+
+## PromptCard
+
+`src/sdk/interactions/promptcard.test.tsx`, testing `src/sdk/interactions/PromptCard.tsx` (ADR 0012). Screen tests (happy-dom). "Things Found in a School Bag" with Biro, Ruler and Eraser, Ruler ticked; a bit of state stands in for the machine.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 364 | shows the prompt with its label and a running count, and every answer with whether it's ticked | Board | The board | "Category"; the prompt as a heading on a `data-feature` card; "1 of 3"; Ruler pressed, the others not | The judge sees what to read out, how the team is doing, and what's been said. |
+| 365 | reports which answer was tapped, and the count follows | Taps | Tap Biro, Eraser, then Ruler; then a card labelled "Question" with one answer, tapped | "3 of 3", then "2 of 3", Ruler unpressed; then "Question" shown and `onToggle(0)` | A tap is reported by position; the count always matches the ticks. |
 
 ## Review
 

@@ -110,3 +110,24 @@ phases: {
 ### How to verify
 
 `pnpm test src/games/name-ten`: tests 352–362.
+
+---
+
+## Step 5: The board, and a judge's handoff
+
+**What:** two SDK changes from ADR 0012:
+
+- `src/sdk/interactions/PromptCard.tsx`: a prompt, a running count ("4 of 10") and a board of answers that tick when tapped.
+- `Handoff` gets an optional `lead`: the line above the name, "Pass the phone to" unless told otherwise.
+
+**Why:** the standard planned `PromptCard` for Name Ten (§6). Building it in the SDK rather than inside Name Ten means a later game with a "tick what was said" board gets it for free.
+
+### Built from what's there
+
+- Each answer is a `Button`: `outline` when unticked, `success` with a check mark when ticked, `aria-pressed` for screen readers. Themes style it like every other button (chapter 09).
+- The prompt sits on a card marked `data-feature`, so a theme's tape or planet decorates it like the Charades flash card.
+- Like every primitive, it knows nothing about machines: it reports a tap's position, and the machine decides what a tick is worth.
+
+### How to verify
+
+`pnpm test src/sdk/interactions`: tests 363–365.

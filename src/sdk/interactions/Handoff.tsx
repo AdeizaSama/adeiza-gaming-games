@@ -1,6 +1,8 @@
 import { Button } from '../../ui/button'
 
 export interface HandoffProps {
+  /** The line above the name. Name Ten's handoff says "Hand the phone to a judge from" (ADR 0012). */
+  lead?: string
   /** Who gets the phone next, e.g. a team name. */
   to: string
   /** A line of context under the name, e.g. "Round 2 of 3". */
@@ -15,11 +17,11 @@ export interface HandoffProps {
  * "Pass the phone to Lions." A privacy gate between turns (standard §5): it shows nothing from the last turn,
  * so the next team can't see the previous team's cards while the phone changes hands.
  */
-export function Handoff({ to, detail, actionLabel = 'Start', onReady }: HandoffProps) {
+export function Handoff({ lead = 'Pass the phone to', to, detail, actionLabel = 'Start', onReady }: HandoffProps) {
   return (
     <section className="flex flex-1 flex-col items-center justify-center gap-10 p-6 text-center">
       <div className="flex flex-col gap-3">
-        <p className="text-lg text-muted-foreground">Pass the phone to</p>
+        <p className="text-lg text-muted-foreground">{lead}</p>
         <h2 className="text-5xl font-bold text-balance">{to}</h2>
         {detail && <p className="text-lg text-muted-foreground">{detail}</p>}
       </div>
