@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 402 runtime tests (`pnpm test`) and 33 compile-time checks (`pnpm typecheck`).
+**Counts:** 414 runtime tests (`pnpm test`) and 33 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -28,6 +28,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Name Ten game](#name-ten-game) | `src/games/name-ten/game.test.ts` | 1 | |
 | [Trivia Night content](#trivia-night-content) | `src/games/trivia-night/schema.test.ts` | 5 | |
 | [Trivia Night settings](#trivia-night-settings) | `src/games/trivia-night/config.test.ts` | 2 | |
+| [Trivia Night machine](#trivia-night-machine) | `src/games/trivia-night/machine.test.ts` | 12 | |
 | [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
 | [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 9 | |
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
@@ -678,6 +679,25 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 |---|---|---|---|---|---|
 | 401 | plays one question a 30-second turn for 1 point, options shuffled, unless asked | Defaults | The least settings | 3 rounds, 30 seconds, no tags, `questions` mode, 1 question, 1 point, `shuffle` | One question a turn is the default way to play, with 30 seconds for it. |
 | 402 | takes against the clock, 1 to 10 questions, 1 to 5 points and A to Z, and keeps the format's turn limits | Limits | Clock, 10, 5, alphabetical, 300 s; then 0 and 11 questions, 0, 6 and 1.5 points, `random`, `steal`, 5 and 301 seconds | The first kept as given; every other refused | Only the default turn changes, not the format's 10–300 second limits. |
+
+## Trivia Night machine
+
+`src/games/trivia-night/machine.test.ts`, testing `src/games/trivia-night/machine.ts` (ADR 0015) with the real Back to School pack. Teams Lions and Eagles; the defaults unless a test says otherwise (one question a 30-second turn, 1 point, shuffled). "Answer it" taps the right option on screen, or a wrong one.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 403 | has no mistakes validateMachine can find | Machine | The machine | No mistakes | Every phase, guard and action it names exists. |
+| 404 | start: shows the first question with its options shuffled, nothing picked, and a 30-second clock | `start`, `dealOptions` | Start at 1 s; seeds 1 to 5 | `turn` ending at 31 s; the question's own options; nothing picked, no results; more than one option order across seeds | The clock starts with the question, and the order changes each game. |
+| 405 | answer: a right pick is worth the points setting, a wrong one nothing, and both show the result | `answer`, points | Answer right; wrong; right with 3 points | `reveal`, the pick kept, `[true]` and 1 point; `[false]` and 0; 3 | Scoring by the setting, and a wrong answer costs nothing. |
+| 406 | ignores an answer for no option, a second answer, and an answer outside the turn | `isOption` | Positions −1, 4, 1.5; an answer in `reveal`; one in the turn summary | Nothing changes each time | Events come from views; a team can't change its pick after the result. |
+| 407 | one question a turn: continue after the result ends the turn | `continue` | Answer, continue | `turn_summary` | The default way to play. |
+| 408 | a set number: continue draws the next question until that many are answered, then ends the turn | `moreQuestions`, `drawItem` | 3 a turn: right, wrong, right | Back to `turn` twice with nothing picked; 3 different questions; `[true, false, true]`, 2 points; then `turn_summary` | Questions mode with more than one. |
+| 409 | against the clock: questions keep coming, and time_up ends the turn from a question or a result | Clock mode, `time_up` | 12 right answers with `questions: 1` set; then `time_up` on a question and on a result | Still in `turn`, 12 points; `turn_summary` both times | Against the clock ignores the question count; only time ends the turn. |
+| 410 | A to Z: the options in alphabetical order | `order` | Alphabetical | The options sorted A to Z, numbers in number order | The setting reaches the card. |
+| 411 | plays a full game from the first handoff to the results | Whole game | Seed 2026; 6 turns of one question, Lions right, Eagles wrong | Final; scores 3 and 0; 6 different questions drawn | The format and the game work together end to end. |
+| 412 | dealOptions puts the options in the order set, nothing picked, keeping the results, without changing the context passed in | `dealOptions` | Capital? Lagos, Abuja, Kano, with option 1 picked; shuffled and A to Z | The same three, nothing picked, results kept; Abuja, Kano, Lagos; the original unchanged | A test per action (standard §12). |
+| 413 | pick records the option and whether it was the answer, without changing the context passed in | `pick` | Answer 1 (Abuja), answer 0 (Kano), after one right | Picked 1, `[true, true]`; `[true, false]`; the original unchanged | Right is decided by the answer as written. |
+| 414 | isOption is true only for an answer naming an option; moreQuestions follows the mode and the count | Guards | Positions 0, 2, 3, −1, 0.5; one answered with 1, 2 a turn, and against the clock | true, true, false, false, false; false, true, true | A test per guard. |
 
 ## App
 

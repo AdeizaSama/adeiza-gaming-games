@@ -156,3 +156,28 @@ seconds: TeamTurnsConfig.shape.seconds.unwrap().default(30),
 ### How to verify
 
 `pnpm test src/games/trivia-night/config.test.ts`: 2 tests.
+
+---
+
+## Step 6: The machine
+
+**What:** `src/games/trivia-night/machine.ts` and its tests.
+
+**Why:** the rules from ADR 0015, as phases.
+
+```
+handoff ──start──▶ turn ──answer──▶ reveal ──continue──▶ turn          (another question to come)
+                    │                 │      └─continue──▶ turn_summary (the last one)
+                    └──time_up──▶ turn_summary ◀──time_up──┘
+```
+
+- **The turn record** is `{ options, picked, results }`: the options in the order shown (so a refresh shows the same card), the pick (null while the question is open), and right or wrong for each question answered. Points are the right answers times the `points` setting.
+- **`answer` goes to its own phase, `reveal`,** so a second tap can't change the pick: `reveal` doesn't listen for `answer`.
+- **`continue` has two transitions, tried in order.** The first, guarded by `moreQuestions`, draws the next question; the second, with no guard, ends the turn. `moreQuestions` is always true against the clock, so only time ends that turn.
+- **`dealOptions`** runs when the format draws the first question (`onStart`) and after each `drawItem`, and puts the options in the order the setting asks for (step 2's `orderOptions`).
+
+The event is `continue`, not `next`: the format already uses `next` to leave the turn summary.
+
+### How to verify
+
+`pnpm test src/games/trivia-night/machine.test.ts`: 12 tests. Make `moreQuestions` always true, and the one-question and set-number tests fail; make every pick right, and the scoring tests fail.
