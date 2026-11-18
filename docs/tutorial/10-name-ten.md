@@ -101,7 +101,7 @@ phases: {
 
 ### Dealing a board
 
-`deal` shuffles the answers (Fisher–Yates) using the machine's random numbers, not `Math.random`, then takes the first `shown`. So the same seed always deals the same board, and a resumed game shows the same answers. A category with fewer answers than the setting puts all of them on the board: test 353 found that, because most Back to School categories have 12 answers and a board can be set to 15.
+`deal` shuffles the answers with the machine's random numbers (`rng.shuffle`, the same shuffle the format uses for its item pool), not `Math.random`, then takes the first `shown`. So the same seed always deals the same board, and a resumed game shows the same answers. A category with fewer answers than the setting puts all of them on the board: test 353 found that, because most Back to School categories have 12 answers and a board can be set to 15.
 
 ### One event for ticks and corrections
 
@@ -215,7 +215,6 @@ We kept a log, through the chapter, of every point where the public docs didn't 
 | Tests | No guide for a game's tests; we copied Charades' | Step 5 of the guide: what tests a game needs, and how an action is called |
 | Shared screens | `Review` said "cards"; the format's handoff assumed the team playing holds the phone | `Review` takes `noun`; `Handoff` takes `lead` (ADR 0012); the guide says when to change the SDK |
 | The registry | Adding a second game broke type checking in the app | `AnyGame` in the registry (step 7); a contributor only adds a line to the list |
-| Random numbers | The SDK's `Rng` has no shuffle | Name Ten has its own `deal`; a shared `shuffle` waits for a second game to need one |
 | Easy | The content check and schema generator found the game by its folder; `defineGame` listed every problem at once; the setup, save, rules and theme code needed no changes | |
 
 The standard's tables were stale too: Charades' column still described the chapter 04 rules (×2 for acting, "punish skips", no extra phases), and Name Ten's described a counter instead of a board.

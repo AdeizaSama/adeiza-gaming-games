@@ -20,13 +20,7 @@ export type NameTenEvent = { type: 'toggle'; index: number } | { type: 'lock_in'
 
 /** `count` of the answers in a random order, using the machine's random numbers so a saved game deals the same board. */
 export function deal(answers: readonly string[], count: number, rng: Rng): string[] {
-  const shuffled = [...answers]
-  // Fisher–Yates: each answer is equally likely to end up in each place.
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = rng.int(0, i)
-    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
-  }
-  return shuffled.slice(0, count)
+  return rng.shuffle(answers).slice(0, count)
 }
 
 /**
