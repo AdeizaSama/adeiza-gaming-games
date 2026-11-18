@@ -191,3 +191,74 @@ We first tried a typed wrapper component around `PlayPage`'s game (the way `Setu
 
 - `pnpm test`: tests 371–373.
 - On a phone: the library lists Charades and Name Ten. Play a turn of Name Ten: setup, the judge's handoff, the board, End turn early, review, the summary.
+
+---
+
+## Step 8: Docs, and what a contributor would have hit
+
+**What:**
+
+- `src/games/name-ten/README.md`: the rules in short, content guidelines and the files.
+- CONTRIBUTING §3 gets the step-by-step guide it promised in chapter 00.
+- The Game Standard's §7 and §8 tables match both games as built.
+- The README lists Name Ten as complete.
+
+**Why:** the point of a second game was to learn whether someone else could add one. The guide is written from what this chapter ran into.
+
+### What a contributor would have run into
+
+We kept a log, through the chapter, of every point where the public docs didn't answer a question:
+
+| Where | What happened | Now |
+|---|---|---|
+| CONTRIBUTING §3 | Still said step-by-step instructions "will be added once Charades is complete" | An 11-step guide, in the order that works, with Name Ten as the starter folder |
+| Tests | No guide for a game's tests; we copied Charades' | Step 5 of the guide: what tests a game needs, and how an action is called |
+| Shared screens | `Review` said "cards"; the format's handoff assumed the team playing holds the phone | `Review` takes `noun`; `Handoff` takes `lead` (ADR 0012); the guide says when to change the SDK |
+| The registry | Adding a second game broke type checking in the app | `AnyGame` in the registry (step 7); a contributor only adds a line to the list |
+| Random numbers | The SDK's `Rng` has no shuffle | Name Ten has its own `deal`; a shared `shuffle` waits for a second game to need one |
+| Easy | The content check and schema generator found the game by its folder; `defineGame` listed every problem at once; the setup, save, rules and theme code needed no changes | |
+
+The standard's tables were stale too: Charades' column still described the chapter 04 rules (×2 for acting, "punish skips", no extra phases), and Name Ten's described a counter instead of a board.
+
+### The Definition of Done
+
+| Item | Where it's met |
+|---|---|
+| Fits an existing format | `team-turns` |
+| `defineGame` with meta, content, config and presets, rules, machine, views | `src/games/name-ten/index.ts` |
+| Deterministic; full game, `validateMachine`, per-guard and per-action tests | `machine.test.ts` (tests 352–362) |
+| A valid content pack | Back to School, 38 categories |
+| Views use primitives | `Handoff`, `Countdown`, `PromptCard`, `Review`, `Stepper` |
+| Setup → turns → results on a phone, with resume | Screen test 373; by hand on a phone (below) |
+| Looks right under every shipped theme | By hand (below) |
+| README | `src/games/name-ten/README.md` |
+
+By hand, on a phone (`pnpm dev --host`):
+
+1. Play Name Ten to the results, with the judge passing the phone each turn. Refresh in the middle of a turn and in review.
+2. Look at the board in all five themes.
+
+---
+
+## Chapter summary
+
+Name Ten is the second game, and the first test of the SDK by a game it wasn't built for.
+
+| Step | What | Contract |
+|---|---|---|
+| 1 | ADR 0012: an answer board and a judge | Yes |
+| 2 | The item schema and the Back to School pack | Yes: Name Ten's content |
+| 3 | Settings: answers on the board | |
+| 4 | The machine: dealing, ticking, review, scoring | |
+| 5 | `PromptCard`; `Handoff`'s `lead` | Yes: SDK |
+| 6 | Views; `Review`'s `noun` | Yes: SDK |
+| 7 | The game definition and registry; `AnyGame` | |
+| 8 | README, CONTRIBUTING's guide, the standard | |
+
+**What we learned:**
+
+- A second user finds what the first one hid. Charades' words were written into a shared screen, the handoff assumed who holds the phone, and the registry only typed correctly with one game.
+- Fix the type problem where it starts. Wrapping one page in a generic component moved the error to the next page; forgetting game types once, at the registry, fixed every page.
+- A test for a board's size found a real case: most categories have 12 answers, so a board set to 15 shows all 12.
+
+**Tests:** 373 runtime tests and 32 compile-time checks.

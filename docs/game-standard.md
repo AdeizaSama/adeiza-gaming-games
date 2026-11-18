@@ -245,12 +245,12 @@ export const machine = teamTurns<CharadesItem, CharadesTurn, CharadesEvent>()({
 
 | | Charades | Name Ten | Trivia Night |
 |---|---|---|---|
-| Turn interaction | FlashCard | PromptCard + counter | MultipleChoice |
+| Turn interaction | FlashCard | PromptCard (a board of answers) | MultipleChoice |
 | Items per turn | Many, until time runs out | One category | One question |
-| Events | `got`, `skip` | `count_up`, `count_down`, `done` | `answer(option)` |
-| Scoring | +1 per got (×2 if acted), optional skip penalty | Points = count reached | +N if correct |
-| Extra config | Modes (describe/act/sing), punish skips | Target count (default 10) | Difficulty, steals on/off |
-| Extra phases | None | None | `steal` after a wrong answer |
+| Events | `got`, `skip`; in review `toggle`, `done` | `toggle`, `lock_in`; in review `toggle`, `done` | `answer(option)` |
+| Scoring | Points per result by mode (default: describe 2, act and sing 3, skip −1), never below 0 per turn | 1 per answer on the board got | +N if correct |
+| Extra config | Mode (Describe or Mix it up), points per result | Answers on the board (10–15) | Difficulty, steals on/off |
+| Extra phases | `review` ([ADR 0007](decisions/0007-turn-review.md)) | `review`; its own handoff to a judge ([ADR 0012](decisions/0012-name-ten.md)) | `steal` after a wrong answer |
 
 **A proposed game that fits no existing format is deferred**, not shoehorned. Open an issue describing it, and it becomes the evidence for the next format.
 
@@ -261,7 +261,7 @@ These four are the whole v1 scope, built in this order:
 | # | Game | Format | Content item | Turn interaction | Notes |
 |---|---|---|---|---|---|
 | 1 | Charades | team-turns | `{ text, tags[], modes[] }` | FlashCard | Modes: describe / act / sing |
-| 2 | Name Ten | team-turns | `{ category, tags[] }` | PromptCard + counter | |
+| 2 | Name Ten | team-turns | `{ category, answers[], tags[] }` | PromptCard | A judge from another team holds the phone |
 | 3 | Trivia Night | team-turns | `{ question, options[], answer, difficulty }` | MultipleChoice | Steals need a format extension |
 | 4 | Mafia | host-led | roles + theme skins | SecretReveal, Vote | Needs the host-led format first |
 

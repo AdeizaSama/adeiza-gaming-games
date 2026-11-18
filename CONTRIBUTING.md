@@ -91,7 +91,23 @@ Full rules: [Game Standard §11](docs/game-standard.md#11-themes).
 6. **Test it.** Include a test that plays a full game from start to finish, plus tests for each guard and action.
 7. **Check the [Definition of Done](docs/game-standard.md#13-definition-of-done-per-game)** before asking for review.
 
-*Step-by-step instructions and a starter game folder will be added here once Charades is complete.*
+### Step by step
+
+[Name Ten](src/games/name-ten/) is the smallest complete game: copy its folder as your starting point, and read [Charades](src/games/charades/) for a game with more settings. The order below is the one that works, because each file builds on the one before:
+
+1. **`schema.ts`: what a content item is.** A zod `itemSchema` and an `itemKey` (what makes two items the same). Import only zod and `src/sdk/`: scripts load this file on its own.
+2. **`content/<pack>.json`: at least one pack.** Then run `pnpm generate-schemas` (it finds your game by its folder) and `pnpm validate-content`.
+3. **`config.ts`: settings**, if your game has its own. Extend `TeamTurnsConfig`; defaults go in the schema.
+4. **`machine.ts`: the turn.** Use `teamTurns()` from `src/sdk/formats/team-turns/`. You write the turn's phases, guards and actions, and `points(turn, config)`; the format runs the handoff, timer, item pool, summary and results. Use the machine's `rng` for anything random (never `Math.random`), so a saved game plays back the same.
+5. **`machine.test.ts`.** A full game from the first handoff to the results, `validateMachine`, and one test per guard and per action. Start from Name Ten's tests. An action is called with `{ context, event, rng, now }`.
+6. **`views/`: one view per phase of your own,** built from the primitives in `src/sdk/interactions/` ([§6](docs/game-standard.md#6-interaction-primitives)). Replace one of the format's views (handoff, turn summary, results) only when its words are wrong for your game, as Name Ten does for its judge. A settings view goes in `config.view` ([ADR 0008](docs/decisions/0008-settings-and-presets.md)).
+7. **`rules.md`,** in the small part of markdown the rules screen shows ([ADR 0009](docs/decisions/0009-rules.md)).
+8. **`index.ts`: `defineGame`.** It checks meta, packs, presets, rules and that every phase has a view, and lists every problem at once.
+9. **Register it:** add it to the list in `src/app/registry/index.ts`, and its icon to `src/app/library/gameIcon.ts`. The app's setup, save and resume, rules page and themes then work for it with no other changes.
+10. **`README.md`:** the rules in short, content guidelines, and what each file is.
+11. **Check:** `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm validate-content` and `pnpm build`, then play it on a phone with `pnpm dev --host`, under every theme.
+
+If something your game needs isn't in the SDK (a primitive, or a word in a shared screen that only fits another game), change the SDK and write a short decision record in `docs/decisions/`. Name Ten needed three: a board primitive, a different line on the handoff screen, and Review's word for its rows ([ADR 0012](docs/decisions/0012-name-ten.md)).
 
 ---
 
