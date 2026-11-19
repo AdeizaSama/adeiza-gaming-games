@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 429 runtime tests (`pnpm test`) and 33 compile-time checks (`pnpm typecheck`).
+**Counts:** 431 runtime tests (`pnpm test`) and 33 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -29,7 +29,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Trivia Night content](#trivia-night-content) | `src/games/trivia-night/schema.test.ts` | 6 | |
 | [Trivia Night settings](#trivia-night-settings) | `src/games/trivia-night/config.test.ts` | 2 | |
 | [Trivia Night machine](#trivia-night-machine) | `src/games/trivia-night/machine.test.ts` | 12 | |
-| [Trivia Night views](#trivia-night-views) | `src/games/trivia-night/views/views.test.tsx` | 6 | |
+| [Trivia Night views](#trivia-night-views) | `src/games/trivia-night/views/views.test.tsx` | 8 | |
 | [Trivia Night game](#trivia-night-game) | `src/games/trivia-night/game.test.ts` | 1 | |
 | [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
 | [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 9 | |
@@ -714,6 +714,8 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 416 | after a pick, shows the result and ends the turn on its last question, without the clock | Result | Lagos picked, one question a turn; tap End turn | "Not quite: it's Abuja.", no timer; `continue` sent | Time running out mustn't cut the last result short (ADR 0015). |
 | 417 | with more to come, keeps the clock and offers the next question | Result | Abuja picked, 3 a turn | `reveal`; "Right!", a timer, Next question | The clock still matters while questions are left. |
 | 418 | counts questions: of a set, against the clock, and not at all for one | `questionCount` | One answered, open, 5 a turn; one answered and picked; against the clock; one a turn | "Question 2 of 5", "Question 1 of 5", "Question 2", nothing | The team knows how far into the turn it is. |
+| 430 | shows the result for 0.75 seconds, then goes on by itself, with no button to tap | Against the clock | Lagos picked; the fake clock moved 749 ms, then 1 ms | The result; Next question hidden; nothing sent, then `continue` once | The team keeps its eyes on the questions, and the next one comes as soon as the result is seen. |
+| 431 | waits for a tap in a set of questions, and fades each new question in | A set of questions | Abuja picked, 3 a turn; 5 s pass | No `continue` sent; the card inside `animate-fade-in` | Only against the clock does play go on by itself. |
 | 419 | picks the mode, with questions per turn only for a set number, 1 to 10 | Settings view | Tap More 12 times; then Against the clock | 1, then 10 at most; the stepper gone | The count only means something for a set number. |
 | 420 | sets points from 1 to 5, and the order of the options | Settings view | Tap More 6 times on points; tap A to Z | "1 point", then "5 points" at most; Shuffled checked, then A to Z | Every setting can be set on setup. |
 

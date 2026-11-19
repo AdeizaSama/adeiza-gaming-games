@@ -1,14 +1,14 @@
 // @vitest-environment happy-dom
-import { render, screen, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { send as step, start } from '../../../sdk/machine/runner'
 import { TriviaConfig } from '../config'
 import { machine } from '../machine'
 import type { TriviaItem } from '../schema'
 import { SettingsView } from './SettingsView'
-import { questionCount, TurnView } from './TurnView'
+import { autoNextMs, questionCount, TurnView } from './TurnView'
 
 // One question, so every state below is on it, whatever the seed.
 const items: TriviaItem[] = [{ question: 'What is the capital of Nigeria?', options: ['Lagos', 'Abuja', 'Kano', 'Ibadan'], answer: 'Abuja', tags: [] }]
@@ -64,6 +64,33 @@ describe('Trivia Night turn', () => {
     expect(questionCount({ ...turn, picked: 0 }, configWith({ questions: 5 }))).toBe('Question 1 of 5')
     expect(questionCount(turn, configWith({ mode: 'clock' }))).toBe('Question 2')
     expect(questionCount(turn, configWith())).toBeNull()
+  })
+})
+
+describe('Trivia Night against the clock', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(0) // the turn ends at 30 s, so the clock doesn't run out first
+  })
+  afterEach(() => vi.useRealTimers())
+
+  it('shows the result for 0.75 seconds, then goes on by itself, with no button to tap', () => {
+    const send = vi.fn()
+    render(<TurnView context={atResult('Lagos', { mode: 'clock' }).context} send={send} points={machine.points} />)
+    expect(screen.getByText("Not quite: it's Abuja.")).toBeDefined()
+    expect(screen.getByText('Next question').closest('button')!.getAttribute('aria-hidden')).toBe('true')
+    act(() => vi.advanceTimersByTime(autoNextMs - 1))
+    expect(send).not.toHaveBeenCalled()
+    act(() => vi.advanceTimersByTime(1))
+    expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'continue' })
+  })
+
+  it('waits for a tap in a set of questions, and fades each new question in', () => {
+    const send = vi.fn()
+    render(<TurnView context={atResult('Abuja', { questions: 3 }).context} send={send} points={machine.points} />)
+    act(() => vi.advanceTimersByTime(5000))
+    expect(send).not.toHaveBeenCalledWith({ type: 'continue' })
+    expect(screen.getByRole('heading', { name: 'What is the capital of Nigeria?' }).closest('.animate-fade-in')).not.toBeNull()
   })
 })
 

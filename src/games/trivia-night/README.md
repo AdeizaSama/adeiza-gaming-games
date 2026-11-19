@@ -10,7 +10,7 @@ The full rules players see are in [rules.md](rules.md), on the game's How to pla
 - **Three ways to play** (presets):
   - **One question** a turn, with 30 seconds for it (the default).
   - **Five questions** a turn, with 120 seconds for all five. Any number from 1 to 10 can be set.
-  - **Against the clock:** as many as the team can answer in 60 seconds.
+  - **Against the clock:** as many as the team can answer in 60 seconds. Each result shows for 0.75 seconds, then the next question comes up by itself.
 - One tap per question. The phone shows whether it was right, and the right answer if not.
 - **1 point** per right answer (a setting, 1 to 5). A wrong answer costs nothing.
 - The options are shuffled every time, or shown A to Z (a setting).

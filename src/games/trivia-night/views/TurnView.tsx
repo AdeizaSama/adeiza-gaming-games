@@ -1,3 +1,4 @@
+import { useEffect, useEffectEvent } from 'react'
 import type { TeamTurnsViewProps } from '../../../sdk/formats/team-turns/views'
 import { Countdown } from '../../../sdk/interactions/Countdown'
 import { MultipleChoice } from '../../../sdk/interactions/MultipleChoice'
@@ -5,6 +6,9 @@ import { Button } from '../../../ui/button'
 import type { TriviaConfig } from '../config'
 import { moreToCome, type TriviaEvent, type TriviaTurn } from '../machine'
 import type { TriviaItem } from '../schema'
+
+/** Against the clock, how long a result shows before the next question comes up by itself (ADR 0015). */
+export const autoNextMs = 750
 
 /** Which question this is: "Question 2 of 5" for a set number, "Question 2" against the clock, nothing for one. */
 export function questionCount(turn: TriviaTurn, config: TriviaConfig): string | null {
@@ -19,12 +23,26 @@ export function questionCount(turn: TriviaTurn, config: TriviaConfig): string | 
  *
  * The clock is hidden on the result of a turn's last question: time running out then would cut the result short,
  * and there's nothing left to answer.
+ *
+ * Against the clock, the result shows for `autoNextMs` and the next question fades in by itself: no button, so the
+ * team keeps its eyes on the questions. In a set of questions, the team taps to go on.
  */
 export function TurnView({ context, send }: TeamTurnsViewProps<TriviaItem, TriviaTurn, TriviaEvent, TriviaConfig>) {
   const { turn, config, item } = context
   const answered = turn.picked !== null
   const more = moreToCome(turn, config)
   const count = questionCount(turn, config)
+  const auto = config.mode === 'clock'
+
+  // An effect event always sends with the latest `send`, without restarting the wait when the parent re-renders.
+  const next = useEffectEvent(() => send({ type: 'continue' }))
+  useEffect(() => {
+    if (!answered || !auto) return
+    const timer = setTimeout(next, autoNextMs)
+    return () => clearTimeout(timer)
+  }, [answered, auto])
+
+  const showButton = answered && !auto
   return (
     // min-h-0: the card fills the play screen's height and no more (ADR 0013).
     <section className="flex min-h-0 flex-1 flex-col gap-4 p-4">
@@ -36,17 +54,21 @@ export function TurnView({ context, send }: TeamTurnsViewProps<TriviaItem, Trivi
         {context.turnEndsAt !== null && (more || !answered) && <Countdown endsAt={context.turnEndsAt} onTimeUp={() => send({ type: 'time_up' })} />}
       </header>
       {item && (
-        <MultipleChoice
-          question={item.question}
-          subtitle={item.subtitle}
-          options={turn.options}
-          answer={turn.options.indexOf(item.answer)}
-          picked={turn.picked}
-          onPick={(index) => send({ type: 'answer', index })}
-        />
+        // A new key for each question, so each one fades in. Its result keeps the key, so only a new question fades.
+        <div key={count ?? 1} className="flex min-h-0 flex-1 flex-col animate-fade-in motion-reduce:animate-none">
+          <MultipleChoice
+            question={item.question}
+            subtitle={item.subtitle}
+            options={turn.options}
+            answer={turn.options.indexOf(item.answer)}
+            picked={turn.picked}
+            onPick={(index) => send({ type: 'answer', index })}
+          />
+        </div>
       )}
-      {/* Kept in place while the question is open, so the card doesn't jump when it appears. */}
-      <Button className={answered ? undefined : 'invisible'} aria-hidden={!answered} tabIndex={answered ? 0 : -1} onClick={() => send({ type: 'continue' })}>
+      {/* Kept in place while the question is open, so the card doesn't jump when it appears. Never shown against the
+          clock: the next question comes by itself. */}
+      <Button className={showButton ? undefined : 'invisible'} aria-hidden={!showButton} tabIndex={showButton ? 0 : -1} onClick={() => send({ type: 'continue' })}>
         {more ? 'Next question' : 'End turn'}
       </Button>
     </section>

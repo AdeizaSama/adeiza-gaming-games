@@ -58,7 +58,7 @@ Presets: **One question** (the defaults: 3 rounds, 30 seconds), **Five questions
 The format's handoff gives the phone to the team playing. Then:
 
 - `turn` shows the question. `answer` (with the option's position) records the pick and goes to `reveal`. `time_up` goes to the turn summary.
-- `reveal` shows the result. `continue` draws the next question and goes back to `turn` while there's one to come (always, against the clock), or else goes to the turn summary. `time_up` goes to the turn summary. On the last question of a set, the clock is hidden, so the reveal isn't cut short.
+- `reveal` shows the result. `continue` draws the next question and goes back to `turn` while there's one to come (always, against the clock), or else goes to the turn summary. `time_up` goes to the turn summary. On the last question of a set, the clock is hidden, so the reveal isn't cut short. Against the clock there's no button: the result shows for 0.75 seconds and the next question fades in by itself.
 
 No review: the app knows the answer, so there's nothing to correct.
 
