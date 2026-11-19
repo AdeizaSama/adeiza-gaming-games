@@ -3,7 +3,7 @@
  * its own (to check packs and generate JSON Schemas), so it imports only zod and the SDK's content helpers.
  */
 import { z } from 'zod'
-import { checkAnswer, Options } from '../../sdk/content/choices'
+import { checkAnswer, choiceFields } from '../../sdk/content/choices'
 import type { ItemKey } from '../../sdk/content/duplicates'
 import { Tag } from '../../sdk/content/pack'
 
@@ -21,27 +21,7 @@ const noRepeats = (list: readonly string[]) => new Set(list).size === list.lengt
  */
 export const itemSchema = z
   .strictObject({
-    question: z
-      .string()
-      .trim()
-      .min(1)
-      .max(150, 'Keep the question to 150 characters: it has to fit above its options')
-      .meta({ description: 'The question, as players read it. At most 150 characters.' }),
-    subtitle: z
-      .string()
-      .trim()
-      .min(1)
-      .max(100, 'Keep the subtitle to 100 characters: it goes under the question')
-      .optional()
-      .meta({ description: 'Optional. A smaller line under the question, e.g. a hint or a translation. At most 100 characters.' }),
-    options: Options.meta({
-      description: 'What players pick from: 2 to 5, each at most 80 characters, none repeated. The answer is one of them.',
-    }),
-    answer: z
-      .string()
-      .trim()
-      .min(1)
-      .meta({ description: 'The right option, written exactly as it is in options.' }),
+    ...choiceFields,
     tags: z
       .array(Tag)
       .refine(noRepeats, 'Remove the repeated tag')

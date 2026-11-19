@@ -3,26 +3,29 @@ import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { send as step, start } from '../../../sdk/machine/runner'
-import { TriviaConfig } from '../config'
-import { machine } from '../machine'
-import type { TriviaItem } from '../schema'
-import { SettingsView } from './SettingsView'
-import { autoNextMs, questionCount, TurnView } from './TurnView'
+import { send as step, start } from '../../../machine/runner'
+import { choiceConfig, type ChoiceConfig } from './config'
+import { choiceTurns, type ChoiceItem } from './machine'
+import { ChoiceSettingsView } from './SettingsView'
+import { autoNextMs, choiceTurnView, questionCount } from './TurnView'
+
+const machine = choiceTurns<ChoiceItem>()
+const TurnView = choiceTurnView<ChoiceItem>()
+const Config = choiceConfig()
 
 // One question, so every state below is on it, whatever the seed.
-const items: TriviaItem[] = [{ question: 'What is the capital of Nigeria?', options: ['Lagos', 'Abuja', 'Kano', 'Ibadan'], answer: 'Abuja', tags: [] }]
-const configWith = (changes: Partial<TriviaConfig> = {}) => TriviaConfig.parse({ teams: ['Lions', 'Eagles'], packs: ['back-to-school'], ...changes })
+const items: ChoiceItem[] = [{ question: 'What is the capital of Nigeria?', options: ['Lagos', 'Abuja', 'Kano', 'Ibadan'], answer: 'Abuja' }]
+const configWith = (changes: Partial<ChoiceConfig> = {}) => Config.parse({ teams: ['Lions', 'Eagles'], packs: ['test'], ...changes })
 
 /** A real state from the machine: the first question of the first turn, or its result after picking `option`. */
-const atQuestion = (changes: Partial<TriviaConfig> = {}) => step(machine, start(machine, { input: { config: configWith(changes), items }, seed: 1 }), { type: 'start' }, { now: 0 })
-const atResult = (option: string, changes: Partial<TriviaConfig> = {}) => {
+const atQuestion = (changes: Partial<ChoiceConfig> = {}) => step(machine, start(machine, { input: { config: configWith(changes), items }, seed: 1 }), { type: 'start' }, { now: 0 })
+const atResult = (option: string, changes: Partial<ChoiceConfig> = {}) => {
   const state = atQuestion(changes)
   return step(machine, state, { type: 'answer', index: state.context.turn.options.indexOf(option) }, { now: 0 })
 }
 const options = () => within(screen.getByRole('list', { name: 'Options' }))
 
-describe('Trivia Night turn', () => {
+describe('choice turn view', () => {
   it('shows the team, the clock and the question with its options in the order dealt, and reports the pick', async () => {
     const user = userEvent.setup()
     const send = vi.fn()
@@ -67,7 +70,7 @@ describe('Trivia Night turn', () => {
   })
 })
 
-describe('Trivia Night against the clock', () => {
+describe('choice turn view against the clock', () => {
   beforeEach(() => {
     vi.useFakeTimers()
     vi.setSystemTime(0) // the turn ends at 30 s, so the clock doesn't run out first
@@ -94,10 +97,10 @@ describe('Trivia Night against the clock', () => {
   })
 })
 
-describe('Trivia Night settings', () => {
+describe('choice settings view', () => {
   function Settings() {
     const [settings, setSettings] = useState(configWith())
-    return <SettingsView settings={settings} onChange={(changes) => setSettings((current) => ({ ...current, ...changes }))} />
+    return <ChoiceSettingsView settings={settings} onChange={(changes) => setSettings((current) => ({ ...current, ...changes }))} />
   }
 
   it('picks the mode, with questions per turn only for a set number, 1 to 10', async () => {

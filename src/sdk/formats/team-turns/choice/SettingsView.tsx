@@ -1,7 +1,7 @@
-import type { SettingsViewProps } from '../../../sdk/game/settings'
-import { Section } from '../../../ui/section'
-import { Stepper } from '../../../ui/stepper'
-import type { TriviaConfig } from '../config'
+import { Section } from '../../../../ui/section'
+import { Stepper } from '../../../../ui/stepper'
+import type { SettingsViewProps } from '../../../game/settings'
+import type { ChoiceConfig } from './config'
 
 const modes = [
   { id: 'questions', name: 'Set questions', description: 'Each turn is a set number of questions. The turn ends when they’re answered, or time runs out.' },
@@ -29,12 +29,12 @@ function Choice<Id extends string>({ name, choices, value, onChange }: { name: s
 /** "1 point", "3 points". */
 export const pointsLabel = (points: number) => `${points} ${points === 1 ? 'point' : 'points'}`
 
-/** Trivia Night's own settings on setup (ADR 0008, 0015): how a turn plays, points for a right answer, option order. */
-export function SettingsView({ settings, onChange }: SettingsViewProps<TriviaConfig>) {
+/** A multiple-choice game's settings on setup (ADR 0008, 0015, 0017): how a turn plays, points, option order. */
+export function ChoiceSettingsView({ settings, onChange }: SettingsViewProps<ChoiceConfig>) {
   return (
     <>
       <Section title="Mode">
-        <Choice name="trivia-mode" choices={modes} value={settings.mode} onChange={(mode) => onChange({ mode })} />
+        <Choice name="choice-mode" choices={modes} value={settings.mode} onChange={(mode) => onChange({ mode })} />
         {settings.mode === 'questions' && (
           <Stepper label="Questions per turn" value={settings.questions} min={1} max={10} onChange={(questions) => onChange({ questions })} />
         )}
@@ -43,7 +43,7 @@ export function SettingsView({ settings, onChange }: SettingsViewProps<TriviaCon
         <Stepper label="Points for a right answer" value={settings.points} min={1} max={5} format={pointsLabel} onChange={(points) => onChange({ points })} />
       </Section>
       <Section title="Order of the options">
-        <Choice name="trivia-order" choices={orders} value={settings.order} onChange={(order) => onChange({ order })} />
+        <Choice name="choice-order" choices={orders} value={settings.order} onChange={(order) => onChange({ order })} />
       </Section>
     </>
   )

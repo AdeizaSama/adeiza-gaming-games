@@ -42,10 +42,9 @@ Packs are in [content/](content/), one JSON file each. [CONTRIBUTING.md](../../.
 
 | File | What it is |
 |---|---|
-| `index.ts` | The game's definition: meta, content, settings, presets, rules, machine and views |
+| `index.ts` | The game's definition: meta, content, settings, presets, rules, machine, and the choice turn's views |
 | `schema.ts` | What a content item is: a question, its options, the answer and tags, using the SDK's option rules |
-| `config.ts` | The settings: the format's, plus the mode, questions a turn, points and option order |
-| `machine.ts` | Putting the options in order, recording the pick, the next question, and scoring |
+| `config.ts` | The settings: the SDK's choice turn settings, with Trivia Night's defaults |
+| `machine.ts` | The SDK's choice turn (`src/sdk/formats/team-turns/choice/`) on Trivia Night's questions |
 | `rules.md` | How to play, for players |
-| `views/` | The question and its result, and the settings on setup |
 | `content/` | The packs |

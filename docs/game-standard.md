@@ -210,6 +210,7 @@ A format is the outer loop shared by several games: setup, turn order, rounds, s
 | Context | `TeamTurnsContext`: `config` (the settings), `scores`, `current` (whose turn), `round`, `turnEndsAt`, `pool`, `item` (the card on screen), and `turn` (the game's record of the current turn) |
 | Item pool | The chosen packs' items, each item once (an item in two packs is kept from the first pack chosen), filtered to the chosen tags if any. Drawn in a shuffled order without repeats. When every item has been drawn, they're shuffled back in and drawing continues, with the item just shown placed last. |
 | Guards/actions | `turnsRemaining`; `resetTurn` (fresh turn record), `startTimer` (the turn ends `seconds` from now; a phase before the turn must run it on its way into `turn`), `drawItem`, `bankPoints` (adds the turn's points to the team's score), `advanceTeam`. A game's phases may use them, usually `drawItem`. |
+| Choice turn | For multiple-choice games, a whole turn in `src/sdk/formats/team-turns/choice/` ([ADR 0017](decisions/0017-a-shared-choice-turn-and-this-or-that.md)): settings with the game's defaults (`choiceConfig`), the machine (`choiceTurns`), the turn view (`choiceTurnView`) and the settings view. A question's fields are `choiceFields` in `src/sdk/content/choices.ts`. Trivia Night uses it. |
 | Views | Default views for `handoff`, `turn_summary` and `results` in `src/sdk/formats/team-turns/views/` (a game may replace any of them). The turn summary is read-only, with every team's score so far ([ADR 0013](decisions/0013-fit-the-screen-and-standings.md)); mis-taps are fixed before it, in a game's review. |
 
 **team-turns: how a game plugs in** ([ADR 0004](decisions/0004-team-turns-builder.md)). A game passes its turn to `teamTurns` (`src/sdk/formats/team-turns/teamTurns.ts`), which returns the whole machine:
@@ -280,7 +281,7 @@ src/
     <id>/
       index.ts         the single defineGame export
       machine.ts       phase graph + guards + actions
-      machine.test.ts  required
+      machine.test.ts  required; a game on a shared turn (the choice turn) plays a full game on its own content
       schema.ts        itemSchema + itemKey (§10); imports zod and sdk/ only
       config.ts        the game's settings schema, if it has settings of its own (§7)
       views/           phase views, and the settings view (ADR 0008)

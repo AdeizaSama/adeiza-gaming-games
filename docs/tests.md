@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 431 runtime tests (`pnpm test`) and 33 compile-time checks (`pnpm typecheck`).
+**Counts:** 434 runtime tests (`pnpm test`) and 33 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -28,8 +28,10 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Name Ten game](#name-ten-game) | `src/games/name-ten/game.test.ts` | 1 | |
 | [Trivia Night content](#trivia-night-content) | `src/games/trivia-night/schema.test.ts` | 6 | |
 | [Trivia Night settings](#trivia-night-settings) | `src/games/trivia-night/config.test.ts` | 2 | |
-| [Trivia Night machine](#trivia-night-machine) | `src/games/trivia-night/machine.test.ts` | 12 | |
-| [Trivia Night views](#trivia-night-views) | `src/games/trivia-night/views/views.test.tsx` | 8 | |
+| [Choice turn settings](#choice-turn-settings) | `src/sdk/formats/team-turns/choice/config.test.ts` | 1 | |
+| [Choice turn machine](#choice-turn-machine) | `src/sdk/formats/team-turns/choice/machine.test.ts` | 12 | |
+| [Choice turn views](#choice-turn-views) | `src/sdk/formats/team-turns/choice/views.test.tsx` | 8 | |
+| [Trivia Night machine](#trivia-night-machine) | `src/games/trivia-night/machine.test.ts` | 2 | |
 | [Trivia Night game](#trivia-night-game) | `src/games/trivia-night/game.test.ts` | 1 | |
 | [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
 | [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 9 | |
@@ -685,9 +687,17 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 401 | plays one question a 30-second turn for 1 point, options shuffled, unless asked | Defaults | The least settings | 3 rounds, 30 seconds, no tags, `questions` mode, 1 question, 1 point, `shuffle` | One question a turn is the default way to play, with 30 seconds for it. |
 | 402 | takes against the clock, 1 to 10 questions, 1 to 5 points and A to Z, and keeps the format's turn limits | Limits | Clock, 10, 5, alphabetical, 300 s; then 0 and 11 questions, 0, 6 and 1.5 points, `random`, `steal`, 5 and 301 seconds | The first kept as given; every other refused | Only the default turn changes, not the format's 10–300 second limits. |
 
-## Trivia Night machine
+## Choice turn settings
 
-`src/games/trivia-night/machine.test.ts`, testing `src/games/trivia-night/machine.ts` (ADR 0015) with the real Back to School pack. Teams Lions and Eagles; the defaults unless a test says otherwise (one question a 30-second turn, 1 point, shuffled). "Answer it" taps the right option on screen, or a wrong one.
+`src/sdk/formats/team-turns/choice/config.test.ts`, testing `choiceConfig` in `config.ts` next to it (ADR 0017).
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 432 | takes a game's own defaults for any choice setting, keeping the limits, and its own for the rest | `choiceConfig` | 60 s, 10 questions, A to Z; then no defaults; then 11 questions, 5 s, 6 points | 60, questions, 10, 1 point, A to Z; 30, questions, 1, 1, shuffle; each refused | Each multiple-choice game picks its defaults without copying the limits. |
+
+## Choice turn machine
+
+`src/sdk/formats/team-turns/choice/machine.test.ts`, testing `choiceTurns` in `machine.ts` next to it (ADR 0015, 0017), on a stand-in game: eight questions of four options each. Moved from Trivia Night's tests when its turn moved into the SDK. Teams Lions and Eagles; the defaults unless a test says otherwise (one question a 30-second turn, 1 point, shuffled). "Answer it" taps the right option on screen, or a wrong one.
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
@@ -704,9 +714,9 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 413 | pick records the option and whether it was the answer, without changing the context passed in | `pick` | Answer 1 (Abuja), answer 0 (Kano), after one right | Picked 1, `[true, true]`; `[true, false]`; the original unchanged | Right is decided by the answer as written. |
 | 414 | isOption is true only for an answer naming an option; moreQuestions follows the mode and the count | Guards | Positions 0, 2, 3, −1, 0.5; one answered with 1, 2 a turn, and against the clock | true, true, false, false, false; false, true, true | A test per guard. |
 
-## Trivia Night views
+## Choice turn views
 
-`src/games/trivia-night/views/views.test.tsx`, testing `TurnView.tsx` and `SettingsView.tsx` in `src/games/trivia-night/views/` (ADR 0015). Screen tests (happy-dom), with real states from the machine on one question: "What is the capital of Nigeria?" (Lagos, Abuja, Kano, Ibadan; the answer is Abuja). `questionCount` is a plain function.
+`src/sdk/formats/team-turns/choice/views.test.tsx`, testing `TurnView.tsx` (`choiceTurnView`) and `SettingsView.tsx` next to it (ADR 0015, 0017). Moved from Trivia Night's tests. Screen tests (happy-dom), with real states from the machine on one question: "What is the capital of Nigeria?" (Lagos, Abuja, Kano, Ibadan; the answer is Abuja). `questionCount` is a plain function.
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
@@ -718,6 +728,15 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 431 | waits for a tap in a set of questions, and fades each new question in | A set of questions | Abuja picked, 3 a turn; 5 s pass | No `continue` sent; the card inside `animate-fade-in` | Only against the clock does play go on by itself. |
 | 419 | picks the mode, with questions per turn only for a set number, 1 to 10 | Settings view | Tap More 12 times; then Against the clock | 1, then 10 at most; the stepper gone | The count only means something for a set number. |
 | 420 | sets points from 1 to 5, and the order of the options | Settings view | Tap More 6 times on points; tap A to Z | "1 point", then "5 points" at most; Shuffled checked, then A to Z | Every setting can be set on setup. |
+
+## Trivia Night machine
+
+`src/games/trivia-night/machine.test.ts`, testing `src/games/trivia-night/machine.ts`: the SDK's choice turn on Trivia Night's questions (ADR 0017), with the real settings and Back to School pack. The choice turn's own tests are in the SDK.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 433 | has no mistakes validateMachine can find | Machine | The machine | No mistakes | Every phase, guard and action it names exists. |
+| 434 | plays a full game on the Back to School pack, one question a turn, from the first handoff to the results | Whole game | Seed 2026; 6 turns, each answered right | Final; 3 points each | The shared turn works on the game's real content and defaults. |
 
 ## Trivia Night game
 

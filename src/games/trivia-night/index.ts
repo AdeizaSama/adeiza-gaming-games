@@ -4,8 +4,12 @@ import { TriviaConfig } from './config'
 import { machine } from './machine'
 import rules from './rules.md?raw'
 import { itemKey, itemSchema } from './schema'
-import { SettingsView } from './views/SettingsView'
-import { TurnView } from './views/TurnView'
+import { ChoiceSettingsView } from '../../sdk/formats/team-turns/choice/SettingsView'
+import { choiceTurnView } from '../../sdk/formats/team-turns/choice/TurnView'
+import type { TriviaItem } from './schema'
+
+/** The question and its result share one view (ADR 0017). */
+export const TurnView = choiceTurnView<TriviaItem>()
 
 export default defineGame({
   meta: {
@@ -27,7 +31,7 @@ export default defineGame({
   // The format's settings plus the mode, questions a turn, points and option order (ADR 0015), shown by SettingsView.
   config: {
     schema: TriviaConfig,
-    view: SettingsView,
+    view: ChoiceSettingsView,
     presets: [
       { id: 'one-question', name: 'One question', contributors: ['AdeizaSama'], config: {} }, // the defaults: 3 rounds, 30 s
       { id: 'five-questions', name: 'Five questions', contributors: ['AdeizaSama'], config: { questions: 5, seconds: 120 } },
@@ -36,6 +40,6 @@ export default defineGame({
   },
   rules,
   machine,
-  // The format's handoff gives the phone to the team playing: nothing on screen gives the answer away before a pick.
+  // The choice turn's view (ADR 0017), for the question and its result. The format's handoff gives the phone to the team playing: nothing on screen gives the answer away before a pick.
   views: { turn: TurnView, reveal: TurnView },
 })

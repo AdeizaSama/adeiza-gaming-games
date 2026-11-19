@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { presetSettings } from '../../sdk/game/settings'
 import { TriviaConfig } from './config'
-import triviaNight from './index'
+import triviaNight, { TurnView } from './index'
 import { machine } from './machine'
-import { TurnView } from './views/TurnView'
 
 describe('Trivia Night game definition', () => {
   it('is a valid game with the Back to School pack, its settings, a preset per way to play, and one view for turn and result', () => {

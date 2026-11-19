@@ -23,3 +23,42 @@
 ### How to verify
 
 Read the ADR.
+
+---
+
+## Step 2: Trivia Night's turn, moved into the SDK
+
+**What:**
+
+| From | To |
+|---|---|
+| Trivia Night's question fields in `schema.ts` | `choiceFields` in `src/sdk/content/choices.ts` |
+| `src/games/trivia-night/config.ts` (the settings) | `choiceConfig(defaults)` in `src/sdk/formats/team-turns/choice/config.ts` |
+| `src/games/trivia-night/machine.ts` | `choiceTurns<Item>()` in `choice/machine.ts` |
+| `views/TurnView.tsx` | `choiceTurnView<Item>(label)` in `choice/TurnView.tsx` |
+| `views/SettingsView.tsx` | `ChoiceSettingsView` in `choice/SettingsView.tsx` |
+| `machine.test.ts`, `views/views.test.tsx` | Next to them in `choice/`, on stand-in questions |
+
+Trivia Night is now small:
+
+```ts
+export const TriviaConfig = choiceConfig()                 // config.ts
+export const machine = choiceTurns<TriviaItem>()           // machine.ts
+export const TurnView = choiceTurnView<TriviaItem>()       // index.ts, for turn and reveal
+```
+
+**Why:** a game can't import another game (standard §9), and This or That plays the same turn.
+
+### Functions that make things
+
+The machine and view take the game's item type, so they're functions a game calls once: `choiceTurns<TriviaItem>()` returns a machine typed for Trivia Night's questions. `choiceConfig` takes the game's defaults (This or That: ten questions a turn, A to Z) and keeps the limits the same for every game.
+
+### Tests
+
+The turn's tests moved with it and run on eight made-up questions, because SDK tests can't load a game's pack. The standard asks every game for a `machine.test.ts`, so Trivia Night keeps one: a full game on its real pack.
+
+The moved tests keep their numbers in the test catalog: it's the same test, in a new place.
+
+### How to verify
+
+`pnpm test`: 434 tests. `pnpm generate-schemas` writes the same Trivia Night schema as before: the move changed no rule. Play Trivia Night: nothing has changed.
