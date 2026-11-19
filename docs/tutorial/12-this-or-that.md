@@ -103,3 +103,41 @@ Jobs and adjectives with two forms are in as two questions: acteur and actrice, 
 ### How to verify
 
 `pnpm test src/games/this-or-that/schema.test.ts`: 4 tests. `pnpm validate-content` lists `this-or-that` with 282 items.
+
+---
+
+## Step 4: The game, registered
+
+**What:** in `src/games/this-or-that/`: `config.ts` (`choiceConfig` with ten questions, 60 seconds, A to Z), `machine.ts` (`choiceTurns<ThisOrThatItem>()`), `index.ts` (the definition, with the card labelled "This or that?" and presets Ten words and Against the clock), `rules.md`, `README.md`, and tests. The registry lists it; `gameIcon.ts` adds `arrow-left-right`. README, CONTRIBUTING and the standard's §7 and §8 include it.
+
+**Why:** with the choice turn in the SDK, a multiple-choice game is a few one-line files plus its content.
+
+```ts
+export const ThisOrThatConfig = choiceConfig({ questions: 10, seconds: 60, order: 'alphabetical' })
+export const machine = choiceTurns<ThisOrThatItem>()
+export const TurnView = choiceTurnView<ThisOrThatItem>('This or that?')
+```
+
+A to Z puts Féminin before Masculin, for every word: what matters in a sorting game is that each answer is always in the same place.
+
+### How to verify
+
+`pnpm test`: 443 tests. Shuffle the options by default, and four tests fail (settings, full game, presets, the library). Then `pnpm dev --host`, open This or That, and play Ten words and Against the clock.
+
+---
+
+## Chapter summary
+
+| Step | What | SDK change? |
+|---|---|---|
+| 1 | ADR 0017: a shared choice turn, and This or That | |
+| 2 | Trivia Night's turn becomes the SDK's choice turn | Yes: `src/sdk/formats/team-turns/choice/`, `choiceFields` |
+| 3 | Two-option questions, and Masculin ou féminin ? (282 words) | |
+| 4 | The game, registered | |
+
+**What we learned:**
+
+- A second game on the same rules is the moment to move them into the SDK, not before: Trivia Night alone didn't show which parts were shared (the settings, the turn, the view) and which were its own (the questions, the defaults).
+- A word list needs the same "one right answer" check as trivia: words the same in both genders, or with two meanings, were left out.
+
+**Tests:** 443 runtime tests and 33 compile-time checks.

@@ -1,4 +1,4 @@
-import { Drama, Gamepad2, Lightbulb, ListChecks, type LucideIcon } from 'lucide-react'
+import { ArrowLeftRight, Drama, Gamepad2, Lightbulb, ListChecks, type LucideIcon } from 'lucide-react'
 
 /**
  * The icons games can use, by the name in `meta.icon` (lucide's names: https://lucide.dev/icons).
@@ -6,6 +6,7 @@ import { Drama, Gamepad2, Lightbulb, ListChecks, type LucideIcon } from 'lucide-
  * over a thousand. A new game whose icon isn't listed adds it here.
  */
 export const gameIcons: Record<string, LucideIcon> = {
+  'arrow-left-right': ArrowLeftRight,
   drama: Drama,
   lightbulb: Lightbulb,
   'list-checks': ListChecks,

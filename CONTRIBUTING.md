@@ -93,7 +93,7 @@ Full rules: [Game Standard §11](docs/game-standard.md#11-themes).
 
 ### Step by step
 
-[Name Ten](src/games/name-ten/) is the smallest complete game: copy its folder as your starting point, and read [Charades](src/games/charades/) for a game with more settings. The order below is the one that works, because each file builds on the one before:
+[Name Ten](src/games/name-ten/) is the smallest complete game with a turn of its own: copy its folder as your starting point, and read [Charades](src/games/charades/) for a game with more settings. For a multiple-choice game, start from [This or That](src/games/this-or-that/) instead: it's the SDK's choice turn with a schema, defaults and content, and steps 4 to 6 below are one line each. The order below is the one that works, because each file builds on the one before:
 
 1. **`schema.ts`: what a content item is.** A zod `itemSchema` and an `itemKey` (what makes two items the same). Import only zod and `src/sdk/`: scripts load this file on its own.
 2. **`content/<pack>.json`: at least one pack.** Then run `pnpm generate-schemas` (it finds your game by its folder) and `pnpm validate-content`.

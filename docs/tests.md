@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 438 runtime tests (`pnpm test`) and 33 compile-time checks (`pnpm typecheck`).
+**Counts:** 443 runtime tests (`pnpm test`) and 33 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -34,6 +34,9 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Trivia Night machine](#trivia-night-machine) | `src/games/trivia-night/machine.test.ts` | 2 | |
 | [Trivia Night game](#trivia-night-game) | `src/games/trivia-night/game.test.ts` | 1 | |
 | [This or That content](#this-or-that-content) | `src/games/this-or-that/schema.test.ts` | 4 | |
+| [This or That settings](#this-or-that-settings) | `src/games/this-or-that/config.test.ts` | 1 | |
+| [This or That machine](#this-or-that-machine) | `src/games/this-or-that/machine.test.ts` | 2 | |
+| [This or That game](#this-or-that-game) | `src/games/this-or-that/game.test.ts` | 1 | |
 | [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
 | [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 9 | |
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
@@ -49,7 +52,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Settings and presets](#settings-and-presets) | `src/sdk/game/settings.test.ts` | 5 | |
 | [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 22 | |
 | [Charades views](#charades-views) | `src/games/charades/views/views.test.tsx` | 6 | |
-| [App](#app) | `src/app/App.test.tsx` | 6 | |
+| [App](#app) | `src/app/App.test.tsx` | 7 | |
 | [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 6 | |
 | [Applying a theme](#applying-a-theme) | `src/app/theme/themes.test.tsx` | 4 | |
 | [Bundled fonts](#bundled-fonts) | `src/app/theme/fonts.test.ts` | 2 | |
@@ -758,6 +761,31 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 437 | ships Masculin ou féminin ?: French words, each with its meaning, the same two options, and both answers often | The shipped pack | `content/*.json` | Named "Masculin ou féminin ?", in French, at least 200 words, each with Masculin and Féminin, a subtitle, and tagged noun or adjective; between 40% and 60% féminin | A pack where one answer wins most of the time teaches nothing. |
 | 438 | never shows an article, which would give the answer away | The shipped pack | Every question | None starts with le, la, les, un, une or l' | "la chaise" answers its own question. |
 
+## This or That settings
+
+`src/games/this-or-that/config.test.ts`, testing `src/games/this-or-that/config.ts` (ADR 0017).
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 439 | plays ten questions a 60-second turn for 1 point, options A to Z, unless asked | Defaults | Teams Lions and Eagles, the Masculin ou féminin ? pack | 3 rounds, 60 seconds, no tags, 10 questions, 1 point, A to Z | A sorting game keeps each answer in the same place. |
+
+## This or That machine
+
+`src/games/this-or-that/machine.test.ts`, testing `src/games/this-or-that/machine.ts`: the choice turn on This or That's questions, with the real settings and pack.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 440 | has no mistakes validateMachine can find | Machine | The machine | No mistakes | Every phase, guard and action it names exists. |
+| 441 | plays a full game of ten words a turn, Féminin always on the left, from the first handoff to the results | Whole game | Seed 2026; 6 turns of 10 words, each answered right | Féminin, Masculin on every word; the summary after the tenth; final, 30 points each | The defaults play end to end on the real pack. |
+
+## This or That game
+
+`src/games/this-or-that/game.test.ts`, testing `src/games/this-or-that/index.ts`.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 442 | is a valid game with Masculin ou féminin ?, the choice turn's views, and a preset per way to play | `index.ts` | The game's default export; each preset applied | Id `this-or-that`; the pack; its machine and settings; one view for `turn` and `reveal`; rules with "## Ways to play"; Ten words (10, 60 s, A to Z), Against the clock (clock, 60 s, A to Z) | Each preset is the way to play it's named for. |
+
 ## App
 
 `src/app/App.test.tsx`, testing the pages in `src/app/` and which address shows which. Screen tests (happy-dom), each starting the app at an address with a `MemoryRouter`.
@@ -767,6 +795,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 180 | shows the library at /, and a game opens at its own address | Library, routing | Start at `/`; tap Charades | Heading Ku Zo Wasa; a Charades link to `/charades` showing "2–20 players"; after the tap, Charades' setup screen | The library lists the registry's games, and each link reaches its game. |
 | 372 | lists Name Ten too, with its own icon, players and setup | Library, registry | Open `/`; tap Name Ten | A link to `/name-ten` with its tagline and the list-checks icon; then Name Ten's setup, with "Answers on the board" and "38 items to play" | A game added to the registry appears in the library and gets the shared setup screen with its own settings. |
 | 422 | lists Trivia Night too, with its own icon, presets and setup | Library, registry | Open `/`; tap Trivia Night | A link to `/trivia-night` with the lightbulb icon; then its setup, with an Against the clock preset, Questions per turn, a 30-second turn and "148 items to play" | The third game reaches the library and the shared setup, with its own default turn length. |
+| 443 | lists This or That too, with its own icon, defaults and pack | Library, registry | Open `/`; tap This or That | A link to `/this-or-that` with the arrow-left-right icon; then its setup, with 10 questions per turn, A to Z checked and "282 items to play" | The fourth game reaches the library with its own defaults. |
 | 214, 215 | says "Page not found" at /chess and /charades/nope/extra, with a way back | Not-found page | A game that doesn't exist; an address with too many parts | "Page not found"; Back to games returns to the library | A mistyped or old link never shows a blank page. Runs once per address (`it.each`). |
 | 216 | has an icon for every game in the registry | `gameIcons` | Every registered game's `meta.icon` | Listed in `gameIcons` | An unlisted icon would quietly show the fallback controller. |
 

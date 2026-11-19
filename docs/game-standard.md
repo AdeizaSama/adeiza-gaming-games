@@ -198,7 +198,7 @@ A format is the outer loop shared by several games: setup, turn order, rounds, s
 
 | Format | Shape | Games |
 |---|---|---|
-| `team-turns` | Teams take timed turns over N rounds; each turn uses items from the pool; points per turn | Charades, Name Ten, Trivia Night |
+| `team-turns` | Teams take timed turns over N rounds; each turn uses items from the pool; points per turn | Charades, Name Ten, Trivia Night, This or That |
 | `host-led` | One device held by a host; secret roles; cyclic phases with eliminations and win conditions | Mafia/Werewolf. Built after the team-turns games. |
 
 **team-turns: what the format provides**
@@ -210,7 +210,7 @@ A format is the outer loop shared by several games: setup, turn order, rounds, s
 | Context | `TeamTurnsContext`: `config` (the settings), `scores`, `current` (whose turn), `round`, `turnEndsAt`, `pool`, `item` (the card on screen), and `turn` (the game's record of the current turn) |
 | Item pool | The chosen packs' items, each item once (an item in two packs is kept from the first pack chosen), filtered to the chosen tags if any. Drawn in a shuffled order without repeats. When every item has been drawn, they're shuffled back in and drawing continues, with the item just shown placed last. |
 | Guards/actions | `turnsRemaining`; `resetTurn` (fresh turn record), `startTimer` (the turn ends `seconds` from now; a phase before the turn must run it on its way into `turn`), `drawItem`, `bankPoints` (adds the turn's points to the team's score), `advanceTeam`. A game's phases may use them, usually `drawItem`. |
-| Choice turn | For multiple-choice games, a whole turn in `src/sdk/formats/team-turns/choice/` ([ADR 0017](decisions/0017-a-shared-choice-turn-and-this-or-that.md)): settings with the game's defaults (`choiceConfig`), the machine (`choiceTurns`), the turn view (`choiceTurnView`) and the settings view. A question's fields are `choiceFields` in `src/sdk/content/choices.ts`. Trivia Night uses it. |
+| Choice turn | For multiple-choice games, a whole turn in `src/sdk/formats/team-turns/choice/` ([ADR 0017](decisions/0017-a-shared-choice-turn-and-this-or-that.md)): settings with the game's defaults (`choiceConfig`), the machine (`choiceTurns`), the turn view (`choiceTurnView`) and the settings view. A question's fields are `choiceFields` in `src/sdk/content/choices.ts`. Trivia Night and This or That use it. |
 | Views | Default views for `handoff`, `turn_summary` and `results` in `src/sdk/formats/team-turns/views/` (a game may replace any of them). The turn summary is read-only, with every team's score so far ([ADR 0013](decisions/0013-fit-the-screen-and-standings.md)); mis-taps are fixed before it, in a game's review. |
 
 **team-turns: how a game plugs in** ([ADR 0004](decisions/0004-team-turns-builder.md)). A game passes its turn to `teamTurns` (`src/sdk/formats/team-turns/teamTurns.ts`), which returns the whole machine:
@@ -257,14 +257,15 @@ export const machine = teamTurns<CharadesItem, CharadesTurn, CharadesEvent>()({
 
 ## 8. v1 games
 
-These four are the whole v1 scope, built in this order:
+These five are the whole v1 scope, built in this order:
 
 | # | Game | Format | Content item | Turn interaction | Notes |
 |---|---|---|---|---|---|
 | 1 | Charades | team-turns | `{ text, tags[], modes[] }` | FlashCard | Modes: describe / act / sing |
 | 2 | Name Ten | team-turns | `{ category, answers[], tags[] }` | PromptCard | A judge from another team holds the phone |
 | 3 | Trivia Night | team-turns | `{ question, subtitle?, options[], answer, tags[] }` | MultipleChoice | One question a turn, a set number, or against the clock. Steals (a missed question passing to the next team) need a format extension |
-| 4 | Mafia | host-led | roles + theme skins | SecretReveal, Vote | Needs the host-led format first |
+| 4 | This or That | team-turns | `{ question, subtitle?, options[2], answer, tags[] }` | MultipleChoice | Trivia Night's turn (the choice turn, [ADR 0017](decisions/0017-a-shared-choice-turn-and-this-or-that.md)) with two options a question. First pack: Masculin ou féminin ? |
+| 5 | Mafia | host-led | roles + theme skins | SecretReveal, Vote | Needs the host-led format first |
 
 Out of scope for v1: multiplayer or multi-device play; accounts, backends or any collection of personal data; image or media content.
 
