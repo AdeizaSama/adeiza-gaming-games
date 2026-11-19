@@ -292,6 +292,22 @@ export function useSettled(ms = settleDelay.ms): boolean  // false for ms, then 
 
 ---
 
+## Step 12: A subtitle under the question
+
+**What:** an optional `subtitle` on a Trivia Night question (at most 100 characters), and a `subtitle` prop on `MultipleChoice`, shown in smaller, muted text right under the question. The game's README and ADR 0015 describe it.
+
+**Why:** room for a hint ("Hint: it's not Lagos") or a translation, without making the question longer.
+
+```json
+{ "question": "chaise", "subtitle": "chair", "options": ["Masculin", "Féminin"], "answer": "Féminin" }
+```
+
+### How to verify
+
+`pnpm test src/sdk/interactions/multiplechoice.test.tsx src/games/trivia-night/schema.test.ts`. Add a subtitle to a question in the pack and play it.
+
+---
+
 ## Chapter summary
 
 | Step | What | SDK change? |
@@ -307,6 +323,7 @@ export function useSettled(ms = settleDelay.ms): boolean  // false for ms, then 
 | 9 | Docs | |
 | 10 | Options as tiles, two to a row | Yes: `MultipleChoice` |
 | 11 | A pause after time runs out (ADR 0016) | Yes: `useSettled`, `Summary`, `Review` |
+| 12 | A subtitle under the question | Yes: `MultipleChoice` |
 
 **What we learned:**
 
@@ -314,4 +331,4 @@ export function useSettled(ms = settleDelay.ms): boolean  // false for ms, then 
 - A setting that changes how a turn ends (one question, a set number, the clock) is one guard, `moreQuestions`, not three machines. The view asks the same function, so the screen and the rules can't disagree about the last question.
 - Content ported from an older set still needs checking. Four of 149 questions had a second defensible answer or couldn't be confirmed.
 
-**Tests:** 427 runtime tests and 33 compile-time checks.
+**Tests:** 429 runtime tests and 33 compile-time checks.

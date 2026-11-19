@@ -38,6 +38,7 @@ export function TurnView({ context, send }: TeamTurnsViewProps<TriviaItem, Trivi
       {item && (
         <MultipleChoice
           question={item.question}
+          subtitle={item.subtitle}
           options={turn.options}
           answer={turn.options.indexOf(item.answer)}
           picked={turn.picked}

@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 427 runtime tests (`pnpm test`) and 33 compile-time checks (`pnpm typecheck`).
+**Counts:** 429 runtime tests (`pnpm test`) and 33 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -26,7 +26,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Name Ten machine](#name-ten-machine) | `src/games/name-ten/machine.test.ts` | 15 | |
 | [Name Ten views](#name-ten-views) | `src/games/name-ten/views/views.test.tsx` | 7 | |
 | [Name Ten game](#name-ten-game) | `src/games/name-ten/game.test.ts` | 1 | |
-| [Trivia Night content](#trivia-night-content) | `src/games/trivia-night/schema.test.ts` | 5 | |
+| [Trivia Night content](#trivia-night-content) | `src/games/trivia-night/schema.test.ts` | 6 | |
 | [Trivia Night settings](#trivia-night-settings) | `src/games/trivia-night/config.test.ts` | 2 | |
 | [Trivia Night machine](#trivia-night-machine) | `src/games/trivia-night/machine.test.ts` | 12 | |
 | [Trivia Night views](#trivia-night-views) | `src/games/trivia-night/views/views.test.tsx` | 6 | |
@@ -58,7 +58,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Summary and Leaderboard](#summary-and-leaderboard) | `src/sdk/interactions/summary.test.tsx` | 5 | |
 | [Review](#review) | `src/sdk/interactions/review.test.tsx` | 3 | |
 | [PromptCard](#promptcard) | `src/sdk/interactions/promptcard.test.tsx` | 3 | |
-| [MultipleChoice](#multiplechoice) | `src/sdk/interactions/multiplechoice.test.tsx` | 5 | |
+| [MultipleChoice](#multiplechoice) | `src/sdk/interactions/multiplechoice.test.tsx` | 6 | |
 | [A pause after time runs out](#a-pause-after-time-runs-out) | `src/sdk/interactions/settle.test.tsx` | 3 | |
 | [Markdown](#markdown) | `src/sdk/interactions/markdown.test.ts` | 5 | |
 | [Instruction](#instruction) | `src/sdk/interactions/instruction.test.tsx` | 3 | |
@@ -672,6 +672,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 396 | needs a question, its options and the answer, filling in no tags | Item schema | The question, no tags | The same, with `tags: []` | Tags are optional for contributors. |
 | 397 | checks the options with the SDK's rules, and the answer is one of them | `Options`, `checkAnswer` | One option; `abuja` repeated; answer Port Harcourt | Problems at `options`, `options.2`, `answer` | The game uses the shared rules, so every multiple-choice game checks the same way. |
 | 398 | keeps the question to 150 characters, checks tags, and rejects an unknown field | Item schema | 151 characters; tag `Maths`; a `difficulty` field | Problems at `question`, `tags.0`; one problem | A question has to fit above its options; `difficulty` isn't a field yet (ADR 0015). |
+| 429 | takes an optional subtitle of up to 100 characters | `subtitle` | "Hint: not Lagos"; 101 characters; a blank | Kept; problems at `subtitle` twice | Optional, short, and never empty. |
 | 399 | names a question by its wording | `itemKey` | The question | Its wording | Two packs with the same question play it once. |
 | 400 | ships a valid Back to School pack, every question tagged with its subject | The shipped pack | `content/*.json` | Back to School loads, with at least 100 questions, each with exactly one of maths, science, social-studies, entertainment, general | Players filter by subject. |
 
@@ -867,6 +868,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 392 | shows the question with its label on the card, and every option in order, none marked | `MultipleChoice` | "What is the capital of Nigeria?", Lagos, Abuja, Kano, Ibadan | The label Question; the question on the theme's card; four outlined options in order | Nothing gives the answer away before a tap. |
 | 393 | reports the tap, then shows the answer in green and a wrong pick in red, and ignores later taps | Picking | Tap Lagos; then Abuja | `onPick(0)`; "Not quite: it's Abuja."; Abuja green with "The answer", Lagos red with "Your pick", Kano plain; the second tap not reported | A team sees at once what the answer was, and can't change its pick. |
 | 394 | says Right! when the pick is the answer, and takes 2 or 5 options | `resultText`; two options | Answer 1 picked 1, and picked 3; Masculin or Féminin with Féminin picked | "Right!", "Not quite: it's Abuja."; the label Gender, Right!, two options | The same card serves a this-or-that game. |
+| 428 | shows a subtitle in smaller text right under the question, and nothing without one | `subtitle` | chaise with subtitle chair; then without | "chair" right after the heading, in the muted color; then no text there | A hint or a translation sits with the question it belongs to. |
 | 395 | shares the height about 65 : 35, with options at least 44px and the question giving way | Layout | The card, four options | The question `flex-[13_1_0%] min-h-0`; the options `flex-[7_0_0%]`, two columns, rows `minmax(2.75rem,1fr)`; no tile spanning a row | Pins the layout ADR 0015 chose: 2x2 for four (happy-dom doesn't lay pages out). |
 | 424 | lays out 2 as 2x1, and gives the last of an odd number the whole row | `spansRow`, layout | 2, 3 and 5 options; the card with A, B, C | Only the last of 3 and of 5 spans; C's tile has `col-span-2` | An odd number of tiles leaves no empty cell. |
 

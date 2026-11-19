@@ -35,7 +35,7 @@ A new SDK primitive (`src/sdk/interactions/MultipleChoice.tsx`):
 { "question": "What is 7 × 8?", "options": ["56", "54", "48", "64"], "answer": "56", "tags": ["maths"] }
 ```
 
-The standard's earlier sketch had a `difficulty`. No question has one yet and nothing uses it, so it's left out until a setting needs it. Images are left out too: content is text only in v1 (standard §8), and an image needs a source and a license we can check. The card has room to add one later.
+An optional `subtitle` is shown in smaller text under the question, for a hint or a translation (at most 100 characters). The standard's earlier sketch had a `difficulty`. No question has one yet and nothing uses it, so it's left out until a setting needs it. Images are left out too: content is text only in v1 (standard §8), and an image needs a source and a license we can check. The card has room to add one later.
 
 ### A turn: one question, a set number, or against the clock
 

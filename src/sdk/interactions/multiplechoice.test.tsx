@@ -62,6 +62,18 @@ describe('MultipleChoice', () => {
   })
 })
 
+describe('MultipleChoice subtitle', () => {
+  it('shows a subtitle in smaller text right under the question, and nothing without one', () => {
+    const { unmount } = render(<MultipleChoice question="chaise" subtitle="chair" options={['Féminin', 'Masculin']} answer={0} picked={null} onPick={() => {}} />)
+    const heading = screen.getByRole('heading', { name: 'chaise' })
+    expect(heading.nextElementSibling?.textContent).toBe('chair')
+    expect(heading.nextElementSibling?.className).toContain('text-muted-foreground')
+    unmount()
+    render(<MultipleChoice question="chaise" options={['Féminin', 'Masculin']} answer={0} picked={null} onPick={() => {}} />)
+    expect(screen.getByRole('heading', { name: 'chaise' }).nextElementSibling?.textContent).toBe('')
+  })
+})
+
 describe('MultipleChoice layout', () => {
   it('shares the height about 65 : 35, with options at least 44px and the question giving way', () => {
     render(<Question />)

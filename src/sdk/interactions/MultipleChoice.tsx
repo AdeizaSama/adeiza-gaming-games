@@ -7,6 +7,8 @@ export interface MultipleChoiceProps {
   label?: string
   /** The question. */
   question: string
+  /** A smaller line under the question, e.g. a hint or a translation. */
+  subtitle?: string
   /** The options, 2 to 5, in the order to show them. */
   options: readonly string[]
   /** The right option's position in `options`. */
@@ -45,7 +47,7 @@ function look(index: number, answer: number, picked: number | null) {
  * they don't fit in a third (a small phone, long options), the question gives up space instead. Give it a parent with
  * a fixed height, like the play screen.
  */
-export function MultipleChoice({ label = 'Question', question, options, answer, picked, onPick }: MultipleChoiceProps) {
+export function MultipleChoice({ label = 'Question', question, subtitle, options, answer, picked, onPick }: MultipleChoiceProps) {
   const answered = picked !== null
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
@@ -57,6 +59,7 @@ export function MultipleChoice({ label = 'Question', question, options, answer, 
       >
         <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{label}</p>
         <h2 className="font-heading text-2xl leading-tight font-bold text-balance break-words">{question}</h2>
+        {subtitle && <p className="text-balance break-words text-muted-foreground">{subtitle}</p>}
         <p className="min-h-6 font-semibold" aria-live="polite">
           {answered && resultText(options, answer, picked)}
         </p>

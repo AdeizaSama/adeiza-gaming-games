@@ -33,6 +33,7 @@ Packs are in [content/](content/), one JSON file each. [CONTRIBUTING.md](../../.
 **Formatting:**
 
 - `answer` is one of the `options`, written exactly the same way: same capitals, same spelling.
+- `subtitle` is optional: a smaller line under the question, for a hint or a translation (at most 100 characters).
 - The question is at most 150 characters; each option at most 80. No option twice (ignoring capitals and spaces).
 - The order of the options doesn't matter: they're shuffled, or put A to Z, when the question comes up.
 - Tag each question with its subject (`maths`, `science`, `social-studies`, `entertainment`, `general`), so players can filter.

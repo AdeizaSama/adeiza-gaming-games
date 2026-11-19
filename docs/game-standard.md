@@ -262,7 +262,7 @@ These four are the whole v1 scope, built in this order:
 |---|---|---|---|---|---|
 | 1 | Charades | team-turns | `{ text, tags[], modes[] }` | FlashCard | Modes: describe / act / sing |
 | 2 | Name Ten | team-turns | `{ category, answers[], tags[] }` | PromptCard | A judge from another team holds the phone |
-| 3 | Trivia Night | team-turns | `{ question, options[], answer, tags[] }` | MultipleChoice | One question a turn, a set number, or against the clock. Steals (a missed question passing to the next team) need a format extension |
+| 3 | Trivia Night | team-turns | `{ question, subtitle?, options[], answer, tags[] }` | MultipleChoice | One question a turn, a set number, or against the clock. Steals (a missed question passing to the next team) need a format extension |
 | 4 | Mafia | host-led | roles + theme skins | SecretReveal, Vote | Needs the host-led format first |
 
 Out of scope for v1: multiplayer or multi-device play; accounts, backends or any collection of personal data; image or media content.
