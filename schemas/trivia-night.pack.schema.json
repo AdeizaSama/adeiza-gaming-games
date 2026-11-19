@@ -57,6 +57,12 @@
             "maxLength": 150,
             "description": "The question, as players read it. At most 150 characters."
           },
+          "subtitle": {
+            "description": "Optional. A smaller line under the question, e.g. a hint or a translation. At most 100 characters.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
           "options": {
             "minItems": 2,
             "maxItems": 5,

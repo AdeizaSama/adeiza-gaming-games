@@ -25,6 +25,36 @@ export const Options = z
   })
 
 /**
+ * A question's fields, for a multiple-choice game's item schema (ADR 0017). Spread them into the game's own object,
+ * with its tags, and check the answer:
+ *
+ *   export const itemSchema = z.strictObject({ ...choiceFields, tags }).superRefine(checkAnswer)
+ */
+export const choiceFields = {
+  question: z
+    .string()
+    .trim()
+    .min(1)
+    .max(150, 'Keep the question to 150 characters: it has to fit above its options')
+    .meta({ description: 'The question, as players read it. At most 150 characters.' }),
+  subtitle: z
+    .string()
+    .trim()
+    .min(1)
+    .max(100, 'Keep the subtitle to 100 characters: it goes under the question')
+    .optional()
+    .meta({ description: 'Optional. A smaller line under the question, e.g. a hint or a translation. At most 100 characters.' }),
+  options: Options.meta({
+    description: 'What players pick from: 2 to 5, each at most 80 characters, none repeated. The answer is one of them.',
+  }),
+  answer: z
+    .string()
+    .trim()
+    .min(1)
+    .meta({ description: 'The right option, written exactly as it is in options.' }),
+}
+
+/**
  * Checks that an item's `answer` is one of its `options`, written the same way. Use it on the whole item, after the
  * fields are checked:
  *

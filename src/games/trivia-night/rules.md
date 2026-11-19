@@ -5,7 +5,7 @@ Play in teams. On your team's turn, you hold the phone: it shows a question and 
 1. Hand the phone to the team named on screen, who taps **Start**.
 2. Read the question out, talk it over, and tap the answer you agree on. You only get one tap.
 3. The phone shows whether you were right, and the right answer if not.
-4. Tap **Next question** for the next one, or **End turn** after the last.
+4. Tap **Next question** for the next one, or **End turn** after the last. Against the clock, the next question comes up by itself.
 
 Every team plays once a round. After the last round, the team with the most points wins.
 

@@ -292,6 +292,38 @@ export function useSettled(ms = settleDelay.ms): boolean  // false for ms, then 
 
 ---
 
+## Step 12: A subtitle under the question
+
+**What:** an optional `subtitle` on a Trivia Night question (at most 100 characters), and a `subtitle` prop on `MultipleChoice`, shown in smaller, muted text right under the question. The game's README and ADR 0015 describe it.
+
+**Why:** room for a hint ("Hint: it's not Lagos") or a translation, without making the question longer.
+
+```json
+{ "question": "chaise", "subtitle": "chair", "options": ["Masculin", "Féminin"], "answer": "Féminin" }
+```
+
+### How to verify
+
+`pnpm test src/sdk/interactions/multiplechoice.test.tsx src/games/trivia-night/schema.test.ts`. Add a subtitle to a question in the pack and play it.
+
+---
+
+## Step 13: Against the clock, the next question by itself
+
+**What:** in `TurnView`, against the clock, a result shows for 0.75 seconds (`autoNextMs`) and then the view sends `continue` by itself; the button stays hidden. Each new question fades in (`animate-fade-in`, a 250ms opacity animation defined in `src/app/index.css`, off for players who ask for reduced motion). Rules, README and ADR 0015 say so.
+
+**Why:** against the clock, tapping Next between questions costs time and takes the team's eyes off the card.
+
+The wait is in the view, not the machine: the machine has no clock of its own besides the turn's, and `continue` is the same event a tap sends. A refresh during a result shows it again and goes on 0.75 seconds later.
+
+The fade comes from a React `key`: the card's wrapper is keyed by the question's number, so a new question mounts a new element and its animation plays, while the result of the same question keeps the element.
+
+### How to verify
+
+`pnpm test src/games/trivia-night/views`: 8 tests. Make every mode go on by itself, and the "waits for a tap" test fails. On a phone, play Against the clock.
+
+---
+
 ## Chapter summary
 
 | Step | What | SDK change? |
@@ -307,6 +339,8 @@ export function useSettled(ms = settleDelay.ms): boolean  // false for ms, then 
 | 9 | Docs | |
 | 10 | Options as tiles, two to a row | Yes: `MultipleChoice` |
 | 11 | A pause after time runs out (ADR 0016) | Yes: `useSettled`, `Summary`, `Review` |
+| 12 | A subtitle under the question | Yes: `MultipleChoice` |
+| 13 | Against the clock, the next question by itself | |
 
 **What we learned:**
 
@@ -314,4 +348,4 @@ export function useSettled(ms = settleDelay.ms): boolean  // false for ms, then 
 - A setting that changes how a turn ends (one question, a set number, the clock) is one guard, `moreQuestions`, not three machines. The view asks the same function, so the screen and the rules can't disagree about the last question.
 - Content ported from an older set still needs checking. Four of 149 questions had a second defensible answer or couldn't be confirmed.
 
-**Tests:** 427 runtime tests and 33 compile-time checks.
+**Tests:** 431 runtime tests and 33 compile-time checks.

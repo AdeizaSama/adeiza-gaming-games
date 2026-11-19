@@ -35,7 +35,7 @@ A new SDK primitive (`src/sdk/interactions/MultipleChoice.tsx`):
 { "question": "What is 7 × 8?", "options": ["56", "54", "48", "64"], "answer": "56", "tags": ["maths"] }
 ```
 
-The standard's earlier sketch had a `difficulty`. No question has one yet and nothing uses it, so it's left out until a setting needs it. Images are left out too: content is text only in v1 (standard §8), and an image needs a source and a license we can check. The card has room to add one later.
+An optional `subtitle` is shown in smaller text under the question, for a hint or a translation (at most 100 characters). The standard's earlier sketch had a `difficulty`. No question has one yet and nothing uses it, so it's left out until a setting needs it. Images are left out too: content is text only in v1 (standard §8), and an image needs a source and a license we can check. The card has room to add one later.
 
 ### A turn: one question, a set number, or against the clock
 
@@ -58,7 +58,7 @@ Presets: **One question** (the defaults: 3 rounds, 30 seconds), **Five questions
 The format's handoff gives the phone to the team playing. Then:
 
 - `turn` shows the question. `answer` (with the option's position) records the pick and goes to `reveal`. `time_up` goes to the turn summary.
-- `reveal` shows the result. `continue` draws the next question and goes back to `turn` while there's one to come (always, against the clock), or else goes to the turn summary. `time_up` goes to the turn summary. On the last question of a set, the clock is hidden, so the reveal isn't cut short.
+- `reveal` shows the result. `continue` draws the next question and goes back to `turn` while there's one to come (always, against the clock), or else goes to the turn summary. `time_up` goes to the turn summary. On the last question of a set, the clock is hidden, so the reveal isn't cut short. Against the clock there's no button: the result shows for 0.75 seconds and the next question fades in by itself.
 
 No review: the app knows the answer, so there's nothing to correct.
 

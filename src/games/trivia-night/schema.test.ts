@@ -27,6 +27,12 @@ describe('Trivia Night item schema', () => {
     expect(problems({ ...question, difficulty: 'easy' })).toHaveLength(1)
   })
 
+  it('takes an optional subtitle of up to 100 characters', () => {
+    expect(itemSchema.parse({ ...question, subtitle: 'Hint: not Lagos' }).subtitle).toBe('Hint: not Lagos')
+    expect(problems({ ...question, subtitle: 'a'.repeat(101) })).toEqual(['subtitle'])
+    expect(problems({ ...question, subtitle: ' ' })).toEqual(['subtitle'])
+  })
+
   it('names a question by its wording', () => {
     expect(itemKey({ ...question, tags: [] })).toBe('What is the capital of Nigeria?')
   })
