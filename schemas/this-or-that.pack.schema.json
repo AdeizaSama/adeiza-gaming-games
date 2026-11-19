@@ -1,0 +1,115 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "description": "Lets your editor check this file and suggest fields. Leave it as it is.",
+      "type": "string"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Must match the file name: \"movies-90s\" for movies-90s.json."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The pack name players see, e.g. \"Back to School\"."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "One or two sentences telling players what is in the pack."
+    },
+    "language": {
+      "type": "string",
+      "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$",
+      "description": "The language players read the pack in, as a code: \"en\", \"en-NG\", \"fr\", \"yo\"…"
+    },
+    "maturity": {
+      "type": "string",
+      "enum": [
+        "everyone",
+        "teen",
+        "adult"
+      ],
+      "description": "Who the pack suits: \"everyone\", \"teen\" or \"adult\"."
+    },
+    "contributors": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 39,
+        "pattern": "^[A-Za-z0-9]+(-[A-Za-z0-9]+)*$"
+      },
+      "description": "GitHub usernames of the people who wrote the pack, without \"@\". Add yours."
+    },
+    "items": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 150,
+            "description": "The question, as players read it. At most 150 characters."
+          },
+          "subtitle": {
+            "description": "Optional. A smaller line under the question, e.g. a hint or a translation. At most 100 characters.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "options": {
+            "minItems": 2,
+            "maxItems": 5,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "description": "The two options, e.g. [\"Masculin\", \"Féminin\"]. The answer is one of them."
+          },
+          "answer": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The right option, written exactly as it is in options."
+          },
+          "tags": {
+            "default": [],
+            "description": "What kind of question it is, e.g. \"noun\" or \"clothes\". Players can filter by tag.",
+            "uniqueItems": true,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+              "description": "Lowercase words joined by hyphens, e.g. \"snack\" or \"tv-show\"."
+            }
+          }
+        },
+        "required": [
+          "question",
+          "options",
+          "answer"
+        ],
+        "additionalProperties": false
+      },
+      "description": "The items in the pack."
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "description",
+    "language",
+    "maturity",
+    "contributors",
+    "items"
+  ],
+  "additionalProperties": false,
+  "title": "Ku Zo Wasa content pack: this-or-that"
+}

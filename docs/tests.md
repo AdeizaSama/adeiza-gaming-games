@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 434 runtime tests (`pnpm test`) and 33 compile-time checks (`pnpm typecheck`).
+**Counts:** 438 runtime tests (`pnpm test`) and 33 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -33,6 +33,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Choice turn views](#choice-turn-views) | `src/sdk/formats/team-turns/choice/views.test.tsx` | 8 | |
 | [Trivia Night machine](#trivia-night-machine) | `src/games/trivia-night/machine.test.ts` | 2 | |
 | [Trivia Night game](#trivia-night-game) | `src/games/trivia-night/game.test.ts` | 1 | |
+| [This or That content](#this-or-that-content) | `src/games/this-or-that/schema.test.ts` | 4 | |
 | [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
 | [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 9 | |
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
@@ -745,6 +746,17 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 421 | is a valid game with the Back to School pack, its settings, a preset per way to play, and one view for turn and result | `index.ts` | The game's default export; each preset applied | Id `trivia-night`; Back to School; its machine and settings; `TurnView` for `turn` and `reveal`; rules with "## Ways to play"; One question (1, 30 s), Five questions (5, 120 s), Against the clock (clock, 60 s) | `defineGame` checked the parts when the file loaded; this checks each preset is the way to play it's named for. |
+
+## This or That content
+
+`src/games/this-or-that/schema.test.ts`, testing `src/games/this-or-that/schema.ts` and its packs (ADR 0017). The question in the schema tests is chaise (chair), Masculin or Féminin; the answer is Féminin.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 435 | needs a question with exactly two options and the answer, filling in no tags | Item schema | The question; with a third option, Neutre; with one option | The same with `tags: []`; a problem at `options` each time | This or That is one or the other. |
+| 436 | uses the SDK's rules for the rest: the answer is an option, the subtitle is optional | `choiceFields`, `checkAnswer` | Answer Neutre; no subtitle; the key | A problem at `answer`; passes; `chaise` | The game shares Trivia Night's rules for a question. |
+| 437 | ships Masculin ou féminin ?: French words, each with its meaning, the same two options, and both answers often | The shipped pack | `content/*.json` | Named "Masculin ou féminin ?", in French, at least 200 words, each with Masculin and Féminin, a subtitle, and tagged noun or adjective; between 40% and 60% féminin | A pack where one answer wins most of the time teaches nothing. |
+| 438 | never shows an article, which would give the answer away | The shipped pack | Every question | None starts with le, la, les, un, une or l' | "la chaise" answers its own question. |
 
 ## App
 

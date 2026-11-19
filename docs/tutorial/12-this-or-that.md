@@ -62,3 +62,44 @@ The moved tests keep their numbers in the test catalog: it's the same test, in a
 ### How to verify
 
 `pnpm test`: 434 tests. `pnpm generate-schemas` writes the same Trivia Night schema as before: the move changed no rule. Play Trivia Night: nothing has changed.
+
+---
+
+## Step 3: Two options, and Masculin ou féminin ?
+
+**What:**
+
+- `src/games/this-or-that/schema.ts`: the SDK's question fields, with exactly two options.
+- `src/games/this-or-that/content/masculin-feminin.json`: 282 French A1 words, each with its English meaning as the subtitle. Tagged `noun` (with a topic: classroom, clothes, home, food, family, body, animals, town, transport, time, jobs) or `adjective`.
+- `schemas/this-or-that.pack.schema.json`, generated.
+
+**Why:** the content is the game.
+
+### Overriding one shared field
+
+```ts
+z.strictObject({
+  ...choiceFields,
+  options: choiceFields.options.refine((options) => options.length === 2, 'Give exactly 2 options…'),
+  tags,
+})
+```
+
+A key written after the spread replaces the shared one, so This or That keeps every rule for options (no repeats, 80 characters) and adds its own.
+
+### Which words
+
+Every question must have exactly one right answer, so some words are left out:
+
+| Left out | Why |
+|---|---|
+| Words that are the same in both genders: élève, enfant, artiste, journaliste; adjectives like rouge, jeune, facile | Either answer would be right |
+| Words with two genders and two meanings: poste (la poste, the post office; le poste, a job) | The subtitle helps, but a learner who knows the other meaning is marked wrong |
+| Plurals: ciseaux, lunettes, cheveux | A1 learners meet them as plurals, where the article (les) doesn't show a gender |
+| Jobs whose feminine form is disputed: médecin, professeur, pompier | There's no single answer people agree on |
+
+Jobs and adjectives with two forms are in as two questions: acteur and actrice, petit and petite. The answers are close to half and half (147 masculine, 135 feminine), and a test keeps them that way, so always tapping one answer doesn't win.
+
+### How to verify
+
+`pnpm test src/games/this-or-that/schema.test.ts`: 4 tests. `pnpm validate-content` lists `this-or-that` with 282 items.
