@@ -14,9 +14,9 @@ Changes to this standard, the SDK (`src/sdk/`) or the content pack format need a
 |---|---|---|---|
 | **Format** | The outer loop: how turns, rounds and scoring flow ([§7](#7-formats)) | `team-turns`, `host-led` | Core maintainers, rarely |
 | **Game** | What happens inside a turn: interaction, events, scoring rules, content shape | Charades, Name Ten, Trivia Night | Developers |
-| **Variant** | Settings + content only. Same rules. | "Anime Charades, 90-second turns" | Anyone, no code |
+| **Variant** | Settings + content only. Same rules. A JSON file; what the home page lists ([ADR 0018](decisions/0018-variants.md)) | "Naija Charades (Back to School Edition)", "Masculin ou féminin ?" | Anyone, no code |
 
-A format is the outer loop, a game fills in the turn, and a variant fills in the settings and content. Name Ten is not a Charades variant: its turn is different, so it's a separate game in the same format. In code and docs, say **Game** (`defineGame`).
+A format is the outer loop, a game fills in the turn, and a variant fills in the settings and content. Name Ten is not a Charades variant: its turn is different, so it's a separate game in the same format. Masculin ou féminin ? is a Trivia Night variant: the same turn, with its own pack and defaults. In code and docs, say **Game** (`defineGame`).
 
 ## 2. Anatomy of a game
 
@@ -61,17 +61,11 @@ export default defineGame({
   config: {
     schema: CharadesConfig,          // zod schema for setup options, defaults included (§7)
     view: SettingsView,              // the game's own settings on setup (optional, ADR 0008)
-    presets: [                       // named variants (optional)
-      {
-        id: "anime-90",
-        name: "Anime Charades, 90-second turns",
-        contributors: ["AdeizaSama"],  // GitHub handles of the variant's creators
-        config: { seconds: 90 },       // settings that differ from the defaults; never teams or tags
-        packs: ["anime"],              // content pack ids (optional: leave out to keep the players' packs)
-      },
-    ],
   },
   rules,                             // import rules from "./rules.md?raw": how to play (ADR 0009)
+  variants: loadVariants(            // the ways to play it on the home page (ADR 0018), one JSON file each
+    import.meta.glob("./variants/*.json", { eager: true, import: "default" }),
+  ),
   machine,                           // ./machine.ts
   views: {                           // one per phase (ADR 0005)
     turn: TurnView,                  // ./views/: required for each of the game's own phases
@@ -81,13 +75,26 @@ export default defineGame({
 });
 ```
 
-`defineGame` is in `src/sdk/game/`. Besides type-checking, it checks what types can't, and throws one error listing every problem: `meta` (kebab-case id, complexity 1–5, `players.max` ≥ `players.min`, at least one contributor), at least one pack, and each preset (unique id, contributors, packs that exist if it names any, settings that pass the config schema), and rules that aren't empty and use only the supported markdown. A game's tests import it, so a broken game fails CI.
+`defineGame` is in `src/sdk/game/`. Besides type-checking, it checks what types can't, and throws one error listing every problem: `meta` (kebab-case id, complexity 1–5, `players.max` ≥ `players.min`, at least one contributor), at least one pack, each variant (an id unique in the game that isn't `play` or `rules`, packs that exist, settings that pass the config schema, open settings the game has), and rules that aren't empty and use only the supported markdown. A game's tests import it, so a broken game fails CI.
 
 **Defaults live in the config schema** (zod's `.default()`), not in a separate list, so they can't drift apart. A game that wants different defaults from the format's extends its schema.
 
-**Settings view** ([ADR 0008](decisions/0008-settings-and-presets.md)): a game with settings of its own (Charades' mode and points) gives a component that the setup screen shows below the format's settings. It receives `settings` (every setting but the teams) and `onChange`. The setup screen keeps, saves and checks them with the rest.
+**Settings view** ([ADR 0008](decisions/0008-settings-and-presets.md)): a game with settings of its own (Charades' mode and points) gives a component that the setup screen shows below the format's settings. It receives `settings` (every setting but the teams) and `onChange`, and on a variant's setup `open`: the settings the variant lets players change, the only ones it shows (`isOpen`). The setup screen keeps, saves and checks them with the rest.
 
-**Presets** ([ADR 0008](decisions/0008-settings-and-presets.md)) are shown on setup. Tapping one applies it whole: the game's defaults plus the preset's own settings, so changes players made are undone. Teams and tags stay as they are, and so do packs unless the preset names some. A preset is shown as selected only while the settings are exactly its own.
+**Variants** ([ADR 0018](decisions/0018-variants.md)) are JSON files in `variants/`: a name and tagline, packs (and optionally tags), the settings that differ from the game's defaults, and `open`, the settings players may change. The home page lists them first, then "Make your own" with each game. A variant's setup (`/:gameId/:variantId`) shows teams and its open settings only; a game's own setup (`/:gameId`) shows every setting. Variants replaced presets.
+
+```json
+{
+  "$schema": "../../../../schemas/variant.schema.json",
+  "id": "masculin-feminin",
+  "name": "Masculin ou féminin ?",
+  "tagline": "French for beginners: is the word masculine or feminine?",
+  "packs": ["masculin-feminin"],
+  "settings": { "questions": 10, "seconds": 60, "order": "alphabetical" },
+  "open": ["rounds", "seconds", "questions"],
+  "contributors": ["AdeizaSama"]
+}
+```
 
 **Views** ([ADR 0005](decisions/0005-views.md)): each of the game's own phases needs a view; the format provides default views for its phases (handoff, turn summary, results), and a game lists one only to replace it. `defineGame` fills in the defaults and checks every phase has a view. A view receives `context` (to show), `send` (to report what players did) and `points` (the game's scoring).
 
@@ -96,7 +103,7 @@ export default defineGame({
 **Contributors.** Credit is recorded at both levels, as a list of GitHub handles:
 
 - `meta.contributors`: who created the game (its rules, machine and views).
-- `presets[].contributors`: who created that variant.
+- A variant file's `contributors`: who created that variant.
 
 Both are required and must have at least one handle. Add yourself when you make a substantial change; don't remove anyone. Content packs use the same `contributors` field for the people who wrote them ([§10](#10-content-packs)).
 
@@ -198,7 +205,7 @@ A format is the outer loop shared by several games: setup, turn order, rounds, s
 
 | Format | Shape | Games |
 |---|---|---|
-| `team-turns` | Teams take timed turns over N rounds; each turn uses items from the pool; points per turn | Charades, Name Ten, Trivia Night, This or That |
+| `team-turns` | Teams take timed turns over N rounds; each turn uses items from the pool; points per turn | Charades, Name Ten, Trivia Night |
 | `host-led` | One device held by a host; secret roles; cyclic phases with eliminations and win conditions | Mafia/Werewolf. Built after the team-turns games. |
 
 **team-turns: what the format provides**
@@ -210,7 +217,7 @@ A format is the outer loop shared by several games: setup, turn order, rounds, s
 | Context | `TeamTurnsContext`: `config` (the settings), `scores`, `current` (whose turn), `round`, `turnEndsAt`, `pool`, `item` (the card on screen), and `turn` (the game's record of the current turn) |
 | Item pool | The chosen packs' items, each item once (an item in two packs is kept from the first pack chosen), filtered to the chosen tags if any. Drawn in a shuffled order without repeats. When every item has been drawn, they're shuffled back in and drawing continues, with the item just shown placed last. |
 | Guards/actions | `turnsRemaining`; `resetTurn` (fresh turn record), `startTimer` (the turn ends `seconds` from now; a phase before the turn must run it on its way into `turn`), `drawItem`, `bankPoints` (adds the turn's points to the team's score), `advanceTeam`. A game's phases may use them, usually `drawItem`. |
-| Choice turn | For multiple-choice games, a whole turn in `src/sdk/formats/team-turns/choice/` ([ADR 0017](decisions/0017-a-shared-choice-turn-and-this-or-that.md)): settings with the game's defaults (`choiceConfig`), the machine (`choiceTurns`), the turn view (`choiceTurnView`) and the settings view. A question's fields are `choiceFields` in `src/sdk/content/choices.ts`. Trivia Night and This or That use it. |
+| Choice turn | For multiple-choice games, a whole turn in `src/sdk/formats/team-turns/choice/` ([ADR 0017](decisions/0017-a-shared-choice-turn-and-this-or-that.md)): settings with the game's defaults (`choiceConfig`), the machine (`choiceTurns`), the turn view (`choiceTurnView`) and the settings view. A question's fields are `choiceFields` in `src/sdk/content/choices.ts`. Trivia Night uses it. |
 | Views | Default views for `handoff`, `turn_summary` and `results` in `src/sdk/formats/team-turns/views/` (a game may replace any of them). The turn summary is read-only, with every team's score so far ([ADR 0013](decisions/0013-fit-the-screen-and-standings.md)); mis-taps are fixed before it, in a game's review. |
 
 **team-turns: how a game plugs in** ([ADR 0004](decisions/0004-team-turns-builder.md)). A game passes its turn to `teamTurns` (`src/sdk/formats/team-turns/teamTurns.ts`), which returns the whole machine:
@@ -257,15 +264,14 @@ export const machine = teamTurns<CharadesItem, CharadesTurn, CharadesEvent>()({
 
 ## 8. v1 games
 
-These five are the whole v1 scope, built in this order:
+These four are the whole v1 scope, built in this order. Masculin ou féminin ? is a Trivia Night variant ([ADR 0018](decisions/0018-variants.md)):
 
 | # | Game | Format | Content item | Turn interaction | Notes |
 |---|---|---|---|---|---|
 | 1 | Charades | team-turns | `{ text, tags[], modes[] }` | FlashCard | Modes: describe / act / sing |
 | 2 | Name Ten | team-turns | `{ category, answers[], tags[] }` | PromptCard | A judge from another team holds the phone |
 | 3 | Trivia Night | team-turns | `{ question, subtitle?, options[], answer, tags[] }` | MultipleChoice | One question a turn, a set number, or against the clock. Steals (a missed question passing to the next team) need a format extension |
-| 4 | This or That | team-turns | `{ question, subtitle?, options[2], answer, tags[] }` | MultipleChoice | Trivia Night's turn (the choice turn, [ADR 0017](decisions/0017-a-shared-choice-turn-and-this-or-that.md)) with two options a question. First pack: Masculin ou féminin ? |
-| 5 | Mafia | host-led | roles + theme skins | SecretReveal, Vote | Needs the host-led format first |
+| 4 | Mafia | host-led | roles + theme skins | SecretReveal, Vote | Needs the host-led format first |
 
 Out of scope for v1: multiplayer or multi-device play; accounts, backends or any collection of personal data; image or media content.
 
@@ -287,6 +293,7 @@ src/
       config.ts        the game's settings schema, if it has settings of its own (§7)
       views/           phase views, and the settings view (ADR 0008)
       content/*.json   content packs
+      variants/*.json  variants: the ways to play it on the home page (ADR 0018)
       rules.md         player-facing rules
       README.md        for contributors: what the game is, content guidelines
   themes/*.json        visual themes (§11)
@@ -421,7 +428,8 @@ Tailwind's built-in palette is switched off, so classes like `bg-red-500` produc
 ## 13. Definition of Done (per game)
 
 - [ ] Fits an existing format, or is explicitly deferred
-- [ ] `defineGame` export with meta, content, config schema (defaults included) and presets, rules, machine, views
+- [ ] `defineGame` export with meta, content, config schema (defaults included), rules, variants, machine, views
+- [ ] At least one variant in `variants/`, so the game is on the home page
 - [ ] Guards and actions are deterministic; full-playthrough test, `validateMachine` test, and per-guard and per-action tests
 - [ ] At least one content pack passing validation
 - [ ] Views use interaction primitives (custom UI justified)

@@ -160,3 +160,38 @@ The cards share one `Card` component. Its icon is drawn with `createElement(game
 ### How to verify
 
 `pnpm test`: 450 tests. Make Continue use the game's name, or let the play page save without the variant, and the Continue test fails. Then `pnpm dev --host` and look at the home page.
+
+---
+
+## Step 8: Docs
+
+**What:** the standard's §1 (a variant is a JSON file the home page lists), §3 (variants instead of presets, with an example), §8 (four v1 games; Masculin ou féminin ? is a Trivia Night variant), §9 (`variants/` in a game's folder) and §13 (a game ships at least one variant); CONTRIBUTING's **Add a variant (no code)**, and a variant step in the game guide; README's status and games table; each game's README lists its variants and the settings a variant can open.
+
+**Why:** "Anime Charades" is now a JSON file anyone can add. That's only true if the instructions say how.
+
+### How to verify
+
+Follow CONTRIBUTING's "Add a variant" with a variant of your own, then run `pnpm validate-content` and `pnpm test`.
+
+---
+
+## Chapter summary
+
+| Step | What | SDK change? |
+|---|---|---|
+| 1 | ADR 0018: variants | |
+| 2 | Variants replace presets | Yes: `variant.ts`, `defineGame`'s `variants`, settings helpers |
+| 3 | The content check and schemas cover variant files | |
+| 4 | Settings views show only a variant's open settings | Yes: `open` on settings views |
+| 5 | A variant's setup screen; saves remember their variant | |
+| 6 | The first four variants; This or That folded into Trivia Night | |
+| 7 | The home page lists variants first, then Make your own | |
+| 8 | Docs | |
+
+**What we learned:**
+
+- The standard had the right three levels from the start. What was missing was a place for the third: without one, every new way to play became a game (This or That) or a button few players found (presets).
+- A variant changes over time, so a variant's setup remembers only what players changed, and only for settings that are still open.
+- Removing a test file's neighbour with a "find the next `it(`" script also removed an `it.each` block. Counting tests after every step caught it.
+
+**Tests:** 450 runtime tests and 31 compile-time checks.

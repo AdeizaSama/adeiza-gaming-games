@@ -7,17 +7,21 @@ The full rules players see are in [rules.md](rules.md), on the game's How to pla
 ## Rules in short
 
 - 2 to 10 teams, each playing one turn per round (2 to 20 players). The team playing holds the phone: nothing on screen gives the answer away until they tap.
-- **Three ways to play** (presets):
+- **Three ways to play** (the `mode` and `questions` settings):
   - **One question** a turn, with 30 seconds for it (the default).
-  - **Five questions** a turn, with 120 seconds for all five. Any number from 1 to 10 can be set.
-  - **Against the clock:** as many as the team can answer in 60 seconds. Each result shows for 0.75 seconds, then the next question comes up by itself.
+  - **A set number** a turn, 1 to 10, with the turn's time for all of them.
+  - **Against the clock:** as many as the team can answer before time runs out. Each result shows for 0.75 seconds, then the next question comes up by itself.
+- **Variants:**
+  - **Back to School Trivia:** the Back to School pack, with rounds, turn length, mode and questions a turn open.
+  - **Masculin ou féminin ?:** the French pack, ten words a 60-second turn, options A to Z, with rounds, turn length and words a turn open (always Set questions).
+- Settings players can open in a variant: `rounds`, `seconds`, `mode`, `questions`, `points`, `order`.
 - One tap per question. The phone shows whether it was right, and the right answer if not.
 - **1 point** per right answer (a setting, 1 to 5). A wrong answer costs nothing.
 - The options are shuffled every time, or shown A to Z (a setting).
 
 ## Content guidelines
 
-Packs are in [content/](content/), one JSON file each. [CONTRIBUTING.md](../../../CONTRIBUTING.md#1-add-or-improve-content-no-code) explains how to add or change one.
+Packs are in [content/](content/), one JSON file each: Back to School, and Masculin ou féminin ? (French words, two options each, the English meaning as the subtitle). [CONTRIBUTING.md](../../../CONTRIBUTING.md#1-add-or-improve-content-no-code) explains how to add or change one.
 
 ```json
 { "question": "What is 7 × 8?", "options": ["56", "54", "48", "64"], "answer": "56", "tags": ["maths"] }
@@ -42,7 +46,8 @@ Packs are in [content/](content/), one JSON file each. [CONTRIBUTING.md](../../.
 
 | File | What it is |
 |---|---|
-| `index.ts` | The game's definition: meta, content, settings, presets, rules, machine, and the choice turn's views |
+| `index.ts` | The game's definition: meta, content, settings, rules, variants, machine, and the choice turn's views |
+| `variants/` | The ways to play it on the home page, one JSON file each |
 | `schema.ts` | What a content item is: a question, its options, the answer and tags, using the SDK's option rules |
 | `config.ts` | The settings: the SDK's choice turn settings, with Trivia Night's defaults |
 | `machine.ts` | The SDK's choice turn (`src/sdk/formats/team-turns/choice/`) on Trivia Night's questions |
