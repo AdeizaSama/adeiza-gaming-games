@@ -146,3 +146,17 @@ Trivia Night's "Make your own" setup now starts with both packs ticked, so schoo
 ### How to verify
 
 `pnpm validate-content` lists the four variants. `pnpm test`: 447 tests. Take `variants` out of Trivia Night's `index.ts`, and its game test fails.
+
+---
+
+## Step 7: The home page lists variants first
+
+**What:** `LibraryPage.tsx` shows the Continue card (if a game is saved), then **Ways to play**: every variant, each linking to `/:gameId/:variantId` and saying which game it is ("Charades · 2–20 players"); then **Make your own**: each game, linking to its own setup. The registry gives the list: `variants`, each with its game, in the order of `games`. Continue names the variant: "Continue Naija Charades (Back to School Edition)".
+
+**Why:** players pick something to play, and the full setup is there for those who want it.
+
+The cards share one `Card` component. Its icon is drawn with `createElement(gameIcon(name), …)` rather than `<Icon />`: React's lint rule refuses a component looked up during render, because a new component each render would lose its state. An icon has no state, and `gameIcon` returns the same one each time, so `createElement` says plainly that it's a lookup.
+
+### How to verify
+
+`pnpm test`: 450 tests. Make Continue use the game's name, or let the play page save without the variant, and the Continue test fails. Then `pnpm dev --host` and look at the home page.

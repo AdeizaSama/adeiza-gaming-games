@@ -1,6 +1,7 @@
 import charades from '../../games/charades'
 import nameTen from '../../games/name-ten'
 import triviaNight from '../../games/trivia-night'
+import type { Variant } from '../../sdk/content/variant'
 import type { Game } from '../../sdk/game/defineGame'
 
 /**
@@ -20,6 +21,15 @@ export type AnyGame = Game<any, any, any, any, any, any, any, any>
  * its definition here and add it to the list.
  */
 export const games: readonly AnyGame[] = [charades, nameTen, triviaNight]
+
+/** A variant, with the game it plays (ADR 0018). */
+export interface ListedVariant {
+  game: AnyGame
+  variant: Variant
+}
+
+/** Every variant, for the home page: each game's in turn, in the order of `games`, each game's sorted by id. */
+export const variants: readonly ListedVariant[] = games.flatMap((game) => game.variants.map((variant) => ({ game, variant })))
 
 /** The game with this id (the first part of its URL, e.g. `/charades`), or `undefined` if there's none. */
 export function findGame(id: string | undefined): AnyGame | undefined {
