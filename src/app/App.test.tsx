@@ -74,7 +74,7 @@ describe('App', () => {
     expect(screen.getByText('282 items to play')).toBeDefined()
   })
 
-  it.each(['/chess', '/charades/nope/extra'])('says "Page not found" at %s, with a way back', async (address) => {
+  it.each(['/chess', '/charades/nope', '/charades/nope/extra'])('says "Page not found" at %s, with a way back', async (address) => {
     const user = userEvent.setup()
     renderAt(address)
 

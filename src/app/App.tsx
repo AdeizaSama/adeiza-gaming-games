@@ -16,6 +16,8 @@ export default function App() {
       <Route path="/:gameId" element={<SetupPage />} />
       <Route path="/:gameId/play" element={<PlayPage />} />
       <Route path="/:gameId/rules" element={<RulesPage />} />
+      {/* After play and rules: a variant can't be called either (defineGame checks). */}
+      <Route path="/:gameId/:variantId" element={<SetupPage />} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )

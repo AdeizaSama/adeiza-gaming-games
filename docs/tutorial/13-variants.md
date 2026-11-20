@@ -88,3 +88,28 @@ Two layouts needed care:
 ### How to verify
 
 `pnpm test`: 449 tests. Show the order of the options whatever `open` says, and the choice view's test fails.
+
+---
+
+## Step 5: A variant's setup screen
+
+**What:**
+
+- `App.tsx`: a route `/:gameId/:variantId`, after `play` and `rules`, to `SetupPage`, which finds the variant (or shows Page not found).
+- `SetupScreen.tsx` takes `variant`: its name and tagline at the top; teams; rounds and turn length only if open; the game's settings view with `open`; no packs or tags.
+- `savedSetup.ts`: `loadVariantSetup` starts from the variant's settings and puts players' last changes on top, for open settings only. Kept under `ku-zo-wasa:setup:charades/naija-back-to-school`.
+- `savedGame.ts`: a save remembers `variantId`, and `saveName` gives the variant's name or the game's. `saveGame` now takes its extras as options: `saveGame(game, state, { variantId })`.
+
+**Why:** a variant is a way to play, so its setup is short: who's playing, and the few things it lets them change.
+
+### Saving only what's open
+
+A variant can change after players used it: a new turn length, or a setting closed. So the screen doesn't save "the settings" for a variant; on the next visit it starts from the variant as it is now and takes back only players' changes to settings that are still open.
+
+### Old saves
+
+`variantId` is optional in a save, so a game saved before this chapter still loads, without a new save version. A save whose variant has been removed since also loads; it's just called by the game's name.
+
+### How to verify
+
+`pnpm test`: 453 tests. Show the packs on a variant's setup, and the variant setup test fails.

@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 449 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
+**Counts:** 453 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -53,7 +53,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Settings and variants](#settings-and-variants) | `src/sdk/game/settings.test.ts` | 5 | |
 | [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 22 | |
 | [Charades views](#charades-views) | `src/games/charades/views/views.test.tsx` | 7 | |
-| [App](#app) | `src/app/App.test.tsx` | 7 | |
+| [App](#app) | `src/app/App.test.tsx` | 8 | |
 | [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 6 | |
 | [Applying a theme](#applying-a-theme) | `src/app/theme/themes.test.tsx` | 4 | |
 | [Bundled fonts](#bundled-fonts) | `src/app/theme/fonts.test.ts` | 2 | |
@@ -74,7 +74,8 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Playing Name Ten](#playing-name-ten) | `src/app/play/nameTen.test.tsx` | 1 | |
 | [Playing Trivia Night](#playing-trivia-night) | `src/app/play/triviaNight.test.tsx` | 1 | |
 | [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 14 | |
-| [Saved game](#saved-game) | `src/app/play/savedGame.test.ts` | 12 | |
+| [Variant setup](#variant-setup) | `src/app/setup/variantSetup.test.tsx` | 2 | |
+| [Saved game](#saved-game) | `src/app/play/savedGame.test.ts` | 13 | |
 | [Play page](#play-page) | `src/app/play/PlayPage.test.tsx` | 3 | |
 | [Continuing a saved game](#continuing-a-saved-game) | `src/app/library/continue.test.tsx` | 6 | |
 | [Wake lock](#wake-lock) | `src/app/play/useWakeLock.test.ts` | 3 | |
@@ -809,7 +810,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 372 | lists Name Ten too, with its own icon, players and setup | Library, registry | Open `/`; tap Name Ten | A link to `/name-ten` with its tagline and the list-checks icon; then Name Ten's setup, with "Answers on the board" and "38 items to play" | A game added to the registry appears in the library and gets the shared setup screen with its own settings. |
 | 422 | lists Trivia Night too, with its own icon and setup | Library, registry | Open `/`; tap Trivia Night | A link to `/trivia-night` with the lightbulb icon; then its setup, with an Against the clock preset, Questions per turn, a 30-second turn and "148 items to play" | The third game reaches the library and the shared setup, with its own default turn length. |
 | 443 | lists This or That too, with its own icon, defaults and pack | Library, registry | Open `/`; tap This or That | A link to `/this-or-that` with the arrow-left-right icon; then its setup, with 10 questions per turn, A to Z checked and "282 items to play" | The fourth game reaches the library with its own defaults. |
-| 214, 215 | says "Page not found" at /chess and /charades/nope/extra, with a way back | Not-found page | A game that doesn't exist; an address with too many parts | "Page not found"; Back to games returns to the library | A mistyped or old link never shows a blank page. Runs once per address (`it.each`). |
+| 214, 215, 460 | says "Page not found" at /chess, /charades/nope and /charades/nope/extra, with a way back | Not-found page | A game that doesn't exist; a variant that doesn't exist; an address with too many parts | "Page not found"; Back to games returns to the library | A mistyped or old link never shows a blank page. Runs once per address (`it.each`). |
 | 216 | has an icon for every game in the registry | `gameIcons` | Every registered game's `meta.icon` | Listed in `gameIcons` | An unlisted icon would quietly show the fallback controller. |
 
 ## Applying a theme
@@ -1047,6 +1048,15 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 282 | shows the game's own settings, keeps them in the draft, and Start plays them | Settings view on setup | Pick Mix it up; in Advanced settings, skip −; Done; leave and come back; Start | Mix it up still picked, "Describe 2 · Act 3 · Sing 3 · Skip 0"; the saved game plays mode `mix` with skip 0 | The game's settings go through the same draft and the same Start as the format's (ADR 0008). |
 | 281 | keeps the game's own settings in the draft, and gives a setting added since the save its default | `loadSetup`, `saveSetup` | Mix it up with points 1/4/5/0; then a draft saved before Charades had modes; then one with a setting Charades doesn't have | The same back; then 5 rounds with mode `describe` and points 2/3/3/1; then nothing loaded | The draft holds every setting, the game's own too (ADR 0008). A game can add settings without breaking drafts on players' phones; the schema's defaults fill the gap. |
 
+## Variant setup
+
+`src/app/setup/variantSetup.test.tsx`, testing `SetupScreen.tsx` with a variant, and `loadVariantSetup` in `savedSetup.ts` (ADR 0018). Screen tests (happy-dom). The variant is made up: Snack Attack, Charades with 90-second turns and Mix it up, snacks only, rounds and mode open.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 462 | shows the variant's name, the teams and only its open settings, and starts with its settings and content | Variant setup | Open the screen; tap More: Rounds; Start | Heading Snack Attack and its tagline; teams, Rounds, Mix it up checked; no Turn length, Packs, Only play or Advanced; Start sends 4 rounds, 90 s, mix, Back to School, snack | Players change only what the variant allows, and get its content. |
+| 463 | remembers what players changed, per variant, and only for open settings | `saveSetup`, `loadVariantSetup` | Tap Describe; then a saved setup with 5 rounds, 15 s, another pack | Saved under `charades/snack-attack`, not `charades`; loads describe, 5 rounds, but 90 s and the variant's pack and tag | A remembered change to a closed setting or the content never leaks in. |
+
 ## Saved game
 
 `src/app/play/savedGame.test.ts`, testing `src/app/play/savedGame.ts` (ADR 0006). Uses the fake browser's `localStorage`, emptied before each test. A new game of Charades: Lions and Eagles, 1 round, 30-second turns, Back to School, seed 2026. Some saves are written by hand, to test saves the app didn't write, or wrote long ago.
@@ -1054,6 +1064,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 228 | saves a game and loads it back exactly | `saveGame`, `loadGame` | The game after `start`, saved at 6000 | The same state, saved at 6000 | Resuming must continue the very same game. |
+| 461 | keeps the variant a game was started from, and still loads one whose variant is gone, under the game's name | `variantId`, `saveName` | Saved with variant `no-such-variant`; a summary with a variant named Snack Attack | `variantId` in the save; it loads; named Charades; then Snack Attack | Continue names the variant (ADR 0018); a variant removed later doesn't throw away a game in progress. |
 | 229 | finds nothing when nothing is saved, or after clearGame | `clearGame` | Nothing; then a save, cleared | Nothing, twice | Quit (step 5) deletes the save. |
 | 230–236 | throws away a save with … , and says why | Checks on load | Not JSON · the wrong shape · an older version · a game that was removed · a phase that was renamed · the phase "toString" · 99 rounds | Discarded with the matching reason; the save is deleted | Every way a save can go stale, from ADR 0006. Never a crash, always a reason for the notice. "toString" exists on every object: a plain `in` check would let it through. Runs once per case (`it.each`). |
 | 237 | reports a save for a different game without deleting it | `loadGame` | A Charades save, loaded for another game id | "other game", Charades; the save kept | Opening another game's play page mustn't destroy the Charades save. |
