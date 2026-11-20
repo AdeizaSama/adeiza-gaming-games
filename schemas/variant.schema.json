@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "description": "Lets your editor check this file and suggest fields. Leave it as it is.",
+      "type": "string"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Must match the file name: \"naija-back-to-school\" for naija-back-to-school.json."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 60,
+      "description": "What players see on the home page, e.g. \"Naija Charades (Back to School Edition)\"."
+    },
+    "tagline": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "One line under the name on the home page."
+    },
+    "packs": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+        "description": "Must match the file name: \"movies-90s\" for movies-90s.json."
+      },
+      "description": "The ids of the game's packs to play, e.g. [\"back-to-school\"]."
+    },
+    "tags": {
+      "default": [],
+      "description": "Optional. Only play items with at least one of these tags. Leave out to play every item.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+        "description": "Lowercase words joined by hyphens, e.g. \"snack\" or \"tv-show\"."
+      }
+    },
+    "settings": {
+      "default": {},
+      "description": "The settings that differ from the game's defaults, e.g. { \"mode\": \"clock\", \"seconds\": 90 }.",
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {}
+    },
+    "open": {
+      "default": [],
+      "description": "The settings players may change, e.g. [\"rounds\", \"seconds\", \"mode\"]. Teams are always open.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "contributors": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 39,
+        "pattern": "^[A-Za-z0-9]+(-[A-Za-z0-9]+)*$"
+      },
+      "description": "GitHub usernames of the people who wrote the pack, without \"@\". Add yours."
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "tagline",
+    "packs",
+    "contributors"
+  ],
+  "additionalProperties": false,
+  "title": "Ku Zo Wasa variant"
+}

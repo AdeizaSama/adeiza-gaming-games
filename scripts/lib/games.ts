@@ -1,7 +1,7 @@
 import { existsSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 
-/** A game folder, as the content scripts see it: where its schemas are and which pack files it has. */
+/** A game folder, as the content scripts see it: where its schemas are and which pack and variant files it has. */
 export interface GameFolder {
   /** The folder name, which is the game's id, e.g. `charades`. */
   id: string
@@ -9,6 +9,8 @@ export interface GameFolder {
   schemaFile: string | null
   /** Every `content/*.json` file, sorted by name. */
   packFiles: string[]
+  /** Every `variants/*.json` file, sorted by name (ADR 0018). */
+  variantFiles: string[]
 }
 
 /** The names of the entries in `dir` that match `keep`, sorted so the output is the same on every computer. */
@@ -17,6 +19,12 @@ function list(dir: string, keep: (entry: { name: string; isDirectory(): boolean 
     .filter(keep)
     .map((entry) => entry.name)
     .sort()
+}
+
+/** The `.json` files directly in `dir`, sorted, as full paths; none if it doesn't exist. */
+function jsonFiles(dir: string): string[] {
+  if (!existsSync(dir)) return []
+  return list(dir, (entry) => !entry.isDirectory() && entry.name.endsWith('.json')).map((name) => join(dir, name))
 }
 
 /**
@@ -28,10 +36,11 @@ export function findGames(gamesDir: string): GameFolder[] {
 
   return list(gamesDir, (entry) => entry.isDirectory()).map((id) => {
     const schemaFile = join(gamesDir, id, 'schema.ts')
-    const contentDir = join(gamesDir, id, 'content')
-    const packFiles = existsSync(contentDir)
-      ? list(contentDir, (entry) => !entry.isDirectory() && entry.name.endsWith('.json')).map((name) => join(contentDir, name))
-      : []
-    return { id, schemaFile: existsSync(schemaFile) ? schemaFile : null, packFiles }
+    return {
+      id,
+      schemaFile: existsSync(schemaFile) ? schemaFile : null,
+      packFiles: jsonFiles(join(gamesDir, id, 'content')),
+      variantFiles: jsonFiles(join(gamesDir, id, 'variants')),
+    }
   })
 }

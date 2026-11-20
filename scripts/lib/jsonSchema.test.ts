@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { loadGameSchema } from './gameSchema'
 import { findGames } from './games'
-import { packJsonSchema, schemaFileName, schemaFileText, themeJsonSchema, themeSchemaFileName } from './jsonSchema'
+import { packJsonSchema, schemaFileName, schemaFileText, themeJsonSchema, themeSchemaFileName, variantJsonSchema, variantSchemaFileName } from './jsonSchema'
 
 // A stand-in item schema with one required field and one with a default, like Charades' `text` and `modes`.
 const TestItem = z.strictObject({ text: z.string(), modes: z.array(z.string()).default(['describe']) })
@@ -68,10 +68,13 @@ describe('the committed schemas/ folder', () => {
     const themeFile = join(schemasDir, themeSchemaFileName)
     const committedTheme = existsSync(themeFile) ? readFileSync(themeFile, 'utf8').replace(/\r\n/g, '\n') : '(missing)'
     expect(committedTheme, themeFile).toBe(schemaFileText(themeJsonSchema()))
+    const variantFile = join(schemasDir, variantSchemaFileName)
+    const committedVariant = existsSync(variantFile) ? readFileSync(variantFile, 'utf8').replace(/\r\n/g, '\n') : '(missing)'
+    expect(committedVariant, variantFile).toBe(schemaFileText(variantJsonSchema()))
   })
 
   it('has no schemas for games that no longer exist', () => {
-    const expected = [...games.map((game) => schemaFileName(game.id)), themeSchemaFileName].sort()
+    const expected = [...games.map((game) => schemaFileName(game.id)), themeSchemaFileName, variantSchemaFileName].sort()
     expect(readdirSync(schemasDir).sort()).toEqual(expected)
   })
 })

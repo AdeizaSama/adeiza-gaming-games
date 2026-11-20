@@ -57,3 +57,17 @@ A variant file is content, so the content check can read it without the game. Bu
 ### How to verify
 
 `pnpm test`: 445 tests; `pnpm typecheck`: 31 compile-time checks (the two about what a preset could set went with presets). Turn off the settings check in `defineGame`, and the "checks a variant's settings" test fails.
+
+---
+
+## Step 3: The content check reads variants
+
+**What:** `pnpm validate-content` checks every `src/games/<game>/variants/*.json` file with `checkVariant` (and its `$schema` link), and `pnpm generate-schemas` writes `schemas/variant.schema.json` for editors. `findGames` lists each game's variant files.
+
+**Why:** a variant is content: someone adding one should hear what's wrong from the check, in plain words, before the tests run.
+
+One schema serves every game's variants, because it describes the shape only. `settings` is any object there: whether `"mode": "clock"` is a Charades setting is for `defineGame` to say, and the tests run it.
+
+### How to verify
+
+`pnpm validate-content` ends with "All packs, variants and themes are valid." `pnpm test`: 446 tests.

@@ -1,6 +1,6 @@
 /**
- * Writes a JSON Schema for each game's content packs to `schemas/<game>.pack.schema.json`, and one for theme files
- * to `schemas/theme.schema.json`. Run with `pnpm generate-schemas` after changing a game's `schema.ts`, the pack
+ * Writes a JSON Schema for each game's content packs to `schemas/<game>.pack.schema.json`, one for variant files to
+ * `schemas/variant.schema.json`, and one for theme files to `schemas/theme.schema.json`. Run with `pnpm generate-schemas` after changing a game's `schema.ts`, the pack
  * format or the theme format, and commit the result.
  * A test (scripts/lib/jsonSchema.test.ts) fails if the committed files are out of date.
  */
@@ -9,7 +9,15 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { loadGameSchema } from './lib/gameSchema'
 import { findGames } from './lib/games'
-import { packJsonSchema, schemaFileName, schemaFileText, themeJsonSchema, themeSchemaFileName } from './lib/jsonSchema'
+import {
+  packJsonSchema,
+  schemaFileName,
+  schemaFileText,
+  themeJsonSchema,
+  themeSchemaFileName,
+  variantJsonSchema,
+  variantSchemaFileName,
+} from './lib/jsonSchema'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const schemasDir = join(root, 'schemas')
@@ -26,6 +34,9 @@ for (const game of findGames(join(root, 'src', 'games'))) {
   writeFileSync(file, schemaFileText(packJsonSchema(game.id, itemSchema)))
   console.log(`${game.id}: wrote schemas/${schemaFileName(game.id)}`)
 }
+
+writeFileSync(join(schemasDir, variantSchemaFileName), schemaFileText(variantJsonSchema()))
+console.log(`variants: wrote schemas/${variantSchemaFileName}`)
 
 writeFileSync(join(schemasDir, themeSchemaFileName), schemaFileText(themeJsonSchema()))
 console.log(`themes: wrote schemas/${themeSchemaFileName}`)

@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 445 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
+**Counts:** 446 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -41,7 +41,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
 | [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 9 | |
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
-| [Content check (scripts)](#content-check-scripts) | `scripts/lib/validate.test.ts` | 9 | |
+| [Content check (scripts)](#content-check-scripts) | `scripts/lib/validate.test.ts` | 10 | |
 | [Themes](#themes) | `src/sdk/theme/theme.test.ts` | 7 | |
 | [Contrast](#contrast) | `src/sdk/theme/contrast.test.ts` | 7 | |
 | [Theme variables](#theme-variables) | `src/sdk/theme/apply.test.ts` | 4 | |
@@ -295,7 +295,7 @@ Each row is a mistake TypeScript must reject.
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 77 | finds each game with its schema file and pack files, sorted | `findGames` | `trivia` (schema, 1 pack) and `charades` (schema, `movies.json`, `anime.json`) | Charades then Trivia, each with its `schema.ts` path and its packs in name order | The content scripts need every game and pack, in the same order on every computer. |
+| 77 | finds each game with its schema file, pack files and variant files, sorted | `findGames` | `trivia` (schema, 1 pack) and `charades` (schema, `movies.json`, `anime.json`, `variants/naija.json`) | Charades then Trivia, each with its `schema.ts` path, its packs in name order and its variants (none for Trivia) | The content scripts need every game and pack, in the same order on every computer. |
 | 78 | reports a missing schema file as null | `findGames` | A game with a pack but no `schema.ts` | `schemaFile` is null | The content check can then say "this game has packs but no schema" instead of crashing. |
 | 79 | gives no pack files for a game without a content folder | `findGames` | A game with only `schema.ts` | No pack files | A game being built may not have packs yet. |
 | 80 | only counts .json files directly in the content folder as packs | `findGames` | `anime.json`, `notes.md`, and `drafts/old.json` | Only `anime.json` | Notes and drafts beside the packs aren't checked or loaded, matching the app's `content/*.json` pattern. |
@@ -342,8 +342,8 @@ Each row is a mistake TypeScript must reject.
 | 310 | requires what a theme must say, and makes fields with a default optional | `themeJsonSchema` | The theme schema | Required: id, name, description, contributors, scheme, colors; no unknown fields; all 19 colors required | Editors ask for what CI demands and no more: fonts, radius and the rest can be left out. |
 | 95 | are named after the game | `schemaFileName` | `charades` | `charades.pack.schema.json` | Packs point at this exact name in `$schema`. |
 | 96 | are written with 2-space indents and a final newline | `schemaFileText` | `{ a: 1 }` | Two-space indented JSON ending in a newline | Readable files whose changes show cleanly in pull requests. |
-| 97 | matches the zod schemas (run `pnpm generate-schemas` if not) | Up-to-date check | Every game's `schema.ts` and the theme schema, and their files in `schemas/` | Each committed file equals a freshly generated one | If someone changes a schema without regenerating, editors would show old rules. This failing test names the fix. |
-| 98 | has no schemas for games that no longer exist | Up-to-date check | The files in `schemas/` | Exactly one per game that has a `schema.ts`, plus `theme.schema.json` | Stops leftover files from a renamed or removed game. |
+| 97 | matches the zod schemas (run `pnpm generate-schemas` if not) | Up-to-date check | Every game's `schema.ts`, the variant schema and the theme schema, and their files in `schemas/` | Each committed file equals a freshly generated one | If someone changes a schema without regenerating, editors would show old rules. This failing test names the fix. |
+| 98 | has no schemas for games that no longer exist | Up-to-date check | The files in `schemas/` | Exactly one per game that has a `schema.ts`, plus `theme.schema.json` and `variant.schema.json` | Stops leftover files from a renamed or removed game. |
 
 ## Loading game schemas (scripts)
 
@@ -388,6 +388,7 @@ Each row is a mistake TypeScript must reject.
 | 311 | finds nothing wrong with a valid theme | `checkThemeFile` | A valid theme with the right `$schema` | No problems | The content check passes good themes. |
 | 312 | reports text that isn't JSON, a wrong $schema link, and problems from the theme check | `checkThemeFile` | Broken JSON; `$schema: "theme.schema.json"` with radius 9 | "Not valid JSON…"; `$schema` should be `../../schemas/theme.schema.json`, and a `radius` problem | Same as for packs: a wrong link silently switches off editor help. |
 | 317 | reports colors that are hard to read, once the theme's shape is right | `checkThemeFile`, contrast | The valid theme with `muted: "#555555"` | One problem at `colors.muted-foreground`, naming "muted-foreground on muted" | CI catches an unreadable theme, not only a malformed one (ADR 0010). |
+| 456 | finds nothing wrong with a valid variant, and reports text that isn't JSON, a wrong $schema link and its problems | `checkVariantFile` | A valid variant; broken JSON; `$schema: "variant.schema.json"` with no packs; the variant in `anime.json` | Nothing; "Not valid JSON…"; the right `$schema` and a problem at `packs`; a problem at `id` | CI checks variant files the way it checks packs (ADR 0018). |
 
 ## Themes
 
