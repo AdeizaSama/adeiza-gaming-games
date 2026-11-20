@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 446 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
+**Counts:** 449 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -25,13 +25,13 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Name Ten content](#name-ten-content) | `src/games/name-ten/schema.test.ts` | 6 | |
 | [Name Ten settings](#name-ten-settings) | `src/games/name-ten/config.test.ts` | 2 | |
 | [Name Ten machine](#name-ten-machine) | `src/games/name-ten/machine.test.ts` | 15 | |
-| [Name Ten views](#name-ten-views) | `src/games/name-ten/views/views.test.tsx` | 7 | |
+| [Name Ten views](#name-ten-views) | `src/games/name-ten/views/views.test.tsx` | 8 | |
 | [Name Ten game](#name-ten-game) | `src/games/name-ten/game.test.ts` | 1 | |
 | [Trivia Night content](#trivia-night-content) | `src/games/trivia-night/schema.test.ts` | 6 | |
 | [Trivia Night settings](#trivia-night-settings) | `src/games/trivia-night/config.test.ts` | 2 | |
 | [Choice turn settings](#choice-turn-settings) | `src/sdk/formats/team-turns/choice/config.test.ts` | 1 | |
 | [Choice turn machine](#choice-turn-machine) | `src/sdk/formats/team-turns/choice/machine.test.ts` | 12 | |
-| [Choice turn views](#choice-turn-views) | `src/sdk/formats/team-turns/choice/views.test.tsx` | 8 | |
+| [Choice turn views](#choice-turn-views) | `src/sdk/formats/team-turns/choice/views.test.tsx` | 9 | |
 | [Trivia Night machine](#trivia-night-machine) | `src/games/trivia-night/machine.test.ts` | 2 | |
 | [Trivia Night game](#trivia-night-game) | `src/games/trivia-night/game.test.ts` | 1 | |
 | [This or That content](#this-or-that-content) | `src/games/this-or-that/schema.test.ts` | 4 | |
@@ -52,7 +52,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [defineGame](#definegame) | `src/sdk/game/defineGame.test.ts` | 12 | 6 |
 | [Settings and variants](#settings-and-variants) | `src/sdk/game/settings.test.ts` | 5 | |
 | [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 22 | |
-| [Charades views](#charades-views) | `src/games/charades/views/views.test.tsx` | 6 | |
+| [Charades views](#charades-views) | `src/games/charades/views/views.test.tsx` | 7 | |
 | [App](#app) | `src/app/App.test.tsx` | 7 | |
 | [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 6 | |
 | [Applying a theme](#applying-a-theme) | `src/app/theme/themes.test.tsx` | 4 | |
@@ -612,6 +612,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 283 | picks the mode, Describe to start with | Mode | Default settings; tap Mix it up | Describe picked; then Mix it up | Describe is the game most people know; one tap changes it. |
 | 284 | changes points in Advanced settings within their limits, and resets them | Advanced settings | Mix it up; open Advanced settings; Acted + twice; Skipped −; Reset to defaults; Done | Reset off at first; Acted "5 points" with + off; Skipped "No penalty" with − off; summary "Describe 2 · Act 5 · Sing 3 · Skip 0"; after Reset "… Act 3 … Skip −1"; the dialog closes | The steppers can't leave the schema's ranges (1–5, skip 0–5), and a host who got lost can get back to the defaults in one tap. |
 | 285 | says acted and sung points only count in Mix it up, when Describe is picked | Advanced settings | Describe; open Advanced settings; Done; pick Mix it up; open again | The note; then no note | In Describe mode the acted and sung points never apply, so a host changing them should know. |
+| 457 | shows only the open settings: the mode alone, points alone under their own heading, or nothing | Settings view on a variant | Open rounds and mode; open points; nothing open | The mode, no Advanced; a Points heading with Advanced, no mode; neither | A variant shows only what it lets players change (ADR 0018). |
 
 ## Name Ten content
 
@@ -670,6 +671,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 368 | shows the category and its board, reports taps by position, and can end early | Turn | A turn on Numbers; tap the fifth answer; tap End turn early | The category heading; the board's answers in order; `toggle` 4; `lock_in` | The judge ticks what's said and can stop when the team gives up. |
 | 369 | lists the board as got or missed, and talks about answers, not cards | Review | A board with Biro got and Ruler missed; the review view | Got it (good), Missed (neutral); "Check the answers before they count."; a list named "Answers this turn" | Review reuses Charades' screen, in Name Ten's words. |
 | 370 | sets the answers on the board from 10 to 15 | Settings | The default; More six times | Less off at 10; 15, with More off | The stepper can't leave the schema's range. |
+| 458 | shows answers on the board only when the variant opens it | Settings view on a variant | Open rounds; open shown | No stepper; the stepper | A variant shows only what it lets players change. |
 
 ## Name Ten game
 
@@ -742,6 +744,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 431 | waits for a tap in a set of questions, and fades each new question in | A set of questions | Abuja picked, 3 a turn; 5 s pass | No `continue` sent; the card inside `animate-fade-in` | Only against the clock does play go on by itself. |
 | 419 | picks the mode, with questions per turn only for a set number, 1 to 10 | Settings view | Tap More 12 times; then Against the clock | 1, then 10 at most; the stepper gone | The count only means something for a set number. |
 | 420 | sets points from 1 to 5, and the order of the options | Settings view | Tap More 6 times on points; tap A to Z | "1 point", then "5 points" at most; Shuffled checked, then A to Z | Every setting can be set on setup. |
+| 459 | shows only the open settings, with questions per turn on its own when the mode is closed | Settings view on a variant | Open questions; open mode, questions, order against the clock; open rounds | Questions per turn under its own heading, nothing else; the mode and order, no questions (it's against the clock); nothing | Masculin ou féminin ? locks the mode but lets players set how many words a turn. |
 
 ## Trivia Night machine
 

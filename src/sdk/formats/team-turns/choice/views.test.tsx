@@ -126,3 +126,22 @@ describe('choice settings view', () => {
     expect(screen.getByRole<HTMLInputElement>('radio', { name: /A to Z/ }).checked).toBe(true)
   })
 })
+
+describe('choice settings view on a variant', () => {
+  it('shows only the open settings, with questions per turn on its own when the mode is closed', () => {
+    const view = (open: string[], changes: Partial<ChoiceConfig> = {}) =>
+      render(<ChoiceSettingsView settings={configWith(changes)} onChange={() => {}} open={open} />)
+    const { unmount } = view(['questions'])
+    expect(screen.queryByRole('radio', { name: /Against the clock/ })).toBeNull()
+    expect(screen.getByRole('heading', { name: 'Questions per turn' })).toBeDefined()
+    expect(screen.queryByRole('group', { name: 'Points for a right answer' })).toBeNull()
+    expect(screen.queryByRole('radio', { name: /A to Z/ })).toBeNull()
+    unmount()
+    const clock = view(['mode', 'questions', 'order'], { mode: 'clock' })
+    expect(screen.getByRole('radio', { name: /Against the clock/ })).toBeDefined()
+    expect(screen.queryByRole('group', { name: 'Questions per turn' })).toBeNull()
+    expect(screen.getByRole('radio', { name: /A to Z/ })).toBeDefined()
+    clock.unmount()
+    expect(view(['rounds']).container.textContent).toBe('')
+  })
+})

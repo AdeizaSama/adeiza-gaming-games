@@ -1,6 +1,6 @@
 import { Section } from '../../../../ui/section'
 import { Stepper } from '../../../../ui/stepper'
-import type { SettingsViewProps } from '../../../game/settings'
+import { isOpen, type SettingsViewProps } from '../../../game/settings'
 import type { ChoiceConfig } from './config'
 
 const modes = [
@@ -29,22 +29,34 @@ function Choice<Id extends string>({ name, choices, value, onChange }: { name: s
 /** "1 point", "3 points". */
 export const pointsLabel = (points: number) => `${points} ${points === 1 ? 'point' : 'points'}`
 
-/** A multiple-choice game's settings on setup (ADR 0008, 0015, 0017): how a turn plays, points, option order. */
-export function ChoiceSettingsView({ settings, onChange }: SettingsViewProps<ChoiceConfig>) {
+/**
+ * A multiple-choice game's settings on setup (ADR 0008, 0015, 0017): how a turn plays, points, option order. On a
+ * variant's setup, only the open ones (ADR 0018). Questions per turn only means something in Set questions mode.
+ */
+export function ChoiceSettingsView({ settings, onChange, open }: SettingsViewProps<ChoiceConfig>) {
+  const questions = isOpen(open, 'questions') && settings.mode === 'questions' && (
+    <Stepper label="Questions per turn" value={settings.questions} min={1} max={10} onChange={(questions) => onChange({ questions })} />
+  )
   return (
     <>
-      <Section title="Mode">
-        <Choice name="choice-mode" choices={modes} value={settings.mode} onChange={(mode) => onChange({ mode })} />
-        {settings.mode === 'questions' && (
-          <Stepper label="Questions per turn" value={settings.questions} min={1} max={10} onChange={(questions) => onChange({ questions })} />
-        )}
-      </Section>
-      <Section title="Points for a right answer" hint="A wrong answer costs nothing.">
-        <Stepper label="Points for a right answer" value={settings.points} min={1} max={5} format={pointsLabel} onChange={(points) => onChange({ points })} />
-      </Section>
-      <Section title="Order of the options">
-        <Choice name="choice-order" choices={orders} value={settings.order} onChange={(order) => onChange({ order })} />
-      </Section>
+      {isOpen(open, 'mode') ? (
+        <Section title="Mode">
+          <Choice name="choice-mode" choices={modes} value={settings.mode} onChange={(mode) => onChange({ mode })} />
+          {questions}
+        </Section>
+      ) : (
+        questions && <Section title="Questions per turn">{questions}</Section>
+      )}
+      {isOpen(open, 'points') && (
+        <Section title="Points for a right answer" hint="A wrong answer costs nothing.">
+          <Stepper label="Points for a right answer" value={settings.points} min={1} max={5} format={pointsLabel} onChange={(points) => onChange({ points })} />
+        </Section>
+      )}
+      {isOpen(open, 'order') && (
+        <Section title="Order of the options">
+          <Choice name="choice-order" choices={orders} value={settings.order} onChange={(order) => onChange({ order })} />
+        </Section>
+      )}
     </>
   )
 }

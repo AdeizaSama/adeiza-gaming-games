@@ -71,3 +71,20 @@ One schema serves every game's variants, because it describes the shape only. `s
 ### How to verify
 
 `pnpm validate-content` ends with "All packs, variants and themes are valid." `pnpm test`: 446 tests.
+
+---
+
+## Step 4: Settings views show only what's open
+
+**What:** Charades', Name Ten's and the choice turn's settings views read `open` and show only those settings (`isOpen(open, 'mode')`). With no `open` list (a game's own setup), they show everything, as before.
+
+**Why:** a variant's setup screen hands its game's settings view the variant's open settings; the view knows how its settings are laid out, so it's the one that hides them.
+
+Two layouts needed care:
+
+- Charades' points live behind **Advanced settings**, under the mode. A variant that opens points but not the mode gets them under their own **Points** heading.
+- The choice turn's **Questions per turn** sits under the mode, and only in Set questions mode. Masculin ou féminin ? locks the mode but opens questions, so the stepper gets its own heading.
+
+### How to verify
+
+`pnpm test`: 449 tests. Show the order of the options whatever `open` says, and the choice view's test fails.

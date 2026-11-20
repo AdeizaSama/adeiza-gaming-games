@@ -105,3 +105,21 @@ describe('Charades settings', () => {
     expect(screen.queryByText('Acted and sung cards only come up in Mix it up.')).toBeNull()
   })
 })
+
+describe('Charades settings on a variant', () => {
+  it('shows only the open settings: the mode alone, points alone under their own heading, or nothing', () => {
+    const view = (open: string[]) => render(<SettingsView settings={config} onChange={() => {}} open={open} />)
+    const { unmount } = view(['rounds', 'mode'])
+    expect(screen.getByRole('radio', { name: /Mix it up/ })).toBeDefined()
+    expect(screen.queryByRole('button', { name: 'Advanced settings' })).toBeNull()
+    unmount()
+    const points = view(['points'])
+    expect(screen.queryByRole('radio', { name: /Mix it up/ })).toBeNull()
+    expect(screen.getByRole('heading', { name: 'Points' })).toBeDefined()
+    expect(screen.getByRole('button', { name: 'Advanced settings' })).toBeDefined()
+    points.unmount()
+    view([])
+    expect(screen.queryByRole('radio')).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Advanced settings' })).toBeNull()
+  })
+})
