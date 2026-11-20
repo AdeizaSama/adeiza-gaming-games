@@ -11,7 +11,7 @@ Short documents that record a decision about the project's contracts: the Game S
 | [0005](0005-views.md) | Views: how each phase is shown | Accepted |
 | [0006](0006-save-and-resume.md) | Save and resume | Accepted |
 | [0007](0007-turn-review.md) | Turn review | Accepted |
-| [0008](0008-settings-and-presets.md) | Game settings and presets on setup | Accepted |
+| [0008](0008-settings-and-presets.md) | Game settings and presets on setup | Accepted; amended by 0018 (presets replaced by variants) |
 | [0009](0009-rules.md) | Rules | Accepted |
 | [0010](0010-theme-files.md) | Theme files | Accepted |
 | [0011](0011-theme-parts.md) | Theme parts | Accepted |
@@ -20,7 +20,8 @@ Short documents that record a decision about the project's contracts: the Game S
 | [0014](0014-a-phase-before-the-turn.md) | A phase before the turn | Accepted; amends 0004 |
 | [0015](0015-trivia-night.md) | Trivia Night: multiple choice, three ways to play | Accepted |
 | [0016](0016-a-pause-after-time-runs-out.md) | A pause after time runs out | Accepted |
-| [0017](0017-a-shared-choice-turn-and-this-or-that.md) | A shared multiple-choice turn, and This or That | Accepted |
+| [0017](0017-a-shared-choice-turn-and-this-or-that.md) | A shared multiple-choice turn, and This or That | Accepted; amended by 0018 (This or That is a variant) |
+| [0018](0018-variants.md) | Variants | Accepted; amends 0008, 0017 |
 
 ## Writing one
 
