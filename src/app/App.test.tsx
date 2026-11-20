@@ -45,7 +45,7 @@ describe('App', () => {
     expect(screen.getByText('38 items to play')).toBeDefined()
   })
 
-  it('lists Trivia Night too, with its own icon, presets and setup', async () => {
+  it('lists Trivia Night too, with its own icon and setup', async () => {
     const user = userEvent.setup()
     renderAt('/')
     const trivia = screen.getByRole('link', { name: /Trivia Night/ })
@@ -54,7 +54,7 @@ describe('App', () => {
 
     await user.click(trivia)
     expect(screen.getByRole('heading', { level: 1, name: 'Trivia Night' })).toBeDefined()
-    expect(screen.getByRole('button', { name: 'Against the clock' })).toBeDefined()
+    expect(screen.getByRole('radio', { name: /Against the clock/ })).toBeDefined()
     expect(screen.getByRole('group', { name: 'Questions per turn' })).toBeDefined()
     expect(within(screen.getByRole('group', { name: 'Turn length' })).getByText('30 seconds')).toBeDefined()
     expect(screen.getByText('148 items to play')).toBeDefined()

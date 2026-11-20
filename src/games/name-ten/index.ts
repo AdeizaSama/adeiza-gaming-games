@@ -31,10 +31,6 @@ export default defineGame({
   config: {
     schema: NameTenConfig,
     view: SettingsView,
-    presets: [
-      { id: 'quick', name: 'Quick', contributors: ['AdeizaSama'], config: { rounds: 2, seconds: 45 } },
-      { id: 'classic', name: 'Classic', contributors: ['AdeizaSama'], config: {} }, // the defaults: 3 rounds, 60 s, 10 answers
-    ],
   },
   rules,
   machine,

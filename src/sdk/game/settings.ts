@@ -1,8 +1,8 @@
 import type { ComponentType } from 'react'
 import type { z } from 'zod'
-import type { TeamTurnsConfig } from '../formats/team-turns/config'
+import type { Variant } from '../content/variant'
 
-/** Every setting except the teams, which players always name themselves: what a settings view and a preset deal in. */
+/** Every setting except the teams, which players always name themselves: what a settings view deals in. */
 export type Settings<Config> = Omit<Config, 'teams'>
 
 /** What a game's settings view receives (ADR 0008). */
@@ -11,14 +11,26 @@ export interface SettingsViewProps<Config> {
   settings: Settings<Config>
   /** Reports the settings players changed, e.g. `{ mode: 'mix' }`. The setup screen checks them with the schema. */
   onChange: (changes: Partial<Settings<Config>>) => void
+  /**
+   * On a variant's setup, the settings players may change (ADR 0018): the view shows only those (use `isOpen`).
+   * Undefined on a game's own setup, where every setting is shown.
+   */
+  open?: readonly string[]
 }
 
 /** A game's own settings on the setup screen, shown below the format's (ADR 0008). */
 export type SettingsView<Config> = ComponentType<SettingsViewProps<Config>>
 
-/** Stand-ins for the parts of the settings a check doesn't look at: teams, and packs when a preset names none. */
+/** Whether a setting is shown: on a game's own setup (no `open` list) every one is; on a variant's, the open ones. */
+export function isOpen(open: readonly string[] | undefined, name: string): boolean {
+  return open === undefined || open.includes(name)
+}
+
+/** Stand-ins for teams: players name their own, so a check of the other settings uses these. */
 const placeholderTeams = ['Team 1', 'Team 2']
-const placeholderPacks = ['placeholder']
+
+/** Settings a variant never opens: players always name their teams, and the content is what makes the variant. */
+const neverOpen = new Set(['teams', 'packs', 'tags'])
 
 /** Settings without the teams. */
 export function withoutTeams<Config>(settings: Config): Settings<Config> {
@@ -32,52 +44,35 @@ export function defaultSettings<Config>(schema: z.ZodType<Config>, packs: string
   return withoutTeams(schema.parse({ teams: placeholderTeams, packs }))
 }
 
-/** What a preset sets (ADR 0008): every setting but teams, packs (unless it names some) and tags. */
-interface PresetLike {
-  config: object
-  packs?: string[]
+/** The names of the settings a variant may open: every setting of the game but teams, packs and tags. */
+export function openableSettings<Config>(schema: z.ZodType<Config>, packs: string[]): string[] {
+  return Object.keys(defaultSettings(schema, packs) as object).filter((name) => !neverOpen.has(name))
+}
+
+/** What `variantSettings` reads from a variant. */
+type VariantLike = Pick<Variant, 'settings' | 'packs' | 'tags'>
+
+/** A variant's settings, checked: the game's defaults, the variant's changes, and its packs and tags. */
+export function checkVariantSettings<Config>(schema: z.ZodType<Config>, variant: VariantLike) {
+  return schema.safeParse({ ...variant.settings, teams: placeholderTeams, packs: variant.packs, tags: variant.tags })
 }
 
 /**
- * The settings after tapping a preset (ADR 0008): the game's defaults plus the preset's own changes. Packs and tags
- * stay as they are, unless the preset names packs. Throws if the preset's settings fail the schema; `defineGame`
- * checks every preset, so that's a bug.
+ * A variant's settings (ADR 0018): the game's defaults, the variant's changes, and its packs and tags. Throws if they
+ * fail the schema; `defineGame` checks every variant, so that's a bug.
  */
-export function presetSettings<Config extends TeamTurnsConfig>(
-  schema: z.ZodType<Config>,
-  preset: PresetLike,
-  current: Pick<TeamTurnsConfig, 'packs' | 'tags'>,
-): Settings<Config> {
-  const settings = schema.parse({ ...preset.config, teams: placeholderTeams, packs: preset.packs ?? placeholderPacks })
-  return { ...withoutTeams(settings), packs: preset.packs ?? current.packs, tags: current.tags }
+export function variantSettings<Config>(schema: z.ZodType<Config>, variant: VariantLike): Settings<Config> {
+  const checked = checkVariantSettings(schema, variant)
+  if (!checked.success) throw checked.error
+  return withoutTeams(checked.data)
 }
 
 /**
- * Whether the settings are exactly what the preset sets (ADR 0008): a preset is shown as selected only then. Teams
- * and tags are never compared, and packs only if the preset names some (in any order).
+ * `settings`, with players' own `changes` to the open settings on top, and nothing else from `changes`: what a
+ * variant's setup starts from when players have changed it before. A change to a closed setting is ignored, so a
+ * variant that closes a setting later still gets its own value.
  */
-export function matchesPreset<Config extends TeamTurnsConfig>(
-  schema: z.ZodType<Config>,
-  preset: PresetLike,
-  current: Settings<Config>,
-): boolean {
-  const expected: Record<string, unknown> = presetSettings(schema, preset, current)
-  const actual: Record<string, unknown> = { ...current }
-  if (preset.packs) {
-    expected.packs = [...preset.packs].sort()
-    actual.packs = [...current.packs].sort()
-  }
-  return sameValue(expected, actual)
-}
-
-/** Whether two settings values are the same: numbers, strings, booleans, and arrays and objects of them. */
-function sameValue(a: unknown, b: unknown): boolean {
-  if (a === b) return true
-  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false
-  if (Array.isArray(a) !== Array.isArray(b)) return false
-  const keys = Object.keys(a)
-  return (
-    keys.length === Object.keys(b).length &&
-    keys.every((key) => Object.hasOwn(b, key) && sameValue((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key]))
-  )
+export function withOpenChanges<Config>(settings: Settings<Config>, changes: Record<string, unknown>, open: readonly string[]): Settings<Config> {
+  const allowed = Object.fromEntries(Object.entries(changes).filter(([name]) => open.includes(name) && !neverOpen.has(name)))
+  return { ...settings, ...allowed }
 }

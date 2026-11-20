@@ -32,11 +32,6 @@ export default defineGame({
   config: {
     schema: TriviaConfig,
     view: ChoiceSettingsView,
-    presets: [
-      { id: 'one-question', name: 'One question', contributors: ['AdeizaSama'], config: {} }, // the defaults: 3 rounds, 30 s
-      { id: 'five-questions', name: 'Five questions', contributors: ['AdeizaSama'], config: { questions: 5, seconds: 120 } },
-      { id: 'against-the-clock', name: 'Against the clock', contributors: ['AdeizaSama'], config: { mode: 'clock', seconds: 60 } },
-    ],
   },
   rules,
   machine,

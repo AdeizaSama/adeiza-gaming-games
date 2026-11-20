@@ -31,10 +31,6 @@ export default defineGame({
   config: {
     schema: ThisOrThatConfig,
     view: ChoiceSettingsView,
-    presets: [
-      { id: 'ten-words', name: 'Ten words', contributors: ['AdeizaSama'], config: {} }, // the defaults: 10 a turn, 60 s, A to Z
-      { id: 'against-the-clock', name: 'Against the clock', contributors: ['AdeizaSama'], config: { mode: 'clock' } },
-    ],
   },
   rules,
   machine,
