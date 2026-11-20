@@ -186,6 +186,27 @@ Follow CONTRIBUTING's "Add a variant" with a variant of your own, then run `pnpm
 `pnpm test src/app/App.test.tsx`: the scroll test. On a phone, scroll the home page down, tap a game: its setup starts at the top.
 ---
 
+## Step 10: Each Charades mode looks different
+
+**What:** `FlashCard` takes an optional `tone` (`primary`, `secondary` or `warning`) and `icon` for its hint: the hint becomes a badge in that color with the icon, and the card gets an outline in it. Charades' `modeLooks` gives each mode one, in Mix it up:
+
+| Mode | Icon | Color |
+|---|---|---|
+| Describe it | speech bubble | secondary |
+| Act it out | person | warning |
+| Sing or hum it | music note | primary |
+
+**Why:** in Mix it up, a player glancing at the card should know at once whether to talk, act or sing.
+
+- **Icons first:** color alone fails for color-blind players; the icon says it either way.
+- **Only theme colors with their own text color**, so the contrast check (ADR 0010) already covers every badge in every theme. Not success (green) or destructive (red): they mean Got it and Skip.
+
+### How to verify
+
+`pnpm test`: 453 tests. Stop the turn passing `modeLooks` to the card, and the Charades turn test fails. On a phone: Naija Charades in Mix it up.
+
+---
+
 ## Chapter summary
 
 | Step | What | SDK change? |
@@ -199,6 +220,7 @@ Follow CONTRIBUTING's "Add a variant" with a variant of your own, then run `pnpm
 | 7 | The home page lists variants first, then Make your own | |
 | 8 | Docs | |
 | 9 | Every new page starts at the top | |
+| 10 | Each Charades mode looks different | Yes: `FlashCard` `tone` and `icon` |
 
 **What we learned:**
 
@@ -206,4 +228,4 @@ Follow CONTRIBUTING's "Add a variant" with a variant of your own, then run `pnpm
 - A variant changes over time, so a variant's setup remembers only what players changed, and only for settings that are still open.
 - Removing a test file's neighbour with a "find the next `it(`" script also removed an `it.each` block. Counting tests after every step caught it.
 
-**Tests:** 451 runtime tests and 31 compile-time checks.
+**Tests:** 453 runtime tests and 31 compile-time checks.

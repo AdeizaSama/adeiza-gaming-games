@@ -12,7 +12,7 @@ Every team plays once a round. After the last round, the team with the most poin
 ## Modes
 
 - **Describe:** say anything but the words on the card.
-- **Mix it up:** each card says how to clue it. **Describe it**, **act it out** without words, or **sing or hum it**.
+- **Mix it up:** each card says how to clue it, with its own icon and color. **Describe it**, **act it out** without words, or **sing or hum it**.
 
 ## Points
 

@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 451 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
+**Counts:** 453 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -48,7 +48,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [defineGame](#definegame) | `src/sdk/game/defineGame.test.ts` | 12 | 6 |
 | [Settings and variants](#settings-and-variants) | `src/sdk/game/settings.test.ts` | 5 | |
 | [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 22 | |
-| [Charades views](#charades-views) | `src/games/charades/views/views.test.tsx` | 7 | |
+| [Charades views](#charades-views) | `src/games/charades/views/views.test.tsx` | 8 | |
 | [App](#app) | `src/app/App.test.tsx` | 10 | |
 | [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 6 | |
 | [Applying a theme](#applying-a-theme) | `src/app/theme/themes.test.tsx` | 4 | |
@@ -57,7 +57,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Theme parts](#theme-parts) | `src/app/theme/parts.test.ts` | 4 | |
 | [UI components](#ui-components) | `src/ui/ui.test.tsx` | 8 | |
 | [Game session](#game-session) | `src/sdk/game/useGameSession.test.ts` | 9 | |
-| [Interaction primitives](#interaction-primitives) | `src/sdk/interactions/interactions.test.tsx` | 9 | |
+| [Interaction primitives](#interaction-primitives) | `src/sdk/interactions/interactions.test.tsx` | 10 | |
 | [Summary and Leaderboard](#summary-and-leaderboard) | `src/sdk/interactions/summary.test.tsx` | 5 | |
 | [Review](#review) | `src/sdk/interactions/review.test.tsx` | 3 | |
 | [PromptCard](#promptcard) | `src/sdk/interactions/promptcard.test.tsx` | 3 | |
@@ -603,7 +603,8 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 278 | says how to clue the card in Mix it up, and nothing in Describe mode | Mode on the card | Gala, picked to be acted; in mix, then in describe | "Act it out"; then the card with no mode line | In Mix it up the card must say how to clue it; in Describe mode everything is described, so saying so is noise. |
+| 278 | says how to clue the card in Mix it up, with its icon and color, and nothing in Describe mode | Mode on the card | Gala, picked to be acted; in mix, then in describe | "Act it out" in the warning color with the person icon; then the card with no mode line | In Mix it up the card must say how to clue it; in Describe mode everything is described, so saying so is noise. |
+| 470 | gives each mode its own icon and color, none of them got-it green or skip red | `modeLooks` | The three modes | Three different icons and three different tones, none success or destructive | Players tell the modes apart at a glance, by icon as well as color, without confusing them with Got it or Skip. |
 | 279 | names each result, and marks a corrected card | `reviewRow` | Gala got; at time up; got then corrected | Got it (good); Not counted (neutral); Skipped (bad), changed | The words and colors players see in review come from the one `resultOf` rule. |
 | 280 | shows how the card was clued only in Mix it up, and a free skip as neutral | `reviewRow` | Gala acted, in mix; a skip with skip points 0 | Detail "Acted"; Skipped in neutral | The mode matters for scoring only in Mix it up; a skip that costs nothing shouldn't look like a loss. |
 | 283 | picks the mode, Describe to start with | Mode | Default settings; tap Mix it up | Describe picked; then Mix it up | Describe is the game most people know; one tap changes it. |
@@ -877,6 +878,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 199 | calls onTimeUp straight away if the time has already passed | Countdown | Ends at 5 s, shown at 10 s | Called once immediately | A turn whose time ran out while the phone was locked (or, from chapter 05, before a refresh) ends at once. |
 | 200 | turns to the warning color from warnAt seconds left | Countdown | Ends at 15 s, warn at 10; after 5 s | No warning class, then `text-warning` | Players see time running out without reading the number. |
 | 201 | vibrates when time runs out, on phones that can | Countdown | A phone with `vibrate`; ends at 1 s | `vibrate` called once | The team acting may not be looking at the screen. |
+| 469 | shows a toned hint as a badge in that color with its icon, and outlines the card in it; a plain hint stays plain | `FlashCard` `tone`, `icon` | Gala, "Sing or hum it", primary, music icon; then "Category" with no tone | A badge in primary with the music icon, the card outlined in primary; then muted text and no outline | Cards that are played differently look different; Name Ten's category card doesn't change. |
 
 ## Summary and Leaderboard
 

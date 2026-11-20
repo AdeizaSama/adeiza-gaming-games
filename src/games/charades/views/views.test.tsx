@@ -8,7 +8,7 @@ import { CharadesConfig } from '../config'
 import { machine, type CharadesEntry } from '../machine'
 import { reviewRow } from './ReviewView'
 import { SettingsView } from './SettingsView'
-import { TurnView } from './TurnView'
+import { modeLooks, TurnView } from './TurnView'
 
 const config = CharadesConfig.parse({ teams: ['Lions', 'Eagles'], packs: ['back-to-school'] })
 const gala = { text: 'Gala', tags: [], modes: ['describe', 'act'] as CharadesEntry['mode'][] }
@@ -23,9 +23,11 @@ describe('Charades TurnView', () => {
     return render(<TurnView context={context} send={() => {}} points={machine.points} />)
   }
 
-  it('says how to clue the card in Mix it up, and nothing in Describe mode', () => {
+  it('says how to clue the card in Mix it up, with its icon and color, and nothing in Describe mode', () => {
     const { unmount } = show('mix')
-    expect(screen.getByText('Act it out')).toBeDefined()
+    const badge = screen.getByText('Act it out')
+    expect(badge.className).toContain('bg-warning') // its mode's color and icon (modeLooks)
+    expect(badge.querySelector('.lucide-person-standing')).not.toBeNull()
     unmount()
 
     show('describe')
@@ -121,5 +123,14 @@ describe('Charades settings on a variant', () => {
     view([])
     expect(screen.queryByRole('radio')).toBeNull()
     expect(screen.queryByRole('button', { name: 'Advanced settings' })).toBeNull()
+  })
+})
+
+describe('Charades modes', () => {
+  it('gives each mode its own icon and color, none of them got-it green or skip red', () => {
+    const looks = Object.values(modeLooks)
+    expect(new Set(looks.map((look) => look.icon)).size).toBe(3)
+    expect(new Set(looks.map((look) => look.tone)).size).toBe(3)
+    for (const { tone } of looks) expect(['success', 'destructive']).not.toContain(tone)
   })
 })

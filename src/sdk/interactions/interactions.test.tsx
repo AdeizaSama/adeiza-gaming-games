@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { Music } from 'lucide-react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Countdown } from './Countdown'
 import { FlashCard, textSize } from './FlashCard'
@@ -52,6 +53,20 @@ describe('FlashCard', () => {
     expect(textSize('Supercalifragilistic')).toBe('text-2xl')
     render(<FlashCard text="Counterrevolution day" onGot={() => {}} onSkip={() => {}} />)
     expect(screen.getByText('Counterrevolution day').className).toContain('text-2xl')
+  })
+})
+
+describe('FlashCard tones', () => {
+  it('shows a toned hint as a badge in that color with its icon, and outlines the card in it; a plain hint stays plain', () => {
+    const { unmount } = render(<FlashCard text="Gala" hint="Sing or hum it" tone="primary" icon={Music} onGot={() => {}} onSkip={() => {}} />)
+    const badge = screen.getByText('Sing or hum it')
+    expect(badge.className).toContain('bg-primary text-primary-foreground')
+    expect(badge.querySelector('.lucide-music')).not.toBeNull()
+    expect(screen.getByText('Gala').closest('[data-feature]')!.className).toContain('border-primary')
+    unmount()
+    render(<FlashCard text="Gala" hint="Category" onGot={() => {}} onSkip={() => {}} />)
+    expect(screen.getByText('Category').className).toContain('text-muted-foreground')
+    expect(screen.getByText('Gala').closest('[data-feature]')!.className).not.toContain('border-line')
   })
 })
 
