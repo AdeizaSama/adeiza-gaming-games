@@ -175,6 +175,17 @@ Follow CONTRIBUTING's "Add a variant" with a variant of your own, then run `pnpm
 
 ---
 
+## Step 9: Every new page starts at the top
+
+**What:** `ScrollToTop` in `App.tsx` scrolls to the top whenever the address changes by a link or a button. Going back (the browser's Back, a "POP") is left alone.
+
+**Why:** a single-page app keeps the window's scroll position across pages. With the home page now longer, tapping a game under "Make your own" opened its setup halfway down.
+
+### How to verify
+
+`pnpm test src/app/App.test.tsx`: the scroll test. On a phone, scroll the home page down, tap a game: its setup starts at the top.
+---
+
 ## Chapter summary
 
 | Step | What | SDK change? |
@@ -187,6 +198,7 @@ Follow CONTRIBUTING's "Add a variant" with a variant of your own, then run `pnpm
 | 6 | The first four variants; This or That folded into Trivia Night | |
 | 7 | The home page lists variants first, then Make your own | |
 | 8 | Docs | |
+| 9 | Every new page starts at the top | |
 
 **What we learned:**
 
@@ -194,4 +206,4 @@ Follow CONTRIBUTING's "Add a variant" with a variant of your own, then run `pnpm
 - A variant changes over time, so a variant's setup remembers only what players changed, and only for settings that are still open.
 - Removing a test file's neighbour with a "find the next `it(`" script also removed an `it.each` block. Counting tests after every step caught it.
 
-**Tests:** 450 runtime tests and 31 compile-time checks.
+**Tests:** 451 runtime tests and 31 compile-time checks.

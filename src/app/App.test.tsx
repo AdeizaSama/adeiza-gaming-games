@@ -2,7 +2,7 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import App from './App'
 import { gameIcons } from './library/gameIcon'
 import { games } from './registry'
@@ -94,6 +94,16 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: 'Page not found' })).toBeDefined()
     await user.click(screen.getByRole('link', { name: 'Back to games' }))
     expect(screen.getByRole('heading', { name: 'Ku Zo Wasa' })).toBeDefined()
+  })
+
+  it('starts each new page at the top, but leaves the first page and going back alone', async () => {
+    const user = userEvent.setup()
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+    renderAt('/')
+    expect(scrollTo).not.toHaveBeenCalled()
+    await user.click(makeYourOwn().getByRole('link', { name: /Charades/ }))
+    expect(scrollTo).toHaveBeenCalledWith(0, 0)
+    scrollTo.mockRestore()
   })
 
   it('has an icon for every game in the registry', () => {
