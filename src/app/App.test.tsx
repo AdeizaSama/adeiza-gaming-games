@@ -57,21 +57,7 @@ describe('App', () => {
     expect(screen.getByRole('radio', { name: /Against the clock/ })).toBeDefined()
     expect(screen.getByRole('group', { name: 'Questions per turn' })).toBeDefined()
     expect(within(screen.getByRole('group', { name: 'Turn length' })).getByText('30 seconds')).toBeDefined()
-    expect(screen.getByText('148 items to play')).toBeDefined()
-  })
-
-  it('lists This or That too, with its own icon, defaults and pack', async () => {
-    const user = userEvent.setup()
-    renderAt('/')
-    const game = screen.getByRole('link', { name: /This or That/ })
-    expect(game.getAttribute('href')).toBe('/this-or-that')
-    expect(game.querySelector('.lucide-arrow-left-right')).not.toBeNull()
-
-    await user.click(game)
-    expect(screen.getByRole('heading', { level: 1, name: 'This or That' })).toBeDefined()
-    expect(within(screen.getByRole('group', { name: 'Questions per turn' })).getByText('10')).toBeDefined()
-    expect(screen.getByRole<HTMLInputElement>('radio', { name: /A to Z/ }).checked).toBe(true)
-    expect(screen.getByText('282 items to play')).toBeDefined()
+    expect(screen.getByText('430 items to play')).toBeDefined() // every pack, Masculin ou féminin ? included
   })
 
   it.each(['/chess', '/charades/nope', '/charades/nope/extra'])('says "Page not found" at %s, with a way back', async (address) => {

@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 453 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
+**Counts:** 447 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -27,17 +27,13 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Name Ten machine](#name-ten-machine) | `src/games/name-ten/machine.test.ts` | 15 | |
 | [Name Ten views](#name-ten-views) | `src/games/name-ten/views/views.test.tsx` | 8 | |
 | [Name Ten game](#name-ten-game) | `src/games/name-ten/game.test.ts` | 1 | |
-| [Trivia Night content](#trivia-night-content) | `src/games/trivia-night/schema.test.ts` | 6 | |
+| [Trivia Night content](#trivia-night-content) | `src/games/trivia-night/schema.test.ts` | 8 | |
 | [Trivia Night settings](#trivia-night-settings) | `src/games/trivia-night/config.test.ts` | 2 | |
 | [Choice turn settings](#choice-turn-settings) | `src/sdk/formats/team-turns/choice/config.test.ts` | 1 | |
 | [Choice turn machine](#choice-turn-machine) | `src/sdk/formats/team-turns/choice/machine.test.ts` | 12 | |
 | [Choice turn views](#choice-turn-views) | `src/sdk/formats/team-turns/choice/views.test.tsx` | 9 | |
 | [Trivia Night machine](#trivia-night-machine) | `src/games/trivia-night/machine.test.ts` | 2 | |
-| [Trivia Night game](#trivia-night-game) | `src/games/trivia-night/game.test.ts` | 1 | |
-| [This or That content](#this-or-that-content) | `src/games/this-or-that/schema.test.ts` | 4 | |
-| [This or That settings](#this-or-that-settings) | `src/games/this-or-that/config.test.ts` | 1 | |
-| [This or That machine](#this-or-that-machine) | `src/games/this-or-that/machine.test.ts` | 2 | |
-| [This or That game](#this-or-that-game) | `src/games/this-or-that/game.test.ts` | 1 | |
+| [Trivia Night game](#trivia-night-game) | `src/games/trivia-night/game.test.ts` | 2 | |
 | [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
 | [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 9 | |
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
@@ -53,7 +49,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Settings and variants](#settings-and-variants) | `src/sdk/game/settings.test.ts` | 5 | |
 | [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 22 | |
 | [Charades views](#charades-views) | `src/games/charades/views/views.test.tsx` | 7 | |
-| [App](#app) | `src/app/App.test.tsx` | 8 | |
+| [App](#app) | `src/app/App.test.tsx` | 7 | |
 | [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 6 | |
 | [Applying a theme](#applying-a-theme) | `src/app/theme/themes.test.tsx` | 4 | |
 | [Bundled fonts](#bundled-fonts) | `src/app/theme/fonts.test.ts` | 2 | |
@@ -694,6 +690,8 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 429 | takes an optional subtitle of up to 100 characters | `subtitle` | "Hint: not Lagos"; 101 characters; a blank | Kept; problems at `subtitle` twice | Optional, short, and never empty. |
 | 399 | names a question by its wording | `itemKey` | The question | Its wording | Two packs with the same question play it once. |
 | 400 | ships a valid Back to School pack, every question tagged with its subject | The shipped pack | `content/*.json` | Back to School loads, with at least 100 questions, each with exactly one of maths, science, social-studies, entertainment, general | Players filter by subject. |
+| 437 | ships Masculin ou féminin ?: French words, each with its meaning, the same two options, and both answers often | The Masculin ou féminin ? pack | `content/*.json` | Named "Masculin ou féminin ?", in French, at least 200 words, each with Masculin and Féminin, a subtitle, and tagged noun or adjective; between 40% and 60% féminin | A pack where one answer wins most of the time teaches nothing. |
+| 438 | never shows an article in Masculin ou féminin ?, which would give the answer away | The Masculin ou féminin ? pack | Every question | None starts with le, la, les, un, une or l' | "la chaise" answers its own question. |
 
 ## Trivia Night settings
 
@@ -763,42 +761,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 421 | is a valid game with the Back to School pack, its settings and one view for turn and result | `index.ts` | The game's default export | Id `trivia-night`; Back to School; its machine and settings; `TurnView` for `turn` and `reveal`; rules with "## Ways to play" | `defineGame` checked the parts when the file loaded; this checks Trivia Night wired its own parts in. |
-
-## This or That content
-
-`src/games/this-or-that/schema.test.ts`, testing `src/games/this-or-that/schema.ts` and its packs (ADR 0017). The question in the schema tests is chaise (chair), Masculin or Féminin; the answer is Féminin.
-
-| # | Test | Feature | Input | Expected output | Why |
-|---|---|---|---|---|---|
-| 435 | needs a question with exactly two options and the answer, filling in no tags | Item schema | The question; with a third option, Neutre; with one option | The same with `tags: []`; a problem at `options` each time | This or That is one or the other. |
-| 436 | uses the SDK's rules for the rest: the answer is an option, the subtitle is optional | `choiceFields`, `checkAnswer` | Answer Neutre; no subtitle; the key | A problem at `answer`; passes; `chaise` | The game shares Trivia Night's rules for a question. |
-| 437 | ships Masculin ou féminin ?: French words, each with its meaning, the same two options, and both answers often | The shipped pack | `content/*.json` | Named "Masculin ou féminin ?", in French, at least 200 words, each with Masculin and Féminin, a subtitle, and tagged noun or adjective; between 40% and 60% féminin | A pack where one answer wins most of the time teaches nothing. |
-| 438 | never shows an article, which would give the answer away | The shipped pack | Every question | None starts with le, la, les, un, une or l' | "la chaise" answers its own question. |
-
-## This or That settings
-
-`src/games/this-or-that/config.test.ts`, testing `src/games/this-or-that/config.ts` (ADR 0017).
-
-| # | Test | Feature | Input | Expected output | Why |
-|---|---|---|---|---|---|
-| 439 | plays ten questions a 60-second turn for 1 point, options A to Z, unless asked | Defaults | Teams Lions and Eagles, the Masculin ou féminin ? pack | 3 rounds, 60 seconds, no tags, 10 questions, 1 point, A to Z | A sorting game keeps each answer in the same place. |
-
-## This or That machine
-
-`src/games/this-or-that/machine.test.ts`, testing `src/games/this-or-that/machine.ts`: the choice turn on This or That's questions, with the real settings and pack.
-
-| # | Test | Feature | Input | Expected output | Why |
-|---|---|---|---|---|---|
-| 440 | has no mistakes validateMachine can find | Machine | The machine | No mistakes | Every phase, guard and action it names exists. |
-| 441 | plays a full game of ten words a turn, Féminin always on the left, from the first handoff to the results | Whole game | Seed 2026; 6 turns of 10 words, each answered right | Féminin, Masculin on every word; the summary after the tenth; final, 30 points each | The defaults play end to end on the real pack. |
-
-## This or That game
-
-`src/games/this-or-that/game.test.ts`, testing `src/games/this-or-that/index.ts`.
-
-| # | Test | Feature | Input | Expected output | Why |
-|---|---|---|---|---|---|
-| 442 | is a valid game with Masculin ou féminin ? and the choice turn's views | `index.ts` | The game's default export | Id `this-or-that`; the pack; its machine and settings; one view for `turn` and `reveal`; rules with "## Ways to play" | This or That wired its own parts in. |
+| 464 | has Back to School Trivia, and Masculin ou féminin ?: ten words a minute, A to Z, Set questions only | Variants | The game's variants | `back-to-school` and `masculin-feminin`; the French one plays 10 questions, 60 s, A to Z, on its own pack, with mode closed | The variant the home page lists plays the way it's meant to (ADR 0018). |
 
 ## App
 
@@ -808,8 +771,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 |---|---|---|---|---|---|
 | 180 | shows the library at /, and a game opens at its own address | Library, routing | Start at `/`; tap Charades | Heading Ku Zo Wasa; a Charades link to `/charades` showing "2–20 players"; after the tap, Charades' setup screen | The library lists the registry's games, and each link reaches its game. |
 | 372 | lists Name Ten too, with its own icon, players and setup | Library, registry | Open `/`; tap Name Ten | A link to `/name-ten` with its tagline and the list-checks icon; then Name Ten's setup, with "Answers on the board" and "38 items to play" | A game added to the registry appears in the library and gets the shared setup screen with its own settings. |
-| 422 | lists Trivia Night too, with its own icon and setup | Library, registry | Open `/`; tap Trivia Night | A link to `/trivia-night` with the lightbulb icon; then its setup, with an Against the clock preset, Questions per turn, a 30-second turn and "148 items to play" | The third game reaches the library and the shared setup, with its own default turn length. |
-| 443 | lists This or That too, with its own icon, defaults and pack | Library, registry | Open `/`; tap This or That | A link to `/this-or-that` with the arrow-left-right icon; then its setup, with 10 questions per turn, A to Z checked and "282 items to play" | The fourth game reaches the library with its own defaults. |
+| 422 | lists Trivia Night too, with its own icon and setup | Library, registry | Open `/`; tap Trivia Night | A link to `/trivia-night` with the lightbulb icon; then its setup, with Against the clock, Questions per turn, a 30-second turn and "430 items to play" (every pack, the French one included) | The third game reaches the library and the shared setup, with its own default turn length. |
 | 214, 215, 460 | says "Page not found" at /chess, /charades/nope and /charades/nope/extra, with a way back | Not-found page | A game that doesn't exist; a variant that doesn't exist; an address with too many parts | "Page not found"; Back to games returns to the library | A mistyped or old link never shows a blank page. Runs once per address (`it.each`). |
 | 216 | has an icon for every game in the registry | `gameIcons` | Every registered game's `meta.icon` | Listed in `gameIcons` | An unlisted icon would quietly show the fallback controller. |
 

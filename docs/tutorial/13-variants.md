@@ -113,3 +113,36 @@ A variant can change after players used it: a new turn length, or a setting clos
 ### How to verify
 
 `pnpm test`: 453 tests. Show the packs on a variant's setup, and the variant setup test fails.
+
+---
+
+## Step 6: The first variants, and This or That folded into Trivia Night
+
+**What:**
+
+- Four variant files:
+
+  | File | Name | Open |
+  |---|---|---|
+  | `charades/variants/naija-back-to-school.json` | Naija Charades (Back to School Edition) | rounds, seconds, mode |
+  | `name-ten/variants/back-to-school.json` | Name Ten (Back to School Edition) | rounds, seconds |
+  | `trivia-night/variants/back-to-school.json` | Back to School Trivia | rounds, seconds, mode, questions |
+  | `trivia-night/variants/masculin-feminin.json` | Masculin ou féminin ? | rounds, seconds, questions |
+
+- Each game's `index.ts` loads them: `variants: loadVariants(import.meta.glob('./variants/*.json', …))`.
+- The Masculin ou féminin ? pack moves to `trivia-night/content/`, with its two tests. Its variant sets ten questions, 60 seconds and A to Z, and leaves the mode closed.
+- `src/games/this-or-that/` and its schema go, and the registry lists three games.
+
+**Why:** these are what the home page will list. This or That was always Trivia Night with other content and defaults: a variant.
+
+### Two variants with the same id
+
+Name Ten's and Trivia Night's Back to School variants are both `back-to-school`. That's fine: a variant's address includes its game (`/name-ten/back-to-school`), so ids only need to be unique within a game.
+
+### A game's own setup offers every pack
+
+Trivia Night's "Make your own" setup now starts with both packs ticked, so school questions and French words mix until players untick one. That's how every game's own setup has always worked (all packs ticked).
+
+### How to verify
+
+`pnpm validate-content` lists the four variants. `pnpm test`: 447 tests. Take `variants` out of Trivia Night's `index.ts`, and its game test fails.

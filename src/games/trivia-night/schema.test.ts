@@ -39,6 +39,27 @@ describe('Trivia Night item schema', () => {
 })
 
 describe('Trivia Night content', () => {
+  const packs = loadPacks(import.meta.glob('./content/*.json', { eager: true, import: 'default' }), itemSchema, itemKey)
+  const french = packs.find((candidate) => candidate.id === 'masculin-feminin')!
+
+  it('ships Masculin ou féminin ?: French words, each with its meaning, the same two options, and both answers often', () => {
+    expect(french.name).toBe('Masculin ou féminin ?')
+    expect(french.language).toBe('fr')
+    expect(french.items.length).toBeGreaterThanOrEqual(200)
+    for (const item of french.items) {
+      expect(item.options, item.question).toEqual(['Masculin', 'Féminin'])
+      expect(item.subtitle, item.question).toBeDefined()
+      expect(item.tags.filter((tag) => tag === 'noun' || tag === 'adjective'), item.question).toHaveLength(1)
+    }
+    const feminine = french.items.filter((item) => item.answer === 'Féminin').length / french.items.length
+    expect(feminine).toBeGreaterThan(0.4)
+    expect(feminine).toBeLessThan(0.6)
+  })
+
+  it('never shows an article in Masculin ou féminin ?, which would give the answer away', () => {
+    for (const item of french.items) expect(item.question, item.question).not.toMatch(/^((le|la|les|un|une) |l')/i)
+  })
+
   it('ships a valid Back to School pack, every question tagged with its subject', () => {
     const packs = loadPacks(import.meta.glob('./content/*.json', { eager: true, import: 'default' }), itemSchema, itemKey)
     const pack = packs.find((candidate) => candidate.id === 'back-to-school')!

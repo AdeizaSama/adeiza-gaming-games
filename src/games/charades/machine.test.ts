@@ -44,6 +44,7 @@ describe('Charades game definition', () => {
   it('is a valid game with the Back to School pack and its own settings', () => {
     expect(charades.meta.id).toBe('charades')
     expect(charades.content.packs.map((pack) => pack.id)).toContain('back-to-school')
+    expect(charades.variants.map((variant) => variant.id)).toEqual(['naija-back-to-school'])
     expect(charades.machine).toBe(machine)
     expect(charades.config.schema).toBe(CharadesConfig)
   })

@@ -1,0 +1,9 @@
+{
+  "$schema": "../../../../schemas/variant.schema.json",
+  "id": "naija-back-to-school",
+  "name": "Naija Charades (Back to School Edition)",
+  "tagline": "Nigerian school days, described, acted and sung.",
+  "packs": ["back-to-school"],
+  "open": ["rounds", "seconds", "mode"],
+  "contributors": ["AdeizaSama"]
+}

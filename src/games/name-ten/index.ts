@@ -1,4 +1,5 @@
 import { loadPacks } from '../../sdk/content/loadPacks'
+import { loadVariants } from '../../sdk/content/variant'
 import { defineGame } from '../../sdk/game/defineGame'
 import { NameTenConfig } from './config'
 import { machine } from './machine'
@@ -33,6 +34,8 @@ export default defineGame({
     view: SettingsView,
   },
   rules,
+  // The ways to play it on the home page (ADR 0018), one JSON file each.
+  variants: loadVariants(import.meta.glob('./variants/*.json', { eager: true, import: 'default' })),
   machine,
   // The handoff is Name Ten's own: the phone goes to a judge, not to the team playing (ADR 0012). The category comes
   // before the turn (ADR 0014).

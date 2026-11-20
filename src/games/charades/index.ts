@@ -1,4 +1,5 @@
 import { loadPacks } from '../../sdk/content/loadPacks'
+import { loadVariants } from '../../sdk/content/variant'
 import { defineGame } from '../../sdk/game/defineGame'
 import { CharadesConfig } from './config'
 import { machine } from './machine'
@@ -31,6 +32,8 @@ export default defineGame({
     view: SettingsView,
   },
   rules,
+  // The ways to play it on the home page (ADR 0018), one JSON file each.
+  variants: loadVariants(import.meta.glob('./variants/*.json', { eager: true, import: 'default' })),
   machine,
   // handoff, turn_summary and results use the format's views. Review lists the cards, so the summary needn't.
   views: { turn: TurnView, review: ReviewView },

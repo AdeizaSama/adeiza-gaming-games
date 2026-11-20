@@ -1,6 +1,5 @@
 import charades from '../../games/charades'
 import nameTen from '../../games/name-ten'
-import thisOrThat from '../../games/this-or-that'
 import triviaNight from '../../games/trivia-night'
 import type { Game } from '../../sdk/game/defineGame'
 
@@ -20,7 +19,7 @@ export type AnyGame = Game<any, any, any, any, any, any, any, any>
  * Every game players can pick. The only place in the app that imports games (standard §9): to add a game, import
  * its definition here and add it to the list.
  */
-export const games: readonly AnyGame[] = [charades, nameTen, triviaNight, thisOrThat]
+export const games: readonly AnyGame[] = [charades, nameTen, triviaNight]
 
 /** The game with this id (the first part of its URL, e.g. `/charades`), or `undefined` if there's none. */
 export function findGame(id: string | undefined): AnyGame | undefined {
