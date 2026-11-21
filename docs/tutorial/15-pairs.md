@@ -45,3 +45,15 @@ One thing an article can't do: "l'école" doesn't show that école is feminine. 
 ### How to verify
 
 `pnpm test src/games/pairs/schema.test.ts`: 3 tests. `pnpm validate-content` lists both packs.
+
+---
+
+## Step 3: Settings
+
+**What:** `src/games/pairs/config.ts`: the format's settings plus `play` (`flip`, `match`, `odd`; default flip), `twoWay` (default true) and `cards` (1–50 a turn, default 10).
+
+**Why:** a variant picks the way to play and says which kind of pack it has; `cards` is the turn's length, as `questions` is Trivia Night's.
+
+### How to verify
+
+`pnpm test src/games/pairs/config.test.ts`.

@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 467 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
+**Counts:** 468 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -35,6 +35,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Trivia Night machine](#trivia-night-machine) | `src/games/trivia-night/machine.test.ts` | 2 | |
 | [Trivia Night game](#trivia-night-game) | `src/games/trivia-night/game.test.ts` | 2 | |
 | [Pairs content](#pairs-content) | `src/games/pairs/schema.test.ts` | 3 | |
+| [Pairs settings](#pairs-settings) | `src/games/pairs/config.test.ts` | 1 | |
 | [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
 | [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 9 | |
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
@@ -780,6 +781,14 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 482 | needs a front and a back of at most 60 characters, filling in no tags, and rejects an unknown field | Item schema | le chat / cat; a blank front and a 61-character back; an extra field; the key | Tags filled in; problems at `front` and `back`; one problem; `le chat` | A pair is two short sides. |
 | 483 | ships Français–anglais: two-way, every English meaning one word's, every noun with its article | The two-way pack | `francais-anglais` | At least 150 pairs; no English meaning twice; every front starts with le, la or l' | Match-up marks a tile right only if it's one word's partner; the article teaches the gender. |
 | 484 | ships Les thèmes: one-way, every theme with at least 7 words, so odd-one-out always has a full group | The one-way pack | `les-themes` | At least 5 themes, each with 7 or more words | An odd-one-out round is 7 words of a group and 3 from others. |
+
+## Pairs settings
+
+`src/games/pairs/config.test.ts`, testing `src/games/pairs/config.ts` (ADR 0020).
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 485 | plays two-way flip cards, ten a 60-second turn, unless asked, and takes 1 to 50 cards and the three ways to play | Defaults, limits | The least settings; odd, one-way, 50; 0 and 51 cards, `snap`, `"yes"`; one player in Free Play | flip, two-way, 10, 60 s; kept; each refused; accepted | The three ways to play are one setting, and Free Play works as for any team-turns game. |
 
 ## App
 
