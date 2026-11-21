@@ -142,4 +142,38 @@ As in Trivia Night, the clock is hidden on the result of the turn's last round, 
 
 ### How to verify
 
-`pnpm test`: 491 tests. `pnpm dev --host`, and play each of the three on a phone.
+`pnpm test`: 489 tests. `pnpm dev --host`, and play each of the three on a phone.
+
+---
+
+## Step 9: Docs
+
+**What:** the standard's §1, §7 and §8 (Pairs as the fifth v1 game, with its item and primitives); README's status and games table; CONTRIBUTING points vocabulary lists at Pairs.
+
+### How to verify
+
+Read Pairs' README as someone adding a vocabulary pack.
+
+---
+
+## Chapter summary
+
+| Step | What | SDK change? |
+|---|---|---|
+| 1 | ADR 0020: Pairs | |
+| 2 | Pairs, and two French packs | |
+| 3 | Settings | |
+| 4 | The flip card | Yes: `FlipCard` |
+| 5 | Picking several tiles | Yes: `PickCard` |
+| 6 | One machine, three ways to play | |
+| 7 | The views | |
+| 8 | The game, three variants, registered | |
+| 9 | Docs | |
+
+**What we learned:**
+
+- With variants and Free Play in place, a game built around them is mostly content: three ways to play, three variant files, two packs.
+- A content rule can be about a whole pack, not one item: "no English meaning twice" and "seven words a theme". They're checked by the game's content tests, and written in its README.
+- A view only sees the context, so anything on screen (a flipped card) has to be in it, even when the phase already says so.
+
+**Tests:** 489 runtime tests and 31 compile-time checks.
