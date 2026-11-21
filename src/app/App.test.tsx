@@ -29,9 +29,12 @@ describe('App', () => {
       ['Name Ten (Back to School Edition)', '/name-ten/back-to-school'],
       ['Back to School Trivia', '/trivia-night/back-to-school'],
       ['Masculin ou féminin ?', '/trivia-night/masculin-feminin'],
+      ['French Flash Cards', '/pairs/french-flash-cards'],
+      ['French Match-Up', '/pairs/french-match-up'],
+      ["L'intrus", '/pairs/l-intrus'],
     ])
     expect(ways[0].textContent).toContain('Charades · 2–20 players')
-    expect(makeYourOwn().getAllByRole('link').map((link) => link.getAttribute('href'))).toEqual(['/charades', '/name-ten', '/trivia-night'])
+    expect(makeYourOwn().getAllByRole('link').map((link) => link.getAttribute('href'))).toEqual(['/charades', '/name-ten', '/trivia-night', '/pairs'])
   })
 
   it('opens a variant’s setup: Masculin ou féminin ? asks for teams, rounds, turn length and words a turn, nothing else', async () => {

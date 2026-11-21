@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 486 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
+**Counts:** 489 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -38,6 +38,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Pairs settings](#pairs-settings) | `src/games/pairs/config.test.ts` | 1 | |
 | [Pairs machine](#pairs-machine) | `src/games/pairs/machine.test.ts` | 10 | |
 | [Pairs views](#pairs-views) | `src/games/pairs/views/views.test.tsx` | 5 | |
+| [Pairs game](#pairs-game) | `src/games/pairs/game.test.ts` | 2 | |
 | [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
 | [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 9 | |
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
@@ -74,6 +75,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Team-turns views](#team-turns-views) | `src/sdk/formats/team-turns/views/views.test.tsx` | 5 | |
 | [Game screen](#game-screen) | `src/app/play/GameScreen.test.tsx` | 3 | |
 | [Playing Name Ten](#playing-name-ten) | `src/app/play/nameTen.test.tsx` | 1 | |
+| [Playing Pairs](#playing-pairs) | `src/app/play/pairs.test.tsx` | 1 | |
 | [Playing Trivia Night](#playing-trivia-night) | `src/app/play/triviaNight.test.tsx` | 2 | |
 | [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 14 | |
 | [Variant setup](#variant-setup) | `src/app/setup/variantSetup.test.tsx` | 5 | |
@@ -823,13 +825,22 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 502 | picks the way to play, both ways, and cards a turn, and shows only open ones on a variant | Settings view | Tap Odd one out and Either side first; then only cards open | Both set, 10 cards a turn; then only the cards stepper | Each setting can be set; a variant shows its open ones (ADR 0018). |
 | 503 | Free Play: 10, 20 or 50 cards, starting at 10 with no clock | Free Play view | The Free Play start; tap 50 cards | 10 cards, no timer; 10 checked; then 50 | Free Play's length (ADR 0019). |
 
+## Pairs game
+
+`src/games/pairs/game.test.ts`, testing `src/games/pairs/index.ts` and its variants (ADR 0020).
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 504 | is a valid game with both French packs, its settings and Free Play, and one view for card and answer | `index.ts` | The game's default export | Id `pairs`; Français–anglais and Les thèmes; its machine, settings and Free Play; one view for `turn` and `reveal`; rules with "## Odd one out" | `defineGame` checked the parts; this checks Pairs wired its own in. |
+| 505 | has a variant for each way to play, each on the pack that suits it, and each with Free Play | Variants | Each variant's settings | French Flash Cards: flip, two-way, Français–anglais; French Match-Up: match, two-way, the same; L'intrus: odd, one-way, Les thèmes; all Free Play | Match-up needs a two-way pack and odd-one-out a one-way one (ADR 0020). |
+
 ## App
 
 `src/app/App.test.tsx`, testing the pages in `src/app/` and which address shows which. Screen tests (happy-dom), each starting the app at an address with a `MemoryRouter`.
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 465 | shows the variants first at /, then Make your own with each game | Home page | Start at `/` | Ways to play: Naija Charades, Name Ten, Back to School Trivia, Masculin ou féminin ?, each linking to `/:gameId/:variantId`, the first saying "Charades · 2–20 players"; Make your own: `/charades`, `/name-ten`, `/trivia-night` | Players pick a way to play first; the full setup is one section down (ADR 0018). |
+| 465 | shows the variants first at /, then Make your own with each game | Home page | Start at `/` | Ways to play: Naija Charades, Name Ten, Back to School Trivia, Masculin ou féminin ?, French Flash Cards, French Match-Up, L'intrus, each linking to `/:gameId/:variantId`, the first saying "Charades · 2–20 players"; Make your own: `/charades`, `/name-ten`, `/trivia-night`, `/pairs` | Players pick a way to play first; the full setup is one section down (ADR 0018). |
 | 466 | opens a variant's setup: Masculin ou féminin ? asks for teams, rounds, turn length and words a turn, nothing else | Variant setup | Tap Masculin ou féminin ? | Its heading; 10 questions a turn; 60 seconds; no mode or order choice; no packs; "282 items to play" | The variant's open settings are the only ones shown. |
 | 180 | shows a game at its own address, from Make your own | Library, routing | Start at `/`; tap Charades in Make your own | A link to `/charades` showing "2–20 players"; after the tap, Charades' setup screen | Each game's own setup is still one tap away. |
 | 372 | lists Name Ten too, with its own icon, players and setup | Library, registry | Open `/`; tap Name Ten in Make your own | A link to `/name-ten` with its tagline and the list-checks icon; then Name Ten's setup, with "Answers on the board" and "38 items to play" | A game added to the registry appears in the library and gets the shared setup screen with its own settings. |
@@ -1052,6 +1063,14 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 373 | goes from setup to a judge, a board, review and the summary, by tapping | Name Ten, end to end | Start; Start; Skip; Play this; tick two answers; End turn early; Adjust; tick a third; Done | "Hand the phone to a judge from" Team 2, "Team 1 are up · Round 1 of 3"; after Skip "2 skips left" and a different category; ten answers, "2 of 10"; review in answers' words; the summary says 3, with scores so far Team 1: 3, Team 2: 0 | Every Name Ten screen in order, through the shared setup, save and play pages. |
+
+## Playing Pairs
+
+`src/app/play/pairs.test.tsx`, the whole app at `/pairs/l-intrus` with nothing saved (ADR 0020). The test knows each word's theme from the Les thèmes pack, through the registry.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 506 | plays L'intrus alone: ten sets, picking the three that don't belong each time, then the score | Pairs, Free Play, end to end | Free Play; Start; in each set, tap the tiles not in the group, Check, go on | "Set 1 of 10" to "10 of 10", "3 of 3 right" every time; then "Your score" 30 | Odd-one-out from setup to the score, through the real app. |
 
 ## Playing Trivia Night
 

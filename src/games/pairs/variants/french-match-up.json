@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../../schemas/variant.schema.json",
+  "id": "french-match-up",
+  "name": "French Match-Up",
+  "tagline": "Three words, ten tiles: find their partners.",
+  "packs": ["francais-anglais"],
+  "settings": { "play": "match", "twoWay": true },
+  "open": ["rounds", "seconds", "cards"],
+  "freePlay": true,
+  "contributors": ["AdeizaSama"]
+}

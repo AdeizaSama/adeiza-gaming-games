@@ -131,3 +131,15 @@ As in Trivia Night, the clock is hidden on the result of the turn's last round, 
 ### How to verify
 
 `pnpm test src/games/pairs`: 19 tests. Never show the card flipped, and the flip view test fails.
+
+---
+
+## Step 8: The game, its variants, registered
+
+**What:** `src/games/pairs/index.ts` (with `config.freePlay`), `rules.md`, `README.md`, three variants (French Flash Cards, French Match-Up, L'intrus, all with Free Play), the registry, the `layers` icon, and tests: the definition, the variants, the home page, and L'intrus played alone through the real app.
+
+**Why:** each way to play is a variant, so the home page offers all three, and "Make your own" opens Pairs' full setup.
+
+### How to verify
+
+`pnpm test`: 491 tests. `pnpm dev --host`, and play each of the three on a phone.
