@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 468 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
+**Counts:** 469 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -64,6 +64,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Review](#review) | `src/sdk/interactions/review.test.tsx` | 3 | |
 | [PromptCard](#promptcard) | `src/sdk/interactions/promptcard.test.tsx` | 3 | |
 | [MultipleChoice](#multiplechoice) | `src/sdk/interactions/multiplechoice.test.tsx` | 6 | |
+| [FlipCard](#flipcard) | `src/sdk/interactions/flipcard.test.tsx` | 1 | |
 | [A pause after time runs out](#a-pause-after-time-runs-out) | `src/sdk/interactions/settle.test.tsx` | 3 | |
 | [Markdown](#markdown) | `src/sdk/interactions/markdown.test.ts` | 5 | |
 | [Instruction](#instruction) | `src/sdk/interactions/instruction.test.tsx` | 3 | |
@@ -950,6 +951,14 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 425 | is false for the delay after the component first shows, then true; with no delay, true at once | `useSettled` | Shown; after 1999 ms; after 2000 ms; with 0 | false, false, true; true | The pause ends exactly when set, and a delay of 0 means none. |
 | 426 | keeps the turn summary's Next off for 2 seconds | `Summary` | Shown; after 2 s | Next off; then on | A tap aimed at the last second of a turn doesn't skip the score. |
 | 427 | keeps review's Adjust and Done off for 2 seconds | `Review` | One row; shown; after 2 s | Adjust and Done off; then on | A late tap doesn't count a turn before it's checked. |
+
+## FlipCard
+
+`src/sdk/interactions/flipcard.test.tsx`, testing `src/sdk/interactions/FlipCard.tsx` (ADR 0020). A screen test (happy-dom); the machine's part (whether it's flipped) is a bit of state.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 486 | shows the front and Show the answer; after the flip, the back, Not yet and Knew it | `FlipCard` | le chat / cat; tap Show the answer, Not yet, Knew it | The label and le chat on the theme's card, no cat, no marking buttons; then cat, no Show the answer; each marking reported once | The answer stays hidden until players have had a go. |
 
 ## Review
 

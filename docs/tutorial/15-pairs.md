@@ -57,3 +57,17 @@ One thing an article can't do: "l'école" doesn't show that école is feminine. 
 ### How to verify
 
 `pnpm test src/games/pairs/config.test.ts`.
+
+---
+
+## Step 4: The flip card
+
+**What:** `src/sdk/interactions/FlipCard.tsx` and its test; the standard's §6 lists it.
+
+**Why:** flash cards work because players try before they see the answer, then mark themselves honestly.
+
+`flipped` is a prop, not the card's own state: the machine keeps it (a `reveal` phase), so a refresh in the middle of a card shows the same thing, as everywhere else in the app (ADR 0006).
+
+### How to verify
+
+`pnpm test src/sdk/interactions/flipcard.test.tsx`. Show the back before the flip, and the test fails.
