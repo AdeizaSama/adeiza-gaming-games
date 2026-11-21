@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 464 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
+**Counts:** 489 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -34,6 +34,11 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Choice turn views](#choice-turn-views) | `src/sdk/formats/team-turns/choice/views.test.tsx` | 11 | |
 | [Trivia Night machine](#trivia-night-machine) | `src/games/trivia-night/machine.test.ts` | 2 | |
 | [Trivia Night game](#trivia-night-game) | `src/games/trivia-night/game.test.ts` | 2 | |
+| [Pairs content](#pairs-content) | `src/games/pairs/schema.test.ts` | 3 | |
+| [Pairs settings](#pairs-settings) | `src/games/pairs/config.test.ts` | 1 | |
+| [Pairs machine](#pairs-machine) | `src/games/pairs/machine.test.ts` | 10 | |
+| [Pairs views](#pairs-views) | `src/games/pairs/views/views.test.tsx` | 5 | |
+| [Pairs game](#pairs-game) | `src/games/pairs/game.test.ts` | 2 | |
 | [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
 | [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 9 | |
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
@@ -62,12 +67,15 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Review](#review) | `src/sdk/interactions/review.test.tsx` | 3 | |
 | [PromptCard](#promptcard) | `src/sdk/interactions/promptcard.test.tsx` | 3 | |
 | [MultipleChoice](#multiplechoice) | `src/sdk/interactions/multiplechoice.test.tsx` | 6 | |
+| [FlipCard](#flipcard) | `src/sdk/interactions/flipcard.test.tsx` | 1 | |
+| [PickCard](#pickcard) | `src/sdk/interactions/pickcard.test.tsx` | 2 | |
 | [A pause after time runs out](#a-pause-after-time-runs-out) | `src/sdk/interactions/settle.test.tsx` | 3 | |
 | [Markdown](#markdown) | `src/sdk/interactions/markdown.test.ts` | 5 | |
 | [Instruction](#instruction) | `src/sdk/interactions/instruction.test.tsx` | 3 | |
 | [Team-turns views](#team-turns-views) | `src/sdk/formats/team-turns/views/views.test.tsx` | 5 | |
 | [Game screen](#game-screen) | `src/app/play/GameScreen.test.tsx` | 3 | |
 | [Playing Name Ten](#playing-name-ten) | `src/app/play/nameTen.test.tsx` | 1 | |
+| [Playing Pairs](#playing-pairs) | `src/app/play/pairs.test.tsx` | 1 | |
 | [Playing Trivia Night](#playing-trivia-night) | `src/app/play/triviaNight.test.tsx` | 2 | |
 | [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 14 | |
 | [Variant setup](#variant-setup) | `src/app/setup/variantSetup.test.tsx` | 5 | |
@@ -770,13 +778,69 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 421 | is a valid game with the Back to School pack, its settings and one view for turn and result | `index.ts` | The game's default export | Id `trivia-night`; Back to School; its machine and settings; `TurnView` for `turn` and `reveal`; rules with "## Ways to play" | `defineGame` checked the parts when the file loaded; this checks Trivia Night wired its own parts in. |
 | 464 | has Back to School Trivia, and Masculin ou féminin ?: ten words a minute, A to Z, Set questions only; both offer Free Play | Variants | The game's variants | `back-to-school` and `masculin-feminin`; the French one plays 10 questions, 60 s, A to Z, on its own pack, with mode closed; the choice Free Play, and both variants offering it | The variant the home page lists plays the way it's meant to (ADR 0018). |
 
+## Pairs content
+
+`src/games/pairs/schema.test.ts`, testing `src/games/pairs/schema.ts` and its packs (ADR 0020).
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 482 | needs a front and a back of at most 60 characters, filling in no tags, and rejects an unknown field | Item schema | le chat / cat; a blank front and a 61-character back; an extra field; the key | Tags filled in; problems at `front` and `back`; one problem; `le chat` | A pair is two short sides. |
+| 483 | ships Français–anglais: two-way, every English meaning one word's, every noun with its article | The two-way pack | `francais-anglais` | At least 150 pairs; no English meaning twice; every front starts with le, la or l' | Match-up marks a tile right only if it's one word's partner; the article teaches the gender. |
+| 484 | ships Les thèmes: one-way, every theme with at least 7 words, so odd-one-out always has a full group | The one-way pack | `les-themes` | At least 5 themes, each with 7 or more words | An odd-one-out round is 7 words of a group and 3 from others. |
+
+## Pairs settings
+
+`src/games/pairs/config.test.ts`, testing `src/games/pairs/config.ts` (ADR 0020).
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 485 | plays two-way flip cards, ten a 60-second turn, unless asked, and takes 1 to 50 cards and the three ways to play | Defaults, limits | The least settings; odd, one-way, 50; 0 and 51 cards, `snap`, `"yes"`; one player in Free Play | flip, two-way, 10, 60 s; kept; each refused; accepted | The three ways to play are one setting, and Free Play works as for any team-turns game. |
+
+## Pairs machine
+
+`src/games/pairs/machine.test.ts`, testing `src/games/pairs/machine.ts` (ADR 0020) with the real packs: Français–anglais for flip and match, Les thèmes for odd-one-out. Teams Lions and Eagles; the defaults unless a test says otherwise.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 489 | has no mistakes validateMachine can find | Machine | The machine | No mistakes | Every phase, guard and action it names exists. |
+| 490 | flip: shows a card, flips it, and scores Knew it 1 and Not yet 0, then ends the turn after the cards | Flip | 2 cards; flip, knew; flip, not yet | A card whose sides are partners; `reveal`, revealed; a new card, `[1]`, not revealed; then `turn_summary`, `[1, 0]`, 1 point | Self-marking is the score. |
+| 491 | flip: two-way shows either side first across cards; one-way always the front | `twoWay` | 20 seeds each way | Both sides first in two-way; always the French side in one-way | Two-way practises both directions. |
+| 492 | match: three prompts, ten distinct tiles, their three partners among them, and no other tile any prompt's partner | Match deal | 5 seeds | 3 prompts, 10 different tiles, the 3 answers are the prompts' partners, no other tile is | A right pick is never marked wrong. |
+| 493 | odd: a group, seven of its words and three from other groups to find | Odd deal | 3 seeds, Les thèmes | 1 group, 10 tiles, 3 answers; every tile is in the group unless it's an answer | The three to find are exactly the ones not in the group. |
+| 494 | pick: tiles toggle, never more than three, Check only with three, and a point for each right one | `pick`, `check`, `continue` | 2 sets; toggle twice; three and a fourth; check with one; bad positions; two right and one wrong; continue; all right | Off again; the fourth ignored; no check; ignored; `[2]` and revealed; a new set with nothing picked; 5 points and the summary | Picking and scoring as ADR 0020 says. |
+| 495 | ignores events for the other way of playing, and ends the turn when time runs out, from a card or a result | Guards, `time_up` | Pick and check on a flip card; knew before flipping; flip on a match set; time up in each | Nothing changes; then `turn_summary` both times | Views send what their way of playing allows; the clock still ends turns. |
+| 496 | plays a whole game of Free Play flip cards: ten known cards, then the score | Free Play | One player, no timer, 1 round; 10 flips and Knew it; next | No end time; final; score 10 | Pairs works with Free Play (ADR 0019). |
+| 497 | dealRound: the same seed deals the same round, and match draws its prompts from the pool so they don't repeat | `dealRound` | The same item, pool and seed twice | The same round; two more items drawn | A refresh deals the same; prompts come out of the pool like any item. |
+| 498 | canPick and allPicked follow the round's tiles and how many are picked | Guards | Picks of 0, 3 and 3 including the tile; position 10; 2 and 3 picked | true, false, true, false; false, true | A test per guard (standard §12). |
+
+## Pairs views
+
+`src/games/pairs/views/views.test.tsx`, testing `TurnView.tsx` and `SettingsView.tsx` (with the Free Play view) in `src/games/pairs/views/` (ADR 0020). Screen tests (happy-dom) with real states from the machine, on a small one-way stand-in pack of twelve pairs.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 499 | flip: the card's front and Show the answer; once flipped, its back, Not yet and Knew it | Turn view, flip | The first card; tap Show the answer; the flipped state; tap Knew it | "Card 1 of 10", a timer; `flip` sent; the back shown; `knew` sent | The view follows the machine's `revealed`, so a refresh keeps the card as it was. |
+| 500 | match: the tiles and their prompts, picks and Check sent; after Check, Next set, or End turn after the last | Turn view, match | One set a turn; tap a tile; the right three checked; tap End turn | "Find their partners", ten tiles; `pick` 0 sent; "3 of 3 right", no timer; `continue` sent | The last result isn't cut short by the clock. |
+| 501 | counts cards and sets, and says what to find | `roundCount`, `pickLabel` | A fresh flip turn; a checked first set; match and odd | "Card 1 of 10"; "Set 1 of 10"; "Find their partners", "Find the 3 that don't belong" | Players know where they are and what to do. |
+| 502 | picks the way to play, both ways, and cards a turn, and shows only open ones on a variant | Settings view | Tap Odd one out and Either side first; then only cards open | Both set, 10 cards a turn; then only the cards stepper | Each setting can be set; a variant shows its open ones (ADR 0018). |
+| 503 | Free Play: 10, 20 or 50 cards, starting at 10 with no clock | Free Play view | The Free Play start; tap 50 cards | 10 cards, no timer; 10 checked; then 50 | Free Play's length (ADR 0019). |
+
+## Pairs game
+
+`src/games/pairs/game.test.ts`, testing `src/games/pairs/index.ts` and its variants (ADR 0020).
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 504 | is a valid game with both French packs, its settings and Free Play, and one view for card and answer | `index.ts` | The game's default export | Id `pairs`; Français–anglais and Les thèmes; its machine, settings and Free Play; one view for `turn` and `reveal`; rules with "## Odd one out" | `defineGame` checked the parts; this checks Pairs wired its own in. |
+| 505 | has a variant for each way to play, each on the pack that suits it, and each with Free Play | Variants | Each variant's settings | French Flash Cards: flip, two-way, Français–anglais; French Match-Up: match, two-way, the same; L'intrus: odd, one-way, Les thèmes; all Free Play | Match-up needs a two-way pack and odd-one-out a one-way one (ADR 0020). |
+
 ## App
 
 `src/app/App.test.tsx`, testing the pages in `src/app/` and which address shows which. Screen tests (happy-dom), each starting the app at an address with a `MemoryRouter`.
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 465 | shows the variants first at /, then Make your own with each game | Home page | Start at `/` | Ways to play: Naija Charades, Name Ten, Back to School Trivia, Masculin ou féminin ?, each linking to `/:gameId/:variantId`, the first saying "Charades · 2–20 players"; Make your own: `/charades`, `/name-ten`, `/trivia-night` | Players pick a way to play first; the full setup is one section down (ADR 0018). |
+| 465 | shows the variants first at /, then Make your own with each game | Home page | Start at `/` | Ways to play: Naija Charades, Name Ten, Back to School Trivia, Masculin ou féminin ?, French Flash Cards, French Match-Up, L'intrus, each linking to `/:gameId/:variantId`, the first saying "Charades · 2–20 players"; Make your own: `/charades`, `/name-ten`, `/trivia-night`, `/pairs` | Players pick a way to play first; the full setup is one section down (ADR 0018). |
 | 466 | opens a variant's setup: Masculin ou féminin ? asks for teams, rounds, turn length and words a turn, nothing else | Variant setup | Tap Masculin ou féminin ? | Its heading; 10 questions a turn; 60 seconds; no mode or order choice; no packs; "282 items to play" | The variant's open settings are the only ones shown. |
 | 180 | shows a game at its own address, from Make your own | Library, routing | Start at `/`; tap Charades in Make your own | A link to `/charades` showing "2–20 players"; after the tap, Charades' setup screen | Each game's own setup is still one tap away. |
 | 372 | lists Name Ten too, with its own icon, players and setup | Library, registry | Open `/`; tap Name Ten in Make your own | A link to `/name-ten` with its tagline and the list-checks icon; then Name Ten's setup, with "Answers on the board" and "38 items to play" | A game added to the registry appears in the library and gets the shared setup screen with its own settings. |
@@ -931,6 +995,23 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 426 | keeps the turn summary's Next off for 2 seconds | `Summary` | Shown; after 2 s | Next off; then on | A tap aimed at the last second of a turn doesn't skip the score. |
 | 427 | keeps review's Adjust and Done off for 2 seconds | `Review` | One row; shown; after 2 s | Adjust and Done off; then on | A late tap doesn't count a turn before it's checked. |
 
+## FlipCard
+
+`src/sdk/interactions/flipcard.test.tsx`, testing `src/sdk/interactions/FlipCard.tsx` (ADR 0020). A screen test (happy-dom); the machine's part (whether it's flipped) is a bit of state.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 486 | shows the front and Show the answer; after the flip, the back, Not yet and Knew it | `FlipCard` | le chat / cat; tap Show the answer, Not yet, Knew it | The label and le chat on the theme's card, no cat, no marking buttons; then cat, no Show the answer; each marking reported once | The answer stays hidden until players have had a go. |
+
+## PickCard
+
+`src/sdk/interactions/pickcard.test.tsx`, testing `src/sdk/interactions/PickCard.tsx` (ADR 0020). Screen tests (happy-dom), with the machine's part played by state; three prompts, five tiles (cat, dog, house, tree, car), the answers cat, dog and house. `pickResult` is a plain function.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 487 | shows the prompts and tiles, picks up to the number needed, and checks only when enough are picked | Picking | Tap cat twice; then cat, dog, tree, and car | The three prompts; Check off; cat off again; car not picked; "3 of 3 picked"; Check on | Players pick exactly the number asked. |
+| 488 | after Check: right picks green, wrong red, missed ones outlined, the rest faded, and the count right | The result | Pick cat, dog, tree; Check | "2 of 3 right"; cat and dog green, tree red, house outlined in green and marked Missed, car faded; no Check; `pickResult` 1 of 3 | Players see what they got, what they got wrong, and what they missed. |
+
 ## Review
 
 `src/sdk/interactions/review.test.tsx`, testing `src/sdk/interactions/Review.tsx`: the turn card by card, before its points count (ADR 0007). Screen tests (happy-dom) with three cards: Gala (acted, got), Zobo (skipped, changed), Assembly (not counted).
@@ -982,6 +1063,14 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 373 | goes from setup to a judge, a board, review and the summary, by tapping | Name Ten, end to end | Start; Start; Skip; Play this; tick two answers; End turn early; Adjust; tick a third; Done | "Hand the phone to a judge from" Team 2, "Team 1 are up · Round 1 of 3"; after Skip "2 skips left" and a different category; ten answers, "2 of 10"; review in answers' words; the summary says 3, with scores so far Team 1: 3, Team 2: 0 | Every Name Ten screen in order, through the shared setup, save and play pages. |
+
+## Playing Pairs
+
+`src/app/play/pairs.test.tsx`, the whole app at `/pairs/l-intrus` with nothing saved (ADR 0020). The test knows each word's theme from the Les thèmes pack, through the registry.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 506 | plays L'intrus alone: ten sets, picking the three that don't belong each time, then the score | Pairs, Free Play, end to end | Free Play; Start; in each set, tap the tiles not in the group, Check, go on | "Set 1 of 10" to "10 of 10", "3 of 3 right" every time; then "Your score" 30 | Odd-one-out from setup to the score, through the real app. |
 
 ## Playing Trivia Night
 

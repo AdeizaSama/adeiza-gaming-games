@@ -1,5 +1,6 @@
 import charades from '../../games/charades'
 import nameTen from '../../games/name-ten'
+import pairs from '../../games/pairs'
 import triviaNight from '../../games/trivia-night'
 import type { Variant } from '../../sdk/content/variant'
 import type { Game } from '../../sdk/game/defineGame'
@@ -20,7 +21,7 @@ export type AnyGame = Game<any, any, any, any, any, any, any, any>
  * Every game players can pick. The only place in the app that imports games (standard §9): to add a game, import
  * its definition here and add it to the list.
  */
-export const games: readonly AnyGame[] = [charades, nameTen, triviaNight]
+export const games: readonly AnyGame[] = [charades, nameTen, triviaNight, pairs]
 
 /** A variant, with the game it plays (ADR 0018). */
 export interface ListedVariant {

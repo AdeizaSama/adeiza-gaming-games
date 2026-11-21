@@ -13,7 +13,7 @@ Changes to this standard, the SDK (`src/sdk/`) or the content pack format need a
 | Level | What it decides | Example | Who makes one |
 |---|---|---|---|
 | **Format** | The outer loop: how turns, rounds and scoring flow ([§7](#7-formats)) | `team-turns`, `host-led` | Core maintainers, rarely |
-| **Game** | What happens inside a turn: interaction, events, scoring rules, content shape | Charades, Name Ten, Trivia Night | Developers |
+| **Game** | What happens inside a turn: interaction, events, scoring rules, content shape | Charades, Name Ten, Trivia Night, Pairs | Developers |
 | **Variant** | Settings + content only. Same rules. A JSON file; what the home page lists ([ADR 0018](decisions/0018-variants.md)) | "Naija Charades (Back to School Edition)", "Masculin ou féminin ?" | Anyone, no code |
 
 A format is the outer loop, a game fills in the turn, and a variant fills in the settings and content. Name Ten is not a Charades variant: its turn is different, so it's a separate game in the same format. Masculin ou féminin ? is a Trivia Night variant: the same turn, with its own pack and defaults. In code and docs, say **Game** (`defineGame`).
@@ -196,6 +196,8 @@ A primitive takes plain props (text, callbacks) and knows nothing about machines
 | `FlashCard` | Big term with got/skip (charades). Its hint can have a tone (a theme color for the badge and the card's outline) and an icon, for cards played differently: Charades' modes | Built |
 | `PromptCard` | A prompt with a running count and a board of answers that tick when tapped (Name Ten's judge, [ADR 0012](decisions/0012-name-ten.md)). Two columns of tiles that fill the screen's height, each at least 44px ([ADR 0013](decisions/0013-fit-the-screen-and-standings.md)) | Built |
 | `MultipleChoice` | A question over 2 to 5 options, as tiles two to a row (2x1, 2x2; the last of an odd number takes the whole row); after a tap, the answer in green and a wrong pick in red (Trivia Night, [ADR 0015](decisions/0015-trivia-night.md)). The question takes about two thirds of the height, the options the rest, each at least 44px | Built |
+| `FlipCard` | A flash card for learning: one side, Show the answer, then both sides with Not yet and Knew it (Pairs, [ADR 0020](decisions/0020-pairs.md)) | Built |
+| `PickCard` | Pick a set number of tiles out of many, Check, then right, wrong and missed shown (Pairs' match-up and odd-one-out, [ADR 0020](decisions/0020-pairs.md)) | Built |
 | `Countdown` | Shared timer display with warnings; reports when time is up (it reads the clock only to show it) | Built |
 | `Summary` | Turn/round recap: who played, what they scored, and every team's score so far with the rounds played ([ADR 0013](decisions/0013-fit-the-screen-and-standings.md)). Next is off for 2 seconds after it appears ([ADR 0016](decisions/0016-a-pause-after-time-runs-out.md)) | Built |
 | `Review` | A turn card by card, locked until the host taps Adjust, to fix mis-taps before they count ([ADR 0007](decisions/0007-turn-review.md)). Adjust and Done are off for 2 seconds after it appears ([ADR 0016](decisions/0016-a-pause-after-time-runs-out.md)) | Built |
@@ -209,7 +211,7 @@ A format is the outer loop shared by several games: setup, turn order, rounds, s
 
 | Format | Shape | Games |
 |---|---|---|
-| `team-turns` | Teams take timed turns over N rounds; each turn uses items from the pool; points per turn | Charades, Name Ten, Trivia Night |
+| `team-turns` | Teams take timed turns over N rounds; each turn uses items from the pool; points per turn | Charades, Name Ten, Trivia Night, Pairs |
 | `host-led` | One device held by a host; secret roles; cyclic phases with eliminations and win conditions | Mafia/Werewolf. Built after the team-turns games. |
 
 **team-turns: what the format provides**
@@ -268,14 +270,15 @@ export const machine = teamTurns<CharadesItem, CharadesTurn, CharadesEvent>()({
 
 ## 8. v1 games
 
-These four are the whole v1 scope, built in this order. Masculin ou féminin ? is a Trivia Night variant ([ADR 0018](decisions/0018-variants.md)):
+These five are the whole v1 scope, built in this order. Masculin ou féminin ? is a Trivia Night variant ([ADR 0018](decisions/0018-variants.md)):
 
 | # | Game | Format | Content item | Turn interaction | Notes |
 |---|---|---|---|---|---|
 | 1 | Charades | team-turns | `{ text, tags[], modes[] }` | FlashCard | Modes: describe / act / sing |
 | 2 | Name Ten | team-turns | `{ category, answers[], tags[] }` | PromptCard | A judge from another team holds the phone |
 | 3 | Trivia Night | team-turns | `{ question, subtitle?, options[], answer, tags[] }` | MultipleChoice | One question a turn, a set number, or against the clock. Steals (a missed question passing to the next team) need a format extension |
-| 4 | Mafia | host-led | roles + theme skins | SecretReveal, Vote | Needs the host-led format first |
+| 4 | Pairs | team-turns | `{ front, back, tags[] }` | FlipCard, PickCard | Flip cards, match-up or odd-one-out, a setting a variant picks ([ADR 0020](decisions/0020-pairs.md)). Two-way packs (a word and its partner) or one-way (a word and its group) |
+| 5 | Mafia | host-led | roles + theme skins | SecretReveal, Vote | Needs the host-led format first |
 
 Out of scope for v1: multiplayer or multi-device play; accounts, backends or any collection of personal data; image or media content.
 

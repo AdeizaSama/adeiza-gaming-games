@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../../schemas/variant.schema.json",
+  "id": "l-intrus",
+  "name": "L'intrus",
+  "tagline": "Les animaux, les métiers… find the three words that don't belong.",
+  "packs": ["les-themes"],
+  "settings": { "play": "odd", "twoWay": false },
+  "open": ["rounds", "seconds", "cards"],
+  "freePlay": true,
+  "contributors": ["AdeizaSama"]
+}
