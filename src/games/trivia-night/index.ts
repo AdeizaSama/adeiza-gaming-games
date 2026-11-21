@@ -5,6 +5,7 @@ import { TriviaConfig } from './config'
 import { machine } from './machine'
 import rules from './rules.md?raw'
 import { itemKey, itemSchema } from './schema'
+import { choiceFreePlay } from '../../sdk/formats/team-turns/choice/FreePlayView'
 import { ChoiceSettingsView } from '../../sdk/formats/team-turns/choice/SettingsView'
 import { choiceTurnView } from '../../sdk/formats/team-turns/choice/TurnView'
 import type { TriviaItem } from './schema'
@@ -33,6 +34,8 @@ export default defineGame({
   config: {
     schema: TriviaConfig,
     view: ChoiceSettingsView,
+    // Its variants can be played alone (ADR 0019): 10, 20 or 50 questions with no clock, or against the clock.
+    freePlay: choiceFreePlay,
   },
   rules,
   // The ways to play it on the home page (ADR 0018), one JSON file each.

@@ -105,3 +105,15 @@ A length is two or three settings at once: 20 questions is `mode: 'questions', q
 ### How to verify
 
 `pnpm test`: 463 tests. Make the screen ignore the Free Play tab, and two of its tests fail.
+
+---
+
+## Step 6: Trivia Night's variants offer Free Play
+
+**What:** Trivia Night's `index.ts` gives `config.freePlay: choiceFreePlay`, and both its variants say `"freePlay": true`. A test plays Masculin ou féminin ? alone through the real app: Free Play tab, Start, ten words with no hand-off and no clock, then "Your score".
+
+**Why:** the parts from steps 2 to 5 only matter once a real variant uses them.
+
+### How to verify
+
+`pnpm test`: 464 tests. `pnpm dev --host`, open Masculin ou féminin ?, pick Free Play.

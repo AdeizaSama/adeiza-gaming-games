@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 463 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
+**Counts:** 464 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -68,7 +68,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Team-turns views](#team-turns-views) | `src/sdk/formats/team-turns/views/views.test.tsx` | 5 | |
 | [Game screen](#game-screen) | `src/app/play/GameScreen.test.tsx` | 3 | |
 | [Playing Name Ten](#playing-name-ten) | `src/app/play/nameTen.test.tsx` | 1 | |
-| [Playing Trivia Night](#playing-trivia-night) | `src/app/play/triviaNight.test.tsx` | 1 | |
+| [Playing Trivia Night](#playing-trivia-night) | `src/app/play/triviaNight.test.tsx` | 2 | |
 | [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 14 | |
 | [Variant setup](#variant-setup) | `src/app/setup/variantSetup.test.tsx` | 5 | |
 | [Saved game](#saved-game) | `src/app/play/savedGame.test.ts` | 13 | |
@@ -768,7 +768,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 421 | is a valid game with the Back to School pack, its settings and one view for turn and result | `index.ts` | The game's default export | Id `trivia-night`; Back to School; its machine and settings; `TurnView` for `turn` and `reveal`; rules with "## Ways to play" | `defineGame` checked the parts when the file loaded; this checks Trivia Night wired its own parts in. |
-| 464 | has Back to School Trivia, and Masculin ou féminin ?: ten words a minute, A to Z, Set questions only | Variants | The game's variants | `back-to-school` and `masculin-feminin`; the French one plays 10 questions, 60 s, A to Z, on its own pack, with mode closed | The variant the home page lists plays the way it's meant to (ADR 0018). |
+| 464 | has Back to School Trivia, and Masculin ou féminin ?: ten words a minute, A to Z, Set questions only; both offer Free Play | Variants | The game's variants | `back-to-school` and `masculin-feminin`; the French one plays 10 questions, 60 s, A to Z, on its own pack, with mode closed; the choice Free Play, and both variants offering it | The variant the home page lists plays the way it's meant to (ADR 0018). |
 
 ## App
 
@@ -990,6 +990,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 423 | goes from setup to a question, its result and the summary, by tapping | Trivia Night, end to end | 2 questions a turn; Start; Start; tap the first option, Next question; tap the first option, End turn | Team 1's handoff; "Question 1 of 2", a result line, then "Question 2 of 2" and a result; the summary with both teams' scores | Every Trivia Night screen in order, through the shared setup, save and play pages. |
+| 481 | plays Masculin ou féminin ? alone, in Free Play: no hand-off, no clock, ten words, then the score | Free Play, end to end | Open `/trivia-night/masculin-feminin`; Free Play; Start; tap the first option and go on, ten times | No hand-off; "Question 1 of 10" to "10 of 10", no timer, Féminin then Masculin each time; then "Your score", no winner | Free Play from the setup tab to the score, through the real app (ADR 0019). |
 
 ## Game screen
 
@@ -1064,7 +1065,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 244 | describes a save by its teams and round, or as Free Play for one player | `describeSave` | 2 teams, round 2 of 3; 3 teams, round 1 of 1; one player | "Lions vs Eagles · Round 2 of 3"; "Lions, Eagles and Hawks · Round 1 of 1" ; "Free Play" | Players recognise their game by who's playing and how far along it is. |
+| 244 | describes a save by its teams and round, or as Free Play for one player | `describeSave` | 2 teams, round 2 of 3; 3 teams, round 1 of 1; one player | "Lions vs Eagles · Round 2 of 3"; "Lions, Eagles and Hawks · Round 1 of 1"; "Free Play" | Players recognise their game by who's playing and how far along it is. |
 | 245 | offers the unfinished game first in the library, and Continue carries on with it | Continue card | A save in round 2; open `/`; tap Continue | A "Continue Charades" link with the teams and round; then the handoff, "Round 2 of 2" | After a back swipe or a closed tab, getting back is one tap. |
 | 467 | names the variant a game was started from, and keeps it as the game is played | Continue, variants | Start Naija Charades from its setup; Start the turn; open `/` again | The save remembers `naija-back-to-school` after the play page saves; "Continue Naija Charades (Back to School Edition)" | Players see the name they picked, and the play page's saves don't drop it. |
 | 246 | offers nothing to continue for a finished game | Continue card | A save at the results | No Continue link | There's nothing left to play in a finished game (ADR 0006). |
