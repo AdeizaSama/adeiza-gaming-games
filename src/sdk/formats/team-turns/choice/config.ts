@@ -29,7 +29,9 @@ export interface ChoiceDefaults {
  *   export const TriviaConfig = choiceConfig()
  */
 export function choiceConfig(defaults: ChoiceDefaults = {}) {
-  return TeamTurnsConfig.extend({
+  // safeExtend: it replaces a field of the format's (seconds), which plain extend refuses on a schema with a rule
+  // across settings (ADR 0019). The rule is kept.
+  return TeamTurnsConfig.safeExtend({
     seconds: TeamTurnsConfig.shape.seconds.unwrap().default(defaults.seconds ?? 30),
     mode: ChoiceMode.default(defaults.mode ?? 'questions'),
     questions: z.int().min(1).max(10).default(defaults.questions ?? 1),

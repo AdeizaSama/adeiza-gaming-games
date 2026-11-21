@@ -27,6 +27,14 @@ describe('TeamTurnsConfig', () => {
     expect(errorFor({ teams: Array.from({ length: 11 }, (_, i) => `Team ${i + 1}`) })).toBe('teams')
   })
 
+  it('Free Play: exactly one player; otherwise at least two teams, as before', () => {
+    const message = (changes: Record<string, unknown>) => TeamTurnsConfig.safeParse({ ...minimal, ...changes }).error?.issues[0].message
+    expect(TeamTurnsConfig.safeParse({ ...minimal, teams: ['You'], solo: true, timer: false }).success).toBe(true)
+    expect(message({ solo: true })).toBe('Free Play is for one player')
+    expect(message({ teams: ['You'] })).toBe('Add at least two teams')
+    expect(errorFor({ timer: 'no' })).toBe('timer')
+  })
+
   it('trims team names and rejects blank or long ones', () => {
     expect(TeamTurnsConfig.parse({ ...minimal, teams: ['  Lions ', 'Eagles'] }).teams).toEqual(['Lions', 'Eagles'])
     expect(errorFor({ teams: ['Lions', '   '] })).toBe('teams.1')
@@ -76,6 +84,8 @@ describe('TeamTurnsConfig', () => {
       seconds: number
       packs: string[]
       tags: string[]
+      solo?: boolean
+      timer?: boolean
     }>()
     expectTypeOf(minimal).toExtend<TeamTurnsSetup>()
   })

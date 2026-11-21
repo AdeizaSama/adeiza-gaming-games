@@ -53,8 +53,11 @@ export function teamTurnsActions<Item, Turn, Config extends TeamTurnsConfig>({ n
     /** A fresh turn record. */
     resetTurn: ({ context }) => ({ ...context, turn: newTurn() }),
 
-    /** The timer: the turn ends `config.seconds` from now. A phase before the turn runs it on the way in (ADR 0014). */
-    startTimer: ({ context, now }) => ({ ...context, turnEndsAt: now + context.config.seconds * 1000 }),
+    /**
+     * The timer: the turn ends `config.seconds` from now. A phase before the turn runs it on the way in (ADR 0014).
+     * With `timer: false` (Free Play, ADR 0019), no end: the game's own rules end the turn.
+     */
+    startTimer: ({ context, now }) => ({ ...context, turnEndsAt: context.config.timer === false ? null : now + context.config.seconds * 1000 }),
 
     /** Puts the next item from the pool on screen. */
     drawItem: ({ context, rng }) => {

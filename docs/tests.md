@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 453 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
+**Counts:** 456 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -41,9 +41,9 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Themes](#themes) | `src/sdk/theme/theme.test.ts` | 7 | |
 | [Contrast](#contrast) | `src/sdk/theme/contrast.test.ts` | 7 | |
 | [Theme variables](#theme-variables) | `src/sdk/theme/apply.test.ts` | 4 | |
-| [Team-turns config](#team-turns-config) | `src/sdk/formats/team-turns/config.test.ts` | 11 | |
+| [Team-turns config](#team-turns-config) | `src/sdk/formats/team-turns/config.test.ts` | 12 | |
 | [Item pool](#item-pool) | `src/sdk/formats/team-turns/pool.test.ts` | 13 | |
-| [Team-turns guards and actions](#team-turns-guards-and-actions) | `src/sdk/formats/team-turns/rules.test.ts` | 10 | |
+| [Team-turns guards and actions](#team-turns-guards-and-actions) | `src/sdk/formats/team-turns/rules.test.ts` | 11 | |
 | [teamTurns (Word Duel)](#teamturns-word-duel) | `src/sdk/formats/team-turns/teamTurns.test.ts` | 16 | 11 |
 | [defineGame](#definegame) | `src/sdk/game/defineGame.test.ts` | 12 | 6 |
 | [Settings and variants](#settings-and-variants) | `src/sdk/game/settings.test.ts` | 5 | |
@@ -65,7 +65,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [A pause after time runs out](#a-pause-after-time-runs-out) | `src/sdk/interactions/settle.test.tsx` | 3 | |
 | [Markdown](#markdown) | `src/sdk/interactions/markdown.test.ts` | 5 | |
 | [Instruction](#instruction) | `src/sdk/interactions/instruction.test.tsx` | 3 | |
-| [Team-turns views](#team-turns-views) | `src/sdk/formats/team-turns/views/views.test.tsx` | 4 | |
+| [Team-turns views](#team-turns-views) | `src/sdk/formats/team-turns/views/views.test.tsx` | 5 | |
 | [Game screen](#game-screen) | `src/app/play/GameScreen.test.tsx` | 3 | |
 | [Playing Name Ten](#playing-name-ten) | `src/app/play/nameTen.test.tsx` | 1 | |
 | [Playing Trivia Night](#playing-trivia-night) | `src/app/play/triviaNight.test.tsx` | 1 | |
@@ -435,6 +435,7 @@ Each row is a mistake TypeScript must reject.
 | 119 | fills in 3 rounds, 60 seconds and no tag filter | Defaults | Only teams and packs | Rounds 3, seconds 60, tags `[]` | Players can start a game after naming teams and picking a pack. |
 | 120 | keeps every setting that is given | Config schema | Three teams, 5 rounds, 90 seconds, two packs, tag `snack` | Unchanged | Defaults never overwrite what players chose. |
 | 121 | needs 2 to 10 teams | `teams` | 1 team; 10 teams; 11 teams | Rejected at `teams`; accepted; rejected at `teams` | A team game needs two sides, and more than 10 names won't fit the screens. |
+| 471 | Free Play: exactly one player; otherwise at least two teams, as before | `solo`, `timer` | One team with `solo` and `timer: false`; two teams with `solo`; one team without; `timer: "no"` | Accepted; "Free Play is for one player"; "Add at least two teams"; a problem at `timer` | One player only in Free Play (ADR 0019), and the teams rule unchanged otherwise. |
 | 122 | trims team names and rejects blank or long ones | `teams` | `"  Lions "`; a name of spaces; 20 characters; 21 characters | Trimmed to `Lions`; rejected at `teams.1`; accepted; rejected at `teams.1` | Names show on the handoff screen and leaderboard, at arm's length. |
 | 123 | rejects two teams with the same name, ignoring case and spaces, pointing at the second | `teams` | Lions, Eagles, ` lions` | Rejected at `teams.2` | Two teams called the same would make the leaderboard ambiguous. Uses the same comparison as duplicate items. |
 | 124 | accepts whole numbers of rounds from 1 to 10 and seconds from 10 to 300 | `rounds`, `seconds` | Rounds 1, 10; 0, 11, 2.5. Seconds 10, 300; 9, 301, 60.5 | Ends of each range accepted; the rest rejected | Keeps games playable: no zero-round games, no 3-second turns. |
@@ -442,7 +443,7 @@ Each row is a mistake TypeScript must reject.
 | 126 | checks tags are kebab-case and not repeated | `tags` | `tv-show`; `TV Show`; `snack` twice | Accepted; rejected at `tags.0`; rejected at `tags` | Same tag rules as items, so a filter can match them. |
 | 127 | rejects an unknown setting, such as a typo | Strict settings | `second: 90` | Rejected as an unknown setting | Catches typos, and settings left over from an older saved game. |
 | 128 | can be extended with a game's own settings and stays strict | `extend` | A Charades-like config with `punishSkips` | Default `false` filled in; `punishSkip` (typo) rejected | Games add their own settings on top (chapter 05) without losing the checks. |
-| 129 | types settings with defaults filled in, and the setup input with them optional | Types | `TeamTurnsConfig` and `TeamTurnsSetup` | Settings have every field; the setup input accepts only teams and packs | The machine never has to handle a missing setting. Checked by `pnpm typecheck`. |
+| 129 | types settings with defaults filled in, and the setup input with them optional | Types | `TeamTurnsConfig` (with optional `solo` and `timer`) and `TeamTurnsSetup` | Settings have every field; the setup input accepts only teams and packs | The machine never has to handle a missing setting. Checked by `pnpm typecheck`. |
 
 ## Item pool
 
@@ -474,6 +475,7 @@ Each row is a mistake TypeScript must reject.
 | 144 | is false once the last team has played in the last round | `turnsRemaining` | Team 2 in round 2 | False | This is what sends the game to results. Off by one here would end a game a turn early or late. |
 | 145 | resetTurn starts a fresh turn record, leaving the timer alone | `resetTurn` | Last turn's record `['old']`, timer at 5 | Record empty; timer still 5; the original unchanged | A phase before the turn starts a turn record without starting the clock (ADR 0014). |
 | 378 | startTimer sets the turn to end the turn length from now, leaving the turn record alone | `startTimer` | Record `['kept']`, now = 1000 ms, 60-second turns | `turnEndsAt` 61 000; the record unchanged | The timer starts when the turn does, whoever starts it. |
+| 472 | startTimer sets no end when the timer is off (Free Play) | `startTimer` | `timer: false` | `turnEndsAt` null | Free Play has no clock unless players ask for one. |
 | 146 | puts the next item from the pool on screen | `drawItem` | Pool `a`, `b` | Item `a`; pool `b` remaining, `a` drawn; the original unchanged | The card on screen and the pool move together. |
 | 147 | adds the turn's points to the current team only | `bankPoints` | Eagles (team 1) playing, scores 4, 2, 7, three words guessed | Scores 4, 5, 7; the original unchanged | Points go to the team that earned them. |
 | 260 | scores the turn under the game's settings | `bankPoints` | A made-up rule worth one point per word per round; two words, 2 rounds | Lions score 4 | `points` receives the settings (ADR 0007), so a game can make its scoring a setting. |
@@ -964,6 +966,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 209 | handoff: names the team and the round, and Start sends start | `HandoffView` | Round 1 of 2; tap Start | Heading Eagles, "Round 1 of 2"; sends `start` | The view connects the Handoff primitive to the machine. |
+| 473 | handoff and turn summary go on by themselves and show nothing; the results show the score | Free Play | One player "You", score 7, `solo` | The hand-off sends `start` and shows nothing; the summary sends `next` and shows nothing; the results say "Your score" 7, no winner | With one player there's no one to pass the phone to and no one to beat (ADR 0019). |
 | 210 | turn summary: shows the turn's points, and Next, or See results after the last turn | `TurnSummaryView` | Round 1; then round 2 (the last turn) | "scored 3 points" and Next (sends `next`); then See results | The button says where `next` will go, using the format's own `turnsRemaining`. |
 | 377 | turn summary: every team's score so far, this turn included, and the rounds each has played | `standingsOf` | Lions, Eagles, Hawks: round 2, Eagles just scored 4 on 5; then the first turn, 3 points | Lions 6 (2 played), Eagles 9 (2, current), Hawks 2 (1); then 3/1, 0/0, 0/0 | Teams play in order, so the round counts for the team that just played and everyone before it; this turn's points show before the format banks them (ADR 0013). |
 | 211 | results: names the winner, or says it's a tie | `ResultsView` | Scores 5 and 8; then 6 and 6 | "Eagles won!"; then "It's a tie!" | A draw needs its own headline. |
