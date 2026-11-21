@@ -26,6 +26,29 @@ function context(changes: Partial<Context> = {}): Context {
 
 const points = (turn: { got: number }) => turn.got
 
+describe('team-turns default views in Free Play', () => {
+  const solo = (changes: Partial<Context> = {}) =>
+    context({ config: { teams: ['You'], rounds: 1, seconds: 60, packs: ['test'], tags: [], solo: true, timer: false }, scores: [7], current: 0, ...changes })
+
+  it('handoff and turn summary go on by themselves and show nothing; the results show the score', () => {
+    const send = vi.fn()
+    const handoff = render(<HandoffView context={solo()} send={send} points={points} />)
+    expect(send).toHaveBeenCalledWith({ type: 'start' })
+    expect(handoff.container.textContent).toBe('')
+    handoff.unmount()
+
+    const summary = render(<TurnSummaryView context={solo()} send={send} points={points} />)
+    expect(send).toHaveBeenLastCalledWith({ type: 'next' })
+    expect(summary.container.textContent).toBe('')
+    summary.unmount()
+
+    render(<ResultsView context={solo()} send={send} points={points} />)
+    expect(screen.getByRole('heading', { name: 'Your score' })).toBeDefined()
+    expect(screen.getByText('7')).toBeDefined()
+    expect(screen.queryByText(/won!/)).toBeNull()
+  })
+})
+
 describe('team-turns default views', () => {
   it('handoff: names the team and the round, and Start sends start', async () => {
     const user = userEvent.setup()

@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 453 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
+**Counts:** 464 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -31,7 +31,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Trivia Night settings](#trivia-night-settings) | `src/games/trivia-night/config.test.ts` | 2 | |
 | [Choice turn settings](#choice-turn-settings) | `src/sdk/formats/team-turns/choice/config.test.ts` | 1 | |
 | [Choice turn machine](#choice-turn-machine) | `src/sdk/formats/team-turns/choice/machine.test.ts` | 12 | |
-| [Choice turn views](#choice-turn-views) | `src/sdk/formats/team-turns/choice/views.test.tsx` | 9 | |
+| [Choice turn views](#choice-turn-views) | `src/sdk/formats/team-turns/choice/views.test.tsx` | 11 | |
 | [Trivia Night machine](#trivia-night-machine) | `src/games/trivia-night/machine.test.ts` | 2 | |
 | [Trivia Night game](#trivia-night-game) | `src/games/trivia-night/game.test.ts` | 2 | |
 | [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
@@ -41,12 +41,12 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Themes](#themes) | `src/sdk/theme/theme.test.ts` | 7 | |
 | [Contrast](#contrast) | `src/sdk/theme/contrast.test.ts` | 7 | |
 | [Theme variables](#theme-variables) | `src/sdk/theme/apply.test.ts` | 4 | |
-| [Team-turns config](#team-turns-config) | `src/sdk/formats/team-turns/config.test.ts` | 11 | |
+| [Team-turns config](#team-turns-config) | `src/sdk/formats/team-turns/config.test.ts` | 12 | |
 | [Item pool](#item-pool) | `src/sdk/formats/team-turns/pool.test.ts` | 13 | |
-| [Team-turns guards and actions](#team-turns-guards-and-actions) | `src/sdk/formats/team-turns/rules.test.ts` | 10 | |
+| [Team-turns guards and actions](#team-turns-guards-and-actions) | `src/sdk/formats/team-turns/rules.test.ts` | 11 | |
 | [teamTurns (Word Duel)](#teamturns-word-duel) | `src/sdk/formats/team-turns/teamTurns.test.ts` | 16 | 11 |
-| [defineGame](#definegame) | `src/sdk/game/defineGame.test.ts` | 12 | 6 |
-| [Settings and variants](#settings-and-variants) | `src/sdk/game/settings.test.ts` | 5 | |
+| [defineGame](#definegame) | `src/sdk/game/defineGame.test.ts` | 13 | 6 |
+| [Settings and variants](#settings-and-variants) | `src/sdk/game/settings.test.ts` | 6 | |
 | [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 22 | |
 | [Charades views](#charades-views) | `src/games/charades/views/views.test.tsx` | 8 | |
 | [App](#app) | `src/app/App.test.tsx` | 10 | |
@@ -65,12 +65,12 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [A pause after time runs out](#a-pause-after-time-runs-out) | `src/sdk/interactions/settle.test.tsx` | 3 | |
 | [Markdown](#markdown) | `src/sdk/interactions/markdown.test.ts` | 5 | |
 | [Instruction](#instruction) | `src/sdk/interactions/instruction.test.tsx` | 3 | |
-| [Team-turns views](#team-turns-views) | `src/sdk/formats/team-turns/views/views.test.tsx` | 4 | |
+| [Team-turns views](#team-turns-views) | `src/sdk/formats/team-turns/views/views.test.tsx` | 5 | |
 | [Game screen](#game-screen) | `src/app/play/GameScreen.test.tsx` | 3 | |
 | [Playing Name Ten](#playing-name-ten) | `src/app/play/nameTen.test.tsx` | 1 | |
-| [Playing Trivia Night](#playing-trivia-night) | `src/app/play/triviaNight.test.tsx` | 1 | |
+| [Playing Trivia Night](#playing-trivia-night) | `src/app/play/triviaNight.test.tsx` | 2 | |
 | [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 14 | |
-| [Variant setup](#variant-setup) | `src/app/setup/variantSetup.test.tsx` | 2 | |
+| [Variant setup](#variant-setup) | `src/app/setup/variantSetup.test.tsx` | 5 | |
 | [Saved game](#saved-game) | `src/app/play/savedGame.test.ts` | 13 | |
 | [Play page](#play-page) | `src/app/play/PlayPage.test.tsx` | 3 | |
 | [Continuing a saved game](#continuing-a-saved-game) | `src/app/library/continue.test.tsx` | 7 | |
@@ -282,7 +282,7 @@ Each row is a mistake TypeScript must reject.
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 444 | accepts a variant file, filling in no tags, no settings and no open settings | `checkVariant` | The variant; one with only id, name, tagline, packs, contributors | The same with `tags: []`; then `settings: {}`, `open: []` too | Only what makes a variant is required. |
+| 444 | accepts a variant file, filling in no tags, no settings and no open settings | `checkVariant` | The variant; one with only id, name, tagline, packs, contributors | The same with `tags: []` and `freePlay: false`; then `settings: {}`, `open: []` too | Only what makes a variant is required. |
 | 445 | needs its id to be its file name, at least one pack, a name and contributors, and no unknown fields | `checkVariant` | File `food.json`; no packs; blank name, no contributors; a `presets` field | Problems at `id`; `packs`; `name` and `contributors`; one problem | The id is the address; a typo in a field name is caught. |
 | 446 | loads every file, sorted by id, and throws one error listing every problem | `loadVariants` | Two good files; then a bad id and an empty pack list | `all-food`, `quick-food`; then one error naming both files | Every problem at once, like packs. |
 
@@ -435,6 +435,7 @@ Each row is a mistake TypeScript must reject.
 | 119 | fills in 3 rounds, 60 seconds and no tag filter | Defaults | Only teams and packs | Rounds 3, seconds 60, tags `[]` | Players can start a game after naming teams and picking a pack. |
 | 120 | keeps every setting that is given | Config schema | Three teams, 5 rounds, 90 seconds, two packs, tag `snack` | Unchanged | Defaults never overwrite what players chose. |
 | 121 | needs 2 to 10 teams | `teams` | 1 team; 10 teams; 11 teams | Rejected at `teams`; accepted; rejected at `teams` | A team game needs two sides, and more than 10 names won't fit the screens. |
+| 471 | Free Play: exactly one player; otherwise at least two teams, as before | `solo`, `timer` | One team with `solo` and `timer: false`; two teams with `solo`; one team without; `timer: "no"` | Accepted; "Free Play is for one player"; "Add at least two teams"; a problem at `timer` | One player only in Free Play (ADR 0019), and the teams rule unchanged otherwise. |
 | 122 | trims team names and rejects blank or long ones | `teams` | `"  Lions "`; a name of spaces; 20 characters; 21 characters | Trimmed to `Lions`; rejected at `teams.1`; accepted; rejected at `teams.1` | Names show on the handoff screen and leaderboard, at arm's length. |
 | 123 | rejects two teams with the same name, ignoring case and spaces, pointing at the second | `teams` | Lions, Eagles, ` lions` | Rejected at `teams.2` | Two teams called the same would make the leaderboard ambiguous. Uses the same comparison as duplicate items. |
 | 124 | accepts whole numbers of rounds from 1 to 10 and seconds from 10 to 300 | `rounds`, `seconds` | Rounds 1, 10; 0, 11, 2.5. Seconds 10, 300; 9, 301, 60.5 | Ends of each range accepted; the rest rejected | Keeps games playable: no zero-round games, no 3-second turns. |
@@ -442,7 +443,7 @@ Each row is a mistake TypeScript must reject.
 | 126 | checks tags are kebab-case and not repeated | `tags` | `tv-show`; `TV Show`; `snack` twice | Accepted; rejected at `tags.0`; rejected at `tags` | Same tag rules as items, so a filter can match them. |
 | 127 | rejects an unknown setting, such as a typo | Strict settings | `second: 90` | Rejected as an unknown setting | Catches typos, and settings left over from an older saved game. |
 | 128 | can be extended with a game's own settings and stays strict | `extend` | A Charades-like config with `punishSkips` | Default `false` filled in; `punishSkip` (typo) rejected | Games add their own settings on top (chapter 05) without losing the checks. |
-| 129 | types settings with defaults filled in, and the setup input with them optional | Types | `TeamTurnsConfig` and `TeamTurnsSetup` | Settings have every field; the setup input accepts only teams and packs | The machine never has to handle a missing setting. Checked by `pnpm typecheck`. |
+| 129 | types settings with defaults filled in, and the setup input with them optional | Types | `TeamTurnsConfig` (with optional `solo` and `timer`) and `TeamTurnsSetup` | Settings have every field; the setup input accepts only teams and packs | The machine never has to handle a missing setting. Checked by `pnpm typecheck`. |
 
 ## Item pool
 
@@ -474,6 +475,7 @@ Each row is a mistake TypeScript must reject.
 | 144 | is false once the last team has played in the last round | `turnsRemaining` | Team 2 in round 2 | False | This is what sends the game to results. Off by one here would end a game a turn early or late. |
 | 145 | resetTurn starts a fresh turn record, leaving the timer alone | `resetTurn` | Last turn's record `['old']`, timer at 5 | Record empty; timer still 5; the original unchanged | A phase before the turn starts a turn record without starting the clock (ADR 0014). |
 | 378 | startTimer sets the turn to end the turn length from now, leaving the turn record alone | `startTimer` | Record `['kept']`, now = 1000 ms, 60-second turns | `turnEndsAt` 61 000; the record unchanged | The timer starts when the turn does, whoever starts it. |
+| 472 | startTimer sets no end when the timer is off (Free Play) | `startTimer` | `timer: false` | `turnEndsAt` null | Free Play has no clock unless players ask for one. |
 | 146 | puts the next item from the pool on screen | `drawItem` | Pool `a`, `b` | Item `a`; pool `b` remaining, `a` drawn; the original unchanged | The card on screen and the pool move together. |
 | 147 | adds the turn's points to the current team only | `bankPoints` | Eagles (team 1) playing, scores 4, 2, 7, three words guessed | Scores 4, 5, 7; the original unchanged | Points go to the team that earned them. |
 | 260 | scores the turn under the game's settings | `bankPoints` | A made-up rule worth one point per word per round; two words, 2 rounds | Lions score 4 | `points` receives the settings (ADR 0007), so a game can make its scoring a setting. |
@@ -539,6 +541,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 452 | checks a variant's settings against the game's config schema | Variants | `quick-food` with 5-second turns | Reports `variants.0.settings.seconds` | A variant can't start a game the setup screen would refuse. |
 | 453 | reports a variant that names a pack the game does not have | Variants | Pack `anime` | Reports `variants.0.packs` naming `anime` | Typos in pack ids are caught before players see an empty game. |
 | 454 | reports a variant that opens a setting there isn't, or opens or sets teams, packs or tags | Variants | Open rounds, speed, packs; tags in settings | `speed` and `packs` reported with the settings it can open; tags belong at the top of the file | Open settings must be real; the content is never open (ADR 0018). |
+| 476 | reports a variant offering Free Play in a game that has none, and accepts one in a game that does | Free Play | `freePlay: true` in Word Duel; then with a Free Play; then one starting at 5-second turns | "Word Duel can't be played alone"; accepted; a problem at `variants.0.freePlay.seconds` | A variant can't offer what its game can't do (ADR 0019). |
 | 455 | reports two variants with the same id, and an id a page of the game already uses | Variants | Two `quick-food`; one `rules` | The second `quick-food`; `rules` is taken | A variant's id is its address, `/:gameId/:variantId`. |
 | 300 | needs rules, in the markdown the rules screen can show | Rules | Rules of only spaces; then a paragraph and a table | Reports `rules: Write how to play`; then `rules: Line 3: tables aren't supported; use a list` | Every game has rules (standard §13), and a construct the rules screen can't show fails CI instead of reaching players as raw symbols (ADR 0009). |
 | 170 | keeps the item and settings types from the schemas | Types | The defined game | Packs typed `Pack<{ text: string }>[]`; settings typed `TeamTurnsConfig` | The app (chapter 04) works with a game's real types. Checked by `pnpm typecheck`. |
@@ -566,6 +569,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 447 | openableSettings: every setting but teams, packs and tags | `openableSettings` | The schema | rounds, seconds, bonus | What a variant may open: players always name their teams, and the content is the variant. |
 | 448 | variantSettings: the defaults plus the variant's changes, packs and tags, and throws on settings that fail | `variantSettings` | `quick`; then 5-second turns | 1 round, 30 s, `food`, `fruit`, bonus 1; then an error | A variant's setup starts from its own settings. |
 | 449 | withOpenChanges: takes players' changes to open settings only, never packs or tags | `withOpenChanges` | Changes to rounds, seconds, packs, tags, bonus; open rounds and packs; then nothing open | Only rounds changed; then nothing | A remembered change to a setting the variant closes later doesn't leak through. |
+| 477 | freePlaySettings: the variant's, then Free Play's start, then players' changes; always one round, solo, its content | `freePlaySettings` | `quick` with Free Play at 45 s, no timer; then changes to seconds, rounds, packs; then a change that fails | 1 round, 45 s, `food`, `fruit`, solo, no timer; 90 s but still 1 round and `food`; 45 s | Free Play is one round with the variant's content, whatever was saved. |
 | 450 | isOpen: every setting on a game's own setup, only the open ones on a variant's | `isOpen` | No list; `['rounds']` | true; true for rounds, false for mode | Settings views ask it which settings to show. |
 
 ## Charades machine
@@ -701,7 +705,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 401 | plays one question a 30-second turn for 1 point, options shuffled, unless asked | Defaults | The least settings | 3 rounds, 30 seconds, no tags, `questions` mode, 1 question, 1 point, `shuffle` | One question a turn is the default way to play, with 30 seconds for it. |
-| 402 | takes against the clock, 1 to 10 questions, 1 to 5 points and A to Z, and keeps the format's turn limits | Limits | Clock, 10, 5, alphabetical, 300 s; then 0 and 11 questions, 0, 6 and 1.5 points, `random`, `steal`, 5 and 301 seconds | The first kept as given; every other refused | Only the default turn changes, not the format's 10–300 second limits. |
+| 402 | takes against the clock, 1 to 50 questions, 1 to 5 points and A to Z, and keeps the format's turn limits | Limits | Clock, 10, 5, alphabetical, 300 s; then 0 and 51 questions, 0, 6 and 1.5 points, `random`, `steal`, 5 and 301 seconds | The first kept as given; every other refused | Only the default turn changes, not the format's 10–300 second limits. |
 
 ## Choice turn settings
 
@@ -709,7 +713,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 432 | takes a game's own defaults for any choice setting, keeping the limits, and its own for the rest | `choiceConfig` | 60 s, 10 questions, A to Z; then no defaults; then 11 questions, 5 s, 6 points | 60, questions, 10, 1 point, A to Z; 30, questions, 1, 1, shuffle; each refused | Each multiple-choice game picks its defaults without copying the limits. |
+| 432 | takes a game's own defaults for any choice setting, keeping the limits, and its own for the rest | `choiceConfig` | 60 s, 10 questions, A to Z; then no defaults; then 51 questions, 5 s, 6 points | 60, questions, 10, 1 point, A to Z; 30, questions, 1, 1, shuffle; each refused | Each multiple-choice game picks its defaults without copying the limits. |
 
 ## Choice turn machine
 
@@ -745,6 +749,8 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 419 | picks the mode, with questions per turn only for a set number, 1 to 10 | Settings view | Tap More 12 times; then Against the clock | 1, then 10 at most; the stepper gone | The count only means something for a set number. |
 | 420 | sets points from 1 to 5, and the order of the options | Settings view | Tap More 6 times on points; tap A to Z | "1 point", then "5 points" at most; Shuffled checked, then A to Z | Every setting can be set on setup. |
 | 459 | shows only the open settings, with questions per turn on its own when the mode is closed | Settings view on a variant | Open questions; open mode, questions, order against the clock; open rounds | Questions per turn under its own heading, nothing else; the mode and order, no questions (it's against the clock); nothing | Masculin ou féminin ? locks the mode but lets players set how many words a turn. |
+| 474 | reads and sets the length: 10, 20 or 50 questions with no clock, or against the clock | `lengthOf`, `lengthSettings`, `choiceFreePlay` | 20 questions; the clock; 7 questions; 50; the clock; the Free Play start | 20, clock, none; 50 with no timer; clock with the timer; 10 | Free Play's lengths map onto the choice turn's own settings (ADR 0019). |
+| 475 | offers the lengths, and the clock's time only against the clock | `ChoiceFreePlayView` | The Free Play start; tap Against the clock | 10 questions checked, no Time stepper; then Time at 30 seconds | The clock's length matters only when there's a clock. |
 
 ## Trivia Night machine
 
@@ -762,7 +768,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 421 | is a valid game with the Back to School pack, its settings and one view for turn and result | `index.ts` | The game's default export | Id `trivia-night`; Back to School; its machine and settings; `TurnView` for `turn` and `reveal`; rules with "## Ways to play" | `defineGame` checked the parts when the file loaded; this checks Trivia Night wired its own parts in. |
-| 464 | has Back to School Trivia, and Masculin ou féminin ?: ten words a minute, A to Z, Set questions only | Variants | The game's variants | `back-to-school` and `masculin-feminin`; the French one plays 10 questions, 60 s, A to Z, on its own pack, with mode closed | The variant the home page lists plays the way it's meant to (ADR 0018). |
+| 464 | has Back to School Trivia, and Masculin ou féminin ?: ten words a minute, A to Z, Set questions only; both offer Free Play | Variants | The game's variants | `back-to-school` and `masculin-feminin`; the French one plays 10 questions, 60 s, A to Z, on its own pack, with mode closed; the choice Free Play, and both variants offering it | The variant the home page lists plays the way it's meant to (ADR 0018). |
 
 ## App
 
@@ -964,6 +970,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 209 | handoff: names the team and the round, and Start sends start | `HandoffView` | Round 1 of 2; tap Start | Heading Eagles, "Round 1 of 2"; sends `start` | The view connects the Handoff primitive to the machine. |
+| 473 | handoff and turn summary go on by themselves and show nothing; the results show the score | Free Play | One player "You", score 7, `solo` | The hand-off sends `start` and shows nothing; the summary sends `next` and shows nothing; the results say "Your score" 7, no winner | With one player there's no one to pass the phone to and no one to beat (ADR 0019). |
 | 210 | turn summary: shows the turn's points, and Next, or See results after the last turn | `TurnSummaryView` | Round 1; then round 2 (the last turn) | "scored 3 points" and Next (sends `next`); then See results | The button says where `next` will go, using the format's own `turnsRemaining`. |
 | 377 | turn summary: every team's score so far, this turn included, and the rounds each has played | `standingsOf` | Lions, Eagles, Hawks: round 2, Eagles just scored 4 on 5; then the first turn, 3 points | Lions 6 (2 played), Eagles 9 (2, current), Hawks 2 (1); then 3/1, 0/0, 0/0 | Teams play in order, so the round counts for the team that just played and everyone before it; this turn's points show before the format banks them (ADR 0013). |
 | 211 | results: names the winner, or says it's a tie | `ResultsView` | Scores 5 and 8; then 6 and 6 | "Eagles won!"; then "It's a tie!" | A draw needs its own headline. |
@@ -983,6 +990,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 423 | goes from setup to a question, its result and the summary, by tapping | Trivia Night, end to end | 2 questions a turn; Start; Start; tap the first option, Next question; tap the first option, End turn | Team 1's handoff; "Question 1 of 2", a result line, then "Question 2 of 2" and a result; the summary with both teams' scores | Every Trivia Night screen in order, through the shared setup, save and play pages. |
+| 481 | plays Masculin ou féminin ? alone, in Free Play: no hand-off, no clock, ten words, then the score | Free Play, end to end | Open `/trivia-night/masculin-feminin`; Free Play; Start; tap the first option and go on, ten times | No hand-off; "Question 1 of 10" to "10 of 10", no timer, Féminin then Masculin each time; then "Your score", no winner | Free Play from the setup tab to the score, through the real app (ADR 0019). |
 
 ## Game screen
 
@@ -1017,12 +1025,15 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 ## Variant setup
 
-`src/app/setup/variantSetup.test.tsx`, testing `SetupScreen.tsx` with a variant, and `loadVariantSetup` in `savedSetup.ts` (ADR 0018). Screen tests (happy-dom). The variant is made up: Snack Attack, Charades with 90-second turns and Mix it up, snacks only, rounds and mode open.
+`src/app/setup/variantSetup.test.tsx`, testing `SetupScreen.tsx` with a variant, and `loadVariantSetup` and the Free Play saves in `savedSetup.ts` (ADR 0018, 0019). Screen tests (happy-dom). The variant is made up: Snack Attack, Charades with 90-second turns and Mix it up, snacks only, rounds and mode open.
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 462 | shows the variant's name, the teams and only its open settings, and starts with its settings and content | Variant setup | Open the screen; tap More: Rounds; Start | Heading Snack Attack and its tagline; teams, Rounds, Mix it up checked; no Turn length, Packs, Only play or Advanced; Start sends 4 rounds, 90 s, mix, Back to School, snack | Players change only what the variant allows, and get its content. |
 | 463 | remembers what players changed, per variant, and only for open settings | `saveSetup`, `loadVariantSetup` | Tap Describe; then a saved setup with 5 rounds, 15 s, another pack | Saved under `charades/snack-attack`, not `charades`; loads describe, 5 rounds, but 90 s and the variant's pack and tag | A remembered change to a closed setting or the content never leaks in. |
+| 478 | offers Competitive and Free Play; Free Play asks only for its length and starts one player, one round, no clock | Free Play tab | Trivia given the choice Free Play, a variant offering it; tap Free Play; Start | Competitive selected, with teams; then no teams or rounds, 10 questions checked; Start sends solo, You, 1 round, 10 questions, no timer, the variant's pack | Playing alone asks only what matters alone (ADR 0019). |
+| 479 | remembers the tab and Free Play's own choices, apart from Competitive's | Free Play tab | Free Play, 20 questions; open the screen again | Free Play still selected, 20 checked; Competitive's saved setup not 20 | Each tab keeps its own settings. |
+| 480 | shows no tabs on a variant that doesn't offer Free Play | Free Play tab | The same variant with `freePlay: false` | No tab list | Only variants that say so offer Free Play. |
 
 ## Saved game
 
@@ -1054,7 +1065,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 244 | describes a save by its teams and round | `describeSave` | 2 teams, round 2 of 3; 3 teams, round 1 of 1 | "Lions vs Eagles · Round 2 of 3"; "Lions, Eagles and Hawks · Round 1 of 1" | Players recognise their game by who's playing and how far along it is. |
+| 244 | describes a save by its teams and round, or as Free Play for one player | `describeSave` | 2 teams, round 2 of 3; 3 teams, round 1 of 1; one player | "Lions vs Eagles · Round 2 of 3"; "Lions, Eagles and Hawks · Round 1 of 1"; "Free Play" | Players recognise their game by who's playing and how far along it is. |
 | 245 | offers the unfinished game first in the library, and Continue carries on with it | Continue card | A save in round 2; open `/`; tap Continue | A "Continue Charades" link with the teams and round; then the handoff, "Round 2 of 2" | After a back swipe or a closed tab, getting back is one tap. |
 | 467 | names the variant a game was started from, and keeps it as the game is played | Continue, variants | Start Naija Charades from its setup; Start the turn; open `/` again | The save remembers `naija-back-to-school` after the play page saves; "Continue Naija Charades (Back to School Edition)" | Players see the name they picked, and the play page's saves don't drop it. |
 | 246 | offers nothing to continue for a finished game | Continue card | A save at the results | No Continue link | There's nothing left to play in a finished game (ADR 0006). |

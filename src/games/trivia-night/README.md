@@ -14,6 +14,7 @@ The full rules players see are in [rules.md](rules.md), on the game's How to pla
 - **Variants:**
   - **Back to School Trivia:** the Back to School pack, with rounds, turn length, mode and questions a turn open.
   - **Masculin ou féminin ?:** the French pack, ten words a 60-second turn, options A to Z, with rounds, turn length and words a turn open (always Set questions).
+- **Free Play:** both variants can also be played alone (ADR 0019): 10, 20 or 50 questions with no clock, or against the clock.
 - Settings players can open in a variant: `rounds`, `seconds`, `mode`, `questions`, `points`, `order`.
 - One tap per question. The phone shows whether it was right, and the right answer if not.
 - **1 point** per right answer (a setting, 1 to 5). A wrong answer costs nothing.

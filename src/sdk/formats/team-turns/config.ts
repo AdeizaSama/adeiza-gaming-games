@@ -17,7 +17,7 @@ export const TeamTurnsConfig = z.strictObject({
   /** In playing order: the first team listed plays first. */
   teams: z
     .array(z.string().trim().min(1, 'Give every team a name').max(20, 'Keep team names to 20 characters'))
-    .min(2, 'Add at least two teams')
+    .min(1, 'Add at least two teams')
     .max(10, 'Up to 10 teams')
     .superRefine((teams, context) => {
       for (const index of repeats(teams)) {
@@ -38,6 +38,17 @@ export const TeamTurnsConfig = z.strictObject({
     .array(Tag)
     .default([])
     .refine((tags) => repeats(tags).length === 0, 'Remove the repeated tag'),
+  /**
+   * Free Play (ADR 0019): one player, called by the one name in `teams`. Left out, a game for teams, as before. The
+   * format's hand-off and turn summary step aside, and the results show the player's score.
+   */
+  solo: z.boolean().optional(),
+  /** False: turns have no clock, and end only by the game's own rules (ADR 0019). Left out, there's a clock. */
+  timer: z.boolean().optional(),
+}).superRefine(({ teams, solo }, context) => {
+  // Across two settings, so on the whole object: one player for Free Play, at least two teams otherwise.
+  if (solo && teams.length !== 1) context.addIssue({ code: 'custom', path: ['teams'], message: 'Free Play is for one player' })
+  if (!solo && teams.length < 2) context.addIssue({ code: 'custom', path: ['teams'], message: 'Add at least two teams' })
 })
 
 /** Settings after checking, with defaults filled in: what the machine receives. */

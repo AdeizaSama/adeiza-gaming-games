@@ -19,9 +19,9 @@ const problems = (file: string, data: unknown) => {
 
 describe('checkVariant', () => {
   it('accepts a variant file, filling in no tags, no settings and no open settings', () => {
-    expect(checkVariant('variants/quick-food.json', variant)).toEqual({ ok: true, variant: { ...variant, tags: [] } })
+    expect(checkVariant('variants/quick-food.json', variant)).toEqual({ ok: true, variant: { ...variant, tags: [], freePlay: false } })
     const least = { id: 'quick-food', name: 'Quick Food', tagline: 'Food, fast.', packs: ['food'], contributors: ['AdeizaSama'] }
-    expect(checkVariant('quick-food.json', least)).toEqual({ ok: true, variant: { ...least, tags: [], settings: {}, open: [] } })
+    expect(checkVariant('quick-food.json', least)).toEqual({ ok: true, variant: { ...least, tags: [], settings: {}, open: [], freePlay: false } })
   })
 
   it('needs its id to be its file name, at least one pack, a name and contributors, and no unknown fields', () => {

@@ -34,9 +34,10 @@ function renderAt(address: string) {
 describe('continuing a saved game', () => {
   beforeEach(() => localStorage.clear())
 
-  it('describes a save by its teams and round', () => {
+  it('describes a save by its teams and round, or as Free Play for one player', () => {
     expect(describeSave({ teams: ['Lions', 'Eagles'], round: 2, rounds: 3 })).toBe('Lions vs Eagles · Round 2 of 3')
     expect(describeSave({ teams: ['Lions', 'Eagles', 'Hawks'], round: 1, rounds: 1 })).toBe('Lions, Eagles and Hawks · Round 1 of 1')
+    expect(describeSave({ teams: ['You'], round: 1, rounds: 1 })).toBe('Free Play')
   })
 
   it('offers the unfinished game first in the library, and Continue carries on with it', async () => {

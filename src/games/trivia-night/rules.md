@@ -13,6 +13,7 @@ Every team plays once a round. After the last round, the team with the most poin
 
 - **Set questions:** each turn is a set number of questions, one unless you change it. The turn ends when they're answered, or when time runs out.
 - **Against the clock:** answer as many as you can before time runs out.
+- **Free Play:** on your own. Pick Free Play on the setup screen, then 10, 20 or 50 questions at your own pace, or against the clock. Your score is at the end.
 
 ## Points
 

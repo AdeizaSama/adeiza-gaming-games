@@ -7,7 +7,7 @@ import type { TeamTurnsConfig } from '../formats/team-turns/config'
 import type { TeamTurnsMachine, TeamTurnsPhase } from '../formats/team-turns/teamTurns'
 import { teamTurnsViews, type TeamTurnsView } from '../formats/team-turns/views'
 import { parseMarkdown } from '../interactions/markdown'
-import { checkVariantSettings, openableSettings, type SettingsView } from './settings'
+import { checkVariantSettings, freePlaySettings, openableSettings, type FreePlay, type SettingsView } from './settings'
 
 /** What the library shows about a game (standard §3). Checked when the game is defined. */
 export const GameMeta = z.strictObject({
@@ -69,6 +69,11 @@ export interface GameDefinition<
      * `NoInfer`, like `views`: it's checked against the schema's settings.
      */
     view?: NoInfer<SettingsView<Config>>
+    /**
+     * Lets the game's variants offer Free Play, one player alone (ADR 0019): the Free Play settings view, and where
+     * Free Play starts. Leave out for a game that can't be played alone.
+     */
+    freePlay?: NoInfer<FreePlay<Config>>
   }
   /**
    * How to play, for players: the game's `rules.md`, imported with `?raw`. Written in the small part of markdown
@@ -108,7 +113,8 @@ export type Game<
  * - `meta` follows the rules above.
  * - There's at least one pack.
  * - Each variant (ADR 0018) has a unique id that isn't `play` or `rules`, names only packs that exist, has settings
- *   that pass the config schema, and opens only real settings (never teams, packs or tags).
+ *   that pass the config schema, opens only real settings (never teams, packs or tags), and offers Free Play only if
+ *   the game does, with settings that pass the schema too (ADR 0019).
  * - The rules aren't empty, and use only the markdown `parseMarkdown` supports.
  * - Every phase of the machine has a view.
  *
@@ -161,6 +167,15 @@ export function defineGame<
     const settings = checkVariantSettings(game.config.schema, variant)
     if (!settings.success) {
       for (const issue of settings.error.issues) report([`${at}.settings`, ...issue.path].join('.'), issue.message)
+    }
+    if (variant.freePlay && !game.config.freePlay) {
+      report(`${at}.freePlay`, `${String(game.meta.name)} can't be played alone: it has no Free Play`)
+    } else if (variant.freePlay && game.config.freePlay && settings.success) {
+      try {
+        freePlaySettings(game.config.schema, variant, game.config.freePlay)
+      } catch (error) {
+        for (const issue of (error as z.ZodError).issues ?? []) report([`${at}.freePlay`, ...issue.path].join('.'), issue.message)
+      }
     }
   }
 

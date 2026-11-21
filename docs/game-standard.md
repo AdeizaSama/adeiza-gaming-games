@@ -61,6 +61,7 @@ export default defineGame({
   config: {
     schema: CharadesConfig,          // zod schema for setup options, defaults included (§7)
     view: SettingsView,              // the game's own settings on setup (optional, ADR 0008)
+    // freePlay: choiceFreePlay,     // optional: lets its variants be played alone (ADR 0019)
   },
   rules,                             // import rules from "./rules.md?raw": how to play (ADR 0009)
   variants: loadVariants(            // the ways to play it on the home page (ADR 0018), one JSON file each
@@ -83,6 +84,8 @@ export default defineGame({
 
 **Variants** ([ADR 0018](decisions/0018-variants.md)) are JSON files in `variants/`: a name and tagline, packs (and optionally tags), the settings that differ from the game's defaults, and `open`, the settings players may change. The home page lists them first, then "Make your own" with each game. A variant's setup (`/:gameId/:variantId`) shows teams and its open settings only; a game's own setup (`/:gameId`) shows every setting. Variants replaced presets.
 
+**Free Play** ([ADR 0019](decisions/0019-free-play.md)): a variant with `"freePlay": true` has two tabs on its setup, Competitive and Free Play (one player, at their own pace). Only a game that gives `config.freePlay` (its Free Play settings view, and where Free Play starts) can have such variants; `defineGame` checks. The choice turn gives `choiceFreePlay`: 10, 20 or 50 questions with no clock, or against the clock.
+
 ```json
 {
   "$schema": "../../../../schemas/variant.schema.json",
@@ -92,6 +95,7 @@ export default defineGame({
   "packs": ["masculin-feminin"],
   "settings": { "questions": 10, "seconds": 60, "order": "alphabetical" },
   "open": ["rounds", "seconds", "questions"],
+  "freePlay": true,
   "contributors": ["AdeizaSama"]
 }
 ```
@@ -212,7 +216,7 @@ A format is the outer loop shared by several games: setup, turn order, rounds, s
 
 | Area | Provided |
 |---|---|
-| Setup | `TeamTurnsConfig` (`src/sdk/formats/team-turns/config.ts`): team names (2–10, in playing order), rounds (1–10, default 3), seconds per turn (10–300, default 60), packs, and tags (default: none, which plays every item). Games extend it with their own settings. Shown on one shared setup screen (`src/app/setup/`), which offers turn lengths in 15-second steps and fills in the team names last used on the device. |
+| Setup | `TeamTurnsConfig` (`src/sdk/formats/team-turns/config.ts`): team names (2–10, in playing order), rounds (1–10, default 3), seconds per turn (10–300, default 60), packs, and tags (default: none, which plays every item). Games extend it with their own settings. Shown on one shared setup screen (`src/app/setup/`), which offers turn lengths in 15-second steps and fills in the team names last used on the device. Two optional settings for Free Play ([ADR 0019](decisions/0019-free-play.md)): `solo` (exactly one player; the default hand-off and turn summary then move on by themselves, and the results show the score) and `timer: false` (no clock: `startTimer` sets no end). |
 | Phases | `handoff → turn → turn_summary → results`, including the loop and the end. `turn` is the game's. A game may add phases after its turn (Charades' and Name Ten's `review`, [ADR 0007](decisions/0007-turn-review.md)) and one before it, named `beforeTurn` (Name Ten's `category`, [ADR 0014](decisions/0014-a-phase-before-the-turn.md)). An optional `round_summary` is added when a game needs it. |
 | Context | `TeamTurnsContext`: `config` (the settings), `scores`, `current` (whose turn), `round`, `turnEndsAt`, `pool`, `item` (the card on screen), and `turn` (the game's record of the current turn) |
 | Item pool | The chosen packs' items, each item once (an item in two packs is kept from the first pack chosen), filtered to the chosen tags if any. Drawn in a shuffled order without repeats. When every item has been drawn, they're shuffled back in and drawing continues, with the item just shown placed last. |

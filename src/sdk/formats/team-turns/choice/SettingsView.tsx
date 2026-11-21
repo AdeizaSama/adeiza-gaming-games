@@ -14,7 +14,7 @@ const orders = [
 ] as const
 
 /** A choice of one, as cards with a radio button (as on Charades' setup). */
-function Choice<Id extends string>({ name, choices, value, onChange }: { name: string; choices: readonly { id: Id; name: string; description: string }[]; value: Id; onChange: (id: Id) => void }) {
+export function Choice<Id extends string>({ name, choices, value, onChange }: { name: string; choices: readonly { id: Id; name: string; description: string }[]; value: Id; onChange: (id: Id) => void }) {
   return choices.map((choice) => (
     <label key={choice.id} className="flex items-start gap-3 rounded-xl bg-card p-4 text-card-foreground shadow-sm">
       <input type="radio" name={name} className="mt-1 size-5 shrink-0 accent-primary" checked={value === choice.id} onChange={() => onChange(choice.id)} />

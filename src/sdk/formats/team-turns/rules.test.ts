@@ -55,6 +55,11 @@ describe('resetTurn and startTimer', () => {
     expect(before.turn).toEqual({ got: ['old'] })
   })
 
+  it('startTimer sets no end when the timer is off (Free Play)', () => {
+    const after = actions.startTimer({ context: context({ config: { ...config, timer: false } }), event, rng: rng(), now: 1_000 })
+    expect(after.turnEndsAt).toBeNull()
+  })
+
   it('startTimer sets the turn to end the turn length from now, leaving the turn record alone', () => {
     const before = context({ turn: { got: ['kept'] } })
     const after = actions.startTimer({ context: before, event, rng: rng(), now: 1_000 })

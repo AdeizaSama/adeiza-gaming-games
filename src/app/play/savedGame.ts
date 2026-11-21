@@ -163,8 +163,9 @@ export function saveName({ game, variant }: Pick<SaveSummary, 'game' | 'variant'
   return variant?.name ?? game.meta.name
 }
 
-/** "Lions vs Eagles · Round 2 of 3", or "Lions, Eagles and Hawks · …" for more teams. */
+/** "Lions vs Eagles · Round 2 of 3", or "Lions, Eagles and Hawks · …" for more teams, or "Free Play" for one player. */
 export function describeSave({ teams, round, rounds }: Pick<SaveSummary, 'teams' | 'round' | 'rounds'>): string {
+  if (teams.length === 1) return 'Free Play'
   const names = teams.length === 2 ? `${teams[0]} vs ${teams[1]}` : `${teams.slice(0, -1).join(', ')} and ${teams.at(-1)}`
   return `${names} · Round ${round} of ${rounds}`
 }

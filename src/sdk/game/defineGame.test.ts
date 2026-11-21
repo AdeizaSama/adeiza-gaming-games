@@ -32,7 +32,7 @@ const SummaryView = (props: Props) => props.points(props.context.turn, props.con
 
 /** A variant of Word Duel: the food pack, 30-second turns, rounds open. */
 function variant(id: string, changes: Partial<Variant> = {}): Variant {
-  return { id, name: 'Quick Food', tagline: 'Food, fast.', packs: ['food'], tags: [], settings: { seconds: 30 }, open: ['rounds'], contributors: ['AdeizaSama'], ...changes }
+  return { id, name: 'Quick Food', tagline: 'Food, fast.', packs: ['food'], tags: [], settings: { seconds: 30 }, open: ['rounds'], freePlay: false, contributors: ['AdeizaSama'], ...changes }
 }
 
 function pack(id: string): Pack<Item> {
@@ -126,6 +126,15 @@ describe('defineGame', () => {
     expect(message).toContain('variants.0.open: "speed" isn\'t a setting players can change. Pick from: rounds, seconds')
     expect(message).toContain('variants.0.open: "packs" isn\'t a setting players can change')
     expect(message).toContain('variants.0.settings.tags: Set tags at the top of the file, not in settings')
+  })
+
+  it('reports a variant offering Free Play in a game that has none, and accepts one in a game that does', () => {
+    expect(problemsWith({ variants: [variant('quick-food', { freePlay: true })] })).toContain('variants.0.freePlay: Word Duel can\'t be played alone: it has no Free Play')
+    const freePlay = { view: () => null, settings: { seconds: 30 } }
+    expect(problemsWith({ config: { ...game.config, freePlay }, variants: [variant('quick-food', { freePlay: true })] })).toBeUndefined()
+    expect(problemsWith({ config: { ...game.config, freePlay: { ...freePlay, settings: { seconds: 5 } } }, variants: [variant('quick-food', { freePlay: true })] })).toContain(
+      'variants.0.freePlay.seconds:',
+    )
   })
 
   it('reports two variants with the same id, and an id a page of the game already uses', () => {

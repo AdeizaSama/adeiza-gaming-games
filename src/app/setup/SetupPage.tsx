@@ -35,7 +35,8 @@ export function SetupPage() {
         onStart={(config) => {
           const start = () => {
             const items = choosePoolItems(game.content.packs, config, game.content.itemKey)
-            saveTeams(config.teams)
+            // Free Play's one player ("You") isn't a team name to offer next time.
+            if (!config.solo) saveTeams(config.teams)
             saveGame(game, newGame(game.machine, { config, items }), { variantId: variant?.id })
             navigate(`/${game.meta.id}/play`)
           }

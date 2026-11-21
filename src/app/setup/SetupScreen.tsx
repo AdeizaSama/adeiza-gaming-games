@@ -10,8 +10,20 @@ import { Button } from '../../ui/button'
 import { Input } from '../../ui/input'
 import { Section } from '../../ui/section'
 import { Stepper } from '../../ui/stepper'
-import { isOpen } from '../../sdk/game/settings'
-import { defaultSetup, loadSetup, loadVariantSetup, saveSetup, variantSetupId, type SetupChoices } from './savedSetup'
+import { isOpen, soloPlayer } from '../../sdk/game/settings'
+import {
+  defaultSetup,
+  freePlaySetupId,
+  loadFreePlaySetup,
+  loadSetup,
+  loadTab,
+  loadVariantSetup,
+  saveSetup,
+  saveTab,
+  variantSetupId,
+  type SetupChoices,
+  type SetupTab,
+} from './savedSetup'
 import { loadTeams, saveTeams } from './savedTeams'
 
 /** The limits the schema allows (standard §7). */
@@ -49,7 +61,8 @@ export interface SetupScreenProps<
  * Settings for any team-turns game: teams, rounds, turn length, packs and tags (standard §7).
  * The game's config schema checks them as players go; its messages are shown next to the field they're about.
  *
- * For a variant (ADR 0018), the variant's settings and content, with only teams and its open settings shown.
+ * For a variant (ADR 0018), the variant's settings and content, with only teams and its open settings shown. A variant
+ * that offers Free Play (ADR 0019) has two tabs: Competitive (all that) and Free Play (the game's Free Play settings).
  */
 export function SetupScreen<
   Item extends { tags?: readonly string[] },
@@ -75,6 +88,17 @@ export function SetupScreen<
   const change = (changes: Partial<SetupChoices<TeamTurnsConfig>>) => setChoices((current) => ({ ...current, ...changes }))
   const id = useId()
 
+  // Free Play (ADR 0019): only on a variant that offers it, in a game that has it. Each tab keeps its own settings.
+  const freePlay = variant?.freePlay ? game.config.freePlay : undefined
+  const FreePlayView = freePlay?.view
+  const [tab, setTab] = useState<SetupTab>(() => (freePlay ? loadTab(setupId) : 'competitive'))
+  const [solo, setSolo] = useState(() => (freePlay && variant ? loadFreePlaySetup(game, variant, freePlay) : undefined))
+  useEffect(() => {
+    if (freePlay) saveTab(setupId, tab)
+    if (solo) saveSetup(freePlaySetupId(setupId), solo)
+  }, [freePlay, setupId, tab, solo])
+  const playingAlone = tab === 'free-play' && solo !== undefined
+
   // Remember every change as it's made, so a back swipe or a refresh in the middle of setup loses nothing.
   useEffect(() => {
     saveTeams(teams)
@@ -85,8 +109,10 @@ export function SetupScreen<
   const tags = [...new Set(packs.filter((pack) => chosenPacks.includes(pack.id)).flatMap((pack) => pack.items.flatMap((item) => item.tags ?? [])))].sort()
   const activeTags = chosenTags.filter((tag) => tags.includes(tag))
 
-  const settings = game.config.schema.safeParse({ ...choices, teams, tags: activeTags })
-  const items = choosePoolItems(packs, { packs: chosenPacks, tags: activeTags }, itemKey)
+  const settings = playingAlone
+    ? game.config.schema.safeParse({ ...solo, teams: [soloPlayer] })
+    : game.config.schema.safeParse({ ...choices, teams, tags: activeTags })
+  const items = playingAlone ? choosePoolItems(packs, solo, itemKey) : choosePoolItems(packs, { packs: chosenPacks, tags: activeTags }, itemKey)
 
   /** The schema's message for exactly this field, e.g. `('teams', 1)` for the second team's name. */
   const problem = (...path: (string | number)[]) =>
@@ -109,102 +135,125 @@ export function SetupScreen<
         </Link>
       </header>
 
-      <Section title="Teams" hint="In playing order.">
-        {teams.map((team, index) => {
-          const error = problem('teams', index)
-          return (
-            <div key={index} className="flex flex-col gap-1">
-              <div className="flex gap-2">
-                <Input
-                  aria-label={`Team ${index + 1}`}
-                  value={team}
-                  maxLength={30}
-                  aria-invalid={error ? true : undefined}
-                  aria-describedby={error ? `${id}-team-${index}` : undefined}
-                  onChange={(event) => setTeams(teams.map((t, i) => (i === index ? event.target.value : t)))}
-                />
-                {teams.length > minTeams && (
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    aria-label={`Remove ${team.trim() || `team ${index + 1}`}`}
-                    onClick={() => setTeams(teams.filter((_, i) => i !== index))}
-                  >
-                    <X aria-hidden />
-                  </Button>
-                )}
-              </div>
-              {error && <ErrorText id={`${id}-team-${index}`}>{error}</ErrorText>}
-            </div>
-          )
-        })}
-        {teams.length < maxTeams && (
-          <Button variant="outline" onClick={() => setTeams([...teams, nextTeamName(teams)])}>
-            Add team
-          </Button>
-        )}
-      </Section>
-
-      {shown('rounds') && (
-        <Section title="Rounds" hint="Every team plays once per round.">
-          <Stepper label="Rounds" value={rounds} min={1} max={10} onChange={(value) => change({ rounds: value })} />
-        </Section>
-      )}
-
-      {shown('seconds') && (
-        <Section title="Turn length">
-          <Stepper
-            label="Turn length"
-            value={seconds}
-            min={15}
-            max={300}
-            step={15}
-            format={(value) => `${value} seconds`}
-            onChange={(value) => change({ seconds: value })}
-          />
-        </Section>
-      )}
-
-      {SettingsView && (
-        <SettingsView settings={choices} open={variant?.open} onChange={(changes) => setChoices((current) => ({ ...current, ...changes }))} />
-      )}
-
-      {/* A variant's content is the variant: its packs and tags aren't for players to change. */}
-      {!variant && (
-        <Section title="Packs">
-          {packs.map((pack) => (
-            <label key={pack.id} className="flex items-start gap-3 rounded-xl bg-card p-4 text-card-foreground shadow-sm">
-              <input
-                type="checkbox"
-                className="mt-1 size-5 shrink-0 accent-primary"
-                checked={chosenPacks.includes(pack.id)}
-                onChange={() => change({ packs: toggle(chosenPacks, pack.id) })}
-              />
-              <span className="flex flex-col gap-1">
-                <span className="font-semibold">
-                  {pack.name} <span className="font-normal text-muted-foreground">· {pack.items.length} items</span>
-                </span>
-                <span className="text-sm text-muted-foreground">{pack.description}</span>
-              </span>
-            </label>
+      {freePlay && (
+        <div role="tablist" aria-label="How to play" className="grid grid-cols-2 gap-2">
+          {(['competitive', 'free-play'] as const).map((option) => (
+            <Button key={option} role="tab" aria-selected={tab === option} variant={tab === option ? 'primary' : 'outline'} onClick={() => setTab(option)}>
+              {option === 'competitive' ? 'Competitive' : 'Free Play'}
+            </Button>
           ))}
-          {problem('packs') && <ErrorText>{problem('packs')}</ErrorText>}
-        </Section>
+        </div>
       )}
 
-      {!variant && tags.length > 0 && (
-        <Section title="Only play" hint="Pick kinds of item to play only those. Pick none to play everything.">
-          <div className="flex flex-wrap gap-2">
-            {tags.map((tag) => {
-              const on = activeTags.includes(tag)
-              return (
-                <Button key={tag} variant={on ? 'primary' : 'outline'} aria-pressed={on} onClick={() => change({ tags: toggle(chosenTags, tag) })}>
-                  {tag}
-                </Button>
-              )
-            })}
-          </div>
+      {playingAlone && FreePlayView && (
+        <>
+          <p className="text-muted-foreground">On your own, at your own pace. Your score at the end.</p>
+          <FreePlayView settings={solo} onChange={(changes) => setSolo((current) => current && { ...current, ...changes })} />
+        </>
+      )}
+
+      {!playingAlone && (
+        <>
+
+        <Section title="Teams" hint="In playing order.">
+          {teams.map((team, index) => {
+            const error = problem('teams', index)
+            return (
+              <div key={index} className="flex flex-col gap-1">
+                <div className="flex gap-2">
+                  <Input
+                    aria-label={`Team ${index + 1}`}
+                    value={team}
+                    maxLength={30}
+                    aria-invalid={error ? true : undefined}
+                    aria-describedby={error ? `${id}-team-${index}` : undefined}
+                    onChange={(event) => setTeams(teams.map((t, i) => (i === index ? event.target.value : t)))}
+                  />
+                  {teams.length > minTeams && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      aria-label={`Remove ${team.trim() || `team ${index + 1}`}`}
+                      onClick={() => setTeams(teams.filter((_, i) => i !== index))}
+                    >
+                      <X aria-hidden />
+                    </Button>
+                  )}
+                </div>
+                {error && <ErrorText id={`${id}-team-${index}`}>{error}</ErrorText>}
+              </div>
+            )
+          })}
+          {teams.length < maxTeams && (
+            <Button variant="outline" onClick={() => setTeams([...teams, nextTeamName(teams)])}>
+              Add team
+            </Button>
+          )}
         </Section>
+
+        {shown('rounds') && (
+          <Section title="Rounds" hint="Every team plays once per round.">
+            <Stepper label="Rounds" value={rounds} min={1} max={10} onChange={(value) => change({ rounds: value })} />
+          </Section>
+        )}
+
+        {shown('seconds') && (
+          <Section title="Turn length">
+            <Stepper
+              label="Turn length"
+              value={seconds}
+              min={15}
+              max={300}
+              step={15}
+              format={(value) => `${value} seconds`}
+              onChange={(value) => change({ seconds: value })}
+            />
+          </Section>
+        )}
+
+        {SettingsView && (
+          <SettingsView settings={choices} open={variant?.open} onChange={(changes) => setChoices((current) => ({ ...current, ...changes }))} />
+        )}
+
+        {/* A variant's content is the variant: its packs and tags aren't for players to change. */}
+        {!variant && (
+          <Section title="Packs">
+            {packs.map((pack) => (
+              <label key={pack.id} className="flex items-start gap-3 rounded-xl bg-card p-4 text-card-foreground shadow-sm">
+                <input
+                  type="checkbox"
+                  className="mt-1 size-5 shrink-0 accent-primary"
+                  checked={chosenPacks.includes(pack.id)}
+                  onChange={() => change({ packs: toggle(chosenPacks, pack.id) })}
+                />
+                <span className="flex flex-col gap-1">
+                  <span className="font-semibold">
+                    {pack.name} <span className="font-normal text-muted-foreground">· {pack.items.length} items</span>
+                  </span>
+                  <span className="text-sm text-muted-foreground">{pack.description}</span>
+                </span>
+              </label>
+            ))}
+            {problem('packs') && <ErrorText>{problem('packs')}</ErrorText>}
+          </Section>
+        )}
+
+        {!variant && tags.length > 0 && (
+          <Section title="Only play" hint="Pick kinds of item to play only those. Pick none to play everything.">
+            <div className="flex flex-wrap gap-2">
+              {tags.map((tag) => {
+                const on = activeTags.includes(tag)
+                return (
+                  <Button key={tag} variant={on ? 'primary' : 'outline'} aria-pressed={on} onClick={() => change({ tags: toggle(chosenTags, tag) })}>
+                    {tag}
+                  </Button>
+                )
+              })}
+            </div>
+          </Section>
+        )}
+
+        </>
       )}
 
       {/*
@@ -212,7 +261,7 @@ export function SetupScreen<
         Only the item count has a backdrop, so it stays readable over cards scrolling under it.
       */}
       <div data-bar className="sticky bottom-0 mt-auto flex flex-col gap-2 py-4">
-        {chosenPacks.length > 0 && (
+        {(playingAlone || chosenPacks.length > 0) && (
           <p className="self-center rounded-full bg-background/75 px-3 py-1 text-center text-muted-foreground backdrop-blur-sm" aria-live="polite">
             {items.length === 0
               ? 'No items match. Pick another pack or kind.'

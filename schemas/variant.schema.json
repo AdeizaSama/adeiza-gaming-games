@@ -60,6 +60,11 @@
         "type": "string"
       }
     },
+    "freePlay": {
+      "default": false,
+      "description": "Optional. true: players can also play it alone, in Free Play (ADR 0019), if its game allows that.",
+      "type": "boolean"
+    },
     "contributors": {
       "minItems": 1,
       "type": "array",

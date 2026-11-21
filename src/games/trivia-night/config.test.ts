@@ -11,7 +11,7 @@ describe('Trivia Night settings', () => {
   it('takes against the clock, 1 to 10 questions, 1 to 5 points and A to Z, and keeps the format’s turn limits', () => {
     const set = TriviaConfig.parse({ ...least, mode: 'clock', questions: 10, points: 5, order: 'alphabetical', seconds: 300 })
     expect([set.mode, set.questions, set.points, set.order, set.seconds]).toEqual(['clock', 10, 5, 'alphabetical', 300])
-    for (const change of [{ questions: 0 }, { questions: 11 }, { points: 0 }, { points: 6 }, { points: 1.5 }, { order: 'random' }, { mode: 'steal' }, { seconds: 5 }, { seconds: 301 }]) {
+    for (const change of [{ questions: 0 }, { questions: 51 }, { points: 0 }, { points: 6 }, { points: 1.5 }, { order: 'random' }, { mode: 'steal' }, { seconds: 5 }, { seconds: 301 }]) {
       expect(TriviaConfig.safeParse({ ...least, ...change }).success, JSON.stringify(change)).toBe(false)
     }
   })

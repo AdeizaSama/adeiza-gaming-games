@@ -21,6 +21,15 @@ export interface SettingsViewProps<Config> {
 /** A game's own settings on the setup screen, shown below the format's (ADR 0008). */
 export type SettingsView<Config> = ComponentType<SettingsViewProps<Config>>
 
+/**
+ * What a game gives to offer Free Play (ADR 0019): its Free Play settings view, and where Free Play starts (e.g. 10
+ * questions, no clock), on top of a variant's settings.
+ */
+export interface FreePlay<Config> {
+  view: SettingsView<Config>
+  settings: Partial<Settings<Config>>
+}
+
 /** Whether a setting is shown: on a game's own setup (no `open` list) every one is; on a variant's, the open ones. */
 export function isOpen(open: readonly string[] | undefined, name: string): boolean {
   return open === undefined || open.includes(name)
@@ -63,6 +72,29 @@ export function checkVariantSettings<Config>(schema: z.ZodType<Config>, variant:
  */
 export function variantSettings<Config>(schema: z.ZodType<Config>, variant: VariantLike): Settings<Config> {
   const checked = checkVariantSettings(schema, variant)
+  if (!checked.success) throw checked.error
+  return withoutTeams(checked.data)
+}
+
+/** The one player in Free Play: the name the format's views show (ADR 0019). */
+export const soloPlayer = 'You'
+
+/**
+ * A variant's Free Play settings (ADR 0019): the variant's, then where the game's Free Play starts, then players' own
+ * `changes` from last time, if any. Always one round, `solo`, and the variant's packs and tags. Throws if the result
+ * fails the schema, unless there are changes: then players' changes are dropped instead.
+ */
+export function freePlaySettings<Config>(
+  schema: z.ZodType<Config>,
+  variant: VariantLike,
+  freePlay: Pick<FreePlay<Config>, 'settings'>,
+  changes: Record<string, unknown> = {},
+): Settings<Config> {
+  const fixed = { packs: variant.packs, tags: variant.tags, solo: true, rounds: 1, teams: [soloPlayer] }
+  const start = { ...variant.settings, ...freePlay.settings }
+  const withChanges = schema.safeParse({ ...start, ...changes, ...fixed })
+  if (withChanges.success) return withoutTeams(withChanges.data)
+  const checked = schema.safeParse({ ...start, ...fixed })
   if (!checked.success) throw checked.error
   return withoutTeams(checked.data)
 }

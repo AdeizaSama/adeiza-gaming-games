@@ -1,3 +1,4 @@
+import { useEffect, useEffectEvent } from 'react'
 import type { MachineEvent } from '../../../machine/types'
 import { Summary, type Standing } from '../../../interactions/Summary'
 import type { TeamTurnsConfig } from '../config'
@@ -8,12 +9,20 @@ import type { TeamTurnsViewProps } from './types'
  * The format's default `turn_summary` view: who played and what they scored, then every team's score so far with
  * the rounds it has played (ADR 0013). A game that can say more (which items were got, say) replaces it with its own
  * (ADR 0005).
+ *
+ * In Free Play (ADR 0019) the game is one turn, so it goes straight on to the results, where the score is.
  */
 export function TurnSummaryView<Item, Turn, Event extends MachineEvent, Config extends TeamTurnsConfig>({
   context,
   send,
   points,
 }: TeamTurnsViewProps<Item, Turn, Event, Config>) {
+  const solo = context.config.solo === true
+  const next = useEffectEvent(() => send({ type: 'next' }))
+  useEffect(() => {
+    if (solo) next()
+  }, [solo])
+  if (solo) return null
   return (
     <Summary
       title={context.config.teams[context.current]}
