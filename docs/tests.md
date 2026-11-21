@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 456 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
+**Counts:** 458 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -31,7 +31,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Trivia Night settings](#trivia-night-settings) | `src/games/trivia-night/config.test.ts` | 2 | |
 | [Choice turn settings](#choice-turn-settings) | `src/sdk/formats/team-turns/choice/config.test.ts` | 1 | |
 | [Choice turn machine](#choice-turn-machine) | `src/sdk/formats/team-turns/choice/machine.test.ts` | 12 | |
-| [Choice turn views](#choice-turn-views) | `src/sdk/formats/team-turns/choice/views.test.tsx` | 9 | |
+| [Choice turn views](#choice-turn-views) | `src/sdk/formats/team-turns/choice/views.test.tsx` | 11 | |
 | [Trivia Night machine](#trivia-night-machine) | `src/games/trivia-night/machine.test.ts` | 2 | |
 | [Trivia Night game](#trivia-night-game) | `src/games/trivia-night/game.test.ts` | 2 | |
 | [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
@@ -703,7 +703,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 401 | plays one question a 30-second turn for 1 point, options shuffled, unless asked | Defaults | The least settings | 3 rounds, 30 seconds, no tags, `questions` mode, 1 question, 1 point, `shuffle` | One question a turn is the default way to play, with 30 seconds for it. |
-| 402 | takes against the clock, 1 to 10 questions, 1 to 5 points and A to Z, and keeps the format's turn limits | Limits | Clock, 10, 5, alphabetical, 300 s; then 0 and 11 questions, 0, 6 and 1.5 points, `random`, `steal`, 5 and 301 seconds | The first kept as given; every other refused | Only the default turn changes, not the format's 10–300 second limits. |
+| 402 | takes against the clock, 1 to 50 questions, 1 to 5 points and A to Z, and keeps the format's turn limits | Limits | Clock, 10, 5, alphabetical, 300 s; then 0 and 51 questions, 0, 6 and 1.5 points, `random`, `steal`, 5 and 301 seconds | The first kept as given; every other refused | Only the default turn changes, not the format's 10–300 second limits. |
 
 ## Choice turn settings
 
@@ -711,7 +711,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 432 | takes a game's own defaults for any choice setting, keeping the limits, and its own for the rest | `choiceConfig` | 60 s, 10 questions, A to Z; then no defaults; then 11 questions, 5 s, 6 points | 60, questions, 10, 1 point, A to Z; 30, questions, 1, 1, shuffle; each refused | Each multiple-choice game picks its defaults without copying the limits. |
+| 432 | takes a game's own defaults for any choice setting, keeping the limits, and its own for the rest | `choiceConfig` | 60 s, 10 questions, A to Z; then no defaults; then 51 questions, 5 s, 6 points | 60, questions, 10, 1 point, A to Z; 30, questions, 1, 1, shuffle; each refused | Each multiple-choice game picks its defaults without copying the limits. |
 
 ## Choice turn machine
 
@@ -747,6 +747,8 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 419 | picks the mode, with questions per turn only for a set number, 1 to 10 | Settings view | Tap More 12 times; then Against the clock | 1, then 10 at most; the stepper gone | The count only means something for a set number. |
 | 420 | sets points from 1 to 5, and the order of the options | Settings view | Tap More 6 times on points; tap A to Z | "1 point", then "5 points" at most; Shuffled checked, then A to Z | Every setting can be set on setup. |
 | 459 | shows only the open settings, with questions per turn on its own when the mode is closed | Settings view on a variant | Open questions; open mode, questions, order against the clock; open rounds | Questions per turn under its own heading, nothing else; the mode and order, no questions (it's against the clock); nothing | Masculin ou féminin ? locks the mode but lets players set how many words a turn. |
+| 474 | reads and sets the length: 10, 20 or 50 questions with no clock, or against the clock | `lengthOf`, `lengthSettings`, `choiceFreePlay` | 20 questions; the clock; 7 questions; 50; the clock; the Free Play start | 20, clock, none; 50 with no timer; clock with the timer; 10 | Free Play's lengths map onto the choice turn's own settings (ADR 0019). |
+| 475 | offers the lengths, and the clock's time only against the clock | `ChoiceFreePlayView` | The Free Play start; tap Against the clock | 10 questions checked, no Time stepper; then Time at 30 seconds | The clock's length matters only when there's a clock. |
 
 ## Trivia Night machine
 

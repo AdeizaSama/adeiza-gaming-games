@@ -21,6 +21,15 @@ export interface SettingsViewProps<Config> {
 /** A game's own settings on the setup screen, shown below the format's (ADR 0008). */
 export type SettingsView<Config> = ComponentType<SettingsViewProps<Config>>
 
+/**
+ * What a game gives to offer Free Play (ADR 0019): its Free Play settings view, and where Free Play starts (e.g. 10
+ * questions, no clock), on top of a variant's settings.
+ */
+export interface FreePlay<Config> {
+  view: SettingsView<Config>
+  settings: Partial<Settings<Config>>
+}
+
 /** Whether a setting is shown: on a game's own setup (no `open` list) every one is; on a variant's, the open ones. */
 export function isOpen(open: readonly string[] | undefined, name: string): boolean {
   return open === undefined || open.includes(name)

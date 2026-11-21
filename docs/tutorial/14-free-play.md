@@ -51,3 +51,24 @@ The hand-off and the summary use the same pattern as the countdown: `useEffectEv
 ### How to verify
 
 `pnpm test`: 456 tests. Make the hand-off ignore `solo`, and the Free Play views test fails.
+
+---
+
+## Step 3: The choice turn's Free Play settings
+
+**What:** `src/sdk/formats/team-turns/choice/FreePlayView.tsx`: `ChoiceFreePlayView` (Length: 10, 20 or 50 questions, or Against the clock, with its time) and `choiceFreePlay`, what a multiple-choice game gives to offer Free Play. `questions` now goes up to 50. A `FreePlay<Config>` type in `settings.ts`: a view and the settings Free Play starts from.
+
+**Why:** the app doesn't know what a game's settings are called, so the game says where Free Play starts:
+
+```ts
+export const choiceFreePlay: FreePlay<ChoiceConfig> = {
+  view: ChoiceFreePlayView,
+  settings: { mode: 'questions', questions: 10, timer: false },
+}
+```
+
+A length is two or three settings at once: 20 questions is `mode: 'questions', questions: 20, timer: false`; against the clock is `mode: 'clock', timer: true`. `lengthSettings` and `lengthOf` turn one into the other, so the view's radio buttons can't disagree with the settings.
+
+### How to verify
+
+`pnpm test src/sdk/formats/team-turns/choice`: the two Free Play tests.

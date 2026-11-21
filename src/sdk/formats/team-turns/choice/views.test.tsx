@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { send as step, start } from '../../../machine/runner'
 import { choiceConfig, type ChoiceConfig } from './config'
 import { choiceTurns, type ChoiceItem } from './machine'
+import { ChoiceFreePlayView, choiceFreePlay, lengthOf, lengthSettings } from './FreePlayView'
 import { ChoiceSettingsView } from './SettingsView'
 import { autoNextMs, choiceTurnView, questionCount } from './TurnView'
 
@@ -143,5 +144,27 @@ describe('choice settings view on a variant', () => {
     expect(screen.getByRole('radio', { name: /A to Z/ })).toBeDefined()
     clock.unmount()
     expect(view(['rounds']).container.textContent).toBe('')
+  })
+})
+
+describe('choice Free Play settings', () => {
+  it('reads and sets the length: 10, 20 or 50 questions with no clock, or against the clock', () => {
+    expect([lengthOf({ mode: 'questions', questions: 20 }), lengthOf({ mode: 'clock', questions: 20 }), lengthOf({ mode: 'questions', questions: 7 })]).toEqual(['20', 'clock', undefined])
+    expect(lengthSettings('50')).toEqual({ mode: 'questions', questions: 50, timer: false })
+    expect(lengthSettings('clock')).toEqual({ mode: 'clock', timer: true })
+    expect(lengthOf({ ...configWith(), ...choiceFreePlay.settings })).toBe('10')
+  })
+
+  it('offers the lengths, and the clock’s time only against the clock', async () => {
+    const user = userEvent.setup()
+    function Settings() {
+      const [settings, setSettings] = useState({ ...configWith(), ...choiceFreePlay.settings })
+      return <ChoiceFreePlayView settings={settings} onChange={(changes) => setSettings((current) => ({ ...current, ...changes }))} />
+    }
+    render(<Settings />)
+    expect(screen.getByRole<HTMLInputElement>('radio', { name: /10 questions/ }).checked).toBe(true)
+    expect(screen.queryByRole('group', { name: 'Time' })).toBeNull()
+    await user.click(screen.getByRole('radio', { name: /Against the clock/ }))
+    expect(within(screen.getByRole('group', { name: 'Time' })).getByText('30 seconds')).toBeDefined()
   })
 })
