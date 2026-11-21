@@ -32,7 +32,7 @@ A Free Play game is one round of one turn. With `solo`, the format's default vie
 ### Who offers it
 
 - A **variant** says `"freePlay": true`.
-- A **game** allows that by giving `config.freePlayView`, its Free Play settings on setup. `defineGame` refuses a variant with `freePlay` in a game without one, so a Charades variant can't offer something Charades can't do.
+- A **game** allows that by giving `config.freePlay`: its Free Play settings view on setup, and the settings Free Play starts from (the app doesn't know what a game's settings are called). `defineGame` refuses a variant with `freePlay` in a game without one, so a Charades variant can't offer something Charades can't do.
 
 The choice turn (ADR 0017) gives its view: the length (10, 20 or 50 questions, or Against the clock), and the clock's length when it's on. Its `questions` setting goes up to 50 (Competitive setup still offers 1 to 10 a turn).
 

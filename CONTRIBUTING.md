@@ -61,6 +61,7 @@ A variant is a way to play a game that the home page lists: its packs, its setti
 - `packs` lists pack ids from the game's `content/` folder. `tags`, optional, plays only items with those tags.
 - `settings` lists only what differs from the game's defaults. Each game's README says what its settings are called.
 - `open` lists the settings players may change on the variant's setup screen. Teams are always theirs; packs and tags never are.
+- `freePlay`, optional: `true` to offer Free Play too, one player at their own pace. Only games that can be played alone allow it (Trivia Night does; Charades and Name Ten don't), and the tests say so if not.
 
 `pnpm validate-content` checks the file's shape, and `pnpm test` checks it against its game (packs that exist, settings the game has). See [ADR 0018](docs/decisions/0018-variants.md).
 

@@ -117,3 +117,35 @@ A length is two or three settings at once: 20 questions is `mode: 'questions', q
 ### How to verify
 
 `pnpm test`: 464 tests. `pnpm dev --host`, open Masculin ou féminin ?, pick Free Play.
+
+---
+
+## Step 7: Docs
+
+**What:** the standard's §3 (`config.freePlay` and a variant's `freePlay`) and §7 (the format's `solo` and `timer`); CONTRIBUTING's variant fields; README; Trivia Night's rules and README; ADR 0019 says `config.freePlay` (a view and starting settings), as built.
+
+### How to verify
+
+Read CONTRIBUTING's "Add a variant" with Free Play in mind.
+
+---
+
+## Chapter summary
+
+| Step | What | SDK change? |
+|---|---|---|
+| 1 | ADR 0019: Free Play | |
+| 2 | One player, with or without a clock | Yes: the format's `solo` and `timer`, its default views |
+| 3 | The choice turn's Free Play settings, up to 50 questions | Yes: `ChoiceFreePlayView`, `choiceFreePlay` |
+| 4 | A variant can offer Free Play, if its game does | Yes: `freePlay` in variant files and `defineGame` |
+| 5 | Competitive and Free Play tabs | |
+| 6 | Trivia Night's variants offer Free Play | |
+| 7 | Docs | |
+
+**What we learned:**
+
+- New settings that are optional rather than defaulted leave every existing game, test and save untouched.
+- A rule across two settings costs something in zod: games that replace one of the format's fields need `.safeExtend()`.
+- The app can't know what a game's settings are called, so a game says where its own Free Play starts.
+
+**Tests:** 464 runtime tests and 31 compile-time checks.
