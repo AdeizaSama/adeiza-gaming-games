@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 460 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
+**Counts:** 463 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -70,7 +70,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Playing Name Ten](#playing-name-ten) | `src/app/play/nameTen.test.tsx` | 1 | |
 | [Playing Trivia Night](#playing-trivia-night) | `src/app/play/triviaNight.test.tsx` | 1 | |
 | [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 14 | |
-| [Variant setup](#variant-setup) | `src/app/setup/variantSetup.test.tsx` | 2 | |
+| [Variant setup](#variant-setup) | `src/app/setup/variantSetup.test.tsx` | 5 | |
 | [Saved game](#saved-game) | `src/app/play/savedGame.test.ts` | 13 | |
 | [Play page](#play-page) | `src/app/play/PlayPage.test.tsx` | 3 | |
 | [Continuing a saved game](#continuing-a-saved-game) | `src/app/library/continue.test.tsx` | 7 | |
@@ -1024,12 +1024,15 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 ## Variant setup
 
-`src/app/setup/variantSetup.test.tsx`, testing `SetupScreen.tsx` with a variant, and `loadVariantSetup` in `savedSetup.ts` (ADR 0018). Screen tests (happy-dom). The variant is made up: Snack Attack, Charades with 90-second turns and Mix it up, snacks only, rounds and mode open.
+`src/app/setup/variantSetup.test.tsx`, testing `SetupScreen.tsx` with a variant, and `loadVariantSetup` and the Free Play saves in `savedSetup.ts` (ADR 0018, 0019). Screen tests (happy-dom). The variant is made up: Snack Attack, Charades with 90-second turns and Mix it up, snacks only, rounds and mode open.
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 462 | shows the variant's name, the teams and only its open settings, and starts with its settings and content | Variant setup | Open the screen; tap More: Rounds; Start | Heading Snack Attack and its tagline; teams, Rounds, Mix it up checked; no Turn length, Packs, Only play or Advanced; Start sends 4 rounds, 90 s, mix, Back to School, snack | Players change only what the variant allows, and get its content. |
 | 463 | remembers what players changed, per variant, and only for open settings | `saveSetup`, `loadVariantSetup` | Tap Describe; then a saved setup with 5 rounds, 15 s, another pack | Saved under `charades/snack-attack`, not `charades`; loads describe, 5 rounds, but 90 s and the variant's pack and tag | A remembered change to a closed setting or the content never leaks in. |
+| 478 | offers Competitive and Free Play; Free Play asks only for its length and starts one player, one round, no clock | Free Play tab | Trivia given the choice Free Play, a variant offering it; tap Free Play; Start | Competitive selected, with teams; then no teams or rounds, 10 questions checked; Start sends solo, You, 1 round, 10 questions, no timer, the variant's pack | Playing alone asks only what matters alone (ADR 0019). |
+| 479 | remembers the tab and Free Play's own choices, apart from Competitive's | Free Play tab | Free Play, 20 questions; open the screen again | Free Play still selected, 20 checked; Competitive's saved setup not 20 | Each tab keeps its own settings. |
+| 480 | shows no tabs on a variant that doesn't offer Free Play | Free Play tab | The same variant with `freePlay: false` | No tab list | Only variants that say so offer Free Play. |
 
 ## Saved game
 
@@ -1061,7 +1064,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 244 | describes a save by its teams and round | `describeSave` | 2 teams, round 2 of 3; 3 teams, round 1 of 1 | "Lions vs Eagles · Round 2 of 3"; "Lions, Eagles and Hawks · Round 1 of 1" | Players recognise their game by who's playing and how far along it is. |
+| 244 | describes a save by its teams and round, or as Free Play for one player | `describeSave` | 2 teams, round 2 of 3; 3 teams, round 1 of 1; one player | "Lions vs Eagles · Round 2 of 3"; "Lions, Eagles and Hawks · Round 1 of 1" ; "Free Play" | Players recognise their game by who's playing and how far along it is. |
 | 245 | offers the unfinished game first in the library, and Continue carries on with it | Continue card | A save in round 2; open `/`; tap Continue | A "Continue Charades" link with the teams and round; then the handoff, "Round 2 of 2" | After a back swipe or a closed tab, getting back is one tap. |
 | 467 | names the variant a game was started from, and keeps it as the game is played | Continue, variants | Start Naija Charades from its setup; Start the turn; open `/` again | The save remembers `naija-back-to-school` after the play page saves; "Continue Naija Charades (Back to School Edition)" | Players see the name they picked, and the play page's saves don't drop it. |
 | 246 | offers nothing to continue for a finished game | Continue card | A save at the results | No Continue link | There's nothing left to play in a finished game (ADR 0006). |

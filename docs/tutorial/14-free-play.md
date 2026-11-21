@@ -87,4 +87,21 @@ A length is two or three settings at once: 20 questions is `mode: 'questions', q
 
 ### How to verify
 
-`pnpm test`: 462 tests. Remove the check in `defineGame`, and its Free Play test fails.
+`pnpm test`: 460 tests. Remove the check in `defineGame`, and its Free Play test fails.
+
+---
+
+## Step 5: Competitive and Free Play tabs
+
+**What:**
+
+- `SetupScreen.tsx`: on a variant that offers Free Play, two tabs under the title. Free Play shows a line about playing alone, the game's Free Play view, the item count and Start; no teams, rounds or other settings. Start sends the Free Play settings with the one player, "You".
+- `savedSetup.ts`: `loadTab`/`saveTab` (the tab players last used) and `loadFreePlaySetup`, kept under `…/free-play`, apart from Competitive's.
+- `SetupPage.tsx`: doesn't remember "You" as a team name.
+- `savedGame.ts`: `describeSave` says "Free Play" for one player, so Continue reads "Continue Masculin ou féminin ? · Free Play".
+
+**Why:** the choice between playing with others and alone belongs where players set the game up, and one card per variant keeps the home page short.
+
+### How to verify
+
+`pnpm test`: 463 tests. Make the screen ignore the Free Play tab, and two of its tests fail.

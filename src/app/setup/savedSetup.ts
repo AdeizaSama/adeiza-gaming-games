@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import type { Variant } from '../../sdk/content/variant'
-import { defaultSettings, variantSettings, withOpenChanges, withoutTeams, type Settings } from '../../sdk/game/settings'
+import { defaultSettings, freePlaySettings, variantSettings, withOpenChanges, withoutTeams, type FreePlay, type Settings } from '../../sdk/game/settings'
 
 /**
  * A game's setup choices as players left them: every setting except teams, the game's own included (ADR 0008).
@@ -65,6 +65,52 @@ export function loadVariantSetup<Config>(game: SetupGame<Config>, variant: Varia
   } catch {
     return settings // not JSON, or storage switched off
   }
+}
+
+/** Which tab a variant's setup shows (ADR 0019): playing in teams, or alone. */
+export type SetupTab = 'competitive' | 'free-play'
+
+const tabKey = (setupId: string) => `ku-zo-wasa:setup-tab:${setupId}`
+
+/** The id a variant's Free Play setup is kept under, next to its Competitive one. */
+export const freePlaySetupId = (setupId: string) => `${setupId}/free-play`
+
+/** The tab players last used on this setup; Competitive if none, or if storage is off. */
+export function loadTab(setupId: string, storage: Storage = localStorage): SetupTab {
+  try {
+    return storage.getItem(tabKey(setupId)) === 'free-play' ? 'free-play' : 'competitive'
+  } catch {
+    return 'competitive'
+  }
+}
+
+/** Remembers the tab players are on. Does nothing if storage is switched off. */
+export function saveTab(setupId: string, tab: SetupTab, storage: Storage = localStorage): void {
+  try {
+    storage.setItem(tabKey(setupId), tab)
+  } catch {
+    // Storage full or switched off: remembering is a nicety.
+  }
+}
+
+/**
+ * A variant's Free Play setup (ADR 0019): `freePlaySettings`, with what players chose last time in Free Play on top.
+ * Kept apart from the variant's Competitive setup, so each tab remembers its own.
+ */
+export function loadFreePlaySetup<Config>(
+  game: SetupGame<Config>,
+  variant: Variant,
+  freePlay: Pick<FreePlay<Config>, 'settings'>,
+  storage: Storage = localStorage,
+): SetupChoices<Config> {
+  let saved: unknown = null
+  try {
+    saved = JSON.parse(storage.getItem(key(freePlaySetupId(variantSetupId(game.meta.id, variant)))) ?? 'null')
+  } catch {
+    // Not JSON, or storage switched off: start from the variant's Free Play.
+  }
+  const changes = typeof saved === 'object' && saved !== null ? (saved as Record<string, unknown>) : {}
+  return freePlaySettings(game.config.schema, variant, freePlay, changes)
 }
 
 /**
