@@ -22,3 +22,26 @@
 ### How to verify
 
 Read the ADR.
+
+---
+
+## Step 2: Pairs, and two French packs
+
+**What:**
+
+- `src/games/pairs/schema.ts`: a pair, `{ front, back, tags }`, each side at most 60 characters.
+- `src/games/pairs/content/francais-anglais.json`: 190 nouns with their article and English meaning ("le chat" ↔ "cat"). Two-way.
+- `src/games/pairs/content/les-themes.json`: the same nouns, and jobs in both forms, with their theme ("le chat" → "les animaux"). One-way, eleven themes.
+- `schemas/pairs.pack.schema.json`, generated.
+
+**Why:** both packs come from the word list checked for Masculin ou féminin ?, so the French has been reviewed once already.
+
+### Built, then checked
+
+A script turns the word list into both packs. It adds the article from the gender ("le", "la", or "l'" before a vowel or a silent h), and refuses to write the two-way pack if two nouns share an English meaning: match-up would mark a right tile wrong. That's why the two-way pack has nouns only, without jobs and adjectives, where "actor" or "small" fit two French words.
+
+One thing an article can't do: "l'école" doesn't show that école is feminine. Masculin ou féminin ? covers those.
+
+### How to verify
+
+`pnpm test src/games/pairs/schema.test.ts`: 3 tests. `pnpm validate-content` lists both packs.

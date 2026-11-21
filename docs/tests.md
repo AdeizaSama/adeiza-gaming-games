@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 464 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
+**Counts:** 467 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -34,6 +34,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Choice turn views](#choice-turn-views) | `src/sdk/formats/team-turns/choice/views.test.tsx` | 11 | |
 | [Trivia Night machine](#trivia-night-machine) | `src/games/trivia-night/machine.test.ts` | 2 | |
 | [Trivia Night game](#trivia-night-game) | `src/games/trivia-night/game.test.ts` | 2 | |
+| [Pairs content](#pairs-content) | `src/games/pairs/schema.test.ts` | 3 | |
 | [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
 | [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 9 | |
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
@@ -769,6 +770,16 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 |---|---|---|---|---|---|
 | 421 | is a valid game with the Back to School pack, its settings and one view for turn and result | `index.ts` | The game's default export | Id `trivia-night`; Back to School; its machine and settings; `TurnView` for `turn` and `reveal`; rules with "## Ways to play" | `defineGame` checked the parts when the file loaded; this checks Trivia Night wired its own parts in. |
 | 464 | has Back to School Trivia, and Masculin ou féminin ?: ten words a minute, A to Z, Set questions only; both offer Free Play | Variants | The game's variants | `back-to-school` and `masculin-feminin`; the French one plays 10 questions, 60 s, A to Z, on its own pack, with mode closed; the choice Free Play, and both variants offering it | The variant the home page lists plays the way it's meant to (ADR 0018). |
+
+## Pairs content
+
+`src/games/pairs/schema.test.ts`, testing `src/games/pairs/schema.ts` and its packs (ADR 0020).
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 482 | needs a front and a back of at most 60 characters, filling in no tags, and rejects an unknown field | Item schema | le chat / cat; a blank front and a 61-character back; an extra field; the key | Tags filled in; problems at `front` and `back`; one problem; `le chat` | A pair is two short sides. |
+| 483 | ships Français–anglais: two-way, every English meaning one word's, every noun with its article | The two-way pack | `francais-anglais` | At least 150 pairs; no English meaning twice; every front starts with le, la or l' | Match-up marks a tile right only if it's one word's partner; the article teaches the gender. |
+| 484 | ships Les thèmes: one-way, every theme with at least 7 words, so odd-one-out always has a full group | The one-way pack | `les-themes` | At least 5 themes, each with 7 or more words | An odd-one-out round is 7 words of a group and 3 from others. |
 
 ## App
 
