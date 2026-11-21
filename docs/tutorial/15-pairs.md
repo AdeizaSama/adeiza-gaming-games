@@ -88,3 +88,32 @@ Tiles use the same grid as Name Ten's board (ADR 0013): two columns sharing the 
 ### How to verify
 
 `pnpm test src/sdk/interactions/pickcard.test.tsx`: 2 tests. Let a fourth tile be picked, and the first fails.
+
+---
+
+## Step 6: One machine, three ways to play
+
+**What:** `src/games/pairs/machine.ts` and its tests.
+
+**Why:** the rules from ADR 0020, as phases.
+
+| | In `turn` | In `reveal` | Points |
+|---|---|---|---|
+| Flip | `flip` → `reveal` | `knew` / `not_yet` → the next card, or the summary | 1 per Knew it |
+| Match, odd | `pick` (on/off, at most 3), `check` → `reveal` | `continue` → the next set, or the summary | 1 per right tile |
+
+Guards keep each event to its way of playing: `flip` only on a card, `pick` only on a set of tiles, `knew` only after the flip.
+
+### Dealing
+
+`dealRound` makes a round from the item the format just drew:
+
+- **Flip:** the card, with a coin flip for which side shows first when `twoWay`.
+- **Match:** two more items drawn from the pool, so prompts don't repeat; their three partners; seven more tiles from other items' partners, never written the same way as an answer.
+- **Odd:** the drawn item's group, six more of its words, and three words from other groups.
+
+Everything random goes through the machine's `rng`, so a refresh deals the same round.
+
+### How to verify
+
+`pnpm test src/games/pairs/machine.test.ts`: 10 tests. Count every pick as right, or swap odd-one-out's answers with the group's words, and a test fails.

@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 471 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
+**Counts:** 481 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -36,6 +36,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Trivia Night game](#trivia-night-game) | `src/games/trivia-night/game.test.ts` | 2 | |
 | [Pairs content](#pairs-content) | `src/games/pairs/schema.test.ts` | 3 | |
 | [Pairs settings](#pairs-settings) | `src/games/pairs/config.test.ts` | 1 | |
+| [Pairs machine](#pairs-machine) | `src/games/pairs/machine.test.ts` | 10 | |
 | [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
 | [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 9 | |
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
@@ -791,6 +792,23 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 485 | plays two-way flip cards, ten a 60-second turn, unless asked, and takes 1 to 50 cards and the three ways to play | Defaults, limits | The least settings; odd, one-way, 50; 0 and 51 cards, `snap`, `"yes"`; one player in Free Play | flip, two-way, 10, 60 s; kept; each refused; accepted | The three ways to play are one setting, and Free Play works as for any team-turns game. |
+
+## Pairs machine
+
+`src/games/pairs/machine.test.ts`, testing `src/games/pairs/machine.ts` (ADR 0020) with the real packs: Français–anglais for flip and match, Les thèmes for odd-one-out. Teams Lions and Eagles; the defaults unless a test says otherwise.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 489 | has no mistakes validateMachine can find | Machine | The machine | No mistakes | Every phase, guard and action it names exists. |
+| 490 | flip: shows a card, flips it, and scores Knew it 1 and Not yet 0, then ends the turn after the cards | Flip | 2 cards; flip, knew; flip, not yet | A card whose sides are partners; `reveal`; a new card, `[1]`; then `turn_summary`, `[1, 0]`, 1 point | Self-marking is the score. |
+| 491 | flip: two-way shows either side first across cards; one-way always the front | `twoWay` | 20 seeds each way | Both sides first in two-way; always the French side in one-way | Two-way practises both directions. |
+| 492 | match: three prompts, ten distinct tiles, their three partners among them, and no other tile any prompt's partner | Match deal | 5 seeds | 3 prompts, 10 different tiles, the 3 answers are the prompts' partners, no other tile is | A right pick is never marked wrong. |
+| 493 | odd: a group, seven of its words and three from other groups to find | Odd deal | 3 seeds, Les thèmes | 1 group, 10 tiles, 3 answers; every tile is in the group unless it's an answer | The three to find are exactly the ones not in the group. |
+| 494 | pick: tiles toggle, never more than three, Check only with three, and a point for each right one | `pick`, `check`, `continue` | 2 sets; toggle twice; three and a fourth; check with one; bad positions; two right and one wrong; continue; all right | Off again; the fourth ignored; no check; ignored; `[2]`; a new set with nothing picked; 5 points and the summary | Picking and scoring as ADR 0020 says. |
+| 495 | ignores events for the other way of playing, and ends the turn when time runs out, from a card or a result | Guards, `time_up` | Pick and check on a flip card; knew before flipping; flip on a match set; time up in each | Nothing changes; then `turn_summary` both times | Views send what their way of playing allows; the clock still ends turns. |
+| 496 | plays a whole game of Free Play flip cards: ten known cards, then the score | Free Play | One player, no timer, 1 round; 10 flips and Knew it; next | No end time; final; score 10 | Pairs works with Free Play (ADR 0019). |
+| 497 | dealRound: the same seed deals the same round, and match draws its prompts from the pool so they don't repeat | `dealRound` | The same item, pool and seed twice | The same round; two more items drawn | A refresh deals the same; prompts come out of the pool like any item. |
+| 498 | canPick and allPicked follow the round's tiles and how many are picked | Guards | Picks of 0, 3 and 3 including the tile; position 10; 2 and 3 picked | true, false, true, false; false, true | A test per guard (standard §12). |
 
 ## App
 
