@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 469 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
+**Counts:** 471 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -65,6 +65,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [PromptCard](#promptcard) | `src/sdk/interactions/promptcard.test.tsx` | 3 | |
 | [MultipleChoice](#multiplechoice) | `src/sdk/interactions/multiplechoice.test.tsx` | 6 | |
 | [FlipCard](#flipcard) | `src/sdk/interactions/flipcard.test.tsx` | 1 | |
+| [PickCard](#pickcard) | `src/sdk/interactions/pickcard.test.tsx` | 2 | |
 | [A pause after time runs out](#a-pause-after-time-runs-out) | `src/sdk/interactions/settle.test.tsx` | 3 | |
 | [Markdown](#markdown) | `src/sdk/interactions/markdown.test.ts` | 5 | |
 | [Instruction](#instruction) | `src/sdk/interactions/instruction.test.tsx` | 3 | |
@@ -959,6 +960,15 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 486 | shows the front and Show the answer; after the flip, the back, Not yet and Knew it | `FlipCard` | le chat / cat; tap Show the answer, Not yet, Knew it | The label and le chat on the theme's card, no cat, no marking buttons; then cat, no Show the answer; each marking reported once | The answer stays hidden until players have had a go. |
+
+## PickCard
+
+`src/sdk/interactions/pickcard.test.tsx`, testing `src/sdk/interactions/PickCard.tsx` (ADR 0020). Screen tests (happy-dom), with the machine's part played by state; three prompts, five tiles (cat, dog, house, tree, car), the answers cat, dog and house. `pickResult` is a plain function.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 487 | shows the prompts and tiles, picks up to the number needed, and checks only when enough are picked | Picking | Tap cat twice; then cat, dog, tree, and car | The three prompts; Check off; cat off again; car not picked; "3 of 3 picked"; Check on | Players pick exactly the number asked. |
+| 488 | after Check: right picks green, wrong red, missed ones outlined, the rest faded, and the count right | The result | Pick cat, dog, tree; Check | "2 of 3 right"; cat and dog green, tree red, house outlined in green and marked Missed, car faded; no Check; `pickResult` 1 of 3 | Players see what they got, what they got wrong, and what they missed. |
 
 ## Review
 

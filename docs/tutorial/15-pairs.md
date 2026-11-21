@@ -71,3 +71,20 @@ One thing an article can't do: "l'école" doesn't show that école is feminine. 
 ### How to verify
 
 `pnpm test src/sdk/interactions/flipcard.test.tsx`. Show the back before the flip, and the test fails.
+
+---
+
+## Step 5: Picking several tiles
+
+**What:** `src/sdk/interactions/PickCard.tsx` and its tests; the standard's §6 lists it.
+
+**Why:** match-up and odd-one-out are the same action: pick three tiles out of ten, then check.
+
+- **Before Check:** picked tiles are filled; once three are picked, the others don't take taps. Check is on only then.
+- **After Check:** a right pick is green with a tick, a wrong one red with a cross, and an answer players didn't pick is outlined in green and marked Missed. The rest fade. The card says "2 of 3 right".
+
+Tiles use the same grid as Name Ten's board (ADR 0013): two columns sharing the height, never under 44px.
+
+### How to verify
+
+`pnpm test src/sdk/interactions/pickcard.test.tsx`: 2 tests. Let a fourth tile be picked, and the first fails.
