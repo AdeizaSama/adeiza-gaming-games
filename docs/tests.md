@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 481 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
+**Counts:** 486 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -37,6 +37,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Pairs content](#pairs-content) | `src/games/pairs/schema.test.ts` | 3 | |
 | [Pairs settings](#pairs-settings) | `src/games/pairs/config.test.ts` | 1 | |
 | [Pairs machine](#pairs-machine) | `src/games/pairs/machine.test.ts` | 10 | |
+| [Pairs views](#pairs-views) | `src/games/pairs/views/views.test.tsx` | 5 | |
 | [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
 | [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 9 | |
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
@@ -800,15 +801,27 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 489 | has no mistakes validateMachine can find | Machine | The machine | No mistakes | Every phase, guard and action it names exists. |
-| 490 | flip: shows a card, flips it, and scores Knew it 1 and Not yet 0, then ends the turn after the cards | Flip | 2 cards; flip, knew; flip, not yet | A card whose sides are partners; `reveal`; a new card, `[1]`; then `turn_summary`, `[1, 0]`, 1 point | Self-marking is the score. |
+| 490 | flip: shows a card, flips it, and scores Knew it 1 and Not yet 0, then ends the turn after the cards | Flip | 2 cards; flip, knew; flip, not yet | A card whose sides are partners; `reveal`, revealed; a new card, `[1]`, not revealed; then `turn_summary`, `[1, 0]`, 1 point | Self-marking is the score. |
 | 491 | flip: two-way shows either side first across cards; one-way always the front | `twoWay` | 20 seeds each way | Both sides first in two-way; always the French side in one-way | Two-way practises both directions. |
 | 492 | match: three prompts, ten distinct tiles, their three partners among them, and no other tile any prompt's partner | Match deal | 5 seeds | 3 prompts, 10 different tiles, the 3 answers are the prompts' partners, no other tile is | A right pick is never marked wrong. |
 | 493 | odd: a group, seven of its words and three from other groups to find | Odd deal | 3 seeds, Les thèmes | 1 group, 10 tiles, 3 answers; every tile is in the group unless it's an answer | The three to find are exactly the ones not in the group. |
-| 494 | pick: tiles toggle, never more than three, Check only with three, and a point for each right one | `pick`, `check`, `continue` | 2 sets; toggle twice; three and a fourth; check with one; bad positions; two right and one wrong; continue; all right | Off again; the fourth ignored; no check; ignored; `[2]`; a new set with nothing picked; 5 points and the summary | Picking and scoring as ADR 0020 says. |
+| 494 | pick: tiles toggle, never more than three, Check only with three, and a point for each right one | `pick`, `check`, `continue` | 2 sets; toggle twice; three and a fourth; check with one; bad positions; two right and one wrong; continue; all right | Off again; the fourth ignored; no check; ignored; `[2]` and revealed; a new set with nothing picked; 5 points and the summary | Picking and scoring as ADR 0020 says. |
 | 495 | ignores events for the other way of playing, and ends the turn when time runs out, from a card or a result | Guards, `time_up` | Pick and check on a flip card; knew before flipping; flip on a match set; time up in each | Nothing changes; then `turn_summary` both times | Views send what their way of playing allows; the clock still ends turns. |
 | 496 | plays a whole game of Free Play flip cards: ten known cards, then the score | Free Play | One player, no timer, 1 round; 10 flips and Knew it; next | No end time; final; score 10 | Pairs works with Free Play (ADR 0019). |
 | 497 | dealRound: the same seed deals the same round, and match draws its prompts from the pool so they don't repeat | `dealRound` | The same item, pool and seed twice | The same round; two more items drawn | A refresh deals the same; prompts come out of the pool like any item. |
 | 498 | canPick and allPicked follow the round's tiles and how many are picked | Guards | Picks of 0, 3 and 3 including the tile; position 10; 2 and 3 picked | true, false, true, false; false, true | A test per guard (standard §12). |
+
+## Pairs views
+
+`src/games/pairs/views/views.test.tsx`, testing `TurnView.tsx` and `SettingsView.tsx` (with the Free Play view) in `src/games/pairs/views/` (ADR 0020). Screen tests (happy-dom) with real states from the machine, on a small one-way stand-in pack of twelve pairs.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 499 | flip: the card's front and Show the answer; once flipped, its back, Not yet and Knew it | Turn view, flip | The first card; tap Show the answer; the flipped state; tap Knew it | "Card 1 of 10", a timer; `flip` sent; the back shown; `knew` sent | The view follows the machine's `revealed`, so a refresh keeps the card as it was. |
+| 500 | match: the tiles and their prompts, picks and Check sent; after Check, Next set, or End turn after the last | Turn view, match | One set a turn; tap a tile; the right three checked; tap End turn | "Find their partners", ten tiles; `pick` 0 sent; "3 of 3 right", no timer; `continue` sent | The last result isn't cut short by the clock. |
+| 501 | counts cards and sets, and says what to find | `roundCount`, `pickLabel` | A fresh flip turn; a checked first set; match and odd | "Card 1 of 10"; "Set 1 of 10"; "Find their partners", "Find the 3 that don't belong" | Players know where they are and what to do. |
+| 502 | picks the way to play, both ways, and cards a turn, and shows only open ones on a variant | Settings view | Tap Odd one out and Either side first; then only cards open | Both set, 10 cards a turn; then only the cards stepper | Each setting can be set; a variant shows its open ones (ADR 0018). |
+| 503 | Free Play: 10, 20 or 50 cards, starting at 10 with no clock | Free Play view | The Free Play start; tap 50 cards | 10 cards, no timer; 10 checked; then 50 | Free Play's length (ADR 0019). |
 
 ## App
 

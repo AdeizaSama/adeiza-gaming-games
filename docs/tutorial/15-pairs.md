@@ -117,3 +117,17 @@ Everything random goes through the machine's `rng`, so a refresh deals the same 
 ### How to verify
 
 `pnpm test src/games/pairs/machine.test.ts`: 10 tests. Count every pick as right, or swap odd-one-out's answers with the group's words, and a test fails.
+
+---
+
+## Step 7: The views
+
+**What:** in `src/games/pairs/views/`: `TurnView.tsx` (a flip card or a set of tiles, for both phases), `SettingsView.tsx` (way to play, both ways, cards per turn; and the Free Play view, 10, 20 or 50 cards), and tests. The machine's turn record gets `revealed`: the card flipped, or the set checked.
+
+**Why:** a view gets the context but not the phase, so whatever the screen shows has to be in the context. `revealed` is set by `flip` and `check` and cleared by each deal.
+
+As in Trivia Night, the clock is hidden on the result of the turn's last round, so time running out doesn't cut it short.
+
+### How to verify
+
+`pnpm test src/games/pairs`: 19 tests. Never show the card flipped, and the flip view test fails.

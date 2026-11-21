@@ -17,12 +17,14 @@ export const findCount = 3
 export type PairsRound = { kind: 'flip'; front: string; back: string } | { kind: 'pick'; prompts: string[]; options: string[]; answers: number[] }
 
 /**
- * One turn: the round on screen, the tiles picked in it, and the points of each round played, in order. Kept so a
- * refresh shows the same round; `results` counts the rounds played.
+ * One turn: the round on screen, the tiles picked in it, whether its answer is showing (the card flipped, the tiles
+ * checked), and the points of each round played, in order. Kept so a refresh shows the same thing; `results` counts
+ * the rounds played.
  */
 export interface PairsTurn {
   round: PairsRound | null
   picked: number[]
+  revealed: boolean
   results: number[]
 }
 
@@ -109,16 +111,16 @@ const more = (played: number, config: Pick<PairsConfig, 'cards'>) => played < co
  * - `time_up` ends the turn. A turn is worth the points of its rounds: 1 per Knew it, or 1 per right tile.
  */
 export const machine = teamTurns<PairsItem, PairsTurn, PairsEvent, PairsConfig>()({
-  newTurn: () => ({ round: null, picked: [], results: [] }),
+  newTurn: () => ({ round: null, picked: [], revealed: false, results: [] }),
   points: (turn) => turn.results.reduce((sum, points) => sum + points, 0),
   onStart: ['deal'],
   phases: {
     turn: {
       interaction: 'pairs',
       on: {
-        flip: { when: 'isFlip', to: 'reveal' },
+        flip: { when: 'isFlip', to: 'reveal', actions: ['reveal'] },
         pick: { when: 'canPick', actions: ['togglePick'] },
-        check: { when: 'allPicked', to: 'reveal', actions: ['scorePicks'] },
+        check: { when: 'allPicked', to: 'reveal', actions: ['scorePicks', 'reveal'] },
         time_up: { to: 'turn_summary' },
       },
     },
@@ -162,8 +164,10 @@ export const machine = teamTurns<PairsItem, PairsTurn, PairsEvent, PairsConfig>(
     /** Makes a round of the item the format drew, with nothing picked. */
     deal: ({ context, rng }) => {
       const { pool, round } = dealRound(context.item!, context.pool, context.config, rng)
-      return { ...context, pool, turn: { ...context.turn, round, picked: [] } }
+      return { ...context, pool, turn: { ...context.turn, round, picked: [], revealed: false } }
     },
+    /** Shows the round's answer: the card's back, or which tiles were right. */
+    reveal: ({ context }) => ({ ...context, turn: { ...context.turn, revealed: true } }),
     /** Turns the tile named by `pick` on, or off. */
     togglePick: ({ context, event }) => {
       if (event.type !== 'pick') return context
