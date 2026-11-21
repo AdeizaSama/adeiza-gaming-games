@@ -40,6 +40,30 @@ Each game's content lives in `src/games/<game>/content/`, one JSON file per pack
 
 Full rules: [Game Standard §10](docs/game-standard.md#10-content-packs).
 
+### Add a variant (no code)
+
+A variant is a way to play a game that the home page lists: its packs, its settings, and which settings players may change. Add one file to the game's `variants/` folder, e.g. `src/games/charades/variants/anime.json`:
+
+```json
+{
+  "$schema": "../../../../schemas/variant.schema.json",
+  "id": "anime",
+  "name": "Anime Charades",
+  "tagline": "Heroes, villains and catchphrases, acted out.",
+  "packs": ["anime"],
+  "settings": { "seconds": 90 },
+  "open": ["rounds", "seconds", "mode"],
+  "contributors": ["your-github-handle"]
+}
+```
+
+- `id` is the file name without `.json`, and the variant's address: `/charades/anime`.
+- `packs` lists pack ids from the game's `content/` folder. `tags`, optional, plays only items with those tags.
+- `settings` lists only what differs from the game's defaults. Each game's README says what its settings are called.
+- `open` lists the settings players may change on the variant's setup screen. Teams are always theirs; packs and tags never are.
+
+`pnpm validate-content` checks the file's shape, and `pnpm test` checks it against its game (packs that exist, settings the game has). See [ADR 0018](docs/decisions/0018-variants.md).
+
 ### Fix a game's rules (no code)
 
 Each game's rules are in `src/games/<game>/rules.md`, shown on its How to play screen. Fix a sentence, explain a rule better, or add a tip.
@@ -87,13 +111,13 @@ Full rules: [Game Standard §11](docs/game-standard.md#11-themes).
 2. **Open an issue** with the rules, the format it uses, and what a content item looks like.
 3. **Create the game folder** as described in [Game Standard §9](docs/game-standard.md#9-repo-layout), then add the game to the list in `src/app/registry/index.ts`. If its `meta.icon` isn't in `src/app/library/gameIcon.ts` yet, add it there.
 4. **Build on shared pieces.** Use the format's phases and helpers, and the shared interaction primitives ([§6](docs/game-standard.md#6-interaction-primitives)). Custom UI is fine when nothing shared fits; explain why in your pull request.
-5. **Credit yourself.** Add your GitHub handle to `meta.contributors`, and to `contributors` on any variant (preset) you create. See [Game Standard §3](docs/game-standard.md#3-game-definition).
+5. **Credit yourself.** Add your GitHub handle to `meta.contributors`, and to `contributors` in any variant file you create. See [Game Standard §3](docs/game-standard.md#3-game-definition).
 6. **Test it.** Include a test that plays a full game from start to finish, plus tests for each guard and action.
 7. **Check the [Definition of Done](docs/game-standard.md#13-definition-of-done-per-game)** before asking for review.
 
 ### Step by step
 
-[Name Ten](src/games/name-ten/) is the smallest complete game with a turn of its own: copy its folder as your starting point, and read [Charades](src/games/charades/) for a game with more settings. For a multiple-choice game, start from [This or That](src/games/this-or-that/) instead: it's the SDK's choice turn with a schema, defaults and content, and steps 4 to 6 below are one line each. The order below is the one that works, because each file builds on the one before:
+[Name Ten](src/games/name-ten/) is the smallest complete game with a turn of its own: copy its folder as your starting point, and read [Charades](src/games/charades/) for a game with more settings. For a multiple-choice game, read [Trivia Night](src/games/trivia-night/): it's the SDK's choice turn with a schema, defaults and content, so steps 4 to 6 below are one line each. If your idea is an existing game with other content or settings, it's a variant, not a game: see "Add a variant" above. The order below is the one that works, because each file builds on the one before:
 
 1. **`schema.ts`: what a content item is.** A zod `itemSchema` and an `itemKey` (what makes two items the same). Import only zod and `src/sdk/`: scripts load this file on its own.
 2. **`content/<pack>.json`: at least one pack.** Then run `pnpm generate-schemas` (it finds your game by its folder) and `pnpm validate-content`.
@@ -102,10 +126,11 @@ Full rules: [Game Standard §11](docs/game-standard.md#11-themes).
 5. **`machine.test.ts`.** A full game from the first handoff to the results, `validateMachine`, and one test per guard and per action. Start from Name Ten's tests. An action is called with `{ context, event, rng, now }`.
 6. **`views/`: one view per phase of your own,** built from the primitives in `src/sdk/interactions/` ([§6](docs/game-standard.md#6-interaction-primitives)). Replace one of the format's views (handoff, turn summary, results) only when its words are wrong for your game, as Name Ten does for its judge. A settings view goes in `config.view` ([ADR 0008](docs/decisions/0008-settings-and-presets.md)).
 7. **`rules.md`,** in the small part of markdown the rules screen shows ([ADR 0009](docs/decisions/0009-rules.md)).
-8. **`index.ts`: `defineGame`.** It checks meta, packs, presets, rules and that every phase has a view, and lists every problem at once.
-9. **Register it:** add it to the list in `src/app/registry/index.ts`, and its icon to `src/app/library/gameIcon.ts`. The app's setup, save and resume, rules page and themes then work for it with no other changes.
-10. **`README.md`:** the rules in short, content guidelines, and what each file is.
-11. **Check:** `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm validate-content` and `pnpm build`, then play it on a phone with `pnpm dev --host`, under every theme.
+8. **`index.ts`: `defineGame`.** It checks meta, packs, variants, rules and that every phase has a view, and lists every problem at once.
+9. **`variants/<id>.json`: at least one variant,** so the game is on the home page (see "Add a variant" above).
+10. **Register it:** add it to the list in `src/app/registry/index.ts`, and its icon to `src/app/library/gameIcon.ts`. The app's setup, save and resume, rules page and themes then work for it with no other changes.
+11. **`README.md`:** the rules in short, content guidelines, and what each file is.
+12. **Check:** `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm validate-content` and `pnpm build`, then play it on a phone with `pnpm dev --host`, under every theme.
 
 If something your game needs isn't in the SDK (a primitive, or a word in a shared screen that only fits another game), change the SDK and write a short decision record in `docs/decisions/`. Name Ten needed a board primitive and new words on two shared screens ([ADR 0012](docs/decisions/0012-name-ten.md)), and a phase before its turn to choose a category ([ADR 0014](docs/decisions/0014-a-phase-before-the-turn.md)). Trivia Night added a multiple-choice card and the rules for a question's options (`src/sdk/content/choices.ts`), for any multiple-choice game to use ([ADR 0015](docs/decisions/0015-trivia-night.md)); its whole turn then moved into the SDK as the choice turn, so a new multiple-choice game is mostly a schema, defaults and content ([ADR 0017](docs/decisions/0017-a-shared-choice-turn-and-this-or-that.md)). A game can add phases after its turn (a review) and one before it (`beforeTurn`).
 

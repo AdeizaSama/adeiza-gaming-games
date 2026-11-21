@@ -10,7 +10,7 @@ The full rules players see are in [rules.md](rules.md), on the game's How to pla
 - A turn: tap **Got it** for each card the team says, **Skip** to move on. When time runs out, the team checks every card in review and can fix a wrong tap before the points count.
 - **Modes:** Describe (say anything but the words on the card), or Mix it up (each card says to describe it, act it out without words, or sing or hum it).
 - **Points**, by default: 2 for a card described, 3 for a card acted or sung, −1 for a skip. A turn never scores below 0. Hosts can change all four in Advanced settings.
-- **Presets:** Quick (2 rounds, 45-second turns), Classic (3 rounds, 60 seconds) and Party (Classic in Mix it up).
+- **Variant:** Naija Charades (Back to School Edition): the Back to School pack, with rounds, turn length and mode open. Settings players can open in a variant: `rounds`, `seconds`, `mode`, `points`.
 
 ## Content guidelines
 
@@ -39,7 +39,8 @@ A good item:
 
 | File | What it is |
 |---|---|
-| `index.ts` | The game's definition: meta, content, settings, presets, rules, machine and views |
+| `index.ts` | The game's definition: meta, content, settings, rules, variants, machine and views |
+| `variants/` | The ways to play it on the home page, one JSON file each |
 | `schema.ts` | What a content item is |
 | `config.ts` | The settings: the format's, plus mode and points |
 | `machine.ts` | What happens in a turn and in review, and how a turn is scored |

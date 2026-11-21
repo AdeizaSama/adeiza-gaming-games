@@ -1,16 +1,17 @@
 import { BookOpen, ChevronLeft, X } from 'lucide-react'
 import { useEffect, useId, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
+import type { Variant } from '../../sdk/content/variant'
 import type { TeamTurnsConfig } from '../../sdk/formats/team-turns/config'
 import { choosePoolItems } from '../../sdk/formats/team-turns/pool'
 import type { Game } from '../../sdk/game/defineGame'
-import { matchesPreset, presetSettings } from '../../sdk/game/settings'
 import type { MachineEvent } from '../../sdk/machine/types'
 import { Button } from '../../ui/button'
 import { Input } from '../../ui/input'
 import { Section } from '../../ui/section'
 import { Stepper } from '../../ui/stepper'
-import { defaultSetup, loadSetup, saveSetup, type SetupChoices } from './savedSetup'
+import { isOpen } from '../../sdk/game/settings'
+import { defaultSetup, loadSetup, loadVariantSetup, saveSetup, variantSetupId, type SetupChoices } from './savedSetup'
 import { loadTeams, saveTeams } from './savedTeams'
 
 /** The limits the schema allows (standard §7). */
@@ -35,6 +36,11 @@ export interface SetupScreenProps<
   ActionName extends string,
 > {
   game: Game<Item, Config, Setup, Turn, Event, Phase, GuardName, ActionName>
+  /**
+   * The variant being set up (ADR 0018): its name and tagline, its packs and tags, and only its open settings. Leave
+   * out for the game's own setup, with every setting.
+   */
+  variant?: Variant
   /** Called with checked settings when players tap Start. */
   onStart: (config: Config) => void
 }
@@ -42,6 +48,8 @@ export interface SetupScreenProps<
 /**
  * Settings for any team-turns game: teams, rounds, turn length, packs and tags (standard §7).
  * The game's config schema checks them as players go; its messages are shown next to the field they're about.
+ *
+ * For a variant (ADR 0018), the variant's settings and content, with only teams and its open settings shown.
  */
 export function SetupScreen<
   Item extends { tags?: readonly string[] },
@@ -52,13 +60,15 @@ export function SetupScreen<
   Phase extends string,
   GuardName extends string,
   ActionName extends string,
->({ game, onStart }: SetupScreenProps<Item, Config, Setup, Turn, Event, Phase, GuardName, ActionName>) {
+>({ game, variant, onStart }: SetupScreenProps<Item, Config, Setup, Turn, Event, Phase, GuardName, ActionName>) {
   const { packs, itemKey } = game.content
   const SettingsView = game.config.view
-  const presets = game.config.presets ?? []
   // Every setting but the teams, as one draft (ADR 0008): what players chose last time on this device, or the
-  // game's defaults, read from its schema so this screen can't disagree with it.
-  const [choices, setChoices] = useState(() => loadSetup(game) ?? defaultSetup(game))
+  // game's defaults, read from its schema so this screen can't disagree with it. A variant's starts from its own.
+  const [choices, setChoices] = useState(() => (variant ? loadVariantSetup(game, variant) : (loadSetup(game) ?? defaultSetup(game))))
+  const setupId = variant ? variantSetupId(game.meta.id, variant) : game.meta.id
+  /** On a variant, only its open settings are shown; on the game's own setup, all of them. */
+  const shown = (name: string) => isOpen(variant?.open, name)
   const [teams, setTeams] = useState(() => loadTeams() ?? ['Team 1', 'Team 2'])
   const { rounds, seconds, packs: chosenPacks, tags: chosenTags } = choices
   // The format's own settings. A spread keeps the game's fields as they are, so TypeScript accepts it for any game.
@@ -68,8 +78,8 @@ export function SetupScreen<
   // Remember every change as it's made, so a back swipe or a refresh in the middle of setup loses nothing.
   useEffect(() => {
     saveTeams(teams)
-    saveSetup(game.meta.id, choices)
-  }, [game.meta.id, teams, choices])
+    saveSetup(setupId, choices)
+  }, [setupId, teams, choices])
 
   // Only the chosen packs' tags are offered. A tag picked before its pack was unticked stops counting.
   const tags = [...new Set(packs.filter((pack) => chosenPacks.includes(pack.id)).flatMap((pack) => pack.items.flatMap((item) => item.tags ?? [])))].sort()
@@ -91,8 +101,8 @@ export function SetupScreen<
           <ChevronLeft aria-hidden className="size-5" />
           Games
         </Link>
-        <h1 className="text-4xl font-bold">{game.meta.name}</h1>
-        <p className="text-lg text-muted-foreground">{game.meta.tagline}</p>
+        <h1 className="text-4xl font-bold">{variant?.name ?? game.meta.name}</h1>
+        <p className="text-lg text-muted-foreground">{variant?.tagline ?? game.meta.tagline}</p>
         <Link to={`/${game.meta.id}/rules`} state={{ fromSetup: true }} className="flex min-h-11 items-center gap-2 self-start font-semibold text-primary">
           <BookOpen aria-hidden className="size-5" />
           How to play
@@ -135,66 +145,54 @@ export function SetupScreen<
         )}
       </Section>
 
-      {presets.length > 0 && (
-        <Section title="Presets" hint="One tap sets how you play. Your teams stay as they are.">
-          <div className="flex flex-wrap gap-2">
-            {presets.map((preset) => {
-              // Selected only while every setting is the preset's (ADR 0008).
-              const on = matchesPreset(game.config.schema, preset, choices)
-              return (
-                <Button
-                  key={preset.id}
-                  variant={on ? 'primary' : 'outline'}
-                  aria-pressed={on}
-                  onClick={() => setChoices((current) => presetSettings(game.config.schema, preset, current))}
-                >
-                  {preset.name}
-                </Button>
-              )
-            })}
-          </div>
+      {shown('rounds') && (
+        <Section title="Rounds" hint="Every team plays once per round.">
+          <Stepper label="Rounds" value={rounds} min={1} max={10} onChange={(value) => change({ rounds: value })} />
         </Section>
       )}
 
-      <Section title="Rounds" hint="Every team plays once per round.">
-        <Stepper label="Rounds" value={rounds} min={1} max={10} onChange={(value) => change({ rounds: value })} />
-      </Section>
+      {shown('seconds') && (
+        <Section title="Turn length">
+          <Stepper
+            label="Turn length"
+            value={seconds}
+            min={15}
+            max={300}
+            step={15}
+            format={(value) => `${value} seconds`}
+            onChange={(value) => change({ seconds: value })}
+          />
+        </Section>
+      )}
 
-      <Section title="Turn length">
-        <Stepper
-          label="Turn length"
-          value={seconds}
-          min={15}
-          max={300}
-          step={15}
-          format={(value) => `${value} seconds`}
-          onChange={(value) => change({ seconds: value })}
-        />
-      </Section>
+      {SettingsView && (
+        <SettingsView settings={choices} open={variant?.open} onChange={(changes) => setChoices((current) => ({ ...current, ...changes }))} />
+      )}
 
-      {SettingsView && <SettingsView settings={choices} onChange={(changes) => setChoices((current) => ({ ...current, ...changes }))} />}
-
-      <Section title="Packs">
-        {packs.map((pack) => (
-          <label key={pack.id} className="flex items-start gap-3 rounded-xl bg-card p-4 text-card-foreground shadow-sm">
-            <input
-              type="checkbox"
-              className="mt-1 size-5 shrink-0 accent-primary"
-              checked={chosenPacks.includes(pack.id)}
-              onChange={() => change({ packs: toggle(chosenPacks, pack.id) })}
-            />
-            <span className="flex flex-col gap-1">
-              <span className="font-semibold">
-                {pack.name} <span className="font-normal text-muted-foreground">· {pack.items.length} items</span>
+      {/* A variant's content is the variant: its packs and tags aren't for players to change. */}
+      {!variant && (
+        <Section title="Packs">
+          {packs.map((pack) => (
+            <label key={pack.id} className="flex items-start gap-3 rounded-xl bg-card p-4 text-card-foreground shadow-sm">
+              <input
+                type="checkbox"
+                className="mt-1 size-5 shrink-0 accent-primary"
+                checked={chosenPacks.includes(pack.id)}
+                onChange={() => change({ packs: toggle(chosenPacks, pack.id) })}
+              />
+              <span className="flex flex-col gap-1">
+                <span className="font-semibold">
+                  {pack.name} <span className="font-normal text-muted-foreground">· {pack.items.length} items</span>
+                </span>
+                <span className="text-sm text-muted-foreground">{pack.description}</span>
               </span>
-              <span className="text-sm text-muted-foreground">{pack.description}</span>
-            </span>
-          </label>
-        ))}
-        {problem('packs') && <ErrorText>{problem('packs')}</ErrorText>}
-      </Section>
+            </label>
+          ))}
+          {problem('packs') && <ErrorText>{problem('packs')}</ErrorText>}
+        </Section>
+      )}
 
-      {tags.length > 0 && (
+      {!variant && tags.length > 0 && (
         <Section title="Only play" hint="Pick kinds of item to play only those. Pick none to play everything.">
           <div className="flex flex-wrap gap-2">
             {tags.map((tag) => {

@@ -1,0 +1,231 @@
+# 13 — Variants
+
+**Goal of this chapter:** the home page lists ways to play, not rule sets: "Naija Charades (Back to School Edition)", "Masculin ou féminin ?". Each is a variant: a game with set content and settings, in a JSON file. Below them, "Make your own" opens a game's full setup.
+
+**Branch:** `chapter/13-variants`
+
+**Where this fits.** The Game Standard always had three levels: format, game, variant (§1). Variants existed only as preset buttons on setup. This chapter gives them the home page, replaces presets with them, and folds This or That back into Trivia Night, which is what it always was.
+
+---
+
+## Step 1: Deciding what a variant is
+
+**What:** [ADR 0018](../decisions/0018-variants.md). No code yet.
+
+**Why:** a variant is content (a JSON file anyone can add), so its shape has to be settled before code reads it.
+
+| Decision | Why |
+|---|---|
+| A variant is `src/games/<game>/variants/<id>.json` | Adding a way to play needs no code, like adding a pack |
+| It lists its packs, settings, and `open`: the settings players may change | "Masculin ou féminin ?" is Set questions only; Naija Charades lets players pick the mode |
+| The home page lists variants first, then "Make your own" | Players pick something to play, not a rule set |
+| Presets go | Variants are presets with a name on the home page; two names for one idea would confuse everyone |
+| This or That becomes a Trivia Night variant | Same rules, its own content and defaults |
+
+### How to verify
+
+Read the ADR.
+
+---
+
+## Step 2: Variants in the SDK, and presets gone
+
+**What:**
+
+- `src/sdk/content/variant.ts`: `VariantFile` (the shape of a variant file), `checkVariant` and `loadVariants`, built like `checkPack` and `loadPacks`.
+- `src/sdk/game/defineGame.ts`: `variants` instead of `config.presets`, with its checks.
+- `src/sdk/game/settings.ts`: `variantSettings`, `withOpenChanges`, `openableSettings`, `isOpen`, and `open` on a settings view's props; `presetSettings` and `matchesPreset` removed.
+- Presets removed from every game and from the setup screen.
+
+**Why:** the app needs to read variants before it can show them.
+
+### Two checks, in two places
+
+A variant file is content, so the content check can read it without the game. But whether `"mode": "clock"` is a real setting depends on the game. So the checks split:
+
+| Checked by | What |
+|---|---|
+| `checkVariant` (the app and the content check) | The shape: fields, types, at least one pack, the id is the file name |
+| `defineGame` (the tests) | Against the game: packs exist, settings pass the game's schema, `open` names real settings, no id twice, no id `play` or `rules` |
+
+`openableSettings` reads the names of a game's settings from its schema's defaults, so a game never lists them by hand: Charades' are rounds, seconds, mode and points.
+
+### A bug the tests found
+
+`openableSettings` parses the schema's defaults, which need a pack. A game with no packs made it throw before `defineGame` could report "A game needs at least one pack". Any pack id will do for reading setting names, so a stand-in id fixes it.
+
+### How to verify
+
+`pnpm test`: 445 tests; `pnpm typecheck`: 31 compile-time checks (the two about what a preset could set went with presets). Turn off the settings check in `defineGame`, and the "checks a variant's settings" test fails.
+
+---
+
+## Step 3: The content check reads variants
+
+**What:** `pnpm validate-content` checks every `src/games/<game>/variants/*.json` file with `checkVariant` (and its `$schema` link), and `pnpm generate-schemas` writes `schemas/variant.schema.json` for editors. `findGames` lists each game's variant files.
+
+**Why:** a variant is content: someone adding one should hear what's wrong from the check, in plain words, before the tests run.
+
+One schema serves every game's variants, because it describes the shape only. `settings` is any object there: whether `"mode": "clock"` is a Charades setting is for `defineGame` to say, and the tests run it.
+
+### How to verify
+
+`pnpm validate-content` ends with "All packs, variants and themes are valid." `pnpm test`: 446 tests.
+
+---
+
+## Step 4: Settings views show only what's open
+
+**What:** Charades', Name Ten's and the choice turn's settings views read `open` and show only those settings (`isOpen(open, 'mode')`). With no `open` list (a game's own setup), they show everything, as before.
+
+**Why:** a variant's setup screen hands its game's settings view the variant's open settings; the view knows how its settings are laid out, so it's the one that hides them.
+
+Two layouts needed care:
+
+- Charades' points live behind **Advanced settings**, under the mode. A variant that opens points but not the mode gets them under their own **Points** heading.
+- The choice turn's **Questions per turn** sits under the mode, and only in Set questions mode. Masculin ou féminin ? locks the mode but opens questions, so the stepper gets its own heading.
+
+### How to verify
+
+`pnpm test`: 449 tests. Show the order of the options whatever `open` says, and the choice view's test fails.
+
+---
+
+## Step 5: A variant's setup screen
+
+**What:**
+
+- `App.tsx`: a route `/:gameId/:variantId`, after `play` and `rules`, to `SetupPage`, which finds the variant (or shows Page not found).
+- `SetupScreen.tsx` takes `variant`: its name and tagline at the top; teams; rounds and turn length only if open; the game's settings view with `open`; no packs or tags.
+- `savedSetup.ts`: `loadVariantSetup` starts from the variant's settings and puts players' last changes on top, for open settings only. Kept under `ku-zo-wasa:setup:charades/naija-back-to-school`.
+- `savedGame.ts`: a save remembers `variantId`, and `saveName` gives the variant's name or the game's. `saveGame` now takes its extras as options: `saveGame(game, state, { variantId })`.
+
+**Why:** a variant is a way to play, so its setup is short: who's playing, and the few things it lets them change.
+
+### Saving only what's open
+
+A variant can change after players used it: a new turn length, or a setting closed. So the screen doesn't save "the settings" for a variant; on the next visit it starts from the variant as it is now and takes back only players' changes to settings that are still open.
+
+### Old saves
+
+`variantId` is optional in a save, so a game saved before this chapter still loads, without a new save version. A save whose variant has been removed since also loads; it's just called by the game's name.
+
+### How to verify
+
+`pnpm test`: 453 tests. Show the packs on a variant's setup, and the variant setup test fails.
+
+---
+
+## Step 6: The first variants, and This or That folded into Trivia Night
+
+**What:**
+
+- Four variant files:
+
+  | File | Name | Open |
+  |---|---|---|
+  | `charades/variants/naija-back-to-school.json` | Naija Charades (Back to School Edition) | rounds, seconds, mode |
+  | `name-ten/variants/back-to-school.json` | Name Ten (Back to School Edition) | rounds, seconds |
+  | `trivia-night/variants/back-to-school.json` | Back to School Trivia | rounds, seconds, mode, questions |
+  | `trivia-night/variants/masculin-feminin.json` | Masculin ou féminin ? | rounds, seconds, questions |
+
+- Each game's `index.ts` loads them: `variants: loadVariants(import.meta.glob('./variants/*.json', …))`.
+- The Masculin ou féminin ? pack moves to `trivia-night/content/`, with its two tests. Its variant sets ten questions, 60 seconds and A to Z, and leaves the mode closed.
+- `src/games/this-or-that/` and its schema go, and the registry lists three games.
+
+**Why:** these are what the home page will list. This or That was always Trivia Night with other content and defaults: a variant.
+
+### Two variants with the same id
+
+Name Ten's and Trivia Night's Back to School variants are both `back-to-school`. That's fine: a variant's address includes its game (`/name-ten/back-to-school`), so ids only need to be unique within a game.
+
+### A game's own setup offers every pack
+
+Trivia Night's "Make your own" setup now starts with both packs ticked, so school questions and French words mix until players untick one. That's how every game's own setup has always worked (all packs ticked).
+
+### How to verify
+
+`pnpm validate-content` lists the four variants. `pnpm test`: 447 tests. Take `variants` out of Trivia Night's `index.ts`, and its game test fails.
+
+---
+
+## Step 7: The home page lists variants first
+
+**What:** `LibraryPage.tsx` shows the Continue card (if a game is saved), then **Ways to play**: every variant, each linking to `/:gameId/:variantId` and saying which game it is ("Charades · 2–20 players"); then **Make your own**: each game, linking to its own setup. The registry gives the list: `variants`, each with its game, in the order of `games`. Continue names the variant: "Continue Naija Charades (Back to School Edition)".
+
+**Why:** players pick something to play, and the full setup is there for those who want it.
+
+The cards share one `Card` component. Its icon is drawn with `createElement(gameIcon(name), …)` rather than `<Icon />`: React's lint rule refuses a component looked up during render, because a new component each render would lose its state. An icon has no state, and `gameIcon` returns the same one each time, so `createElement` says plainly that it's a lookup.
+
+### How to verify
+
+`pnpm test`: 450 tests. Make Continue use the game's name, or let the play page save without the variant, and the Continue test fails. Then `pnpm dev --host` and look at the home page.
+
+---
+
+## Step 8: Docs
+
+**What:** the standard's §1 (a variant is a JSON file the home page lists), §3 (variants instead of presets, with an example), §8 (four v1 games; Masculin ou féminin ? is a Trivia Night variant), §9 (`variants/` in a game's folder) and §13 (a game ships at least one variant); CONTRIBUTING's **Add a variant (no code)**, and a variant step in the game guide; README's status and games table; each game's README lists its variants and the settings a variant can open.
+
+**Why:** "Anime Charades" is now a JSON file anyone can add. That's only true if the instructions say how.
+
+### How to verify
+
+Follow CONTRIBUTING's "Add a variant" with a variant of your own, then run `pnpm validate-content` and `pnpm test`.
+
+---
+
+## Step 9: Every new page starts at the top
+
+**What:** `ScrollToTop` in `App.tsx` scrolls to the top whenever the address changes by a link or a button. Going back (the browser's Back, a "POP") is left alone.
+
+**Why:** a single-page app keeps the window's scroll position across pages. With the home page now longer, tapping a game under "Make your own" opened its setup halfway down.
+
+### How to verify
+
+`pnpm test src/app/App.test.tsx`: the scroll test. On a phone, scroll the home page down, tap a game: its setup starts at the top.
+---
+
+## Step 10: Each Charades mode looks different
+
+**What:** `FlashCard` takes an optional `tone` (`primary`, `secondary` or `warning`) and `icon` for its hint: the hint becomes a badge in that color with the icon, and the card gets an outline in it. Charades' `modeLooks` gives each mode one, in Mix it up:
+
+| Mode | Icon | Color |
+|---|---|---|
+| Describe it | speech bubble | secondary |
+| Act it out | person | warning |
+| Sing or hum it | music note | primary |
+
+**Why:** in Mix it up, a player glancing at the card should know at once whether to talk, act or sing.
+
+- **Icons first:** color alone fails for color-blind players; the icon says it either way.
+- **Only theme colors with their own text color**, so the contrast check (ADR 0010) already covers every badge in every theme. Not success (green) or destructive (red): they mean Got it and Skip.
+
+### How to verify
+
+`pnpm test`: 453 tests. Stop the turn passing `modeLooks` to the card, and the Charades turn test fails. On a phone: Naija Charades in Mix it up.
+
+---
+
+## Chapter summary
+
+| Step | What | SDK change? |
+|---|---|---|
+| 1 | ADR 0018: variants | |
+| 2 | Variants replace presets | Yes: `variant.ts`, `defineGame`'s `variants`, settings helpers |
+| 3 | The content check and schemas cover variant files | |
+| 4 | Settings views show only a variant's open settings | Yes: `open` on settings views |
+| 5 | A variant's setup screen; saves remember their variant | |
+| 6 | The first four variants; This or That folded into Trivia Night | |
+| 7 | The home page lists variants first, then Make your own | |
+| 8 | Docs | |
+| 9 | Every new page starts at the top | |
+| 10 | Each Charades mode looks different | Yes: `FlashCard` `tone` and `icon` |
+
+**What we learned:**
+
+- The standard had the right three levels from the start. What was missing was a place for the third: without one, every new way to play became a game (This or That) or a button few players found (presets).
+- A variant changes over time, so a variant's setup remembers only what players changed, and only for settings that are still open.
+- Removing a test file's neighbour with a "find the next `it(`" script also removed an `it.each` block. Counting tests after every step caught it.
+
+**Tests:** 453 runtime tests and 31 compile-time checks.

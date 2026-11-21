@@ -1,0 +1,9 @@
+{
+  "$schema": "../../../../schemas/variant.schema.json",
+  "id": "back-to-school",
+  "name": "Back to School Trivia",
+  "tagline": "Maths, science, social studies, and everything on telly after school.",
+  "packs": ["back-to-school"],
+  "open": ["rounds", "seconds", "mode", "questions"],
+  "contributors": ["AdeizaSama"]
+}

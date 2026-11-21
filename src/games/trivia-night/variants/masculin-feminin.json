@@ -1,0 +1,10 @@
+{
+  "$schema": "../../../../schemas/variant.schema.json",
+  "id": "masculin-feminin",
+  "name": "Masculin ou féminin ?",
+  "tagline": "French for beginners: is the word masculine or feminine?",
+  "packs": ["masculin-feminin"],
+  "settings": { "questions": 10, "seconds": 60, "order": "alphabetical" },
+  "open": ["rounds", "seconds", "questions"],
+  "contributors": ["AdeizaSama"]
+}

@@ -1,5 +1,5 @@
 /**
- * Checks every content pack in src/games and every theme in src/themes, the same way the app does, and prints what's
+ * Checks every content pack and variant in src/games and every theme in src/themes, the same way the app does, and prints what's
  * wrong in plain words.
  * Run with `pnpm validate-content`. CI runs it on every pull request; it exits with code 1 if anything is wrong.
  */
@@ -8,7 +8,7 @@ import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { loadGameSchema, type GameSchema } from './lib/gameSchema'
 import { findGames } from './lib/games'
-import { checkPackFile, checkThemeFile } from './lib/validate'
+import { checkPackFile, checkThemeFile, checkVariantFile } from './lib/validate'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const games = findGames(join(root, 'src', 'games'))
@@ -27,7 +27,7 @@ function report(file: string, problems: { path: string; message: string }[]): vo
   for (const { path, message } of problems) console.log(`      ${path ? `${path}: ` : ''}${message}`)
 }
 
-console.log('Checking content packs\n')
+console.log('Checking content packs and variants\n')
 
 for (const game of games) {
   console.log(game.id)
@@ -53,6 +53,11 @@ for (const game of games) {
     if (result.problems.length > 0) report(file, result.problems)
     else console.log(`  ✓ ${shown(file)} (${result.items} items)`)
   }
+  for (const file of game.variantFiles) {
+    const problems = checkVariantFile(file, readFileSync(file, 'utf8'))
+    if (problems.length > 0) report(file, problems)
+    else console.log(`  ✓ ${shown(file)}`)
+  }
 }
 
 if (games.length === 0) console.log('No games found.')
@@ -72,8 +77,8 @@ if (themeFiles.length === 0) console.log('  (no themes yet)')
 
 if (problemCount > 0) {
   console.log(`\n${problemCount} problem${problemCount === 1 ? '' : 's'} in ${badFiles} file${badFiles === 1 ? '' : 's'}.`)
-  console.log('The rules for packs and themes are in CONTRIBUTING.md, under "Add or improve content" and "Add a theme".')
+  console.log('The rules for packs, variants and themes are in CONTRIBUTING.md, under "Add or improve content", "Add a variant" and "Add a theme".')
   process.exitCode = 1
 } else {
-  console.log('\nAll packs and themes are valid.')
+  console.log('\nAll packs, variants and themes are valid.')
 }

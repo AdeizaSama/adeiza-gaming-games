@@ -23,23 +23,26 @@ function file(path: string): void {
 }
 
 describe('findGames', () => {
-  it('finds each game with its schema file and pack files, sorted', () => {
+  it('finds each game with its schema file, pack files and variant files, sorted', () => {
     file('trivia/schema.ts')
     file('trivia/content/general.json')
     file('charades/schema.ts')
     file('charades/content/movies.json')
     file('charades/content/anime.json')
+    file('charades/variants/naija.json')
 
     expect(findGames(gamesDir)).toEqual([
       {
         id: 'charades',
         schemaFile: join(gamesDir, 'charades', 'schema.ts'),
         packFiles: [join(gamesDir, 'charades', 'content', 'anime.json'), join(gamesDir, 'charades', 'content', 'movies.json')],
+        variantFiles: [join(gamesDir, 'charades', 'variants', 'naija.json')],
       },
       {
         id: 'trivia',
         schemaFile: join(gamesDir, 'trivia', 'schema.ts'),
         packFiles: [join(gamesDir, 'trivia', 'content', 'general.json')],
+        variantFiles: [],
       },
     ])
   })

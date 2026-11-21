@@ -1,4 +1,5 @@
 import { loadPacks } from '../../sdk/content/loadPacks'
+import { loadVariants } from '../../sdk/content/variant'
 import { defineGame } from '../../sdk/game/defineGame'
 import { TriviaConfig } from './config'
 import { machine } from './machine'
@@ -32,13 +33,10 @@ export default defineGame({
   config: {
     schema: TriviaConfig,
     view: ChoiceSettingsView,
-    presets: [
-      { id: 'one-question', name: 'One question', contributors: ['AdeizaSama'], config: {} }, // the defaults: 3 rounds, 30 s
-      { id: 'five-questions', name: 'Five questions', contributors: ['AdeizaSama'], config: { questions: 5, seconds: 120 } },
-      { id: 'against-the-clock', name: 'Against the clock', contributors: ['AdeizaSama'], config: { mode: 'clock', seconds: 60 } },
-    ],
   },
   rules,
+  // The ways to play it on the home page (ADR 0018), one JSON file each.
+  variants: loadVariants(import.meta.glob('./variants/*.json', { eager: true, import: 'default' })),
   machine,
   // The choice turn's view (ADR 0017), for the question and its result. The format's handoff gives the phone to the team playing: nothing on screen gives the answer away before a pick.
   views: { turn: TurnView, reveal: TurnView },

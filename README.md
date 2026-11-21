@@ -6,7 +6,7 @@ An open-source library of **single-device party games**: charades, name ten, tri
 
 The library is built to be extended. Developers can add games, designers can add themes, and anyone can add or improve the words, categories and questions the games use.
 
-> **Status: early development.** Charades, Name Ten, Trivia Night and This or That are complete: setup with presets, rules, a review after every turn, and games that survive a refresh, a locked phone or a closed tab. Five themes to pick from, from sticky notes on lined paper to glass panels over a starfield, and anyone can add one as a JSON file. The other games are planned. Expect breaking changes until the first release.
+> **Status: early development.** Charades, Name Ten and Trivia Night are complete, played from four ready-made variants (Naija Charades, Name Ten and Trivia in Back to School editions, and Masculin ou féminin ? for French learners) or set up from scratch. Each has rules, a review after every turn, and games that survive a refresh, a locked phone or a closed tab. Five themes to pick from, from sticky notes on lined paper to glass panels over a starfield, and anyone can add one as a JSON file. The other games are planned. Expect breaking changes until the first release.
 
 ---
 
@@ -17,7 +17,6 @@ The library is built to be extended. Developers can add games, designers can add
 | [Charades](src/games/charades/README.md) | team-turns | Complete |
 | [Name Ten](src/games/name-ten/README.md) | team-turns | Complete |
 | [Trivia Night](src/games/trivia-night/README.md) | team-turns | Complete |
-| [This or That](src/games/this-or-that/README.md) | team-turns | Complete |
 | Mafia | host-led | Planned |
 
 ## Principles
@@ -53,7 +52,7 @@ pnpm dev        # start the dev server (add --host to open it on a phone on the 
 pnpm test       # run the tests once (pnpm test:watch re-runs on save)
 pnpm typecheck  # check types without building
 pnpm lint       # check code style and folder boundaries
-pnpm validate-content  # check every content pack and theme (including contrast), as CI does
+pnpm validate-content  # check every content pack, variant and theme (including contrast), as CI does
 pnpm generate-schemas  # rebuild schemas/ after changing a game's schema.ts or the theme format
 pnpm build      # type-check and build to dist/
 pnpm preview    # serve the production build locally

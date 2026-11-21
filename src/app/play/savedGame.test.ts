@@ -4,7 +4,7 @@ import { choosePoolItems } from '../../sdk/formats/team-turns/pool'
 import { newGame } from '../../sdk/game/useGameSession'
 import { send } from '../../sdk/machine/runner'
 import { games } from '../registry'
-import { clearGame, loadGame, saveGame, saveVersion, summarizeSave } from './savedGame'
+import { clearGame, loadGame, saveGame, saveName, saveVersion, summarizeSave } from './savedGame'
 
 const charades = games[0]
 const config = charades.config.schema.parse({ teams: ['Lions', 'Eagles'], rounds: 1, seconds: 30, packs: ['back-to-school'] })
@@ -20,8 +20,18 @@ describe('saved game', () => {
 
   it('saves a game and loads it back exactly', () => {
     const mid = send(charades.machine, fresh, { type: 'start' }, { now: 5_000 })
-    saveGame(charades, mid, localStorage, 6_000)
+    saveGame(charades, mid, { now: 6_000 })
     expect(loadGame(charades)).toEqual({ status: 'ok', state: mid, savedAt: 6_000 })
+  })
+
+  it('keeps the variant a game was started from, and still loads one whose variant is gone, under the game’s name', () => {
+    saveGame(charades, fresh, { variantId: 'no-such-variant' })
+    expect(JSON.parse(localStorage.getItem(key) ?? 'null').variantId).toBe('no-such-variant')
+    const loaded = loadGame(charades)
+    expect(loaded.status).toBe('ok')
+    const summary = summarizeSave()
+    expect(summary.status === 'ok' && saveName(summary.summary)).toBe('Charades')
+    expect(saveName({ game: charades, variant: { name: 'Snack Attack' } as never })).toBe('Snack Attack')
   })
 
   it('finds nothing when nothing is saved, or after clearGame', () => {
@@ -53,7 +63,7 @@ describe('saved game', () => {
   })
 
   it('summarizes the save for the library, and says when the game is finished', () => {
-    saveGame(charades, fresh, localStorage, 7_000)
+    saveGame(charades, fresh, { now: 7_000 })
     expect(summarizeSave()).toEqual({
       status: 'ok',
       summary: { game: charades, teams: ['Lions', 'Eagles'], round: 1, rounds: 1, finished: false, savedAt: 7_000 },
@@ -82,7 +92,7 @@ describe('saved game', () => {
         throw new Error('SecurityError')
       },
     } as unknown as Storage
-    expect(() => saveGame(charades, fresh, off)).not.toThrow()
+    expect(() => saveGame(charades, fresh, { storage: off })).not.toThrow()
     expect(loadGame(charades, off)).toEqual({ status: 'none' })
     expect(() => clearGame(off)).not.toThrow()
   })

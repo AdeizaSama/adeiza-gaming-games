@@ -1,4 +1,5 @@
 import { loadPacks } from '../../sdk/content/loadPacks'
+import { loadVariants } from '../../sdk/content/variant'
 import { defineGame } from '../../sdk/game/defineGame'
 import { CharadesConfig } from './config'
 import { machine } from './machine'
@@ -29,14 +30,10 @@ export default defineGame({
   config: {
     schema: CharadesConfig,
     view: SettingsView,
-    // What most people pick instead of opening the settings. None names packs, so players keep theirs (ADR 0008).
-    presets: [
-      { id: 'quick', name: 'Quick', contributors: ['AdeizaSama'], config: { rounds: 2, seconds: 45 } },
-      { id: 'classic', name: 'Classic', contributors: ['AdeizaSama'], config: {} }, // the defaults: 3 rounds, 60 s, Describe
-      { id: 'party', name: 'Party', contributors: ['AdeizaSama'], config: { mode: 'mix' } },
-    ],
   },
   rules,
+  // The ways to play it on the home page (ADR 0018), one JSON file each.
+  variants: loadVariants(import.meta.glob('./variants/*.json', { eager: true, import: 'default' })),
   machine,
   // handoff, turn_summary and results use the format's views. Review lists the cards, so the summary needn't.
   views: { turn: TurnView, review: ReviewView },

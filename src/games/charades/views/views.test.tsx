@@ -8,7 +8,7 @@ import { CharadesConfig } from '../config'
 import { machine, type CharadesEntry } from '../machine'
 import { reviewRow } from './ReviewView'
 import { SettingsView } from './SettingsView'
-import { TurnView } from './TurnView'
+import { modeLooks, TurnView } from './TurnView'
 
 const config = CharadesConfig.parse({ teams: ['Lions', 'Eagles'], packs: ['back-to-school'] })
 const gala = { text: 'Gala', tags: [], modes: ['describe', 'act'] as CharadesEntry['mode'][] }
@@ -23,9 +23,11 @@ describe('Charades TurnView', () => {
     return render(<TurnView context={context} send={() => {}} points={machine.points} />)
   }
 
-  it('says how to clue the card in Mix it up, and nothing in Describe mode', () => {
+  it('says how to clue the card in Mix it up, with its icon and color, and nothing in Describe mode', () => {
     const { unmount } = show('mix')
-    expect(screen.getByText('Act it out')).toBeDefined()
+    const badge = screen.getByText('Act it out')
+    expect(badge.className).toContain('bg-warning') // its mode's color and icon (modeLooks)
+    expect(badge.querySelector('.lucide-person-standing')).not.toBeNull()
     unmount()
 
     show('describe')
@@ -103,5 +105,32 @@ describe('Charades settings', () => {
     await user.click(screen.getByRole('radio', { name: /Mix it up/ }))
     await user.click(screen.getByRole('button', { name: 'Advanced settings' }))
     expect(screen.queryByText('Acted and sung cards only come up in Mix it up.')).toBeNull()
+  })
+})
+
+describe('Charades settings on a variant', () => {
+  it('shows only the open settings: the mode alone, points alone under their own heading, or nothing', () => {
+    const view = (open: string[]) => render(<SettingsView settings={config} onChange={() => {}} open={open} />)
+    const { unmount } = view(['rounds', 'mode'])
+    expect(screen.getByRole('radio', { name: /Mix it up/ })).toBeDefined()
+    expect(screen.queryByRole('button', { name: 'Advanced settings' })).toBeNull()
+    unmount()
+    const points = view(['points'])
+    expect(screen.queryByRole('radio', { name: /Mix it up/ })).toBeNull()
+    expect(screen.getByRole('heading', { name: 'Points' })).toBeDefined()
+    expect(screen.getByRole('button', { name: 'Advanced settings' })).toBeDefined()
+    points.unmount()
+    view([])
+    expect(screen.queryByRole('radio')).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Advanced settings' })).toBeNull()
+  })
+})
+
+describe('Charades modes', () => {
+  it('gives each mode its own icon and color, none of them got-it green or skip red', () => {
+    const looks = Object.values(modeLooks)
+    expect(new Set(looks.map((look) => look.icon)).size).toBe(3)
+    expect(new Set(looks.map((look) => look.tone)).size).toBe(3)
+    for (const { tone } of looks) expect(['success', 'destructive']).not.toContain(tone)
   })
 })

@@ -31,7 +31,8 @@ export function PlayPage() {
       game={game}
       initial={saved.state}
       input={input}
-      options={{ onChange: (state) => saveGame(game, state) }}
+      // Every save keeps the variant the game was started from, so Continue still names it (ADR 0018).
+      options={{ onChange: (state) => saveGame(game, state, { variantId: saved.variantId }) }}
       onQuit={() => {
         clearGame()
         navigate('/')

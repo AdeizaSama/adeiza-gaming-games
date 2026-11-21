@@ -51,6 +51,17 @@ describe('continuing a saved game', () => {
     expect(screen.getByText('Round 2 of 2')).toBeDefined()
   })
 
+  it('names the variant a game was started from, and keeps it as the game is played', async () => {
+    const user = userEvent.setup()
+    const { unmount } = renderAt('/charades/naija-back-to-school')
+    await user.click(screen.getByRole('button', { name: 'Start' }))
+    await user.click(screen.getByRole('button', { name: 'Start' })) // the handoff: the play page saves as it goes
+    expect(summarizeSave()).toMatchObject({ status: 'ok', summary: { variant: { id: 'naija-back-to-school' } } })
+    unmount()
+    renderAt('/') // coming back to the home page later
+    expect(screen.getByRole('link', { name: /Continue Naija Charades \(Back to School Edition\)/ })).toBeDefined()
+  })
+
   it('offers nothing to continue for a finished game', () => {
     saveGame(charades, played(4))
     renderAt('/')

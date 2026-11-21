@@ -1,6 +1,7 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import { z } from 'zod'
 import type { Pack } from '../content/pack'
+import type { Variant } from '../content/variant'
 import { TeamTurnsConfig } from '../formats/team-turns/config'
 import { teamTurns } from '../formats/team-turns/teamTurns'
 import { teamTurnsViews, type TeamTurnsViewProps } from '../formats/team-turns/views'
@@ -29,6 +30,11 @@ type Props = TeamTurnsViewProps<Item, { got: number }, { type: 'got' }>
 const TurnView = (props: Props) => props.context.item?.text ?? null
 const SummaryView = (props: Props) => props.points(props.context.turn, props.context.config)
 
+/** A variant of Word Duel: the food pack, 30-second turns, rounds open. */
+function variant(id: string, changes: Partial<Variant> = {}): Variant {
+  return { id, name: 'Quick Food', tagline: 'Food, fast.', packs: ['food'], tags: [], settings: { seconds: 30 }, open: ['rounds'], contributors: ['AdeizaSama'], ...changes }
+}
+
 function pack(id: string): Pack<Item> {
   return { id, name: id, description: id, language: 'en', maturity: 'everyone', contributors: ['AdeizaSama'], items: [{ text: 'Sun' }] }
 }
@@ -48,11 +54,9 @@ const meta: GameMeta = {
 const game = {
   meta,
   content: { itemSchema, itemKey: (item: Item) => item.text, packs: [pack('animals'), pack('food')] },
-  config: {
-    schema: TeamTurnsConfig,
-    presets: [{ id: 'quick', name: 'Quick game', contributors: ['AdeizaSama'], config: { rounds: 1, seconds: 30 }, packs: ['food'] }],
-  },
+  config: { schema: TeamTurnsConfig },
   rules: '## A turn\n\nGuess the word.',
+  variants: [variant('quick-food')],
   machine,
   views: { turn: TurnView },
 }
@@ -87,8 +91,9 @@ describe('defineGame', () => {
     expect(problemsWith({ views: {} })).toContain('views: Phase "turn" has no view')
   })
 
-  it('accepts a game without presets', () => {
-    expect(problemsWith({ config: { schema: TeamTurnsConfig } })).toBeUndefined()
+  it('accepts a game without variants, and gives it an empty list', () => {
+    expect(defineGame({ ...game, variants: undefined }).variants).toEqual([])
+    expect(defineGame(game).variants.map((v) => v.id)).toEqual(['quick-food'])
   })
 
   it('reports problems in meta, with where each is', () => {
@@ -108,32 +113,25 @@ describe('defineGame', () => {
     )
   })
 
-  it('checks a preset’s settings against the game’s config schema', () => {
-    const presets = [{ ...game.config.presets[0], config: { seconds: 5 } }]
-    expect(problemsWith({ config: { ...game.config, presets } })).toContain('config.presets.0.config.seconds:')
+  it('checks a variant’s settings against the game’s config schema', () => {
+    expect(problemsWith({ variants: [variant('quick-food', { settings: { seconds: 5 } })] })).toContain('variants.0.settings.seconds:')
   })
 
-  it('reports a preset that names a pack the game does not have', () => {
-    const presets = [{ ...game.config.presets[0], packs: ['anime'] }]
-    expect(problemsWith({ config: { ...game.config, presets } })).toContain('config.presets.0.packs: No pack with id "anime"')
+  it('reports a variant that names a pack the game does not have', () => {
+    expect(problemsWith({ variants: [variant('quick-food', { packs: ['anime'] })] })).toContain('variants.0.packs: No pack with id "anime"')
   })
 
-  it('accepts a preset without packs, checks its settings all the same, and reports an empty pack list', () => {
-    const settingsOnly = { ...game.config.presets[0], packs: undefined }
-    expect(problemsWith({ config: { ...game.config, presets: [settingsOnly] } })).toBeUndefined()
-    expect(problemsWith({ config: { ...game.config, presets: [{ ...settingsOnly, config: { seconds: 5 } }] } })).toContain(
-      'config.presets.0.config.seconds:',
-    )
-    expect(problemsWith({ config: { ...game.config, presets: [{ ...settingsOnly, packs: [] }] } })).toContain(
-      'config.presets.0.packs: List at least one pack, or leave packs out',
-    )
+  it('reports a variant that opens a setting there isn’t, or opens or sets teams, packs or tags', () => {
+    const message = problemsWith({ variants: [variant('quick-food', { open: ['rounds', 'speed', 'packs'], settings: { tags: ['fruit'] } })] })
+    expect(message).toContain('variants.0.open: "speed" isn\'t a setting players can change. Pick from: rounds, seconds')
+    expect(message).toContain('variants.0.open: "packs" isn\'t a setting players can change')
+    expect(message).toContain('variants.0.settings.tags: Set tags at the top of the file, not in settings')
   })
 
-  it('reports two presets with the same id, and a preset without contributors', () => {
-    const presets = [game.config.presets[0], { ...game.config.presets[0], contributors: [] }]
-    const message = problemsWith({ config: { ...game.config, presets } })
-    expect(message).toContain('config.presets.1.id: "quick" is already used by another preset')
-    expect(message).toContain('config.presets.1.contributors:')
+  it('reports two variants with the same id, and an id a page of the game already uses', () => {
+    const message = problemsWith({ variants: [variant('quick-food'), variant('quick-food'), variant('rules')] })
+    expect(message).toContain('variants.1.id: "quick-food" is already used by another variant')
+    expect(message).toContain('variants.2.id: "rules" is taken: the game\'s rules page uses it')
   })
 
   // Checked by `pnpm typecheck`; at runtime these lines do nothing.
@@ -160,24 +158,6 @@ export const mistakes = [
       ...game,
       // @ts-expect-error: the machine plays `{ word }` items, but the packs hold `{ text }` items
       machine: otherItems,
-    }),
-  () =>
-    defineGame({
-      ...game,
-      config: {
-        schema: TeamTurnsConfig,
-        // @ts-expect-error: presets never set the teams; players name their own
-        presets: [{ id: 'x', name: 'X', contributors: ['AdeizaSama'], config: { teams: ['A', 'B'] }, packs: ['food'] }],
-      },
-    }),
-  () =>
-    defineGame({
-      ...game,
-      config: {
-        schema: TeamTurnsConfig,
-        // @ts-expect-error: presets never set tags, which depend on the packs players choose
-        presets: [{ id: 'x', name: 'X', contributors: ['AdeizaSama'], config: { tags: ['fruit'] } }],
-      },
     }),
   () =>
     defineGame({

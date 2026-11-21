@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { SettingsViewProps } from '../../../sdk/game/settings'
+import { isOpen, type SettingsViewProps } from '../../../sdk/game/settings'
 import { Button } from '../../../ui/button'
 import { Dialog } from '../../../ui/dialog'
 import { Section } from '../../../ui/section'
@@ -28,35 +28,48 @@ export const pointsSummary = ({ describe, act, sing, skip }: Points) =>
 
 const samePoints = (a: Points, b: Points) => a.describe === b.describe && a.act === b.act && a.sing === b.sing && a.skip === b.skip
 
-/** Charades' own settings on setup (ADR 0008): the mode, and points per result in Advanced settings. */
-export function SettingsView({ settings, onChange }: SettingsViewProps<CharadesConfig>) {
+/**
+ * Charades' own settings on setup (ADR 0008): the mode, and points per result in Advanced settings. On a variant's
+ * setup, only the open ones (ADR 0018).
+ */
+export function SettingsView({ settings, onChange, open }: SettingsViewProps<CharadesConfig>) {
   const [advanced, setAdvanced] = useState(false)
   const { points } = settings
   const setPoints = (changes: Partial<Points>) => onChange({ points: { ...points, ...changes } })
 
+  // Points live behind Advanced settings, under the mode; on a variant that closes the mode, under their own heading.
+  const advancedButton = isOpen(open, 'points') && (
+    <>
+      <Button variant="outline" onClick={() => setAdvanced(true)}>
+        Advanced settings
+      </Button>
+      <p className="text-center text-sm text-muted-foreground">{pointsSummary(points)}</p>
+    </>
+  )
+
   return (
     <>
-      <Section title="Mode">
-        {modes.map((mode) => (
-          <label key={mode.id} className="flex items-start gap-3 rounded-xl bg-card p-4 text-card-foreground shadow-sm">
-            <input
-              type="radio"
-              name="charades-mode"
-              className="mt-1 size-5 shrink-0 accent-primary"
-              checked={settings.mode === mode.id}
-              onChange={() => onChange({ mode: mode.id })}
-            />
-            <span className="flex flex-col gap-1">
-              <span className="font-semibold">{mode.name}</span>
-              <span className="text-sm text-muted-foreground">{mode.description}</span>
-            </span>
-          </label>
-        ))}
-        <Button variant="outline" onClick={() => setAdvanced(true)}>
-          Advanced settings
-        </Button>
-        <p className="text-center text-sm text-muted-foreground">{pointsSummary(points)}</p>
-      </Section>
+      {!isOpen(open, 'mode') && advancedButton && <Section title="Points">{advancedButton}</Section>}
+      {isOpen(open, 'mode') && (
+        <Section title="Mode">
+          {modes.map((mode) => (
+            <label key={mode.id} className="flex items-start gap-3 rounded-xl bg-card p-4 text-card-foreground shadow-sm">
+              <input
+                type="radio"
+                name="charades-mode"
+                className="mt-1 size-5 shrink-0 accent-primary"
+                checked={settings.mode === mode.id}
+                onChange={() => onChange({ mode: mode.id })}
+              />
+              <span className="flex flex-col gap-1">
+                <span className="font-semibold">{mode.name}</span>
+                <span className="text-sm text-muted-foreground">{mode.description}</span>
+              </span>
+            </label>
+          ))}
+          {advancedButton}
+        </Section>
+      )}
 
       <Dialog
         open={advanced}

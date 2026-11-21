@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 443 runtime tests (`pnpm test`) and 33 compile-time checks (`pnpm typecheck`).
+**Counts:** 453 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -19,28 +19,25 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Duplicate items](#duplicate-items) | `src/sdk/content/duplicates.test.ts` | 10 | |
 | [Multiple-choice options](#multiple-choice-options) | `src/sdk/content/choices.test.ts` | 5 | |
 | [Loading packs](#loading-packs) | `src/sdk/content/loadPacks.test.ts` | 12 | |
+| [Variant files](#variant-files) | `src/sdk/content/variant.test.ts` | 3 | |
 | [Finding games (scripts)](#finding-games-scripts) | `scripts/lib/games.test.ts` | 6 | |
 | [Charades content](#charades-content) | `src/games/charades/schema.test.ts` | 8 | |
 | [Name Ten content](#name-ten-content) | `src/games/name-ten/schema.test.ts` | 6 | |
 | [Name Ten settings](#name-ten-settings) | `src/games/name-ten/config.test.ts` | 2 | |
 | [Name Ten machine](#name-ten-machine) | `src/games/name-ten/machine.test.ts` | 15 | |
-| [Name Ten views](#name-ten-views) | `src/games/name-ten/views/views.test.tsx` | 7 | |
+| [Name Ten views](#name-ten-views) | `src/games/name-ten/views/views.test.tsx` | 8 | |
 | [Name Ten game](#name-ten-game) | `src/games/name-ten/game.test.ts` | 1 | |
-| [Trivia Night content](#trivia-night-content) | `src/games/trivia-night/schema.test.ts` | 6 | |
+| [Trivia Night content](#trivia-night-content) | `src/games/trivia-night/schema.test.ts` | 8 | |
 | [Trivia Night settings](#trivia-night-settings) | `src/games/trivia-night/config.test.ts` | 2 | |
 | [Choice turn settings](#choice-turn-settings) | `src/sdk/formats/team-turns/choice/config.test.ts` | 1 | |
 | [Choice turn machine](#choice-turn-machine) | `src/sdk/formats/team-turns/choice/machine.test.ts` | 12 | |
-| [Choice turn views](#choice-turn-views) | `src/sdk/formats/team-turns/choice/views.test.tsx` | 8 | |
+| [Choice turn views](#choice-turn-views) | `src/sdk/formats/team-turns/choice/views.test.tsx` | 9 | |
 | [Trivia Night machine](#trivia-night-machine) | `src/games/trivia-night/machine.test.ts` | 2 | |
-| [Trivia Night game](#trivia-night-game) | `src/games/trivia-night/game.test.ts` | 1 | |
-| [This or That content](#this-or-that-content) | `src/games/this-or-that/schema.test.ts` | 4 | |
-| [This or That settings](#this-or-that-settings) | `src/games/this-or-that/config.test.ts` | 1 | |
-| [This or That machine](#this-or-that-machine) | `src/games/this-or-that/machine.test.ts` | 2 | |
-| [This or That game](#this-or-that-game) | `src/games/this-or-that/game.test.ts` | 1 | |
+| [Trivia Night game](#trivia-night-game) | `src/games/trivia-night/game.test.ts` | 2 | |
 | [Charades settings](#charades-settings) | `src/games/charades/config.test.ts` | 5 | |
 | [JSON Schemas (scripts)](#json-schemas-scripts) | `scripts/lib/jsonSchema.test.ts` | 9 | |
 | [Loading game schemas (scripts)](#loading-game-schemas-scripts) | `scripts/lib/gameSchema.test.ts` | 4 | |
-| [Content check (scripts)](#content-check-scripts) | `scripts/lib/validate.test.ts` | 9 | |
+| [Content check (scripts)](#content-check-scripts) | `scripts/lib/validate.test.ts` | 10 | |
 | [Themes](#themes) | `src/sdk/theme/theme.test.ts` | 7 | |
 | [Contrast](#contrast) | `src/sdk/theme/contrast.test.ts` | 7 | |
 | [Theme variables](#theme-variables) | `src/sdk/theme/apply.test.ts` | 4 | |
@@ -48,11 +45,11 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Item pool](#item-pool) | `src/sdk/formats/team-turns/pool.test.ts` | 13 | |
 | [Team-turns guards and actions](#team-turns-guards-and-actions) | `src/sdk/formats/team-turns/rules.test.ts` | 10 | |
 | [teamTurns (Word Duel)](#teamturns-word-duel) | `src/sdk/formats/team-turns/teamTurns.test.ts` | 16 | 11 |
-| [defineGame](#definegame) | `src/sdk/game/defineGame.test.ts` | 12 | 8 |
-| [Settings and presets](#settings-and-presets) | `src/sdk/game/settings.test.ts` | 5 | |
+| [defineGame](#definegame) | `src/sdk/game/defineGame.test.ts` | 12 | 6 |
+| [Settings and variants](#settings-and-variants) | `src/sdk/game/settings.test.ts` | 5 | |
 | [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 22 | |
-| [Charades views](#charades-views) | `src/games/charades/views/views.test.tsx` | 6 | |
-| [App](#app) | `src/app/App.test.tsx` | 7 | |
+| [Charades views](#charades-views) | `src/games/charades/views/views.test.tsx` | 8 | |
+| [App](#app) | `src/app/App.test.tsx` | 10 | |
 | [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 6 | |
 | [Applying a theme](#applying-a-theme) | `src/app/theme/themes.test.tsx` | 4 | |
 | [Bundled fonts](#bundled-fonts) | `src/app/theme/fonts.test.ts` | 2 | |
@@ -60,7 +57,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Theme parts](#theme-parts) | `src/app/theme/parts.test.ts` | 4 | |
 | [UI components](#ui-components) | `src/ui/ui.test.tsx` | 8 | |
 | [Game session](#game-session) | `src/sdk/game/useGameSession.test.ts` | 9 | |
-| [Interaction primitives](#interaction-primitives) | `src/sdk/interactions/interactions.test.tsx` | 9 | |
+| [Interaction primitives](#interaction-primitives) | `src/sdk/interactions/interactions.test.tsx` | 10 | |
 | [Summary and Leaderboard](#summary-and-leaderboard) | `src/sdk/interactions/summary.test.tsx` | 5 | |
 | [Review](#review) | `src/sdk/interactions/review.test.tsx` | 3 | |
 | [PromptCard](#promptcard) | `src/sdk/interactions/promptcard.test.tsx` | 3 | |
@@ -72,10 +69,11 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Game screen](#game-screen) | `src/app/play/GameScreen.test.tsx` | 3 | |
 | [Playing Name Ten](#playing-name-ten) | `src/app/play/nameTen.test.tsx` | 1 | |
 | [Playing Trivia Night](#playing-trivia-night) | `src/app/play/triviaNight.test.tsx` | 1 | |
-| [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 15 | |
-| [Saved game](#saved-game) | `src/app/play/savedGame.test.ts` | 12 | |
+| [Setup screen](#setup-screen) | `src/app/setup/setup.test.tsx` | 14 | |
+| [Variant setup](#variant-setup) | `src/app/setup/variantSetup.test.tsx` | 2 | |
+| [Saved game](#saved-game) | `src/app/play/savedGame.test.ts` | 13 | |
 | [Play page](#play-page) | `src/app/play/PlayPage.test.tsx` | 3 | |
-| [Continuing a saved game](#continuing-a-saved-game) | `src/app/library/continue.test.tsx` | 6 | |
+| [Continuing a saved game](#continuing-a-saved-game) | `src/app/library/continue.test.tsx` | 7 | |
 | [Wake lock](#wake-lock) | `src/app/play/useWakeLock.test.ts` | 3 | |
 
 **Two kinds of test:**
@@ -278,13 +276,23 @@ Each row is a mistake TypeScript must reject.
 | 75 | throws one error listing every problem in every file | `loadPacks` | `anime.json` with Goku twice, `movies.json` with id `films`, and a valid `ok.json` | One error naming both files, each with where and what | A developer sees every broken pack at once, with file names. |
 | 76 | gives packs the item type from the item schema | Types | The result of `loadPacks` | Exactly `Pack<{ text: string }>[]` | Code using the packs knows their item shape. Checked by `pnpm typecheck`. |
 
+## Variant files
+
+`src/sdk/content/variant.test.ts`, testing `src/sdk/content/variant.ts` (ADR 0018): a variant file's shape, checked by the app and the content check. The variant is `quick-food`: pack `food`, 30-second turns, rounds open.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 444 | accepts a variant file, filling in no tags, no settings and no open settings | `checkVariant` | The variant; one with only id, name, tagline, packs, contributors | The same with `tags: []`; then `settings: {}`, `open: []` too | Only what makes a variant is required. |
+| 445 | needs its id to be its file name, at least one pack, a name and contributors, and no unknown fields | `checkVariant` | File `food.json`; no packs; blank name, no contributors; a `presets` field | Problems at `id`; `packs`; `name` and `contributors`; one problem | The id is the address; a typo in a field name is caught. |
+| 446 | loads every file, sorted by id, and throws one error listing every problem | `loadVariants` | Two good files; then a bad id and an empty pack list | `all-food`, `quick-food`; then one error naming both files | Every problem at once, like packs. |
+
 ## Finding games (scripts)
 
 `scripts/lib/games.test.ts`, testing `scripts/lib/games.ts`. Each test creates a throwaway games folder in the system's temp directory and deletes it afterwards, so no test files are committed and the real `src/games` is never touched.
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 77 | finds each game with its schema file and pack files, sorted | `findGames` | `trivia` (schema, 1 pack) and `charades` (schema, `movies.json`, `anime.json`) | Charades then Trivia, each with its `schema.ts` path and its packs in name order | The content scripts need every game and pack, in the same order on every computer. |
+| 77 | finds each game with its schema file, pack files and variant files, sorted | `findGames` | `trivia` (schema, 1 pack) and `charades` (schema, `movies.json`, `anime.json`, `variants/naija.json`) | Charades then Trivia, each with its `schema.ts` path, its packs in name order and its variants (none for Trivia) | The content scripts need every game and pack, in the same order on every computer. |
 | 78 | reports a missing schema file as null | `findGames` | A game with a pack but no `schema.ts` | `schemaFile` is null | The content check can then say "this game has packs but no schema" instead of crashing. |
 | 79 | gives no pack files for a game without a content folder | `findGames` | A game with only `schema.ts` | No pack files | A game being built may not have packs yet. |
 | 80 | only counts .json files directly in the content folder as packs | `findGames` | `anime.json`, `notes.md`, and `drafts/old.json` | Only `anime.json` | Notes and drafts beside the packs aren't checked or loaded, matching the app's `content/*.json` pattern. |
@@ -331,8 +339,8 @@ Each row is a mistake TypeScript must reject.
 | 310 | requires what a theme must say, and makes fields with a default optional | `themeJsonSchema` | The theme schema | Required: id, name, description, contributors, scheme, colors; no unknown fields; all 19 colors required | Editors ask for what CI demands and no more: fonts, radius and the rest can be left out. |
 | 95 | are named after the game | `schemaFileName` | `charades` | `charades.pack.schema.json` | Packs point at this exact name in `$schema`. |
 | 96 | are written with 2-space indents and a final newline | `schemaFileText` | `{ a: 1 }` | Two-space indented JSON ending in a newline | Readable files whose changes show cleanly in pull requests. |
-| 97 | matches the zod schemas (run `pnpm generate-schemas` if not) | Up-to-date check | Every game's `schema.ts` and the theme schema, and their files in `schemas/` | Each committed file equals a freshly generated one | If someone changes a schema without regenerating, editors would show old rules. This failing test names the fix. |
-| 98 | has no schemas for games that no longer exist | Up-to-date check | The files in `schemas/` | Exactly one per game that has a `schema.ts`, plus `theme.schema.json` | Stops leftover files from a renamed or removed game. |
+| 97 | matches the zod schemas (run `pnpm generate-schemas` if not) | Up-to-date check | Every game's `schema.ts`, the variant schema and the theme schema, and their files in `schemas/` | Each committed file equals a freshly generated one | If someone changes a schema without regenerating, editors would show old rules. This failing test names the fix. |
+| 98 | has no schemas for games that no longer exist | Up-to-date check | The files in `schemas/` | Exactly one per game that has a `schema.ts`, plus `theme.schema.json` and `variant.schema.json` | Stops leftover files from a renamed or removed game. |
 
 ## Loading game schemas (scripts)
 
@@ -377,6 +385,7 @@ Each row is a mistake TypeScript must reject.
 | 311 | finds nothing wrong with a valid theme | `checkThemeFile` | A valid theme with the right `$schema` | No problems | The content check passes good themes. |
 | 312 | reports text that isn't JSON, a wrong $schema link, and problems from the theme check | `checkThemeFile` | Broken JSON; `$schema: "theme.schema.json"` with radius 9 | "Not valid JSON…"; `$schema` should be `../../schemas/theme.schema.json`, and a `radius` problem | Same as for packs: a wrong link silently switches off editor help. |
 | 317 | reports colors that are hard to read, once the theme's shape is right | `checkThemeFile`, contrast | The valid theme with `muted: "#555555"` | One problem at `colors.muted-foreground`, naming "muted-foreground on muted" | CI catches an unreadable theme, not only a malformed one (ADR 0010). |
+| 456 | finds nothing wrong with a valid variant, and reports text that isn't JSON, a wrong $schema link and its problems | `checkVariantFile` | A valid variant; broken JSON; `$schema: "variant.schema.json"` with no packs; the variant in `anime.json` | Nothing; "Not valid JSON…"; the right `$schema` and a problem at `packs`; a problem at `id` | CI checks variant files the way it checks packs (ADR 0018). |
 
 ## Themes
 
@@ -524,14 +533,14 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 163 | returns the game with the format's default views filled in | `defineGame`, views | The valid game, with a view for `turn` only | The same machine; views are the format's three defaults plus the game's `turn` | ADR 0005: games write views for their own phases and get the format's for free. |
-| 164 | accepts a game without presets | Presets | No `presets` | No error | Presets are optional. |
 | 165 | reports problems in meta, with where each is | `meta` | Id `Word Duel`, complexity 6, players min 4 max 2, no contributors | One error naming the game, listing `meta.id`, `meta.complexity`, `meta.players` and `meta.contributors` | The library shows these; mistakes fail the game's tests instead of reaching players. All problems at once. |
 | 166 | needs at least one pack | Content | No packs | Reports `content.packs` | A game without items can't be played. |
+| 451 | accepts a game without variants, and gives it an empty list | Variants | No `variants`; then `quick-food` | `[]`; then `quick-food` | Variants are optional, and the app can always read the list. |
+| 452 | checks a variant's settings against the game's config schema | Variants | `quick-food` with 5-second turns | Reports `variants.0.settings.seconds` | A variant can't start a game the setup screen would refuse. |
+| 453 | reports a variant that names a pack the game does not have | Variants | Pack `anime` | Reports `variants.0.packs` naming `anime` | Typos in pack ids are caught before players see an empty game. |
+| 454 | reports a variant that opens a setting there isn't, or opens or sets teams, packs or tags | Variants | Open rounds, speed, packs; tags in settings | `speed` and `packs` reported with the settings it can open; tags belong at the top of the file | Open settings must be real; the content is never open (ADR 0018). |
+| 455 | reports two variants with the same id, and an id a page of the game already uses | Variants | Two `quick-food`; one `rules` | The second `quick-food`; `rules` is taken | A variant's id is its address, `/:gameId/:variantId`. |
 | 300 | needs rules, in the markdown the rules screen can show | Rules | Rules of only spaces; then a paragraph and a table | Reports `rules: Write how to play`; then `rules: Line 3: tables aren't supported; use a list` | Every game has rules (standard §13), and a construct the rules screen can't show fails CI instead of reaching players as raw symbols (ADR 0009). |
-| 167 | checks a preset's settings against the game's config schema | Presets | Preset with 5-second turns | Reports `config.presets.0.config.seconds` | A preset is just settings, so the same rules apply as on the setup screen. |
-| 168 | reports a preset that names a pack the game does not have | Presets | Preset with pack `anime` | Reports `config.presets.0.packs` naming `"anime"` | A typo in a pack id would give players an empty game. |
-| 291 | accepts a preset without packs, checks its settings all the same, and reports an empty pack list | Presets | `quick` without packs; then with 5-second turns; then with `packs: []` | No error; reports `config.presets.0.config.seconds`; reports `config.presets.0.packs` "List at least one pack, or leave packs out" | A preset about how to play needn't name packs (ADR 0008), but its settings are still checked, and an empty list is a mistake, not a way to say "keep". |
-| 169 | reports two presets with the same id, and a preset without contributors | Presets | Two presets called `quick`, the second without contributors | Reports `config.presets.1.id` and `config.presets.1.contributors` | Preset ids are used in links; credit is required (§3). |
 | 170 | keeps the item and settings types from the schemas | Types | The defined game | Packs typed `Pack<{ text: string }>[]`; settings typed `TeamTurnsConfig` | The app (chapter 04) works with a game's real types. Checked by `pnpm typecheck`. |
 | 206 | uses a game's own view for a format phase instead of the default | Views | Views for `turn` and `turn_summary` | The game's summary view is used | A game can replace a format view when the default can't show what it needs. |
 | 207 | reports a phase without a view | Views | `views: {}` (types bypassed) | Reports `views: Phase "turn" has no view` | Types catch this; the check also covers code that bypasses them. |
@@ -541,25 +550,23 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Mistake | Example | Why |
 |---|---|---|---|
 | C24 | The machine plays different items from the packs | A machine for `{ word }` items with `{ text }` packs | The item schema, the packs and the machine must agree on what an item is. |
-| C25 | A preset sets the teams | `config: { teams: ['A', 'B'] }` | Players always name their own teams. |
-| C32 | A preset sets tags | `config: { tags: ['fruit'] }` | Tags depend on the packs players choose, so a preset keeps them (ADR 0008). |
 | C26 | A format that doesn't exist yet | `format: 'host-led'` | Only `team-turns` is built. |
 | C27 | A game phase without a view | `views: { turn_summary: … }` with no `turn` | Players would see a blank screen in that phase. |
 | C28 | A view for a phase the machine doesn't have | `views: { turn, steal }` | Usually a typo; the view would never be shown. |
 | C29 | A view written for another game's items | A view reading `item.word` in a game whose items have `text` | It would show nothing, or crash, on the real items. |
 | C31 | A settings view for a setting the game doesn't have | `view` reading `settings.mode` in a game with only the format's settings | It would show a setting that's never saved or checked (ADR 0008). |
 
-## Settings and presets
+## Settings and variants
 
-`src/sdk/game/settings.test.ts`, testing `src/sdk/game/settings.ts`: the rules for a game's settings on setup and for presets (ADR 0008). The schema is `TeamTurnsConfig` plus a nested setting of the game's own, `bonus: { got }` (default 1), like Charades' points. Two presets: `quick` (1 round, 30 seconds, no packs) and one with 90-second turns and packs `animals` and `food`.
+`src/sdk/game/settings.test.ts`, testing `src/sdk/game/settings.ts`: the rules for a game's settings on setup (ADR 0008) and a variant's (ADR 0018). The schema is `TeamTurnsConfig` plus a nested setting of the game's own, `bonus: { got }` (default 1), like Charades' points. The variant `quick`: 1 round, 30 seconds, pack `food`, tag `fruit`.
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 286 | defaultSettings: the schema's defaults for these packs, without teams | `defaultSettings` | Pack `food` | 3 rounds, 60 seconds, `food`, no tags, bonus 1; no teams | Setup starts from the schema's defaults, the game's own included, so the screen can't disagree with the schema. |
-| 287 | presetSettings: the defaults plus the preset's changes, undoing players' own changes, keeping packs and tags | `presetSettings` | 5 rounds, tag `fruit`, bonus 3; apply `quick` | 1 round, 30 seconds, bonus back to 1, `food` and `fruit` kept | A preset is applied whole (ADR 0008), so it never leaves a setting nobody chose for it. |
-| 288 | presetSettings: uses the preset's packs when it names some | `presetSettings` | Pack `food`, tag `fruit`; apply the 90-second preset | 90 seconds, packs `animals` and `food`, `fruit` kept | A preset about content still sets content. |
-| 289 | matchesPreset: only while every setting is the preset's, whatever the packs and tags | `matchesPreset` | `quick` applied; then other packs and tags; rounds 2; bonus 2; the defaults | True; true; false; false; false | A lit preset means exactly its settings; packs and tags it doesn't set don't count. |
-| 290 | matchesPreset: compares packs, in any order, when the preset names some | `matchesPreset` | The 90-second preset applied, packs reversed; then only `food` | True; false | Ticking packs in another order is the same choice. |
+| 447 | openableSettings: every setting but teams, packs and tags | `openableSettings` | The schema | rounds, seconds, bonus | What a variant may open: players always name their teams, and the content is the variant. |
+| 448 | variantSettings: the defaults plus the variant's changes, packs and tags, and throws on settings that fail | `variantSettings` | `quick`; then 5-second turns | 1 round, 30 s, `food`, `fruit`, bonus 1; then an error | A variant's setup starts from its own settings. |
+| 449 | withOpenChanges: takes players' changes to open settings only, never packs or tags | `withOpenChanges` | Changes to rounds, seconds, packs, tags, bonus; open rounds and packs; then nothing open | Only rounds changed; then nothing | A remembered change to a setting the variant closes later doesn't leak through. |
+| 450 | isOpen: every setting on a game's own setup, only the open ones on a variant's | `isOpen` | No list; `['rounds']` | true; true for rounds, false for mode | Settings views ask it which settings to show. |
 
 ## Charades machine
 
@@ -596,12 +603,14 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 278 | says how to clue the card in Mix it up, and nothing in Describe mode | Mode on the card | Gala, picked to be acted; in mix, then in describe | "Act it out"; then the card with no mode line | In Mix it up the card must say how to clue it; in Describe mode everything is described, so saying so is noise. |
+| 278 | says how to clue the card in Mix it up, with its icon and color, and nothing in Describe mode | Mode on the card | Gala, picked to be acted; in mix, then in describe | "Act it out" in the warning color with the person icon; then the card with no mode line | In Mix it up the card must say how to clue it; in Describe mode everything is described, so saying so is noise. |
+| 470 | gives each mode its own icon and color, none of them got-it green or skip red | `modeLooks` | The three modes | Three different icons and three different tones, none success or destructive | Players tell the modes apart at a glance, by icon as well as color, without confusing them with Got it or Skip. |
 | 279 | names each result, and marks a corrected card | `reviewRow` | Gala got; at time up; got then corrected | Got it (good); Not counted (neutral); Skipped (bad), changed | The words and colors players see in review come from the one `resultOf` rule. |
 | 280 | shows how the card was clued only in Mix it up, and a free skip as neutral | `reviewRow` | Gala acted, in mix; a skip with skip points 0 | Detail "Acted"; Skipped in neutral | The mode matters for scoring only in Mix it up; a skip that costs nothing shouldn't look like a loss. |
 | 283 | picks the mode, Describe to start with | Mode | Default settings; tap Mix it up | Describe picked; then Mix it up | Describe is the game most people know; one tap changes it. |
 | 284 | changes points in Advanced settings within their limits, and resets them | Advanced settings | Mix it up; open Advanced settings; Acted + twice; Skipped −; Reset to defaults; Done | Reset off at first; Acted "5 points" with + off; Skipped "No penalty" with − off; summary "Describe 2 · Act 5 · Sing 3 · Skip 0"; after Reset "… Act 3 … Skip −1"; the dialog closes | The steppers can't leave the schema's ranges (1–5, skip 0–5), and a host who got lost can get back to the defaults in one tap. |
 | 285 | says acted and sung points only count in Mix it up, when Describe is picked | Advanced settings | Describe; open Advanced settings; Done; pick Mix it up; open again | The note; then no note | In Describe mode the acted and sung points never apply, so a host changing them should know. |
+| 457 | shows only the open settings: the mode alone, points alone under their own heading, or nothing | Settings view on a variant | Open rounds and mode; open points; nothing open | The mode, no Advanced; a Points heading with Advanced, no mode; neither | A variant shows only what it lets players change (ADR 0018). |
 
 ## Name Ten content
 
@@ -660,6 +669,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 368 | shows the category and its board, reports taps by position, and can end early | Turn | A turn on Numbers; tap the fifth answer; tap End turn early | The category heading; the board's answers in order; `toggle` 4; `lock_in` | The judge ticks what's said and can stop when the team gives up. |
 | 369 | lists the board as got or missed, and talks about answers, not cards | Review | A board with Biro got and Ruler missed; the review view | Got it (good), Missed (neutral); "Check the answers before they count."; a list named "Answers this turn" | Review reuses Charades' screen, in Name Ten's words. |
 | 370 | sets the answers on the board from 10 to 15 | Settings | The default; More six times | Less off at 10; 15, with More off | The stepper can't leave the schema's range. |
+| 458 | shows answers on the board only when the variant opens it | Settings view on a variant | Open rounds; open shown | No stepper; the stepper | A variant shows only what it lets players change. |
 
 ## Name Ten game
 
@@ -667,7 +677,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 371 | is a valid game with the Back to School pack, its own settings and presets, and its own handoff | `index.ts` | The game's default export | Id `name-ten`; Back to School; its machine and settings; presets Quick and Classic; its own handoff view; rules with "## A turn" | `defineGame` checked everything (meta, packs, presets, rules, a view per phase) when the file loaded; this checks Name Ten wired its own parts in. |
+| 371 | is a valid game with the Back to School pack, its own settings, and its own handoff | `index.ts` | The game's default export | Id `name-ten`; Back to School; its machine and settings; its own handoff view; rules with "## A turn" | `defineGame` checked everything (meta, packs, presets, rules, a view per phase) when the file loaded; this checks Name Ten wired its own parts in. |
 
 ## Trivia Night content
 
@@ -681,6 +691,8 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 429 | takes an optional subtitle of up to 100 characters | `subtitle` | "Hint: not Lagos"; 101 characters; a blank | Kept; problems at `subtitle` twice | Optional, short, and never empty. |
 | 399 | names a question by its wording | `itemKey` | The question | Its wording | Two packs with the same question play it once. |
 | 400 | ships a valid Back to School pack, every question tagged with its subject | The shipped pack | `content/*.json` | Back to School loads, with at least 100 questions, each with exactly one of maths, science, social-studies, entertainment, general | Players filter by subject. |
+| 437 | ships Masculin ou féminin ?: French words, each with its meaning, the same two options, and both answers often | The Masculin ou féminin ? pack | `content/*.json` | Named "Masculin ou féminin ?", in French, at least 200 words, each with Masculin and Féminin, a subtitle, and tagged noun or adjective; between 40% and 60% féminin | A pack where one answer wins most of the time teaches nothing. |
+| 438 | never shows an article in Masculin ou féminin ?, which would give the answer away | The Masculin ou féminin ? pack | Every question | None starts with le, la, les, un, une or l' | "la chaise" answers its own question. |
 
 ## Trivia Night settings
 
@@ -732,6 +744,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 431 | waits for a tap in a set of questions, and fades each new question in | A set of questions | Abuja picked, 3 a turn; 5 s pass | No `continue` sent; the card inside `animate-fade-in` | Only against the clock does play go on by itself. |
 | 419 | picks the mode, with questions per turn only for a set number, 1 to 10 | Settings view | Tap More 12 times; then Against the clock | 1, then 10 at most; the stepper gone | The count only means something for a set number. |
 | 420 | sets points from 1 to 5, and the order of the options | Settings view | Tap More 6 times on points; tap A to Z | "1 point", then "5 points" at most; Shuffled checked, then A to Z | Every setting can be set on setup. |
+| 459 | shows only the open settings, with questions per turn on its own when the mode is closed | Settings view on a variant | Open questions; open mode, questions, order against the clock; open rounds | Questions per turn under its own heading, nothing else; the mode and order, no questions (it's against the clock); nothing | Masculin ou féminin ? locks the mode but lets players set how many words a turn. |
 
 ## Trivia Night machine
 
@@ -748,43 +761,8 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 421 | is a valid game with the Back to School pack, its settings, a preset per way to play, and one view for turn and result | `index.ts` | The game's default export; each preset applied | Id `trivia-night`; Back to School; its machine and settings; `TurnView` for `turn` and `reveal`; rules with "## Ways to play"; One question (1, 30 s), Five questions (5, 120 s), Against the clock (clock, 60 s) | `defineGame` checked the parts when the file loaded; this checks each preset is the way to play it's named for. |
-
-## This or That content
-
-`src/games/this-or-that/schema.test.ts`, testing `src/games/this-or-that/schema.ts` and its packs (ADR 0017). The question in the schema tests is chaise (chair), Masculin or Féminin; the answer is Féminin.
-
-| # | Test | Feature | Input | Expected output | Why |
-|---|---|---|---|---|---|
-| 435 | needs a question with exactly two options and the answer, filling in no tags | Item schema | The question; with a third option, Neutre; with one option | The same with `tags: []`; a problem at `options` each time | This or That is one or the other. |
-| 436 | uses the SDK's rules for the rest: the answer is an option, the subtitle is optional | `choiceFields`, `checkAnswer` | Answer Neutre; no subtitle; the key | A problem at `answer`; passes; `chaise` | The game shares Trivia Night's rules for a question. |
-| 437 | ships Masculin ou féminin ?: French words, each with its meaning, the same two options, and both answers often | The shipped pack | `content/*.json` | Named "Masculin ou féminin ?", in French, at least 200 words, each with Masculin and Féminin, a subtitle, and tagged noun or adjective; between 40% and 60% féminin | A pack where one answer wins most of the time teaches nothing. |
-| 438 | never shows an article, which would give the answer away | The shipped pack | Every question | None starts with le, la, les, un, une or l' | "la chaise" answers its own question. |
-
-## This or That settings
-
-`src/games/this-or-that/config.test.ts`, testing `src/games/this-or-that/config.ts` (ADR 0017).
-
-| # | Test | Feature | Input | Expected output | Why |
-|---|---|---|---|---|---|
-| 439 | plays ten questions a 60-second turn for 1 point, options A to Z, unless asked | Defaults | Teams Lions and Eagles, the Masculin ou féminin ? pack | 3 rounds, 60 seconds, no tags, 10 questions, 1 point, A to Z | A sorting game keeps each answer in the same place. |
-
-## This or That machine
-
-`src/games/this-or-that/machine.test.ts`, testing `src/games/this-or-that/machine.ts`: the choice turn on This or That's questions, with the real settings and pack.
-
-| # | Test | Feature | Input | Expected output | Why |
-|---|---|---|---|---|---|
-| 440 | has no mistakes validateMachine can find | Machine | The machine | No mistakes | Every phase, guard and action it names exists. |
-| 441 | plays a full game of ten words a turn, Féminin always on the left, from the first handoff to the results | Whole game | Seed 2026; 6 turns of 10 words, each answered right | Féminin, Masculin on every word; the summary after the tenth; final, 30 points each | The defaults play end to end on the real pack. |
-
-## This or That game
-
-`src/games/this-or-that/game.test.ts`, testing `src/games/this-or-that/index.ts`.
-
-| # | Test | Feature | Input | Expected output | Why |
-|---|---|---|---|---|---|
-| 442 | is a valid game with Masculin ou féminin ?, the choice turn's views, and a preset per way to play | `index.ts` | The game's default export; each preset applied | Id `this-or-that`; the pack; its machine and settings; one view for `turn` and `reveal`; rules with "## Ways to play"; Ten words (10, 60 s, A to Z), Against the clock (clock, 60 s, A to Z) | Each preset is the way to play it's named for. |
+| 421 | is a valid game with the Back to School pack, its settings and one view for turn and result | `index.ts` | The game's default export | Id `trivia-night`; Back to School; its machine and settings; `TurnView` for `turn` and `reveal`; rules with "## Ways to play" | `defineGame` checked the parts when the file loaded; this checks Trivia Night wired its own parts in. |
+| 464 | has Back to School Trivia, and Masculin ou féminin ?: ten words a minute, A to Z, Set questions only | Variants | The game's variants | `back-to-school` and `masculin-feminin`; the French one plays 10 questions, 60 s, A to Z, on its own pack, with mode closed | The variant the home page lists plays the way it's meant to (ADR 0018). |
 
 ## App
 
@@ -792,12 +770,14 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 180 | shows the library at /, and a game opens at its own address | Library, routing | Start at `/`; tap Charades | Heading Ku Zo Wasa; a Charades link to `/charades` showing "2–20 players"; after the tap, Charades' setup screen | The library lists the registry's games, and each link reaches its game. |
-| 372 | lists Name Ten too, with its own icon, players and setup | Library, registry | Open `/`; tap Name Ten | A link to `/name-ten` with its tagline and the list-checks icon; then Name Ten's setup, with "Answers on the board" and "38 items to play" | A game added to the registry appears in the library and gets the shared setup screen with its own settings. |
-| 422 | lists Trivia Night too, with its own icon, presets and setup | Library, registry | Open `/`; tap Trivia Night | A link to `/trivia-night` with the lightbulb icon; then its setup, with an Against the clock preset, Questions per turn, a 30-second turn and "148 items to play" | The third game reaches the library and the shared setup, with its own default turn length. |
-| 443 | lists This or That too, with its own icon, defaults and pack | Library, registry | Open `/`; tap This or That | A link to `/this-or-that` with the arrow-left-right icon; then its setup, with 10 questions per turn, A to Z checked and "282 items to play" | The fourth game reaches the library with its own defaults. |
-| 214, 215 | says "Page not found" at /chess and /charades/nope/extra, with a way back | Not-found page | A game that doesn't exist; an address with too many parts | "Page not found"; Back to games returns to the library | A mistyped or old link never shows a blank page. Runs once per address (`it.each`). |
+| 465 | shows the variants first at /, then Make your own with each game | Home page | Start at `/` | Ways to play: Naija Charades, Name Ten, Back to School Trivia, Masculin ou féminin ?, each linking to `/:gameId/:variantId`, the first saying "Charades · 2–20 players"; Make your own: `/charades`, `/name-ten`, `/trivia-night` | Players pick a way to play first; the full setup is one section down (ADR 0018). |
+| 466 | opens a variant's setup: Masculin ou féminin ? asks for teams, rounds, turn length and words a turn, nothing else | Variant setup | Tap Masculin ou féminin ? | Its heading; 10 questions a turn; 60 seconds; no mode or order choice; no packs; "282 items to play" | The variant's open settings are the only ones shown. |
+| 180 | shows a game at its own address, from Make your own | Library, routing | Start at `/`; tap Charades in Make your own | A link to `/charades` showing "2–20 players"; after the tap, Charades' setup screen | Each game's own setup is still one tap away. |
+| 372 | lists Name Ten too, with its own icon, players and setup | Library, registry | Open `/`; tap Name Ten in Make your own | A link to `/name-ten` with its tagline and the list-checks icon; then Name Ten's setup, with "Answers on the board" and "38 items to play" | A game added to the registry appears in the library and gets the shared setup screen with its own settings. |
+| 422 | lists Trivia Night too, with its own icon and setup | Library, registry | Open `/`; tap Trivia Night in Make your own | A link to `/trivia-night` with the lightbulb icon; then its setup, with Against the clock, Questions per turn, a 30-second turn and "430 items to play" (every pack, the French one included) | The third game reaches the library and the shared setup, with its own default turn length. |
+| 214, 215, 460 | says "Page not found" at /chess, /charades/nope and /charades/nope/extra, with a way back | Not-found page | A game that doesn't exist; a variant that doesn't exist; an address with too many parts | "Page not found"; Back to games returns to the library | A mistyped or old link never shows a blank page. Runs once per address (`it.each`). |
 | 216 | has an icon for every game in the registry | `gameIcons` | Every registered game's `meta.icon` | Listed in `gameIcons` | An unlisted icon would quietly show the fallback controller. |
+| 468 | starts each new page at the top, but leaves the first page and going back alone | `ScrollToTop` | Open `/` (window.scrollTo watched); tap Charades in Make your own | Not called on the first page; called with 0, 0 after the tap | A setup opened from far down the home page starts at its top, not halfway down. |
 
 ## Applying a theme
 
@@ -898,6 +878,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 199 | calls onTimeUp straight away if the time has already passed | Countdown | Ends at 5 s, shown at 10 s | Called once immediately | A turn whose time ran out while the phone was locked (or, from chapter 05, before a refresh) ends at once. |
 | 200 | turns to the warning color from warnAt seconds left | Countdown | Ends at 15 s, warn at 10; after 5 s | No warning class, then `text-warning` | Players see time running out without reading the number. |
 | 201 | vibrates when time runs out, on phones that can | Countdown | A phone with `vibrate`; ends at 1 s | `vibrate` called once | The team acting may not be looking at the screen. |
+| 469 | shows a toned hint as a badge in that color with its icon, and outlines the card in it; a plain hint stays plain | `FlashCard` `tone`, `icon` | Gala, "Sing or hum it", primary, music icon; then "Category" with no tone | A badge in primary with the music icon, the card outlined in primary; then muted text and no outline | Cards that are played differently look different; Name Ten's category card doesn't change. |
 
 ## Summary and Leaderboard
 
@@ -1031,9 +1012,17 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 223 | sends the play page back to setup when there is no saved game, like a shared /charades/play link | Play page | Open `/charades/play` with nothing saved | Charades' setup screen | The play page only plays a save (ADR 0006): without one there's nothing to play. |
 | 250 | remembers setup choices as they are made, so leaving setup loses nothing | Setup draft | Rename Team 1 to Lions, rounds +, turn length +, pick snack; leave; open setup again | Lions, 4 rounds, 75 seconds, snack picked, "5 items to play" | A back swipe or refresh mid-setup keeps everything, not only after Start (ADR 0006). |
 | 251 | drops remembered packs that no longer exist, and ignores choices that are no longer allowed | `loadSetup` | Saved packs: one existing, one removed; then only a removed pack; then 99 rounds; then broken JSON | The existing pack kept, with every other setting as saved; then nothing loaded, three times | A pack can be deleted while a phone remembers it: picking it would crash the item pool. |
-| 292 | offers the game's presets: Classic is the defaults, a tap applies one whole, and any change unselects it | Presets on setup | Defaults; pick snack; Acted + in Advanced settings; tap Party; tap Quick; rounds + | Classic selected; then none; Party selected, Mix it up, points back to 2/3/3/1, snack still picked; 2 rounds, 45 seconds, Describe; then only snack pressed | A preset is applied whole and is lit only while it's exactly what's set (ADR 0008), so a lit preset never lies. |
 | 282 | shows the game's own settings, keeps them in the draft, and Start plays them | Settings view on setup | Pick Mix it up; in Advanced settings, skip −; Done; leave and come back; Start | Mix it up still picked, "Describe 2 · Act 3 · Sing 3 · Skip 0"; the saved game plays mode `mix` with skip 0 | The game's settings go through the same draft and the same Start as the format's (ADR 0008). |
 | 281 | keeps the game's own settings in the draft, and gives a setting added since the save its default | `loadSetup`, `saveSetup` | Mix it up with points 1/4/5/0; then a draft saved before Charades had modes; then one with a setting Charades doesn't have | The same back; then 5 rounds with mode `describe` and points 2/3/3/1; then nothing loaded | The draft holds every setting, the game's own too (ADR 0008). A game can add settings without breaking drafts on players' phones; the schema's defaults fill the gap. |
+
+## Variant setup
+
+`src/app/setup/variantSetup.test.tsx`, testing `SetupScreen.tsx` with a variant, and `loadVariantSetup` in `savedSetup.ts` (ADR 0018). Screen tests (happy-dom). The variant is made up: Snack Attack, Charades with 90-second turns and Mix it up, snacks only, rounds and mode open.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 462 | shows the variant's name, the teams and only its open settings, and starts with its settings and content | Variant setup | Open the screen; tap More: Rounds; Start | Heading Snack Attack and its tagline; teams, Rounds, Mix it up checked; no Turn length, Packs, Only play or Advanced; Start sends 4 rounds, 90 s, mix, Back to School, snack | Players change only what the variant allows, and get its content. |
+| 463 | remembers what players changed, per variant, and only for open settings | `saveSetup`, `loadVariantSetup` | Tap Describe; then a saved setup with 5 rounds, 15 s, another pack | Saved under `charades/snack-attack`, not `charades`; loads describe, 5 rounds, but 90 s and the variant's pack and tag | A remembered change to a closed setting or the content never leaks in. |
 
 ## Saved game
 
@@ -1042,6 +1031,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 228 | saves a game and loads it back exactly | `saveGame`, `loadGame` | The game after `start`, saved at 6000 | The same state, saved at 6000 | Resuming must continue the very same game. |
+| 461 | keeps the variant a game was started from, and still loads one whose variant is gone, under the game's name | `variantId`, `saveName` | Saved with variant `no-such-variant`; a summary with a variant named Snack Attack | `variantId` in the save; it loads; named Charades; then Snack Attack | Continue names the variant (ADR 0018); a variant removed later doesn't throw away a game in progress. |
 | 229 | finds nothing when nothing is saved, or after clearGame | `clearGame` | Nothing; then a save, cleared | Nothing, twice | Quit (step 5) deletes the save. |
 | 230–236 | throws away a save with … , and says why | Checks on load | Not JSON · the wrong shape · an older version · a game that was removed · a phase that was renamed · the phase "toString" · 99 rounds | Discarded with the matching reason; the save is deleted | Every way a save can go stale, from ADR 0006. Never a crash, always a reason for the notice. "toString" exists on every object: a plain `in` check would let it through. Runs once per case (`it.each`). |
 | 237 | reports a save for a different game without deleting it | `loadGame` | A Charades save, loaded for another game id | "other game", Charades; the save kept | Opening another game's play page mustn't destroy the Charades save. |
@@ -1066,6 +1056,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 |---|---|---|---|---|---|
 | 244 | describes a save by its teams and round | `describeSave` | 2 teams, round 2 of 3; 3 teams, round 1 of 1 | "Lions vs Eagles · Round 2 of 3"; "Lions, Eagles and Hawks · Round 1 of 1" | Players recognise their game by who's playing and how far along it is. |
 | 245 | offers the unfinished game first in the library, and Continue carries on with it | Continue card | A save in round 2; open `/`; tap Continue | A "Continue Charades" link with the teams and round; then the handoff, "Round 2 of 2" | After a back swipe or a closed tab, getting back is one tap. |
+| 467 | names the variant a game was started from, and keeps it as the game is played | Continue, variants | Start Naija Charades from its setup; Start the turn; open `/` again | The save remembers `naija-back-to-school` after the play page saves; "Continue Naija Charades (Back to School Edition)" | Players see the name they picked, and the play page's saves don't drop it. |
 | 246 | offers nothing to continue for a finished game | Continue card | A save at the results | No Continue link | There's nothing left to play in a finished game (ADR 0006). |
 | 247 | says when a save couldn't be restored, found by the library or by the play page | Discarded notice | An old-version save, opening `/`; then a save with an unknown phase, opening `/charades/play` | The notice with "older version of the app"; then the library with the notice naming the phase | A lost game is explained wherever it's found, never silent. The play page sends the reason to the library. |
 | 248 | asks before Start replaces an unfinished game: Continue saved game keeps it, Start new game replaces it | Replace question | A save in round 2; Start; Continue saved game | "Replace your saved game?" naming the teams and round; then the saved game, round 2 | One save per device: starting a new game must never silently destroy the old one. |

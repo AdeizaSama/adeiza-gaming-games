@@ -111,3 +111,13 @@ describe('Name Ten settings', () => {
     expect(stepper.getByRole<HTMLButtonElement>('button', { name: 'More: Answers on the board' }).disabled).toBe(true)
   })
 })
+
+describe('Name Ten settings on a variant', () => {
+  it('shows answers on the board only when the variant opens it', () => {
+    const { unmount } = render(<SettingsView settings={config} onChange={() => {}} open={['rounds']} />)
+    expect(screen.queryByRole('group', { name: 'Answers on the board' })).toBeNull()
+    unmount()
+    render(<SettingsView settings={config} onChange={() => {}} open={['shown']} />)
+    expect(screen.getByRole('group', { name: 'Answers on the board' })).toBeDefined()
+  })
+})

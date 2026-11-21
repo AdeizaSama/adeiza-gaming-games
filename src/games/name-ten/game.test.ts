@@ -5,12 +5,12 @@ import { machine } from './machine'
 import { HandoffView } from './views/HandoffView'
 
 describe('Name Ten game definition', () => {
-  it('is a valid game with the Back to School pack, its own settings and presets, and its own handoff', () => {
+  it('is a valid game with the Back to School pack, its own settings, and its own handoff', () => {
     expect(nameTen.meta.id).toBe('name-ten')
     expect(nameTen.content.packs.map((pack) => pack.id)).toContain('back-to-school')
+    expect(nameTen.variants.map((variant) => variant.id)).toEqual(['back-to-school'])
     expect(nameTen.machine).toBe(machine)
     expect(nameTen.config.schema).toBe(NameTenConfig)
-    expect(nameTen.config.presets?.map((preset) => preset.id)).toEqual(['quick', 'classic'])
     expect(nameTen.views.handoff).toBe(HandoffView)
     expect(nameTen.rules).toContain('## A turn')
   })

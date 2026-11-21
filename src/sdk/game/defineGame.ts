@@ -1,12 +1,13 @@
 import { z } from 'zod'
 import type { ItemKey } from '../content/duplicates'
 import { PackInfo, Tag, type Pack } from '../content/pack'
+import type { Variant } from '../content/variant'
 import type { MachineEvent } from '../machine/types'
 import type { TeamTurnsConfig } from '../formats/team-turns/config'
 import type { TeamTurnsMachine, TeamTurnsPhase } from '../formats/team-turns/teamTurns'
 import { teamTurnsViews, type TeamTurnsView } from '../formats/team-turns/views'
 import { parseMarkdown } from '../interactions/markdown'
-import type { SettingsView } from './settings'
+import { checkVariantSettings, openableSettings, type SettingsView } from './settings'
 
 /** What the library shows about a game (standard §3). Checked when the game is defined. */
 export const GameMeta = z.strictObject({
@@ -29,28 +30,8 @@ export const GameMeta = z.strictObject({
 
 export type GameMeta = z.infer<typeof GameMeta>
 
-/**
- * A named variant: settings, and optionally packs, on top of the game's defaults (standard §1). Tapping one on setup
- * applies it whole (ADR 0008). Teams and tags are never part of a preset: players name their own teams, and tags
- * depend on the packs chosen.
- */
-export interface Preset<Setup> {
-  id: string
-  name: string
-  contributors: string[]
-  /** Settings that differ from the defaults, e.g. `{ seconds: 90 }`. */
-  config: Partial<Omit<Setup, 'teams' | 'packs' | 'tags'>>
-  /** Content pack ids. Leave out to keep the packs players chose. */
-  packs?: string[]
-}
-
-/** A preset's own fields; its settings are checked against the game's config schema. */
-const PresetInfo = z.object({
-  id: PackInfo.shape.id,
-  name: z.string().trim().min(1),
-  contributors: PackInfo.shape.contributors,
-  packs: z.array(z.string()).min(1, 'List at least one pack, or leave packs out').optional(),
-})
+/** Addresses a game already uses (`/:gameId/play`, `/:gameId/rules`), so no variant can have them as its id. */
+const takenIds = new Set(['play', 'rules'])
 
 /**
  * The views a game lists (ADR 0005): one for each of its own phases, required, and optionally its own for any of the
@@ -83,7 +64,6 @@ export interface GameDefinition<
   config: {
     /** The settings players choose, with defaults: `TeamTurnsConfig`, or the game's extension of it. */
     schema: z.ZodType<Config, Setup>
-    presets?: Preset<Setup>[]
     /**
      * The game's own settings on the setup screen (ADR 0008), below the format's. Leave it out if the game has none.
      * `NoInfer`, like `views`: it's checked against the schema's settings.
@@ -95,6 +75,8 @@ export interface GameDefinition<
    * `parseMarkdown` supports (ADR 0009).
    */
   rules: string
+  /** The ways to play it the home page lists (ADR 0018), from `loadVariants`. Leave out if it has none yet. */
+  variants?: Variant[]
   machine: TeamTurnsMachine<Item, Turn, Event, Config, Phase, GuardName, ActionName>
   /**
    * One view per phase. `NoInfer`: the types come from the rest of the game, and the views are checked against
@@ -113,8 +95,9 @@ export type Game<
   Phase extends string,
   GuardName extends string,
   ActionName extends string,
-> = Omit<GameDefinition<Item, Config, Setup, Turn, Event, Phase, GuardName, ActionName>, 'views'> & {
+> = Omit<GameDefinition<Item, Config, Setup, Turn, Event, Phase, GuardName, ActionName>, 'views' | 'variants'> & {
   views: Record<TeamTurnsPhase | Phase, TeamTurnsView<Item, Turn, Event, Config>>
+  variants: Variant[]
 }
 
 /**
@@ -124,12 +107,13 @@ export type Game<
  * never reaches players:
  * - `meta` follows the rules above.
  * - There's at least one pack.
- * - Each preset has a unique id, a name and contributors, only names packs that exist (if it names any), and its
- *   settings pass the config schema.
+ * - Each variant (ADR 0018) has a unique id that isn't `play` or `rules`, names only packs that exist, has settings
+ *   that pass the config schema, and opens only real settings (never teams, packs or tags).
  * - The rules aren't empty, and use only the markdown `parseMarkdown` supports.
  * - Every phase of the machine has a view.
  *
- * Returns the game with the format's default views filled in for any format phase the game didn't list.
+ * Returns the game with the format's default views filled in for any format phase the game didn't list, and an
+ * empty list of variants if it has none.
  */
 export function defineGame<
   Item,
@@ -154,29 +138,29 @@ export function defineGame<
   if (game.content.packs.length === 0) report('content.packs', 'A game needs at least one pack')
 
   const packIds = new Set(game.content.packs.map((pack) => pack.id))
-  const presetIds = new Set<string>()
+  const variants = game.variants ?? []
+  const variantIds = new Set<string>()
+  // Any pack id will do: only the names of the settings are read. A stand-in keeps a game without packs reportable.
+  const openable = new Set(openableSettings(game.config.schema, [game.content.packs[0]?.id ?? 'placeholder']))
 
-  for (const [index, preset] of (game.config.presets ?? []).entries()) {
-    const at = `config.presets.${index}`
+  for (const [index, variant] of variants.entries()) {
+    const at = `variants.${index}`
+    if (variantIds.has(variant.id)) report(`${at}.id`, `"${variant.id}" is already used by another variant`)
+    if (takenIds.has(variant.id)) report(`${at}.id`, `"${variant.id}" is taken: the game's ${variant.id} page uses it`)
+    variantIds.add(variant.id)
 
-    const info = PresetInfo.safeParse(preset)
-    if (!info.success) {
-      for (const issue of info.error.issues) report([at, ...issue.path].join('.'), issue.message)
-    }
-
-    if (presetIds.has(preset.id)) report(`${at}.id`, `"${preset.id}" is already used by another preset`)
-    presetIds.add(preset.id)
-
-    for (const pack of preset.packs ?? []) {
+    for (const pack of variant.packs) {
       if (!packIds.has(pack)) report(`${at}.packs`, `No pack with id "${pack}"`)
     }
-
-    // Placeholder teams stand in for the ones players will name, and the first pack for the packs they'll choose
-    // when the preset names none, so only the preset's own settings are tested.
-    const packs = preset.packs ?? game.content.packs.slice(0, 1).map((pack) => pack.id)
-    const settings = game.config.schema.safeParse({ ...preset.config, teams: ['Team 1', 'Team 2'], packs })
+    for (const name of ['teams', 'packs', 'tags']) {
+      if (name in variant.settings) report(`${at}.settings.${name}`, `Set ${name === 'teams' ? 'teams on setup' : `${name} at the top of the file`}, not in settings`)
+    }
+    for (const name of variant.open) {
+      if (!openable.has(name)) report(`${at}.open`, `"${name}" isn't a setting players can change. Pick from: ${[...openable].join(', ')}`)
+    }
+    const settings = checkVariantSettings(game.config.schema, variant)
     if (!settings.success) {
-      for (const issue of settings.error.issues) report([`${at}.config`, ...issue.path].join('.'), issue.message)
+      for (const issue of settings.error.issues) report([`${at}.settings`, ...issue.path].join('.'), issue.message)
     }
   }
 
@@ -191,5 +175,5 @@ export function defineGame<
   if (problems.length > 0) {
     throw new Error(`Game "${String(game.meta.id)}" has problems:\n${problems.map((p) => `  ${p}`).join('\n')}`)
   }
-  return { ...game, views }
+  return { ...game, views, variants }
 }

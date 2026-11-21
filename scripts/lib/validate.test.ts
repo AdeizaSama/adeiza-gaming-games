@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import type { GameSchema } from './gameSchema'
 import { themeData } from '../../src/sdk/theme/testTheme'
-import { checkPackFile, checkThemeFile, expectedSchemaLink, expectedThemeSchemaLink } from './validate'
+import { checkPackFile, checkThemeFile, checkVariantFile, expectedSchemaLink, expectedThemeSchemaLink, expectedVariantSchemaLink } from './validate'
 
 // A stand-in game schema, shaped like Charades': items are `{ text }` and the key is the text.
 const schema: GameSchema = {
@@ -63,6 +63,30 @@ describe('checkPackFile', () => {
 
   it('runs the same checks as the app, such as the id matching the file name', () => {
     expect(checkPackFile('test', file, packText({ id: 'zoo' }), schema).problems.map((problem) => problem.path)).toEqual(['id'])
+  })
+})
+
+describe('checkVariantFile', () => {
+  const variant = (changes: Record<string, unknown> = {}) =>
+    JSON.stringify({
+      $schema: expectedVariantSchemaLink,
+      id: 'naija',
+      name: 'Naija Charades',
+      tagline: 'Act it out.',
+      packs: ['back-to-school'],
+      contributors: ['AdeizaSama'],
+      ...changes,
+    })
+
+  it('finds nothing wrong with a valid variant, and reports text that isn’t JSON, a wrong $schema link and its problems', () => {
+    const at = 'src/games/charades/variants/naija.json'
+    expect(checkVariantFile(at, variant())).toEqual([])
+    expect(checkVariantFile(at, '{ "id": ')[0].message).toMatch(/^Not valid JSON/)
+    expect(checkVariantFile(at, variant({ $schema: 'variant.schema.json', packs: [] }))).toEqual([
+      { path: '$schema', message: 'Should be "../../../../schemas/variant.schema.json"' },
+      expect.objectContaining({ path: 'packs' }),
+    ])
+    expect(checkVariantFile('src/games/charades/variants/anime.json', variant())).toEqual([expect.objectContaining({ path: 'id' })])
   })
 })
 

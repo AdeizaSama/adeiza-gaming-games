@@ -1,5 +1,5 @@
 {
-  "$schema": "../../../../schemas/this-or-that.pack.schema.json",
+  "$schema": "../../../../schemas/trivia-night.pack.schema.json",
   "id": "masculin-feminin",
   "name": "Masculin ou féminin ?",
   "description": "French for beginners (A1): is the word masculine or feminine? Everyday nouns (school, clothes, home, food, family, jobs, town) and adjectives, each with its English meaning.",
