@@ -42,6 +42,10 @@ export const VariantFile = z.strictObject({
     .array(z.string())
     .default([])
     .meta({ description: 'The settings players may change, e.g. ["rounds", "seconds", "mode"]. Teams are always open.' }),
+  freePlay: z
+    .boolean()
+    .default(false)
+    .meta({ description: 'Optional. true: players can also play it alone, in Free Play (ADR 0019), if its game allows that.' }),
   contributors: PackInfo.shape.contributors,
 })
 

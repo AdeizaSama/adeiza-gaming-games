@@ -19,6 +19,7 @@ const variant: Variant = {
   tags: ['snack'],
   settings: { seconds: 90, mode: 'mix' },
   open: ['rounds', 'mode'],
+  freePlay: false,
   contributors: ['AdeizaSama'],
 }
 

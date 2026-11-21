@@ -76,6 +76,29 @@ export function variantSettings<Config>(schema: z.ZodType<Config>, variant: Vari
   return withoutTeams(checked.data)
 }
 
+/** The one player in Free Play: the name the format's views show (ADR 0019). */
+export const soloPlayer = 'You'
+
+/**
+ * A variant's Free Play settings (ADR 0019): the variant's, then where the game's Free Play starts, then players' own
+ * `changes` from last time, if any. Always one round, `solo`, and the variant's packs and tags. Throws if the result
+ * fails the schema, unless there are changes: then players' changes are dropped instead.
+ */
+export function freePlaySettings<Config>(
+  schema: z.ZodType<Config>,
+  variant: VariantLike,
+  freePlay: Pick<FreePlay<Config>, 'settings'>,
+  changes: Record<string, unknown> = {},
+): Settings<Config> {
+  const fixed = { packs: variant.packs, tags: variant.tags, solo: true, rounds: 1, teams: [soloPlayer] }
+  const start = { ...variant.settings, ...freePlay.settings }
+  const withChanges = schema.safeParse({ ...start, ...changes, ...fixed })
+  if (withChanges.success) return withoutTeams(withChanges.data)
+  const checked = schema.safeParse({ ...start, ...fixed })
+  if (!checked.success) throw checked.error
+  return withoutTeams(checked.data)
+}
+
 /**
  * `settings`, with players' own `changes` to the open settings on top, and nothing else from `changes`: what a
  * variant's setup starts from when players have changed it before. A change to a closed setting is ignored, so a

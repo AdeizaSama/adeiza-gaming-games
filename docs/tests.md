@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 458 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
+**Counts:** 460 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -45,8 +45,8 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Item pool](#item-pool) | `src/sdk/formats/team-turns/pool.test.ts` | 13 | |
 | [Team-turns guards and actions](#team-turns-guards-and-actions) | `src/sdk/formats/team-turns/rules.test.ts` | 11 | |
 | [teamTurns (Word Duel)](#teamturns-word-duel) | `src/sdk/formats/team-turns/teamTurns.test.ts` | 16 | 11 |
-| [defineGame](#definegame) | `src/sdk/game/defineGame.test.ts` | 12 | 6 |
-| [Settings and variants](#settings-and-variants) | `src/sdk/game/settings.test.ts` | 5 | |
+| [defineGame](#definegame) | `src/sdk/game/defineGame.test.ts` | 13 | 6 |
+| [Settings and variants](#settings-and-variants) | `src/sdk/game/settings.test.ts` | 6 | |
 | [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 22 | |
 | [Charades views](#charades-views) | `src/games/charades/views/views.test.tsx` | 8 | |
 | [App](#app) | `src/app/App.test.tsx` | 10 | |
@@ -282,7 +282,7 @@ Each row is a mistake TypeScript must reject.
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 444 | accepts a variant file, filling in no tags, no settings and no open settings | `checkVariant` | The variant; one with only id, name, tagline, packs, contributors | The same with `tags: []`; then `settings: {}`, `open: []` too | Only what makes a variant is required. |
+| 444 | accepts a variant file, filling in no tags, no settings and no open settings | `checkVariant` | The variant; one with only id, name, tagline, packs, contributors | The same with `tags: []` and `freePlay: false`; then `settings: {}`, `open: []` too | Only what makes a variant is required. |
 | 445 | needs its id to be its file name, at least one pack, a name and contributors, and no unknown fields | `checkVariant` | File `food.json`; no packs; blank name, no contributors; a `presets` field | Problems at `id`; `packs`; `name` and `contributors`; one problem | The id is the address; a typo in a field name is caught. |
 | 446 | loads every file, sorted by id, and throws one error listing every problem | `loadVariants` | Two good files; then a bad id and an empty pack list | `all-food`, `quick-food`; then one error naming both files | Every problem at once, like packs. |
 
@@ -541,6 +541,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 452 | checks a variant's settings against the game's config schema | Variants | `quick-food` with 5-second turns | Reports `variants.0.settings.seconds` | A variant can't start a game the setup screen would refuse. |
 | 453 | reports a variant that names a pack the game does not have | Variants | Pack `anime` | Reports `variants.0.packs` naming `anime` | Typos in pack ids are caught before players see an empty game. |
 | 454 | reports a variant that opens a setting there isn't, or opens or sets teams, packs or tags | Variants | Open rounds, speed, packs; tags in settings | `speed` and `packs` reported with the settings it can open; tags belong at the top of the file | Open settings must be real; the content is never open (ADR 0018). |
+| 476 | reports a variant offering Free Play in a game that has none, and accepts one in a game that does | Free Play | `freePlay: true` in Word Duel; then with a Free Play; then one starting at 5-second turns | "Word Duel can't be played alone"; accepted; a problem at `variants.0.freePlay.seconds` | A variant can't offer what its game can't do (ADR 0019). |
 | 455 | reports two variants with the same id, and an id a page of the game already uses | Variants | Two `quick-food`; one `rules` | The second `quick-food`; `rules` is taken | A variant's id is its address, `/:gameId/:variantId`. |
 | 300 | needs rules, in the markdown the rules screen can show | Rules | Rules of only spaces; then a paragraph and a table | Reports `rules: Write how to play`; then `rules: Line 3: tables aren't supported; use a list` | Every game has rules (standard §13), and a construct the rules screen can't show fails CI instead of reaching players as raw symbols (ADR 0009). |
 | 170 | keeps the item and settings types from the schemas | Types | The defined game | Packs typed `Pack<{ text: string }>[]`; settings typed `TeamTurnsConfig` | The app (chapter 04) works with a game's real types. Checked by `pnpm typecheck`. |
@@ -568,6 +569,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 447 | openableSettings: every setting but teams, packs and tags | `openableSettings` | The schema | rounds, seconds, bonus | What a variant may open: players always name their teams, and the content is the variant. |
 | 448 | variantSettings: the defaults plus the variant's changes, packs and tags, and throws on settings that fail | `variantSettings` | `quick`; then 5-second turns | 1 round, 30 s, `food`, `fruit`, bonus 1; then an error | A variant's setup starts from its own settings. |
 | 449 | withOpenChanges: takes players' changes to open settings only, never packs or tags | `withOpenChanges` | Changes to rounds, seconds, packs, tags, bonus; open rounds and packs; then nothing open | Only rounds changed; then nothing | A remembered change to a setting the variant closes later doesn't leak through. |
+| 477 | freePlaySettings: the variant's, then Free Play's start, then players' changes; always one round, solo, its content | `freePlaySettings` | `quick` with Free Play at 45 s, no timer; then changes to seconds, rounds, packs; then a change that fails | 1 round, 45 s, `food`, `fruit`, solo, no timer; 90 s but still 1 round and `food`; 45 s | Free Play is one round with the variant's content, whatever was saved. |
 | 450 | isOpen: every setting on a game's own setup, only the open ones on a variant's | `isOpen` | No list; `['rounds']` | true; true for rounds, false for mode | Settings views ask it which settings to show. |
 
 ## Charades machine

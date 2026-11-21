@@ -72,3 +72,19 @@ A length is two or three settings at once: 20 questions is `mode: 'questions', q
 ### How to verify
 
 `pnpm test src/sdk/formats/team-turns/choice`: the two Free Play tests.
+
+---
+
+## Step 4: Variants offer Free Play, if their game does
+
+**What:**
+
+- `variant.ts`: `"freePlay": true` in a variant file (default false). `schemas/variant.schema.json` regenerated.
+- `defineGame`: `config.freePlay` (a `FreePlay`: view and starting settings). A variant with `freePlay` in a game without one is reported, and so are Free Play settings that fail the schema.
+- `settings.ts`: `freePlaySettings(schema, variant, freePlay, changes)`: the variant's settings, then Free Play's start, then players' changes; always `solo`, one round, one player called "You", and the variant's packs and tags.
+
+**Why:** a Charades variant saying `"freePlay": true` would offer a game nobody can play alone. The tests now refuse it.
+
+### How to verify
+
+`pnpm test`: 462 tests. Remove the check in `defineGame`, and its Free Play test fails.
