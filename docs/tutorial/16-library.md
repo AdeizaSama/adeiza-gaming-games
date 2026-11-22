@@ -75,3 +75,23 @@ No page uses the card yet: the next three steps do.
 ### How to verify
 
 `pnpm test src/app/library/cards.test.tsx`. Drop a file called `naija.webp` in `src/games/charades/images/`, and the test "has no picture in the games' folders named after nothing" names it.
+
+---
+
+## Step 5: Browse
+
+**What:**
+
+- `src/app/library/BrowsePage.tsx` at `/games`: every variant in a two-column grid of cards, and a row of filter buttons: All, then each category at least one variant is in.
+- `src/app/library/LibraryLayout.tsx`: the frame Browse and Custom game share (a link home, a title, a line under it) and the grid.
+- `src/app/setup/backLink.ts`: the setup page's back link now goes where the card said (`state.back`), or, opened by its address, to Browse for a variant.
+
+**Why the filter is in the address:** `/games?category=french`. Open a game, tap back, and the filter is still French: the address is all the page needs. Picking a filter replaces the address instead of adding one, so the phone's Back goes home, not through every filter tried.
+
+**Why the back link is checked:** navigation state comes from wherever the page was opened, and is gone after a refresh. `backLink` follows only a link inside the app (starting with `/`), and falls back otherwise.
+
+The home page still has its long list; step 7 replaces it.
+
+### How to verify
+
+`pnpm test src/app/library/browse.test.tsx`. Run `pnpm dev`, open `/games`, tap French, open a game, tap Games at the top: French is still picked.

@@ -1,6 +1,6 @@
 import { BookOpen, ChevronLeft, X } from 'lucide-react'
 import { useEffect, useId, useState, type ReactNode } from 'react'
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import type { Variant } from '../../sdk/content/variant'
 import type { TeamTurnsConfig } from '../../sdk/formats/team-turns/config'
 import { choosePoolItems } from '../../sdk/formats/team-turns/pool'
@@ -25,6 +25,7 @@ import {
   type SetupTab,
 } from './savedSetup'
 import { loadTeams, saveTeams } from './savedTeams'
+import { backLink } from './backLink'
 
 /** The limits the schema allows (standard §7). */
 const maxTeams = 10
@@ -87,6 +88,7 @@ export function SetupScreen<
   // The format's own settings. A spread keeps the game's fields as they are, so TypeScript accepts it for any game.
   const change = (changes: Partial<SetupChoices<TeamTurnsConfig>>) => setChoices((current) => ({ ...current, ...changes }))
   const id = useId()
+  const back = backLink(useLocation().state, variant !== undefined)
 
   // Free Play (ADR 0019): only on a variant that offers it, in a game that has it. Each tab keeps its own settings.
   const freePlay = variant?.freePlay ? game.config.freePlay : undefined
@@ -123,9 +125,9 @@ export function SetupScreen<
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-8 p-6">
       <header className="flex flex-col gap-2">
-        <Link to="/" className="flex items-center gap-1 self-start text-muted-foreground">
+        <Link to={back.to} className="flex min-h-11 items-center gap-1 self-start text-muted-foreground">
           <ChevronLeft aria-hidden className="size-5" />
-          Games
+          {back.label}
         </Link>
         <h1 className="text-4xl font-bold">{variant?.name ?? game.meta.name}</h1>
         <p className="text-lg text-muted-foreground">{variant?.tagline ?? game.meta.tagline}</p>

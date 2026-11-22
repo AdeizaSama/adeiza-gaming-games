@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 497 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
+**Counts:** 501 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -57,6 +57,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Charades views](#charades-views) | `src/games/charades/views/views.test.tsx` | 8 | |
 | [App](#app) | `src/app/App.test.tsx` | 10 | |
 | [Library cards](#library-cards) | `src/app/library/cards.test.tsx` | 4 | |
+| [Browse](#browse) | `src/app/library/browse.test.tsx` | 4 | |
 | [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 6 | |
 | [Applying a theme](#applying-a-theme) | `src/app/theme/themes.test.tsx` | 4 | |
 | [Bundled fonts](#bundled-fonts) | `src/app/theme/fonts.test.ts` | 2 | |
@@ -857,6 +858,17 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 512 | reports a picture named after nothing, outside a game, or a second one with the same name | `indexImages` | `naija.webp`; a picture in `chess`; `game.webp` and `game.png` | Three problems, the first listing Charades' variant ids | A typo in a file name would quietly show no picture. |
 | 513 | has no picture in the games' folders named after nothing | The shipped pictures | Every file in `src/games/*/images/` | No problems | CI catches a misnamed picture. |
 | 514 | shows its picture, or the game's icon on theme colors, and tells the setup where to go back to | `GameCard` | A card with a picture and its back link; one without | The `img`; the stand-in with Pairs' colors and its layers icon; after a tap, the back link arrives at the page opened | Every card looks finished before pictures exist; the setup's back link returns to where the player was. |
+
+## Browse
+
+`src/app/library/browse.test.tsx`, testing `src/app/library/BrowsePage.tsx` and `src/app/setup/backLink.ts` (ADR 0021): every variant at `/games`, filtered by category. Screen tests (happy-dom), starting the app at an address.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 515 | lists every variant at /games, with a filter of the categories they use | Browse | Start at `/games` | The heading; All and the seven categories, in the list's order, All pressed; the seven variants, the first linking to `/charades/naija-back-to-school` with "Charades · 2–20 players" | Every way to play in one place; only filters that show something. |
+| 516 | filters by category, and a setup's back link returns to the same filter | Filter, back link | Tap Back to School; open Back to School Trivia; tap Games; tap All | Three variants; the setup's Games link to `/games?category=school`; Back to School still pressed with three; then all seven | The filter lives in the address, so coming back from a setup doesn't lose it. |
+| 517 | shows every game for a category it doesn't offer | Filter | Start at `/games?category=chess` | All pressed; seven variants | An old or mistyped link still shows the games. |
+| 518 | sends a setup opened by its address back to Browse for a variant, home for a game, unless the card said where | `backLink` | No state for a variant; none for a game; other state; a link off the site; a card's link home | `/games` "Games"; `/` "Home"; the same; `/games`; `/` "Home" | Navigation state can be anything: only a link inside the app is followed. |
 
 ## App
 
