@@ -3,6 +3,7 @@
   "id": "french-flash-cards",
   "name": "French Flash Cards",
   "tagline": "Le chat? Cat. Flip, think, and be honest.",
+  "categories": ["learning", "french", "words"],
   "packs": ["francais-anglais"],
   "settings": { "play": "flip", "twoWay": true },
   "open": ["rounds", "seconds", "cards"],

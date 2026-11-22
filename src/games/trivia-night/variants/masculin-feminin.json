@@ -3,6 +3,7 @@
   "id": "masculin-feminin",
   "name": "Masculin ou féminin ?",
   "tagline": "French for beginners: is the word masculine or feminine?",
+  "categories": ["learning", "french", "words"],
   "packs": ["masculin-feminin"],
   "settings": { "questions": 10, "seconds": 60, "order": "alphabetical" },
   "open": ["rounds", "seconds", "questions"],

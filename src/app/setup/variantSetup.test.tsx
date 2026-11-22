@@ -16,6 +16,7 @@ const variant: Variant = {
   id: 'snack-attack',
   name: 'Snack Attack',
   tagline: 'Tuck-shop favourites, acted out.',
+  categories: ['party'],
   packs: ['back-to-school'],
   tags: ['snack'],
   settings: { seconds: 90, mode: 'mix' },

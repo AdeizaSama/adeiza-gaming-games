@@ -9,10 +9,15 @@ import { teamTurnsViews, type TeamTurnsView } from '../formats/team-turns/views'
 import { parseMarkdown } from '../interactions/markdown'
 import { checkVariantSettings, freePlaySettings, openableSettings, type FreePlay, type SettingsView } from './settings'
 
+/** Addresses the library's own pages use (`/games`, `/custom`, ADR 0021), so no game can have them as its id. */
+export const reservedGameIds = ['games', 'custom'] as const
+
 /** What the library shows about a game (standard §3). Checked when the game is defined. */
 export const GameMeta = z.strictObject({
-  /** Permanent: saved games and links use it. */
-  id: PackInfo.shape.id,
+  /** Permanent: saved games and links use it. Not one of `reservedGameIds`. */
+  id: PackInfo.shape.id.refine((id) => !(reservedGameIds as readonly string[]).includes(id), {
+    error: (issue) => `"${String(issue.input)}" is taken: the library's /${String(issue.input)} page uses it`,
+  }),
   name: z.string().trim().min(1),
   tagline: z.string().trim().min(1),
   /** An icon name from the shared icon set. */

@@ -47,6 +47,11 @@ export const fonts = {
     family: `"Orbitron Variable", system-ui, sans-serif`,
     bundled: { package: '@fontsource-variable/orbitron', license: 'OFL-1.1' },
   },
+  'space-grotesk': {
+    name: 'Space Grotesk: modern and a little quirky, compact for headings',
+    family: `"Space Grotesk Variable", system-ui, sans-serif`,
+    bundled: { package: '@fontsource-variable/space-grotesk', license: 'OFL-1.1' },
+  },
 } satisfies Record<string, Font>
 
 export type FontId = keyof typeof fonts

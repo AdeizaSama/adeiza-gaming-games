@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import App from './App'
+import { featured, featuredIds } from './library/featured'
 import { gameIcons } from './library/gameIcon'
 import { games } from './registry'
 
@@ -16,30 +17,33 @@ function renderAt(address: string) {
   )
 }
 
-/** The home page's "Make your own" list: each game, opening its own setup. */
-const makeYourOwn = () => within(screen.getByRole('list', { name: 'Make your own' }))
+/** Custom game's list: each game, opening its own setup. */
+const makeYourOwn = () => within(screen.getByRole('list', { name: 'Games' }))
 
 describe('App', () => {
-  it('shows the variants first at /, then Make your own with each game', () => {
+  it('shows two featured variants at /, then Browse games and Custom game', async () => {
+    const user = userEvent.setup()
     renderAt('/')
     expect(screen.getByRole('heading', { name: 'Ku Zo Wasa' })).toBeDefined()
-    const ways = within(screen.getByRole('list', { name: 'Ways to play' })).getAllByRole('link')
-    expect(ways.map((link) => [link.querySelector('h3')?.textContent, link.getAttribute('href')])).toEqual([
+    const featured = within(screen.getByRole('list', { name: 'Featured' })).getAllByRole('link')
+    expect(featured.map((link) => [link.querySelector('h3')?.textContent, link.getAttribute('href')])).toEqual([
       ['Naija Charades (Back to School Edition)', '/charades/naija-back-to-school'],
-      ['Name Ten (Back to School Edition)', '/name-ten/back-to-school'],
       ['Back to School Trivia', '/trivia-night/back-to-school'],
-      ['Masculin ou féminin ?', '/trivia-night/masculin-feminin'],
-      ['French Flash Cards', '/pairs/french-flash-cards'],
-      ['French Match-Up', '/pairs/french-match-up'],
-      ["L'intrus", '/pairs/l-intrus'],
     ])
-    expect(ways[0].textContent).toContain('Charades · 2–20 players')
-    expect(makeYourOwn().getAllByRole('link').map((link) => link.getAttribute('href'))).toEqual(['/charades', '/name-ten', '/trivia-night', '/pairs'])
+    expect(featured[0].textContent).toContain('Charades · 2–20 players')
+    const more = within(screen.getByRole('navigation', { name: 'More games' })).getAllByRole('link')
+    expect(more.map((link) => link.getAttribute('href'))).toEqual(['/games', '/custom'])
+
+    await user.click(featured[1])
+    expect(screen.getByRole('heading', { level: 1, name: 'Back to School Trivia' })).toBeDefined()
+    await user.click(screen.getByRole('link', { name: 'Home' })) // a featured game goes back home, not to Browse
+    await user.click(screen.getByRole('link', { name: /Browse games/ }))
+    expect(screen.getByRole('heading', { level: 1, name: 'Browse games' })).toBeDefined()
   })
 
   it('opens a variant’s setup: Masculin ou féminin ? asks for teams, rounds, turn length and words a turn, nothing else', async () => {
     const user = userEvent.setup()
-    renderAt('/')
+    renderAt('/games')
     await user.click(screen.getByRole('link', { name: /Masculin ou féminin/ }))
     expect(screen.getByRole('heading', { level: 1, name: 'Masculin ou féminin ?' })).toBeDefined()
     expect(within(screen.getByRole('group', { name: 'Questions per turn' })).getByText('10')).toBeDefined()
@@ -49,9 +53,9 @@ describe('App', () => {
     expect(screen.getByText('282 items to play')).toBeDefined()
   })
 
-  it('shows a game at its own address, from Make your own', async () => {
+  it('shows a game at its own address, from Custom game', async () => {
     const user = userEvent.setup()
-    renderAt('/')
+    renderAt('/custom')
     const charades = makeYourOwn().getByRole('link', { name: /Charades/ })
     expect(charades.getAttribute('href')).toBe('/charades')
     expect(charades.textContent).toContain('2–20 players')
@@ -63,11 +67,11 @@ describe('App', () => {
 
   it('lists Name Ten too, with its own icon, players and setup', async () => {
     const user = userEvent.setup()
-    renderAt('/')
+    renderAt('/custom')
     const nameTen = makeYourOwn().getByRole('link', { name: /Name Ten/ })
     expect(nameTen.getAttribute('href')).toBe('/name-ten')
     expect(nameTen.textContent).toContain('Name ten before the clock runs out.')
-    expect(nameTen.querySelector('.lucide-list-checks')).not.toBeNull()
+    expect(nameTen.querySelector('img, .lucide-list-checks')).not.toBeNull() // its picture, or its icon until it has one
 
     await user.click(nameTen)
     expect(screen.getByRole('heading', { level: 1, name: 'Name Ten' })).toBeDefined()
@@ -77,17 +81,17 @@ describe('App', () => {
 
   it('lists Trivia Night too, with its own icon and setup', async () => {
     const user = userEvent.setup()
-    renderAt('/')
+    renderAt('/custom')
     const trivia = makeYourOwn().getByRole('link', { name: /Trivia Night/ })
     expect(trivia.getAttribute('href')).toBe('/trivia-night')
-    expect(trivia.querySelector('.lucide-lightbulb')).not.toBeNull()
+    expect(trivia.querySelector('img, .lucide-lightbulb')).not.toBeNull()
 
     await user.click(trivia)
     expect(screen.getByRole('heading', { level: 1, name: 'Trivia Night' })).toBeDefined()
     expect(screen.getByRole('radio', { name: /Against the clock/ })).toBeDefined()
     expect(screen.getByRole('group', { name: 'Questions per turn' })).toBeDefined()
     expect(within(screen.getByRole('group', { name: 'Turn length' })).getByText('30 seconds')).toBeDefined()
-    expect(screen.getByText('430 items to play')).toBeDefined() // every pack, Masculin ou féminin ? included
+    expect(screen.getByText('772 items to play')).toBeDefined() // every pack, the French ones included
   })
 
   it.each(['/chess', '/charades/nope', '/charades/nope/extra'])('says "Page not found" at %s, with a way back', async (address) => {
@@ -104,9 +108,14 @@ describe('App', () => {
     const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
     renderAt('/')
     expect(scrollTo).not.toHaveBeenCalled()
-    await user.click(makeYourOwn().getByRole('link', { name: /Charades/ }))
+    await user.click(screen.getByRole('link', { name: /Browse games/ }))
     expect(scrollTo).toHaveBeenCalledWith(0, 0)
     scrollTo.mockRestore()
+  })
+
+  it('features two variants that exist', () => {
+    expect(featuredIds).toHaveLength(2)
+    expect(featured.map(({ game, variant }) => ({ game: game.meta.id, variant: variant.id }))).toEqual(featuredIds)
   })
 
   it('has an icon for every game in the registry', () => {

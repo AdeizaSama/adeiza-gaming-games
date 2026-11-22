@@ -32,7 +32,7 @@ const SummaryView = (props: Props) => props.points(props.context.turn, props.con
 
 /** A variant of Word Duel: the food pack, 30-second turns, rounds open. */
 function variant(id: string, changes: Partial<Variant> = {}): Variant {
-  return { id, name: 'Quick Food', tagline: 'Food, fast.', packs: ['food'], tags: [], settings: { seconds: 30 }, open: ['rounds'], freePlay: false, contributors: ['AdeizaSama'], ...changes }
+  return { id, name: 'Quick Food', tagline: 'Food, fast.', categories: ['party'], packs: ['food'], tags: [], settings: { seconds: 30 }, open: ['rounds'], freePlay: false, contributors: ['AdeizaSama'], ...changes }
 }
 
 function pack(id: string): Pack<Item> {
@@ -105,6 +105,11 @@ describe('defineGame', () => {
     expect(message).toContain('meta.complexity:')
     expect(message).toContain('meta.players: max must be at least min')
     expect(message).toContain('meta.contributors:')
+  })
+
+  it('refuses a game id the library’s own pages use', () => {
+    expect(problemsWith({ meta: { ...meta, id: 'games' } })).toContain('meta.id: "games" is taken: the library\'s /games page uses it')
+    expect(problemsWith({ meta: { ...meta, id: 'custom' } })).toContain('meta.id: "custom" is taken')
   })
 
   it('needs at least one pack', () => {

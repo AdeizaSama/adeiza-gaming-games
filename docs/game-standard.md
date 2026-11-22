@@ -14,7 +14,7 @@ Changes to this standard, the SDK (`src/sdk/`) or the content pack format need a
 |---|---|---|---|
 | **Format** | The outer loop: how turns, rounds and scoring flow ([§7](#7-formats)) | `team-turns`, `host-led` | Core maintainers, rarely |
 | **Game** | What happens inside a turn: interaction, events, scoring rules, content shape | Charades, Name Ten, Trivia Night, Pairs | Developers |
-| **Variant** | Settings + content only. Same rules. A JSON file; what the home page lists ([ADR 0018](decisions/0018-variants.md)) | "Naija Charades (Back to School Edition)", "Masculin ou féminin ?" | Anyone, no code |
+| **Variant** | Settings + content only. Same rules. A JSON file; what Browse lists ([ADR 0018](decisions/0018-variants.md)) | "Naija Charades (Back to School Edition)", "Masculin ou féminin ?" | Anyone, no code |
 
 A format is the outer loop, a game fills in the turn, and a variant fills in the settings and content. Name Ten is not a Charades variant: its turn is different, so it's a separate game in the same format. Masculin ou féminin ? is a Trivia Night variant: the same turn, with its own pack and defaults. In code and docs, say **Game** (`defineGame`).
 
@@ -64,7 +64,7 @@ export default defineGame({
     // freePlay: choiceFreePlay,     // optional: lets its variants be played alone (ADR 0019)
   },
   rules,                             // import rules from "./rules.md?raw": how to play (ADR 0009)
-  variants: loadVariants(            // the ways to play it on the home page (ADR 0018), one JSON file each
+  variants: loadVariants(            // the ways to play it, listed in Browse (ADR 0018), one JSON file each
     import.meta.glob("./variants/*.json", { eager: true, import: "default" }),
   ),
   machine,                           // ./machine.ts
@@ -76,13 +76,13 @@ export default defineGame({
 });
 ```
 
-`defineGame` is in `src/sdk/game/`. Besides type-checking, it checks what types can't, and throws one error listing every problem: `meta` (kebab-case id, complexity 1–5, `players.max` ≥ `players.min`, at least one contributor), at least one pack, each variant (an id unique in the game that isn't `play` or `rules`, packs that exist, settings that pass the config schema, open settings the game has), and rules that aren't empty and use only the supported markdown. A game's tests import it, so a broken game fails CI.
+`defineGame` is in `src/sdk/game/`. Besides type-checking, it checks what types can't, and throws one error listing every problem: `meta` (kebab-case id that isn't `games` or `custom`, the library's own pages, complexity 1–5, `players.max` ≥ `players.min`, at least one contributor), at least one pack, each variant (an id unique in the game that isn't `play` or `rules`, packs that exist, settings that pass the config schema, open settings the game has), and rules that aren't empty and use only the supported markdown. A game's tests import it, so a broken game fails CI.
 
 **Defaults live in the config schema** (zod's `.default()`), not in a separate list, so they can't drift apart. A game that wants different defaults from the format's extends its schema.
 
 **Settings view** ([ADR 0008](decisions/0008-settings-and-presets.md)): a game with settings of its own (Charades' mode and points) gives a component that the setup screen shows below the format's settings. It receives `settings` (every setting but the teams) and `onChange`, and on a variant's setup `open`: the settings the variant lets players change, the only ones it shows (`isOpen`). The setup screen keeps, saves and checks them with the rest.
 
-**Variants** ([ADR 0018](decisions/0018-variants.md)) are JSON files in `variants/`: a name and tagline, packs (and optionally tags), the settings that differ from the game's defaults, and `open`, the settings players may change. The home page lists them first, then "Make your own" with each game. A variant's setup (`/:gameId/:variantId`) shows teams and its open settings only; a game's own setup (`/:gameId`) shows every setting. Variants replaced presets.
+**Variants** ([ADR 0018](decisions/0018-variants.md)) are JSON files in `variants/`: a name and tagline, categories (what Browse filters by, from `src/sdk/content/categories.json`, [ADR 0021](decisions/0021-library-pages.md)), packs (and optionally tags), the settings that differ from the game's defaults, and `open`, the settings players may change. Browse (`/games`) lists them, filtered by category; Custom game (`/custom`) lists each game; the home page features two ([ADR 0021](decisions/0021-library-pages.md)). A variant's setup (`/:gameId/:variantId`) shows teams and its open settings only; a game's own setup (`/:gameId`) shows every setting. Variants replaced presets.
 
 **Free Play** ([ADR 0019](decisions/0019-free-play.md)): a variant with `"freePlay": true` has two tabs on its setup, Competitive and Free Play (one player, at their own pace). Only a game that gives `config.freePlay` (its Free Play settings view, and where Free Play starts) can have such variants; `defineGame` checks. The choice turn gives `choiceFreePlay`: 10, 20 or 50 questions with no clock, or against the clock.
 
@@ -92,6 +92,7 @@ export default defineGame({
   "id": "masculin-feminin",
   "name": "Masculin ou féminin ?",
   "tagline": "French for beginners: is the word masculine or feminine?",
+  "categories": ["learning", "french", "words"],
   "packs": ["masculin-feminin"],
   "settings": { "questions": 10, "seconds": 60, "order": "alphabetical" },
   "open": ["rounds", "seconds", "questions"],
@@ -286,9 +287,9 @@ Out of scope for v1: multiplayer or multi-device play; accounts, backends or any
 
 ```
 src/
-  app/                 app shell: routing (App.tsx), library page (library/), setup screen (setup/), game screen (play/), persistence
-    registry/          the list of games; the only part of app/ that imports games
-  sdk/                 defineGame and useGameSession (game/), machine runner (machine/), Rng, content packs (content/), formats with their default views (formats/<format>/)
+  app/                 app shell: routing (App.tsx), library pages: home, Browse, Custom game (library/), setup screen (setup/), game screen (play/), persistence
+    registry/          the list of games and their pictures; the only part of app/ that reads games/
+  sdk/                 defineGame and useGameSession (game/), machine runner (machine/), Rng, content packs and the categories list (content/), formats with their default views (formats/<format>/)
     interactions/      shared phase primitives (§6)
   ui/                  low-level components (button, dialog, …). Only what's used.
   games/
@@ -300,7 +301,8 @@ src/
       config.ts        the game's settings schema, if it has settings of its own (§7)
       views/           phase views, and the settings view (ADR 0008)
       content/*.json   content packs
-      variants/*.json  variants: the ways to play it on the home page (ADR 0018)
+      variants/*.json  variants: the ways to play it, listed in Browse (ADR 0018)
+      images/          optional pictures for its cards: game.webp, <variant-id>.webp (ADR 0021)
       rules.md         player-facing rules
       README.md        for contributors: what the game is, content guidelines
   themes/*.json        visual themes (§11)
@@ -436,7 +438,7 @@ Tailwind's built-in palette is switched off, so classes like `bg-red-500` produc
 
 - [ ] Fits an existing format, or is explicitly deferred
 - [ ] `defineGame` export with meta, content, config schema (defaults included), rules, variants, machine, views
-- [ ] At least one variant in `variants/`, so the game is on the home page
+- [ ] At least one variant in `variants/`, so the game is in Browse
 - [ ] Guards and actions are deterministic; full-playthrough test, `validateMachine` test, and per-guard and per-action tests
 - [ ] At least one content pack passing validation
 - [ ] Views use interaction primitives (custom UI justified)

@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 489 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
+**Counts:** 504 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -19,7 +19,8 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Duplicate items](#duplicate-items) | `src/sdk/content/duplicates.test.ts` | 10 | |
 | [Multiple-choice options](#multiple-choice-options) | `src/sdk/content/choices.test.ts` | 5 | |
 | [Loading packs](#loading-packs) | `src/sdk/content/loadPacks.test.ts` | 12 | |
-| [Variant files](#variant-files) | `src/sdk/content/variant.test.ts` | 3 | |
+| [Variant files](#variant-files) | `src/sdk/content/variant.test.ts` | 4 | |
+| [Categories](#categories) | `src/sdk/content/categories.test.ts` | 2 | |
 | [Finding games (scripts)](#finding-games-scripts) | `scripts/lib/games.test.ts` | 6 | |
 | [Charades content](#charades-content) | `src/games/charades/schema.test.ts` | 8 | |
 | [Name Ten content](#name-ten-content) | `src/games/name-ten/schema.test.ts` | 6 | |
@@ -27,7 +28,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Name Ten machine](#name-ten-machine) | `src/games/name-ten/machine.test.ts` | 15 | |
 | [Name Ten views](#name-ten-views) | `src/games/name-ten/views/views.test.tsx` | 8 | |
 | [Name Ten game](#name-ten-game) | `src/games/name-ten/game.test.ts` | 1 | |
-| [Trivia Night content](#trivia-night-content) | `src/games/trivia-night/schema.test.ts` | 8 | |
+| [Trivia Night content](#trivia-night-content) | `src/games/trivia-night/schema.test.ts` | 9 | |
 | [Trivia Night settings](#trivia-night-settings) | `src/games/trivia-night/config.test.ts` | 2 | |
 | [Choice turn settings](#choice-turn-settings) | `src/sdk/formats/team-turns/choice/config.test.ts` | 1 | |
 | [Choice turn machine](#choice-turn-machine) | `src/sdk/formats/team-turns/choice/machine.test.ts` | 12 | |
@@ -50,11 +51,14 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Item pool](#item-pool) | `src/sdk/formats/team-turns/pool.test.ts` | 13 | |
 | [Team-turns guards and actions](#team-turns-guards-and-actions) | `src/sdk/formats/team-turns/rules.test.ts` | 11 | |
 | [teamTurns (Word Duel)](#teamturns-word-duel) | `src/sdk/formats/team-turns/teamTurns.test.ts` | 16 | 11 |
-| [defineGame](#definegame) | `src/sdk/game/defineGame.test.ts` | 13 | 6 |
+| [defineGame](#definegame) | `src/sdk/game/defineGame.test.ts` | 14 | 6 |
 | [Settings and variants](#settings-and-variants) | `src/sdk/game/settings.test.ts` | 6 | |
 | [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 22 | |
 | [Charades views](#charades-views) | `src/games/charades/views/views.test.tsx` | 8 | |
-| [App](#app) | `src/app/App.test.tsx` | 10 | |
+| [App](#app) | `src/app/App.test.tsx` | 11 | |
+| [Library cards](#library-cards) | `src/app/library/cards.test.tsx` | 4 | |
+| [Browse](#browse) | `src/app/library/browse.test.tsx` | 4 | |
+| [Custom game](#custom-game) | `src/app/library/custom.test.tsx` | 1 | |
 | [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 6 | |
 | [Applying a theme](#applying-a-theme) | `src/app/theme/themes.test.tsx` | 4 | |
 | [Bundled fonts](#bundled-fonts) | `src/app/theme/fonts.test.ts` | 2 | |
@@ -286,13 +290,23 @@ Each row is a mistake TypeScript must reject.
 
 ## Variant files
 
-`src/sdk/content/variant.test.ts`, testing `src/sdk/content/variant.ts` (ADR 0018): a variant file's shape, checked by the app and the content check. The variant is `quick-food`: pack `food`, 30-second turns, rounds open.
+`src/sdk/content/variant.test.ts`, testing `src/sdk/content/variant.ts` (ADR 0018, 0021): a variant file's shape, checked by the app and the content check. The variant is `quick-food`: category `party`, pack `food`, 30-second turns, rounds open.
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 444 | accepts a variant file, filling in no tags, no settings and no open settings | `checkVariant` | The variant; one with only id, name, tagline, packs, contributors | The same with `tags: []` and `freePlay: false`; then `settings: {}`, `open: []` too | Only what makes a variant is required. |
+| 444 | accepts a variant file, filling in no tags, no settings and no open settings | `checkVariant` | The variant; one with only id, name, tagline, categories, packs, contributors | The same with `tags: []` and `freePlay: false`; then `settings: {}`, `open: []` too | Only what makes a variant is required. |
 | 445 | needs its id to be its file name, at least one pack, a name and contributors, and no unknown fields | `checkVariant` | File `food.json`; no packs; blank name, no contributors; a `presets` field | Problems at `id`; `packs`; `name` and `contributors`; one problem | The id is the address; a typo in a field name is caught. |
+| 507 | needs at least one category, each from the list and listed once | `checkVariant` | No categories; an empty list; `nigerian`; `party` twice | A problem at `categories`; `categories`; `categories.0`; `categories` | Browse filters by category, and one list keeps the names consistent (ADR 0021). |
 | 446 | loads every file, sorted by id, and throws one error listing every problem | `loadVariants` | Two good files; then a bad id and an empty pack list | `all-food`, `quick-food`; then one error naming both files | Every problem at once, like packs. |
+
+## Categories
+
+`src/sdk/content/categories.test.ts`, testing `src/sdk/content/categories.ts` and `categories.json` (ADR 0021): the list of categories variants can be in.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 508 | loads the shipped list, each id once with a label | The list | `categories.json`; the label for `school` | party, learning, trivia, words, school, french, naija, in that order; "Back to School" | The order is the filter's on Browse. |
+| 509 | refuses a list with a bad id, a blank or long label, or an id used twice | `loadCategories` | `Party`; a blank label; a 33-character label; `party` twice; an empty list | Errors at `0.id`; `0.label`; "20 characters"; "used once"; "whole file" | A broken list stops the build, not Browse. |
 
 ## Finding games (scripts)
 
@@ -551,6 +565,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 454 | reports a variant that opens a setting there isn't, or opens or sets teams, packs or tags | Variants | Open rounds, speed, packs; tags in settings | `speed` and `packs` reported with the settings it can open; tags belong at the top of the file | Open settings must be real; the content is never open (ADR 0018). |
 | 476 | reports a variant offering Free Play in a game that has none, and accepts one in a game that does | Free Play | `freePlay: true` in Word Duel; then with a Free Play; then one starting at 5-second turns | "Word Duel can't be played alone"; accepted; a problem at `variants.0.freePlay.seconds` | A variant can't offer what its game can't do (ADR 0019). |
 | 455 | reports two variants with the same id, and an id a page of the game already uses | Variants | Two `quick-food`; one `rules` | The second `quick-food`; `rules` is taken | A variant's id is its address, `/:gameId/:variantId`. |
+| 510 | refuses a game id the library's own pages use | `meta.id` | Id `games`; id `custom` | Each is taken, naming its page | `/games` and `/custom` would hide a game with that id (ADR 0021). |
 | 300 | needs rules, in the markdown the rules screen can show | Rules | Rules of only spaces; then a paragraph and a table | Reports `rules: Write how to play`; then `rules: Line 3: tables aren't supported; use a list` | Every game has rules (standard §13), and a construct the rules screen can't show fails CI instead of reaching players as raw symbols (ADR 0009). |
 | 170 | keeps the item and settings types from the schemas | Types | The defined game | Packs typed `Pack<{ text: string }>[]`; settings typed `TeamTurnsConfig` | The app (chapter 04) works with a game's real types. Checked by `pnpm typecheck`. |
 | 206 | uses a game's own view for a format phase instead of the default | Views | Views for `turn` and `turn_summary` | The game's summary view is used | A game can replace a format view when the default can't show what it needs. |
@@ -705,6 +720,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 400 | ships a valid Back to School pack, every question tagged with its subject | The shipped pack | `content/*.json` | Back to School loads, with at least 100 questions, each with exactly one of maths, science, social-studies, entertainment, general | Players filter by subject. |
 | 437 | ships Masculin ou féminin ?: French words, each with its meaning, the same two options, and both answers often | The Masculin ou féminin ? pack | `content/*.json` | Named "Masculin ou féminin ?", in French, at least 200 words, each with Masculin and Féminin, a subtitle, and tagged noun or adjective; between 40% and 60% féminin | A pack where one answer wins most of the time teaches nothing. |
 | 438 | never shows an article in Masculin ou féminin ?, which would give the answer away | The Masculin ou féminin ? pack | Every question | None starts with le, la, les, un, une or l' | "la chaise" answers its own question. |
+| 521 | ships Conjugaison française: every verb in all six persons, its infinitive in the question, its meaning under it, four options | The Conjugaison française pack | `content/*.json` | Named "Conjugaison française", in French; every question reads "nous ___ (aller)" or "j'___ (aimer)", has a subtitle, four options, one verb group tag and one person tag; at least 50 verbs, each with je, tu, il-elle-on, nous, vous and ils-elles exactly once | The infinitive is what makes each question unique and answerable; a verb missing a person leaves a hole players can filter into. |
 
 ## Trivia Night settings
 
@@ -776,7 +792,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 421 | is a valid game with the Back to School pack, its settings and one view for turn and result | `index.ts` | The game's default export | Id `trivia-night`; Back to School; its machine and settings; `TurnView` for `turn` and `reveal`; rules with "## Ways to play" | `defineGame` checked the parts when the file loaded; this checks Trivia Night wired its own parts in. |
-| 464 | has Back to School Trivia, and Masculin ou féminin ?: ten words a minute, A to Z, Set questions only; both offer Free Play | Variants | The game's variants | `back-to-school` and `masculin-feminin`; the French one plays 10 questions, 60 s, A to Z, on its own pack, with mode closed; the choice Free Play, and both variants offering it | The variant the home page lists plays the way it's meant to (ADR 0018). |
+| 464 | has Back to School Trivia, Conjugaison française (ten verbs in 90 s, shuffled) and Masculin ou féminin ? (ten words a minute, A to Z), the French ones Set questions only; all offer Free Play | Variants | The game's variants | `back-to-school`, `conjugaison` and `masculin-feminin`; Conjugaison plays 10 questions, 90 s, shuffled, on its own pack; Masculin ou féminin ? 10 questions, 60 s, A to Z; both French ones with mode closed; the choice Free Play, and all three variants offering it | The variant Browse lists plays the way it's meant to (ADR 0018). |
 
 ## Pairs content
 
@@ -834,20 +850,51 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 504 | is a valid game with both French packs, its settings and Free Play, and one view for card and answer | `index.ts` | The game's default export | Id `pairs`; Français–anglais and Les thèmes; its machine, settings and Free Play; one view for `turn` and `reveal`; rules with "## Odd one out" | `defineGame` checked the parts; this checks Pairs wired its own in. |
 | 505 | has a variant for each way to play, each on the pack that suits it, and each with Free Play | Variants | Each variant's settings | French Flash Cards: flip, two-way, Français–anglais; French Match-Up: match, two-way, the same; L'intrus: odd, one-way, Les thèmes; all Free Play | Match-up needs a two-way pack and odd-one-out a one-way one (ADR 0020). |
 
+## Library cards
+
+`src/app/library/cards.test.tsx`, testing `src/app/registry/images.ts` and `src/app/library/GameCard.tsx` (ADR 0021): the pictures on the library's cards, and the card itself. Screen test (happy-dom) for the card.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 511 | finds each game's picture and its variants', by file name | `indexImages`, `cardImage` | Charades' `game.webp` and `naija-back-to-school.png`; Pairs' `french-match-up.webp` | No problems; Naija Charades its own; Charades' card the game's; French Match-Up its own; L'intrus none | A variant's own picture wins, then its game's; with neither the card draws one. |
+| 512 | reports a picture named after nothing, outside a game, or a second one with the same name | `indexImages` | `naija.webp`; a picture in `chess`; `game.webp` and `game.png` | Three problems, the first listing Charades' variant ids | A typo in a file name would quietly show no picture. |
+| 513 | has no picture in the games' folders named after nothing | The shipped pictures | Every file in `src/games/*/images/` | No problems | CI catches a misnamed picture. |
+| 514 | shows its picture, or the game's icon on theme colors, and tells the setup where to go back to | `GameCard` | A card with a picture and its back link; one without | The `img`; the stand-in with Pairs' colors and its layers icon; after a tap, the back link arrives at the page opened | Every card looks finished before pictures exist; the setup's back link returns to where the player was. |
+
+## Browse
+
+`src/app/library/browse.test.tsx`, testing `src/app/library/BrowsePage.tsx` and `src/app/setup/backLink.ts` (ADR 0021): every variant at `/games`, filtered by category. Screen tests (happy-dom), starting the app at an address.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 515 | lists every variant at /games, with a filter of the categories they use | Browse | Start at `/games` | The heading; All and the seven categories, in the list's order, All pressed; the eight variants, the first linking to `/charades/naija-back-to-school` with "Charades · 2–20 players" | Every way to play in one place; only filters that show something. |
+| 516 | filters by category, and a setup's back link returns to the same filter | Filter, back link | Tap Back to School; open Back to School Trivia; tap Games; tap All | Three variants; the setup's Games link to `/games?category=school`; Back to School still pressed with three; then all eight | The filter lives in the address, so coming back from a setup doesn't lose it. |
+| 517 | shows every game for a category it doesn't offer | Filter | Start at `/games?category=chess` | All pressed; eight variants | An old or mistyped link still shows the games. |
+| 518 | sends a setup opened by its address back to Browse for a variant, Custom game for a game, unless the card said where | `backLink` | No state for a variant; none for a game; other state; a link off the site; a card's link home | `/games` "Games"; `/custom` "Custom game"; the same; `/games`; `/` "Home" | Navigation state can be anything: only a link inside the app is followed. |
+
+## Custom game
+
+`src/app/library/custom.test.tsx`, testing `src/app/library/CustomPage.tsx` (ADR 0021). Screen test (happy-dom).
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 519 | lists every game at /custom, each opening its own setup, which leads back here | Custom game | Start at `/custom`; tap Charades; tap Custom game; tap Home | Charades, Name Ten, Trivia Night, Pairs, linking to their setups, with players; Charades' setup; Custom game again; home | The full setup of every game, away from the home page; each page leads back the way it came. |
+
 ## App
 
 `src/app/App.test.tsx`, testing the pages in `src/app/` and which address shows which. Screen tests (happy-dom), each starting the app at an address with a `MemoryRouter`.
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 465 | shows the variants first at /, then Make your own with each game | Home page | Start at `/` | Ways to play: Naija Charades, Name Ten, Back to School Trivia, Masculin ou féminin ?, French Flash Cards, French Match-Up, L'intrus, each linking to `/:gameId/:variantId`, the first saying "Charades · 2–20 players"; Make your own: `/charades`, `/name-ten`, `/trivia-night`, `/pairs` | Players pick a way to play first; the full setup is one section down (ADR 0018). |
-| 466 | opens a variant's setup: Masculin ou féminin ? asks for teams, rounds, turn length and words a turn, nothing else | Variant setup | Tap Masculin ou féminin ? | Its heading; 10 questions a turn; 60 seconds; no mode or order choice; no packs; "282 items to play" | The variant's open settings are the only ones shown. |
-| 180 | shows a game at its own address, from Make your own | Library, routing | Start at `/`; tap Charades in Make your own | A link to `/charades` showing "2–20 players"; after the tap, Charades' setup screen | Each game's own setup is still one tap away. |
-| 372 | lists Name Ten too, with its own icon, players and setup | Library, registry | Open `/`; tap Name Ten in Make your own | A link to `/name-ten` with its tagline and the list-checks icon; then Name Ten's setup, with "Answers on the board" and "38 items to play" | A game added to the registry appears in the library and gets the shared setup screen with its own settings. |
-| 422 | lists Trivia Night too, with its own icon and setup | Library, registry | Open `/`; tap Trivia Night in Make your own | A link to `/trivia-night` with the lightbulb icon; then its setup, with Against the clock, Questions per turn, a 30-second turn and "430 items to play" (every pack, the French one included) | The third game reaches the library and the shared setup, with its own default turn length. |
+| 465 | shows two featured variants at /, then Browse games and Custom game | Home page | Start at `/`; tap Back to School Trivia; tap Home; tap Browse games | Featured: Naija Charades (`/charades/naija-back-to-school`, "Charades · 2–20 players") and Back to School Trivia; links to `/games` and `/custom`; its setup; home; Browse | The home page stays short: two games to start with, and a page each to find more or set up your own (ADR 0021). |
+| 520 | features two variants that exist | `featured` | `featuredIds` | Two, and both found in the registry | A renamed or removed variant would quietly drop off the home page. |
+| 466 | opens a variant's setup: Masculin ou féminin ? asks for teams, rounds, turn length and words a turn, nothing else | Variant setup | Start at `/games`; tap Masculin ou féminin ? | Its heading; 10 questions a turn; 60 seconds; no mode or order choice; no packs; "282 items to play" | The variant's open settings are the only ones shown. |
+| 180 | shows a game at its own address, from Custom game | Library, routing | Start at `/custom`; tap Charades | A link to `/charades` showing "2–20 players"; after the tap, Charades' setup screen | Each game's own setup is one tap from Custom game. |
+| 372 | lists Name Ten too, with its own icon, players and setup | Library, registry | Open `/custom`; tap Name Ten | A link to `/name-ten` with its tagline and its picture or the list-checks icon; then Name Ten's setup, with "Answers on the board" and "38 items to play" | A game added to the registry appears in the library and gets the shared setup screen with its own settings. |
+| 422 | lists Trivia Night too, with its own icon and setup | Library, registry | Open `/custom`; tap Trivia Night | A link to `/trivia-night` with its picture or the lightbulb icon; then its setup, with Against the clock, Questions per turn, a 30-second turn and "772 items to play" (every pack, the French ones included) | The third game reaches the library and the shared setup, with its own default turn length. |
 | 214, 215, 460 | says "Page not found" at /chess, /charades/nope and /charades/nope/extra, with a way back | Not-found page | A game that doesn't exist; a variant that doesn't exist; an address with too many parts | "Page not found"; Back to games returns to the library | A mistyped or old link never shows a blank page. Runs once per address (`it.each`). |
 | 216 | has an icon for every game in the registry | `gameIcons` | Every registered game's `meta.icon` | Listed in `gameIcons` | An unlisted icon would quietly show the fallback controller. |
-| 468 | starts each new page at the top, but leaves the first page and going back alone | `ScrollToTop` | Open `/` (window.scrollTo watched); tap Charades in Make your own | Not called on the first page; called with 0, 0 after the tap | A setup opened from far down the home page starts at its top, not halfway down. |
+| 468 | starts each new page at the top, but leaves the first page and going back alone | `ScrollToTop` | Open `/` (window.scrollTo watched); tap Browse games | Not called on the first page; called with 0, 0 after the tap | A page opened from far down another starts at its top, not halfway down. |
 
 ## Applying a theme
 

@@ -4,6 +4,7 @@ import pairs from '../../games/pairs'
 import triviaNight from '../../games/trivia-night'
 import type { Variant } from '../../sdk/content/variant'
 import type { Game } from '../../sdk/game/defineGame'
+import { indexImages } from './images'
 
 /**
  * A game, with its own types forgotten: some kind of item, settings, turn and events. Each game is fully type-checked
@@ -31,6 +32,16 @@ export interface ListedVariant {
 
 /** Every variant, for the home page: each game's in turn, in the order of `games`, each game's sorted by id. */
 export const variants: readonly ListedVariant[] = games.flatMap((game) => game.variants.map((variant) => ({ game, variant })))
+
+/**
+ * Every picture in the games' `images/` folders (ADR 0021). `?url`: each is a file served under a hashed name, not
+ * code, so a picture only downloads when a card shows it. The pattern must be written out here (Vite reads it before
+ * the app runs), so its extensions repeat `imageExtensions`.
+ */
+export const images = indexImages(
+  import.meta.glob<string>('../../games/*/images/*.{webp,avif,png,jpg,jpeg}', { eager: true, query: '?url', import: 'default' }),
+  games,
+)
 
 /** The game with this id (the first part of its URL, e.g. `/charades`), or `undefined` if there's none. */
 export function findGame(id: string | undefined): AnyGame | undefined {

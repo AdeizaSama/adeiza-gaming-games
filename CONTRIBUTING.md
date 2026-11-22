@@ -42,7 +42,7 @@ Full rules: [Game Standard §10](docs/game-standard.md#10-content-packs).
 
 ### Add a variant (no code)
 
-A variant is a way to play a game that the home page lists: its packs, its settings, and which settings players may change. Add one file to the game's `variants/` folder, e.g. `src/games/charades/variants/anime.json`:
+A variant is a way to play a game that Browse lists: its packs, its settings, and which settings players may change. Add one file to the game's `variants/` folder, e.g. `src/games/charades/variants/anime.json`:
 
 ```json
 {
@@ -50,6 +50,7 @@ A variant is a way to play a game that the home page lists: its packs, its setti
   "id": "anime",
   "name": "Anime Charades",
   "tagline": "Heroes, villains and catchphrases, acted out.",
+  "categories": ["party"],
   "packs": ["anime"],
   "settings": { "seconds": 90 },
   "open": ["rounds", "seconds", "mode"],
@@ -58,6 +59,7 @@ A variant is a way to play a game that the home page lists: its packs, its setti
 ```
 
 - `id` is the file name without `.json`, and the variant's address: `/charades/anime`.
+- `categories` says what kind of game it is, for the filter on Browse: at least one, from [the list](src/sdk/content/categories.json) (your editor suggests them). A new category is a line in that file, then `pnpm generate-schemas`. See [ADR 0021](docs/decisions/0021-library-pages.md).
 - `packs` lists pack ids from the game's `content/` folder. `tags`, optional, plays only items with those tags.
 - `settings` lists only what differs from the game's defaults. Each game's README says what its settings are called.
 - `open` lists the settings players may change on the variant's setup screen. Teams are always theirs; packs and tags never are.
@@ -66,6 +68,17 @@ A variant is a way to play a game that the home page lists: its packs, its setti
 A new vocabulary list is a Pairs pack and a variant: see [Pairs' content guidelines](src/games/pairs/README.md#content-guidelines) for the two kinds of pack.
 
 `pnpm validate-content` checks the file's shape, and `pnpm test` checks it against its game (packs that exist, settings the game has). See [ADR 0018](docs/decisions/0018-variants.md).
+
+### Add a picture (no code)
+
+Cards in the library show a picture, found by its file name in the game's `images/` folder:
+
+- `src/games/<game>/images/game.webp`: the game's picture. Its card on Custom game uses it, and so does every variant without one of its own.
+- `src/games/<game>/images/<variant-id>.webp`: a variant's own, e.g. `src/games/charades/images/naija-back-to-school.webp`.
+
+WebP is best; AVIF, PNG and JPEG work too. Cards are 4:3 in the grid and square when featured on the home page, cut to fit from the middle: 1200×900 covers both, as long as the subject sits in the middle. Keep each file under about 100 KB. Illustrations work better than photos at card size; no real people, logos or brands.
+
+Use a picture you made, or one whose license lets anyone reuse it (CC0 or CC BY), and add a line for it to the folder's `CREDITS.md`: the file, where it's from, its license and its author. Without a picture, a card shows the game's icon on the theme's colors, so a picture is never required. `pnpm test` fails for a file named after nothing (a typo in the variant id). See [ADR 0021](docs/decisions/0021-library-pages.md).
 
 ### Fix a game's rules (no code)
 
@@ -130,7 +143,7 @@ Full rules: [Game Standard §11](docs/game-standard.md#11-themes).
 6. **`views/`: one view per phase of your own,** built from the primitives in `src/sdk/interactions/` ([§6](docs/game-standard.md#6-interaction-primitives)). Replace one of the format's views (handoff, turn summary, results) only when its words are wrong for your game, as Name Ten does for its judge. A settings view goes in `config.view` ([ADR 0008](docs/decisions/0008-settings-and-presets.md)).
 7. **`rules.md`,** in the small part of markdown the rules screen shows ([ADR 0009](docs/decisions/0009-rules.md)).
 8. **`index.ts`: `defineGame`.** It checks meta, packs, variants, rules and that every phase has a view, and lists every problem at once.
-9. **`variants/<id>.json`: at least one variant,** so the game is on the home page (see "Add a variant" above).
+9. **`variants/<id>.json`: at least one variant,** so the game is in Browse (see "Add a variant" above).
 10. **Register it:** add it to the list in `src/app/registry/index.ts`, and its icon to `src/app/library/gameIcon.ts`. The app's setup, save and resume, rules page and themes then work for it with no other changes.
 11. **`README.md`:** the rules in short, content guidelines, and what each file is.
 12. **Check:** `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm validate-content` and `pnpm build`, then play it on a phone with `pnpm dev --host`, under every theme.
@@ -149,4 +162,4 @@ If something your game needs isn't in the SDK (a primitive, or a word in a share
 
 ## License
 
-By contributing, you agree that your code is licensed under [MIT](https://opensource.org/license/mit) and your content packs under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+By contributing, you agree that your code is licensed under [MIT](https://opensource.org/license/mit) and your content packs under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Pictures keep their own license, credited in `CREDITS.md` (see "Add a picture").

@@ -24,6 +24,7 @@ Short documents that record a decision about the project's contracts: the Game S
 | [0018](0018-variants.md) | Variants | Accepted; amends 0008, 0017 |
 | [0019](0019-free-play.md) | Free Play | Accepted; amends 0004 |
 | [0020](0020-pairs.md) | Pairs: flip cards, match-up and odd-one-out | Accepted |
+| [0021](0021-library-pages.md) | Library pages: home, browse, custom, categories and images | Accepted |
 
 ## Writing one
 

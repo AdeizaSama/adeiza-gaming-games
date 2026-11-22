@@ -5,6 +5,7 @@ const variant = {
   id: 'quick-food',
   name: 'Quick Food',
   tagline: 'Food, fast.',
+  categories: ['party'],
   packs: ['food'],
   settings: { seconds: 30 },
   open: ['rounds'],
@@ -20,7 +21,7 @@ const problems = (file: string, data: unknown) => {
 describe('checkVariant', () => {
   it('accepts a variant file, filling in no tags, no settings and no open settings', () => {
     expect(checkVariant('variants/quick-food.json', variant)).toEqual({ ok: true, variant: { ...variant, tags: [], freePlay: false } })
-    const least = { id: 'quick-food', name: 'Quick Food', tagline: 'Food, fast.', packs: ['food'], contributors: ['AdeizaSama'] }
+    const least = { id: 'quick-food', name: 'Quick Food', tagline: 'Food, fast.', categories: ['party'], packs: ['food'], contributors: ['AdeizaSama'] }
     expect(checkVariant('quick-food.json', least)).toEqual({ ok: true, variant: { ...least, tags: [], settings: {}, open: [], freePlay: false } })
   })
 
@@ -29,6 +30,13 @@ describe('checkVariant', () => {
     expect(problems('quick-food.json', { ...variant, packs: [] })).toEqual(['packs'])
     expect(problems('quick-food.json', { ...variant, name: ' ', contributors: [] })).toEqual(['name', 'contributors'])
     expect(problems('quick-food.json', { ...variant, presets: [] })).toHaveLength(1)
+  })
+
+  it('needs at least one category, each from the list and listed once', () => {
+    expect(problems('quick-food.json', { ...variant, categories: undefined })).toEqual(['categories'])
+    expect(problems('quick-food.json', { ...variant, categories: [] })).toEqual(['categories'])
+    expect(problems('quick-food.json', { ...variant, categories: ['nigerian'] })).toEqual(['categories.0'])
+    expect(problems('quick-food.json', { ...variant, categories: ['party', 'party'] })).toEqual(['categories'])
   })
 })
 

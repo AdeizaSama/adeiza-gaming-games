@@ -159,7 +159,8 @@
             "exo2",
             "gochi-hand",
             "nunito",
-            "orbitron"
+            "orbitron",
+            "space-grotesk"
           ],
           "description": "A font from the list in src/sdk/theme/fonts.ts."
         },
@@ -174,7 +175,8 @@
             "exo2",
             "gochi-hand",
             "nunito",
-            "orbitron"
+            "orbitron",
+            "space-grotesk"
           ],
           "description": "A font from the list in src/sdk/theme/fonts.ts."
         }

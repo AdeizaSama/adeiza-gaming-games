@@ -6,7 +6,7 @@ An open-source library of **single-device party games**: charades, name ten, tri
 
 The library is built to be extended. Developers can add games, designers can add themes, and anyone can add or improve the words, categories and questions the games use.
 
-> **Status: early development.** Charades, Name Ten, Trivia Night and Pairs are complete, played from four ready-made variants (Naija Charades, Name Ten and Trivia in Back to School editions, and Masculin ou féminin ? for French learners) or set up from scratch. Pairs teaches French vocabulary three ways: flip cards, match-up and odd-one-out. The Trivia and Pairs variants can also be played alone, in Free Play. Each has rules, a review after every turn, and games that survive a refresh, a locked phone or a closed tab. Five themes to pick from, from sticky notes on lined paper to glass panels over a starfield, and anyone can add one as a JSON file. The other games are planned. Expect breaking changes until the first release.
+> **Status: early development.** Charades, Name Ten, Trivia Night and Pairs are complete, played from ready-made variants (Naija Charades, Name Ten and Trivia in Back to School editions, and Masculin ou féminin ? and Conjugaison française for French learners) or set up from scratch. Pairs teaches French vocabulary three ways: flip cards, match-up and odd-one-out. The Trivia and Pairs variants can also be played alone, in Free Play. Each has rules, a review after every turn, and games that survive a refresh, a locked phone or a closed tab. Five themes to pick from, from sticky notes on lined paper to glass panels over a starfield, and anyone can add one as a JSON file. The other games are planned. Expect breaking changes until the first release.
 
 ---
 
@@ -63,6 +63,7 @@ pnpm preview    # serve the production build locally
 
 - **Code:** [MIT](LICENSE)
 - **Content packs** (`src/games/*/content/`): [CC BY 4.0](LICENSE-CONTENT.md). Reuse them anywhere, including commercially, with credit.
+- **Pictures** (`src/games/*/images/`): each under its own license, listed with its source in the folder's `CREDITS.md`.
 
 By contributing, you agree that your contributions are licensed under these terms.
 

@@ -1,0 +1,9 @@
+[
+  { "id": "party", "label": "Party" },
+  { "id": "learning", "label": "Learning" },
+  { "id": "trivia", "label": "Trivia" },
+  { "id": "words", "label": "Words" },
+  { "id": "school", "label": "Back to School" },
+  { "id": "french", "label": "French" },
+  { "id": "naija", "label": "Naija" }
+]
