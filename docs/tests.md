@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 489 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
+**Counts:** 490 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -27,7 +27,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Name Ten machine](#name-ten-machine) | `src/games/name-ten/machine.test.ts` | 15 | |
 | [Name Ten views](#name-ten-views) | `src/games/name-ten/views/views.test.tsx` | 8 | |
 | [Name Ten game](#name-ten-game) | `src/games/name-ten/game.test.ts` | 1 | |
-| [Trivia Night content](#trivia-night-content) | `src/games/trivia-night/schema.test.ts` | 8 | |
+| [Trivia Night content](#trivia-night-content) | `src/games/trivia-night/schema.test.ts` | 9 | |
 | [Trivia Night settings](#trivia-night-settings) | `src/games/trivia-night/config.test.ts` | 2 | |
 | [Choice turn settings](#choice-turn-settings) | `src/sdk/formats/team-turns/choice/config.test.ts` | 1 | |
 | [Choice turn machine](#choice-turn-machine) | `src/sdk/formats/team-turns/choice/machine.test.ts` | 12 | |
@@ -705,6 +705,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 400 | ships a valid Back to School pack, every question tagged with its subject | The shipped pack | `content/*.json` | Back to School loads, with at least 100 questions, each with exactly one of maths, science, social-studies, entertainment, general | Players filter by subject. |
 | 437 | ships Masculin ou féminin ?: French words, each with its meaning, the same two options, and both answers often | The Masculin ou féminin ? pack | `content/*.json` | Named "Masculin ou féminin ?", in French, at least 200 words, each with Masculin and Féminin, a subtitle, and tagged noun or adjective; between 40% and 60% féminin | A pack where one answer wins most of the time teaches nothing. |
 | 438 | never shows an article in Masculin ou féminin ?, which would give the answer away | The Masculin ou féminin ? pack | Every question | None starts with le, la, les, un, une or l' | "la chaise" answers its own question. |
+| 507 | ships Conjugaison française: every verb in all six persons, its infinitive in the question, its meaning under it, four options | The Conjugaison française pack | `content/*.json` | Named "Conjugaison française", in French; every question reads "nous ___ (aller)" or "j'___ (aimer)", has a subtitle, four options, one verb group tag and one person tag; at least 50 verbs, each with je, tu, il-elle-on, nous, vous and ils-elles exactly once | The infinitive is what makes each question unique and answerable; a verb missing a person leaves a hole players can filter into. |
 
 ## Trivia Night settings
 
@@ -776,7 +777,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 421 | is a valid game with the Back to School pack, its settings and one view for turn and result | `index.ts` | The game's default export | Id `trivia-night`; Back to School; its machine and settings; `TurnView` for `turn` and `reveal`; rules with "## Ways to play" | `defineGame` checked the parts when the file loaded; this checks Trivia Night wired its own parts in. |
-| 464 | has Back to School Trivia, and Masculin ou féminin ?: ten words a minute, A to Z, Set questions only; both offer Free Play | Variants | The game's variants | `back-to-school` and `masculin-feminin`; the French one plays 10 questions, 60 s, A to Z, on its own pack, with mode closed; the choice Free Play, and both variants offering it | The variant the home page lists plays the way it's meant to (ADR 0018). |
+| 464 | has Back to School Trivia, Conjugaison française (ten verbs in 90 s, shuffled) and Masculin ou féminin ? (ten words a minute, A to Z), the French ones Set questions only; all offer Free Play | Variants | The game's variants | `back-to-school`, `conjugaison` and `masculin-feminin`; Conjugaison plays 10 questions, 90 s, shuffled, on its own pack; Masculin ou féminin ? 10 questions, 60 s, A to Z; both French ones with mode closed; the choice Free Play, and all three variants offering it | The variant the home page lists plays the way it's meant to (ADR 0018). |
 
 ## Pairs content
 
@@ -840,11 +841,11 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 465 | shows the variants first at /, then Make your own with each game | Home page | Start at `/` | Ways to play: Naija Charades, Name Ten, Back to School Trivia, Masculin ou féminin ?, French Flash Cards, French Match-Up, L'intrus, each linking to `/:gameId/:variantId`, the first saying "Charades · 2–20 players"; Make your own: `/charades`, `/name-ten`, `/trivia-night`, `/pairs` | Players pick a way to play first; the full setup is one section down (ADR 0018). |
+| 465 | shows the variants first at /, then Make your own with each game | Home page | Start at `/` | Ways to play: Naija Charades, Name Ten, Back to School Trivia, Conjugaison française, Masculin ou féminin ?, French Flash Cards, French Match-Up, L'intrus, each linking to `/:gameId/:variantId`, the first saying "Charades · 2–20 players"; Make your own: `/charades`, `/name-ten`, `/trivia-night`, `/pairs` | Players pick a way to play first; the full setup is one section down (ADR 0018). |
 | 466 | opens a variant's setup: Masculin ou féminin ? asks for teams, rounds, turn length and words a turn, nothing else | Variant setup | Tap Masculin ou féminin ? | Its heading; 10 questions a turn; 60 seconds; no mode or order choice; no packs; "282 items to play" | The variant's open settings are the only ones shown. |
 | 180 | shows a game at its own address, from Make your own | Library, routing | Start at `/`; tap Charades in Make your own | A link to `/charades` showing "2–20 players"; after the tap, Charades' setup screen | Each game's own setup is still one tap away. |
 | 372 | lists Name Ten too, with its own icon, players and setup | Library, registry | Open `/`; tap Name Ten in Make your own | A link to `/name-ten` with its tagline and the list-checks icon; then Name Ten's setup, with "Answers on the board" and "38 items to play" | A game added to the registry appears in the library and gets the shared setup screen with its own settings. |
-| 422 | lists Trivia Night too, with its own icon and setup | Library, registry | Open `/`; tap Trivia Night in Make your own | A link to `/trivia-night` with the lightbulb icon; then its setup, with Against the clock, Questions per turn, a 30-second turn and "430 items to play" (every pack, the French one included) | The third game reaches the library and the shared setup, with its own default turn length. |
+| 422 | lists Trivia Night too, with its own icon and setup | Library, registry | Open `/`; tap Trivia Night in Make your own | A link to `/trivia-night` with the lightbulb icon; then its setup, with Against the clock, Questions per turn, a 30-second turn and "772 items to play" (every pack, the French ones included) | The third game reaches the library and the shared setup, with its own default turn length. |
 | 214, 215, 460 | says "Page not found" at /chess, /charades/nope and /charades/nope/extra, with a way back | Not-found page | A game that doesn't exist; a variant that doesn't exist; an address with too many parts | "Page not found"; Back to games returns to the library | A mistyped or old link never shows a blank page. Runs once per address (`it.each`). |
 | 216 | has an icon for every game in the registry | `gameIcons` | Every registered game's `meta.icon` | Listed in `gameIcons` | An unlisted icon would quietly show the fallback controller. |
 | 468 | starts each new page at the top, but leaves the first page and going back alone | `ScrollToTop` | Open `/` (window.scrollTo watched); tap Charades in Make your own | Not called on the first page; called with 0, 0 after the tap | A setup opened from far down the home page starts at its top, not halfway down. |

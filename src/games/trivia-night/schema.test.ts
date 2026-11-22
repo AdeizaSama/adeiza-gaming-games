@@ -60,6 +60,28 @@ describe('Trivia Night content', () => {
     for (const item of french.items) expect(item.question, item.question).not.toMatch(/^((le|la|les|un|une) |l')/i)
   })
 
+  it('ships Conjugaison française: every verb in all six persons, its infinitive in the question, its meaning under it, four options', () => {
+    const verbs = packs.find((candidate) => candidate.id === 'conjugaison')!
+    expect(verbs.name).toBe('Conjugaison française')
+    expect(verbs.language).toBe('fr')
+    const persons = ['je', 'tu', 'il-elle-on', 'nous', 'vous', 'ils-elles']
+    const groups = ['regular-er', 'regular-ir', 'regular-re', 'irregular']
+    const byVerb = new Map<string, string[]>()
+    for (const item of verbs.items) {
+      // "nous ___ (aller)", or "j'___ (aimer)" before a vowel.
+      const infinitive = /^(?:\S+ |j')___ \((\S+)\)$/.exec(item.question)?.[1]
+      expect(infinitive, item.question).toBeDefined()
+      expect(item.subtitle, item.question).toBeDefined()
+      expect(item.options, item.question).toHaveLength(4)
+      expect(item.tags.filter((tag) => groups.includes(tag)), item.question).toHaveLength(1)
+      const person = item.tags.filter((tag) => persons.includes(tag))
+      expect(person, item.question).toHaveLength(1)
+      byVerb.set(infinitive!, [...(byVerb.get(infinitive!) ?? []), person[0]])
+    }
+    expect(byVerb.size).toBeGreaterThanOrEqual(50)
+    for (const [infinitive, seen] of byVerb) expect(seen.toSorted(), infinitive).toEqual(persons.toSorted())
+  })
+
   it('ships a valid Back to School pack, every question tagged with its subject', () => {
     const packs = loadPacks(import.meta.glob('./content/*.json', { eager: true, import: 'default' }), itemSchema, itemKey)
     const pack = packs.find((candidate) => candidate.id === 'back-to-school')!

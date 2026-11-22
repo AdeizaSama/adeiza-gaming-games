@@ -28,6 +28,7 @@ describe('App', () => {
       ['Naija Charades (Back to School Edition)', '/charades/naija-back-to-school'],
       ['Name Ten (Back to School Edition)', '/name-ten/back-to-school'],
       ['Back to School Trivia', '/trivia-night/back-to-school'],
+      ['Conjugaison française', '/trivia-night/conjugaison'],
       ['Masculin ou féminin ?', '/trivia-night/masculin-feminin'],
       ['French Flash Cards', '/pairs/french-flash-cards'],
       ['French Match-Up', '/pairs/french-match-up'],
@@ -87,7 +88,7 @@ describe('App', () => {
     expect(screen.getByRole('radio', { name: /Against the clock/ })).toBeDefined()
     expect(screen.getByRole('group', { name: 'Questions per turn' })).toBeDefined()
     expect(within(screen.getByRole('group', { name: 'Turn length' })).getByText('30 seconds')).toBeDefined()
-    expect(screen.getByText('430 items to play')).toBeDefined() // every pack, Masculin ou féminin ? included
+    expect(screen.getByText('772 items to play')).toBeDefined() // every pack, the French ones included
   })
 
   it.each(['/chess', '/charades/nope', '/charades/nope/extra'])('says "Page not found" at %s, with a way back', async (address) => {
