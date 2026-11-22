@@ -56,3 +56,22 @@ The routes come with their pages, in steps 6 and 7.
 ### How to verify
 
 `pnpm test src/sdk/game/defineGame.test.ts`. Change Charades' `meta.id` to `custom` and run `pnpm test`: every test that loads the registry fails with `meta.id: "custom" is taken`.
+
+---
+
+## Step 4: The card, and its picture
+
+**What:**
+
+- `src/app/registry/images.ts`: `indexImages` sorts the picture files by game and name (`game`, or a variant's id) and lists any named after nothing; `cardImage` picks a variant's own picture, else its game's.
+- `src/app/registry/index.ts`: `images`, every file in `src/games/*/images/`, loaded with `import.meta.glob(..., { query: '?url' })`. The registry already reads the games' folders; nothing else in the app may (standard §9).
+- `src/app/library/GameCard.tsx`: the card. Picture on top (4:3 in the grid, 16:9 when featured), then the name (two lines at most in the grid), the tagline and a small line of detail. It passes its `back` link along to the page it opens.
+- With no picture, `CardArt` draws the game's icon on a gradient of two theme colors. `standIn` picks the pair from the game's id, so a game looks the same everywhere and neighbours differ.
+
+**Why `?url`:** it makes each picture a file with a hashed name that browsers can keep, and only the pictures a page shows download. Importing them as code would put every picture in the app's first download.
+
+No page uses the card yet: the next three steps do.
+
+### How to verify
+
+`pnpm test src/app/library/cards.test.tsx`. Drop a file called `naija.webp` in `src/games/charades/images/`, and the test "has no picture in the games' folders named after nothing" names it.

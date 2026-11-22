@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 493 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
+**Counts:** 497 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -56,6 +56,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 22 | |
 | [Charades views](#charades-views) | `src/games/charades/views/views.test.tsx` | 8 | |
 | [App](#app) | `src/app/App.test.tsx` | 10 | |
+| [Library cards](#library-cards) | `src/app/library/cards.test.tsx` | 4 | |
 | [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 6 | |
 | [Applying a theme](#applying-a-theme) | `src/app/theme/themes.test.tsx` | 4 | |
 | [Bundled fonts](#bundled-fonts) | `src/app/theme/fonts.test.ts` | 2 | |
@@ -845,6 +846,17 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 |---|---|---|---|---|---|
 | 504 | is a valid game with both French packs, its settings and Free Play, and one view for card and answer | `index.ts` | The game's default export | Id `pairs`; Français–anglais and Les thèmes; its machine, settings and Free Play; one view for `turn` and `reveal`; rules with "## Odd one out" | `defineGame` checked the parts; this checks Pairs wired its own in. |
 | 505 | has a variant for each way to play, each on the pack that suits it, and each with Free Play | Variants | Each variant's settings | French Flash Cards: flip, two-way, Français–anglais; French Match-Up: match, two-way, the same; L'intrus: odd, one-way, Les thèmes; all Free Play | Match-up needs a two-way pack and odd-one-out a one-way one (ADR 0020). |
+
+## Library cards
+
+`src/app/library/cards.test.tsx`, testing `src/app/registry/images.ts` and `src/app/library/GameCard.tsx` (ADR 0021): the pictures on the library's cards, and the card itself. Screen test (happy-dom) for the card.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 511 | finds each game's picture and its variants', by file name | `indexImages`, `cardImage` | Charades' `game.webp` and `naija-back-to-school.png`; Pairs' `french-match-up.webp` | No problems; Naija Charades its own; Charades' card the game's; French Match-Up its own; L'intrus none | A variant's own picture wins, then its game's; with neither the card draws one. |
+| 512 | reports a picture named after nothing, outside a game, or a second one with the same name | `indexImages` | `naija.webp`; a picture in `chess`; `game.webp` and `game.png` | Three problems, the first listing Charades' variant ids | A typo in a file name would quietly show no picture. |
+| 513 | has no picture in the games' folders named after nothing | The shipped pictures | Every file in `src/games/*/images/` | No problems | CI catches a misnamed picture. |
+| 514 | shows its picture, or the game's icon on theme colors, and tells the setup where to go back to | `GameCard` | A card with a picture and its back link; one without | The `img`; the stand-in with Pairs' colors and its layers icon; after a tap, the back link arrives at the page opened | Every card looks finished before pictures exist; the setup's back link returns to where the player was. |
 
 ## App
 
