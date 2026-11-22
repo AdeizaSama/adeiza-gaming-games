@@ -76,7 +76,7 @@ Cards in the library show a picture, found by its file name in the game's `image
 - `src/games/<game>/images/game.webp`: the game's picture. Its card on Custom game uses it, and so does every variant without one of its own.
 - `src/games/<game>/images/<variant-id>.webp`: a variant's own, e.g. `src/games/charades/images/naija-back-to-school.webp`.
 
-WebP is best; AVIF, PNG and JPEG work too. Cards are 4:3 in the grid and 16:9 when featured on the home page, cut to fit from the middle: 1200×900 covers both. Keep each file under about 100 KB. Illustrations work better than photos at card size; no real people, logos or brands.
+WebP is best; AVIF, PNG and JPEG work too. Cards are 4:3 in the grid and square when featured on the home page, cut to fit from the middle: 1200×900 covers both, as long as the subject sits in the middle. Keep each file under about 100 KB. Illustrations work better than photos at card size; no real people, logos or brands.
 
 Use a picture you made, or one whose license lets anyone reuse it (CC0 or CC BY), and add a line for it to the folder's `CREDITS.md`: the file, where it's from, its license and its author. Without a picture, a card shows the game's icon on the theme's colors, so a picture is never required. `pnpm test` fails for a file named after nothing (a typo in the variant id). See [ADR 0021](docs/decisions/0021-library-pages.md).
 

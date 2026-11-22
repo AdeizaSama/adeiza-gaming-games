@@ -65,7 +65,7 @@ The routes come with their pages, in steps 6 and 7.
 
 - `src/app/registry/images.ts`: `indexImages` sorts the picture files by game and name (`game`, or a variant's id) and lists any named after nothing; `cardImage` picks a variant's own picture, else its game's.
 - `src/app/registry/index.ts`: `images`, every file in `src/games/*/images/`, loaded with `import.meta.glob(..., { query: '?url' })`. The registry already reads the games' folders; nothing else in the app may (standard §9).
-- `src/app/library/GameCard.tsx`: the card. Picture on top (4:3 in the grid, 16:9 when featured), then the name (two lines at most in the grid), the tagline and a small line of detail. It passes its `back` link along to the page it opens.
+- `src/app/library/GameCard.tsx`: the card. Picture on top (4:3), then the name (two lines at most), the tagline and a small line of detail. It passes its `back` link along to the page it opens.
 - With no picture, `CardArt` draws the game's icon on a gradient of two theme colors. `standIn` picks the pair from the game's id, so a game looks the same everywhere and neighbours differ.
 
 **Why `?url`:** it makes each picture a file with a hashed name that browsers can keep, and only the pictures a page shows download. Importing them as code would put every picture in the app's first download.
@@ -152,6 +152,20 @@ Read CONTRIBUTING's "Add a picture" as someone with a picture for Naija Charades
 
 ---
 
+## Step 10: Featured games as rows
+
+**What:** on the home page, the featured cards are rows: a square picture on the left, as tall as the card, and the name, tagline and detail beside it. `GameCard`'s `size` is `grid` or `row`; `featured` (a 16:9 picture on top) is gone.
+
+**Why:** seen on a phone, two wide cards with their pictures on top pushed Browse games and Custom game below the fold, and they're what most visits need next. A row is about 112px tall, so Continue, both featured games and both links fit on one screen. A two-column grid was the other option, but it would make Featured look the same as Browse, and it's about twice as tall.
+
+Pictures are still 4:3; a row cuts the middle square, so CONTRIBUTING now says to keep the subject in the middle.
+
+### How to verify
+
+Run `pnpm dev` and open `/` on a phone, with a game saved: Browse games and Custom game show without scrolling.
+
+---
+
 ## Merging Conjugaison française
 
 `content/conjugaison` (a French verbs pack and variant for Trivia Night, built alongside this chapter) is merged in. Two conflicts: the home page test (this chapter replaced its list of every variant with the featured two) and `docs/tests.md` (both branches numbered a new test 507; Conjugaison's became 521). Then one commit brings it up to date: its variant gets `categories` (learning, french, words), and Browse's tests list eight variants.
@@ -171,6 +185,7 @@ Read CONTRIBUTING's "Add a picture" as someone with a picture for Naija Charades
 | 7 | The home page | |
 | 8 | Space Grotesk for Space Travel | Yes: a font in the list |
 | 9 | Docs | |
+| 10 | Featured games as rows | |
 
 **What we learned:**
 

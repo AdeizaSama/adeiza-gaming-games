@@ -66,11 +66,11 @@ export function LibraryPage() {
         <h2 id="featured" className="text-2xl font-bold">
           Featured
         </h2>
-        <ul aria-labelledby="featured" className="flex flex-col gap-4">
+        <ul aria-labelledby="featured" className="flex flex-col gap-3">
           {featured.map(({ game, variant }) => (
             <GameCard
               key={`${game.meta.id}/${variant.id}`}
-              size="featured"
+              size="row"
               to={`/${game.meta.id}/${variant.id}`}
               game={game}
               name={variant.name}

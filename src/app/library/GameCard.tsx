@@ -59,25 +59,32 @@ export interface GameCardProps {
   image?: string
   /** Where the setup page's back link returns to. */
   back: BackLink
-  /** `grid`: a tile in Browse or Custom game; `featured`: a wide card on the home page. */
-  size?: 'grid' | 'featured'
+  /**
+   * `grid`: a tile in Browse or Custom game, picture on top. `row`: a short card on the home page, picture on the
+   * left, so the featured games leave room for the links under them.
+   */
+  size?: 'grid' | 'row'
 }
 
-/** One game or variant in the library: a whole-card link, picture on top. */
+/** One game or variant in the library: a whole-card link with its picture. */
 export function GameCard({ to, game, name, tagline, detail, image, back, size = 'grid' }: GameCardProps) {
-  const featured = size === 'featured'
+  const row = size === 'row'
   return (
     <li className="flex">
       <Link
         to={to}
         state={{ back }}
-        className="flex w-full flex-col overflow-hidden rounded-xl bg-card text-card-foreground shadow-sm transition-transform active:scale-[0.98] focus-visible:outline-3 focus-visible:outline-offset-2 motion-reduce:transition-none motion-reduce:active:scale-100"
+        className={cn(
+          'flex w-full overflow-hidden rounded-xl bg-card text-card-foreground shadow-sm transition-transform active:scale-[0.98] focus-visible:outline-3 focus-visible:outline-offset-2 motion-reduce:transition-none motion-reduce:active:scale-100',
+          row ? 'min-h-28 flex-row' : 'flex-col',
+        )}
       >
-        <CardArt game={game} image={image} className={featured ? 'aspect-video' : 'aspect-[4/3]'} />
-        <div className={cn('flex flex-1 flex-col gap-1', featured ? 'p-4' : 'p-3')}>
-          <h3 className={cn('font-bold text-balance', featured ? 'text-2xl' : 'line-clamp-2 text-lg leading-snug')}>{name}</h3>
-          <p className={cn('text-muted-foreground', !featured && 'line-clamp-2 text-sm')}>{tagline}</p>
-          <p className={cn('mt-auto text-muted-foreground', featured ? 'text-sm' : 'text-xs')}>{detail}</p>
+        {/* In a row, the picture is a square as tall as the card: a 4:3 picture is cut to fit from the middle. */}
+        <CardArt game={game} image={image} className={row ? 'w-28 shrink-0 self-stretch' : 'aspect-[4/3]'} />
+        <div className="flex min-w-0 flex-1 flex-col gap-1 p-3">
+          <h3 className="line-clamp-2 text-lg leading-snug font-bold text-balance">{name}</h3>
+          <p className="line-clamp-2 text-sm text-muted-foreground">{tagline}</p>
+          <p className="mt-auto text-xs text-muted-foreground">{detail}</p>
         </div>
       </Link>
     </li>
