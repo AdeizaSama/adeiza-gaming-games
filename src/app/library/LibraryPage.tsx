@@ -1,38 +1,31 @@
-import { Play } from 'lucide-react'
-import { createElement, useState } from 'react'
+import { LayoutGrid, Play, SlidersHorizontal, type LucideIcon } from 'lucide-react'
+import { useState } from 'react'
 import { Link, useLocation } from 'react-router'
 import { describeSave, saveName, summarizeSave } from '../play/savedGame'
-import { games, variants, type AnyGame } from '../registry'
+import { images } from '../registry'
+import { cardImage } from '../registry/images'
 import { ThemePicker } from '../theme/ThemePicker'
-import { gameIcon } from './gameIcon'
+import { featured } from './featured'
+import { GameCard } from './GameCard'
+import { players } from './LibraryLayout'
 
-/** The look of every card on the home page: a whole-card link. */
-const cardClass =
-  'flex items-center gap-4 rounded-xl bg-card p-5 text-card-foreground shadow-sm transition-transform active:scale-[0.98] focus-visible:outline-3 focus-visible:outline-offset-2 motion-reduce:transition-none motion-reduce:active:scale-100'
+/** The press effect every link-card on the home page shares. */
+const press = 'transition-transform active:scale-[0.98] focus-visible:outline-3 focus-visible:outline-offset-2 motion-reduce:transition-none motion-reduce:active:scale-100'
 
-/** One card: the game's icon, a name, a line under it, and a small line about who it's for. */
-function Card({ to, game, name, tagline, detail }: { to: string; game: AnyGame; name: string; tagline: string; detail: string }) {
+/** One of the two big links under the featured games: an icon, a name and a line under it. */
+function PageLink({ to, icon: Icon, name, description }: { to: string; icon: LucideIcon; name: string; description: string }) {
   return (
-    <li>
-      <Link to={to} className={cardClass}>
-        {/* createElement, not <Icon />: the icon is looked up by name, and React wants components it can see. */}
-        {createElement(gameIcon(game.meta.icon), { 'aria-hidden': true, className: 'size-12 shrink-0 text-primary' })}
-        <div className="flex flex-col gap-1">
-          <h3 className="text-2xl font-bold">{name}</h3>
-          <p className="text-muted-foreground">{tagline}</p>
-          <p className="text-sm text-muted-foreground">{detail}</p>
-        </div>
-      </Link>
-    </li>
+    <Link to={to} className={`flex flex-col gap-2 rounded-xl bg-card p-4 text-card-foreground shadow-sm ${press}`}>
+      <Icon aria-hidden className="size-8 text-primary" />
+      <span className="text-xl font-bold">{name}</span>
+      <span className="text-sm text-muted-foreground">{description}</span>
+    </Link>
   )
 }
 
-/** "2–20 players". */
-const players = (game: AnyGame) => `${game.meta.players.min}–${game.meta.players.max} players`
-
 /**
- * The home page (ADR 0018): the saved game to continue, if there is one; then every variant, each a link to its
- * setup; then "Make your own", every game, each a link to its own setup with every setting.
+ * The home page (ADR 0021): the saved game to continue, if there is one; the two featured variants; then Browse
+ * games and Custom game, each a page of its own.
  */
 export function LibraryPage() {
   const location = useLocation()
@@ -60,10 +53,7 @@ export function LibraryPage() {
       )}
 
       {unfinished && (
-        <Link
-          to={`/${unfinished.game.meta.id}/play`}
-          className="flex items-center gap-4 rounded-xl bg-primary p-5 text-primary-foreground shadow-sm transition-transform active:scale-[0.98] focus-visible:outline-3 focus-visible:outline-offset-2 motion-reduce:transition-none motion-reduce:active:scale-100"
-        >
+        <Link to={`/${unfinished.game.meta.id}/play`} className={`flex items-center gap-4 rounded-xl bg-primary p-5 text-primary-foreground shadow-sm ${press}`}>
           <Play aria-hidden className="size-10 shrink-0" />
           <div className="flex flex-col gap-1">
             <h2 className="text-2xl font-bold">Continue {saveName(unfinished)}</h2>
@@ -72,31 +62,31 @@ export function LibraryPage() {
         </Link>
       )}
 
-      <ul aria-label="Ways to play" className="flex flex-col gap-4">
-        {variants.map(({ game, variant }) => (
-          <Card
-            key={`${game.meta.id}/${variant.id}`}
-            to={`/${game.meta.id}/${variant.id}`}
-            game={game}
-            name={variant.name}
-            tagline={variant.tagline}
-            detail={`${game.meta.name} · ${players(game)}`}
-          />
-        ))}
-      </ul>
       <section className="flex flex-col gap-4">
-        <div>
-          <h2 id="make-your-own" className="text-2xl font-bold">
-            Make your own
-          </h2>
-          <p className="text-muted-foreground">Pick the packs and every setting yourself.</p>
-        </div>
-        <ul aria-labelledby="make-your-own" className="flex flex-col gap-4">
-          {games.map((game) => (
-            <Card key={game.meta.id} to={`/${game.meta.id}`} game={game} name={game.meta.name} tagline={game.meta.tagline} detail={players(game)} />
+        <h2 id="featured" className="text-2xl font-bold">
+          Featured
+        </h2>
+        <ul aria-labelledby="featured" className="flex flex-col gap-4">
+          {featured.map(({ game, variant }) => (
+            <GameCard
+              key={`${game.meta.id}/${variant.id}`}
+              size="featured"
+              to={`/${game.meta.id}/${variant.id}`}
+              game={game}
+              name={variant.name}
+              tagline={variant.tagline}
+              detail={`${game.meta.name} · ${players(game)}`}
+              image={cardImage(images, game, variant.id)}
+              back={{ to: '/', label: 'Home' }}
+            />
           ))}
         </ul>
       </section>
+
+      <nav aria-label="More games" className="grid grid-cols-2 gap-3">
+        <PageLink to="/games" icon={LayoutGrid} name="Browse games" description="Every way to play, by what it's like." />
+        <PageLink to="/custom" icon={SlidersHorizontal} name="Custom game" description="Pick the packs and every setting yourself." />
+      </nav>
     </main>
   )
 }

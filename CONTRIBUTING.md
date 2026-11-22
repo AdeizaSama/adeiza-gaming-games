@@ -42,7 +42,7 @@ Full rules: [Game Standard §10](docs/game-standard.md#10-content-packs).
 
 ### Add a variant (no code)
 
-A variant is a way to play a game that the home page lists: its packs, its settings, and which settings players may change. Add one file to the game's `variants/` folder, e.g. `src/games/charades/variants/anime.json`:
+A variant is a way to play a game that Browse lists: its packs, its settings, and which settings players may change. Add one file to the game's `variants/` folder, e.g. `src/games/charades/variants/anime.json`:
 
 ```json
 {

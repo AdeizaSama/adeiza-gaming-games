@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 502 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
+**Counts:** 503 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -55,7 +55,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Settings and variants](#settings-and-variants) | `src/sdk/game/settings.test.ts` | 6 | |
 | [Charades machine](#charades-machine) | `src/games/charades/machine.test.ts` | 22 | |
 | [Charades views](#charades-views) | `src/games/charades/views/views.test.tsx` | 8 | |
-| [App](#app) | `src/app/App.test.tsx` | 10 | |
+| [App](#app) | `src/app/App.test.tsx` | 11 | |
 | [Library cards](#library-cards) | `src/app/library/cards.test.tsx` | 4 | |
 | [Browse](#browse) | `src/app/library/browse.test.tsx` | 4 | |
 | [Custom game](#custom-game) | `src/app/library/custom.test.tsx` | 1 | |
@@ -885,14 +885,15 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 465 | shows the variants first at /, then Make your own with each game | Home page | Start at `/` | Ways to play: Naija Charades, Name Ten, Back to School Trivia, Masculin ou féminin ?, French Flash Cards, French Match-Up, L'intrus, each linking to `/:gameId/:variantId`, the first saying "Charades · 2–20 players"; Make your own: `/charades`, `/name-ten`, `/trivia-night`, `/pairs` | Players pick a way to play first; the full setup is one section down (ADR 0018). |
-| 466 | opens a variant's setup: Masculin ou féminin ? asks for teams, rounds, turn length and words a turn, nothing else | Variant setup | Tap Masculin ou féminin ? | Its heading; 10 questions a turn; 60 seconds; no mode or order choice; no packs; "282 items to play" | The variant's open settings are the only ones shown. |
-| 180 | shows a game at its own address, from Make your own | Library, routing | Start at `/`; tap Charades in Make your own | A link to `/charades` showing "2–20 players"; after the tap, Charades' setup screen | Each game's own setup is still one tap away. |
-| 372 | lists Name Ten too, with its own icon, players and setup | Library, registry | Open `/`; tap Name Ten in Make your own | A link to `/name-ten` with its tagline and the list-checks icon; then Name Ten's setup, with "Answers on the board" and "38 items to play" | A game added to the registry appears in the library and gets the shared setup screen with its own settings. |
-| 422 | lists Trivia Night too, with its own icon and setup | Library, registry | Open `/`; tap Trivia Night in Make your own | A link to `/trivia-night` with the lightbulb icon; then its setup, with Against the clock, Questions per turn, a 30-second turn and "430 items to play" (every pack, the French one included) | The third game reaches the library and the shared setup, with its own default turn length. |
+| 465 | shows two featured variants at /, then Browse games and Custom game | Home page | Start at `/`; tap Back to School Trivia; tap Home; tap Browse games | Featured: Naija Charades (`/charades/naija-back-to-school`, "Charades · 2–20 players") and Back to School Trivia; links to `/games` and `/custom`; its setup; home; Browse | The home page stays short: two games to start with, and a page each to find more or set up your own (ADR 0021). |
+| 520 | features two variants that exist | `featured` | `featuredIds` | Two, and both found in the registry | A renamed or removed variant would quietly drop off the home page. |
+| 466 | opens a variant's setup: Masculin ou féminin ? asks for teams, rounds, turn length and words a turn, nothing else | Variant setup | Start at `/games`; tap Masculin ou féminin ? | Its heading; 10 questions a turn; 60 seconds; no mode or order choice; no packs; "282 items to play" | The variant's open settings are the only ones shown. |
+| 180 | shows a game at its own address, from Custom game | Library, routing | Start at `/custom`; tap Charades | A link to `/charades` showing "2–20 players"; after the tap, Charades' setup screen | Each game's own setup is one tap from Custom game. |
+| 372 | lists Name Ten too, with its own icon, players and setup | Library, registry | Open `/custom`; tap Name Ten | A link to `/name-ten` with its tagline and the list-checks icon; then Name Ten's setup, with "Answers on the board" and "38 items to play" | A game added to the registry appears in the library and gets the shared setup screen with its own settings. |
+| 422 | lists Trivia Night too, with its own icon and setup | Library, registry | Open `/custom`; tap Trivia Night | A link to `/trivia-night` with the lightbulb icon; then its setup, with Against the clock, Questions per turn, a 30-second turn and "430 items to play" (every pack, the French one included) | The third game reaches the library and the shared setup, with its own default turn length. |
 | 214, 215, 460 | says "Page not found" at /chess, /charades/nope and /charades/nope/extra, with a way back | Not-found page | A game that doesn't exist; a variant that doesn't exist; an address with too many parts | "Page not found"; Back to games returns to the library | A mistyped or old link never shows a blank page. Runs once per address (`it.each`). |
 | 216 | has an icon for every game in the registry | `gameIcons` | Every registered game's `meta.icon` | Listed in `gameIcons` | An unlisted icon would quietly show the fallback controller. |
-| 468 | starts each new page at the top, but leaves the first page and going back alone | `ScrollToTop` | Open `/` (window.scrollTo watched); tap Charades in Make your own | Not called on the first page; called with 0, 0 after the tap | A setup opened from far down the home page starts at its top, not halfway down. |
+| 468 | starts each new page at the top, but leaves the first page and going back alone | `ScrollToTop` | Open `/` (window.scrollTo watched); tap Browse games | Not called on the first page; called with 0, 0 after the tap | A page opened from far down another starts at its top, not halfway down. |
 
 ## Applying a theme
 

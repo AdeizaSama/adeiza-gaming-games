@@ -107,3 +107,19 @@ The home page still has its long list; step 7 replaces it.
 ### How to verify
 
 `pnpm test src/app/library/custom.test.tsx`. Open `/charades` directly: the back link at the top says Custom game.
+
+---
+
+## Step 7: The home page
+
+**What:** `src/app/library/LibraryPage.tsx`, rewritten: the header and Theme, a saved game's Continue (unchanged), **Featured** (two wide cards), then two big links side by side, **Browse games** and **Custom game**. The long list of variants and "Make your own" are gone: they're Browse and Custom game now.
+
+`src/app/library/featured.ts` lists the two: Naija Charades (Back to School Edition) and Back to School Trivia. A featured card's setup goes back home, not to Browse.
+
+**Why the order:** Continue first, since it's what someone coming back wants; then two games that need no choosing; then the ways to look further.
+
+The App tests that started on the home page and tapped a game in "Make your own" now start at `/custom` or `/games`; a new one checks the featured two exist, so renaming one fails a test instead of quietly emptying the home page.
+
+### How to verify
+
+`pnpm test src/app/App.test.tsx`. Run `pnpm dev`: the home page fits on a phone's screen, with Browse games and Custom game in reach of a thumb.

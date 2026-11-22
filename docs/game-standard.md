@@ -14,7 +14,7 @@ Changes to this standard, the SDK (`src/sdk/`) or the content pack format need a
 |---|---|---|---|
 | **Format** | The outer loop: how turns, rounds and scoring flow ([§7](#7-formats)) | `team-turns`, `host-led` | Core maintainers, rarely |
 | **Game** | What happens inside a turn: interaction, events, scoring rules, content shape | Charades, Name Ten, Trivia Night, Pairs | Developers |
-| **Variant** | Settings + content only. Same rules. A JSON file; what the home page lists ([ADR 0018](decisions/0018-variants.md)) | "Naija Charades (Back to School Edition)", "Masculin ou féminin ?" | Anyone, no code |
+| **Variant** | Settings + content only. Same rules. A JSON file; what Browse lists ([ADR 0018](decisions/0018-variants.md)) | "Naija Charades (Back to School Edition)", "Masculin ou féminin ?" | Anyone, no code |
 
 A format is the outer loop, a game fills in the turn, and a variant fills in the settings and content. Name Ten is not a Charades variant: its turn is different, so it's a separate game in the same format. Masculin ou féminin ? is a Trivia Night variant: the same turn, with its own pack and defaults. In code and docs, say **Game** (`defineGame`).
 
@@ -82,7 +82,7 @@ export default defineGame({
 
 **Settings view** ([ADR 0008](decisions/0008-settings-and-presets.md)): a game with settings of its own (Charades' mode and points) gives a component that the setup screen shows below the format's settings. It receives `settings` (every setting but the teams) and `onChange`, and on a variant's setup `open`: the settings the variant lets players change, the only ones it shows (`isOpen`). The setup screen keeps, saves and checks them with the rest.
 
-**Variants** ([ADR 0018](decisions/0018-variants.md)) are JSON files in `variants/`: a name and tagline, categories (what Browse filters by, from `src/sdk/content/categories.json`, [ADR 0021](decisions/0021-library-pages.md)), packs (and optionally tags), the settings that differ from the game's defaults, and `open`, the settings players may change. The home page lists them first, then "Make your own" with each game. A variant's setup (`/:gameId/:variantId`) shows teams and its open settings only; a game's own setup (`/:gameId`) shows every setting. Variants replaced presets.
+**Variants** ([ADR 0018](decisions/0018-variants.md)) are JSON files in `variants/`: a name and tagline, categories (what Browse filters by, from `src/sdk/content/categories.json`, [ADR 0021](decisions/0021-library-pages.md)), packs (and optionally tags), the settings that differ from the game's defaults, and `open`, the settings players may change. Browse (`/games`) lists them, filtered by category; Custom game (`/custom`) lists each game; the home page features two ([ADR 0021](decisions/0021-library-pages.md)). A variant's setup (`/:gameId/:variantId`) shows teams and its open settings only; a game's own setup (`/:gameId`) shows every setting. Variants replaced presets.
 
 **Free Play** ([ADR 0019](decisions/0019-free-play.md)): a variant with `"freePlay": true` has two tabs on its setup, Competitive and Free Play (one player, at their own pace). Only a game that gives `config.freePlay` (its Free Play settings view, and where Free Play starts) can have such variants; `defineGame` checks. The choice turn gives `choiceFreePlay`: 10, 20 or 50 questions with no clock, or against the clock.
 
