@@ -42,3 +42,17 @@ The variant files changed in this step, not in a content step of their own: the 
 ### How to verify
 
 `pnpm test src/sdk/content`: the new tests in `categories.test.ts` and `variant.test.ts`. Type `"categories": ["nigerian"]` in a variant file: the editor underlines it, and `pnpm validate-content` names the file and `categories.0`.
+
+---
+
+## Step 3: Two game ids the library keeps
+
+**What:** `defineGame` refuses `games` and `custom` as game ids (`reservedGameIds` in `src/sdk/game/defineGame.ts`), with a message naming the page that uses it.
+
+**Why:** the next steps add `/games` (Browse) and `/custom` (Custom game). React Router prefers a fixed path like `/games` over `/:gameId`, so a game called `games` would never be reachable. Variants already have the same rule for `play` and `rules` (ADR 0018).
+
+The routes come with their pages, in steps 6 and 7.
+
+### How to verify
+
+`pnpm test src/sdk/game/defineGame.test.ts`. Change Charades' `meta.id` to `custom` and run `pnpm test`: every test that loads the registry fails with `meta.id: "custom" is taken`.

@@ -76,7 +76,7 @@ export default defineGame({
 });
 ```
 
-`defineGame` is in `src/sdk/game/`. Besides type-checking, it checks what types can't, and throws one error listing every problem: `meta` (kebab-case id, complexity 1–5, `players.max` ≥ `players.min`, at least one contributor), at least one pack, each variant (an id unique in the game that isn't `play` or `rules`, packs that exist, settings that pass the config schema, open settings the game has), and rules that aren't empty and use only the supported markdown. A game's tests import it, so a broken game fails CI.
+`defineGame` is in `src/sdk/game/`. Besides type-checking, it checks what types can't, and throws one error listing every problem: `meta` (kebab-case id that isn't `games` or `custom`, the library's own pages, complexity 1–5, `players.max` ≥ `players.min`, at least one contributor), at least one pack, each variant (an id unique in the game that isn't `play` or `rules`, packs that exist, settings that pass the config schema, open settings the game has), and rules that aren't empty and use only the supported markdown. A game's tests import it, so a broken game fails CI.
 
 **Defaults live in the config schema** (zod's `.default()`), not in a separate list, so they can't drift apart. A game that wants different defaults from the format's extends its schema.
 

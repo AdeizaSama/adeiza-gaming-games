@@ -107,6 +107,11 @@ describe('defineGame', () => {
     expect(message).toContain('meta.contributors:')
   })
 
+  it('refuses a game id the library’s own pages use', () => {
+    expect(problemsWith({ meta: { ...meta, id: 'games' } })).toContain('meta.id: "games" is taken: the library\'s /games page uses it')
+    expect(problemsWith({ meta: { ...meta, id: 'custom' } })).toContain('meta.id: "custom" is taken')
+  })
+
   it('needs at least one pack', () => {
     expect(problemsWith({ content: { ...game.content, packs: [] } })).toContain(
       'content.packs: A game needs at least one pack',
