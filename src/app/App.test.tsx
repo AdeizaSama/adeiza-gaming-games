@@ -91,7 +91,7 @@ describe('App', () => {
     expect(screen.getByRole('radio', { name: /Against the clock/ })).toBeDefined()
     expect(screen.getByRole('group', { name: 'Questions per turn' })).toBeDefined()
     expect(within(screen.getByRole('group', { name: 'Turn length' })).getByText('30 seconds')).toBeDefined()
-    expect(screen.getByText('430 items to play')).toBeDefined() // every pack, Masculin ou féminin ? included
+    expect(screen.getByText('772 items to play')).toBeDefined() // every pack, the French ones included
   })
 
   it.each(['/chess', '/charades/nope', '/charades/nope/extra'])('says "Page not found" at %s, with a way back', async (address) => {
