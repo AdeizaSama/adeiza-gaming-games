@@ -48,7 +48,8 @@ Packs are in [content/](content/), one JSON file each: Back to School, and Mascu
 | File | What it is |
 |---|---|
 | `index.ts` | The game's definition: meta, content, settings, rules, variants, machine, and the choice turn's views |
-| `variants/` | The ways to play it on the home page, one JSON file each |
+| `variants/` | The ways to play it, listed in Browse, one JSON file each |
+| `images/` | Optional pictures for its cards: `game.webp`, `<variant-id>.webp` (see CONTRIBUTING, "Add a picture") |
 | `schema.ts` | What a content item is: a question, its options, the answer and tags, using the SDK's option rules |
 | `config.ts` | The settings: the SDK's choice turn settings, with Trivia Night's defaults |
 | `machine.ts` | The SDK's choice turn (`src/sdk/formats/team-turns/choice/`) on Trivia Night's questions |

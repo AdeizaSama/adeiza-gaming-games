@@ -40,7 +40,8 @@ A good item:
 | File | What it is |
 |---|---|
 | `index.ts` | The game's definition: meta, content, settings, rules, variants, machine and views |
-| `variants/` | The ways to play it on the home page, one JSON file each |
+| `variants/` | The ways to play it, listed in Browse, one JSON file each |
+| `images/` | Optional pictures for its cards: `game.webp`, `<variant-id>.webp` (see CONTRIBUTING, "Add a picture") |
 | `schema.ts` | What a content item is |
 | `config.ts` | The settings: the format's, plus mode and points |
 | `machine.ts` | What happens in a turn and in review, and how a turn is scored |

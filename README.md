@@ -63,6 +63,7 @@ pnpm preview    # serve the production build locally
 
 - **Code:** [MIT](LICENSE)
 - **Content packs** (`src/games/*/content/`): [CC BY 4.0](LICENSE-CONTENT.md). Reuse them anywhere, including commercially, with credit.
+- **Pictures** (`src/games/*/images/`): each under its own license, listed with its source in the folder's `CREDITS.md`.
 
 By contributing, you agree that your contributions are licensed under these terms.
 

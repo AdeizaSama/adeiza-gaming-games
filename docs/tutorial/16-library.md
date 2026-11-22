@@ -130,10 +130,46 @@ The App tests that started on the home page and tapped a game in "Make your own"
 
 **What:** Space Grotesk (`@fontsource-variable/space-grotesk`, SIL Open Font License, 22 KB for Latin) added to `src/sdk/theme/fonts.ts` and imported in `src/app/theme/fonts.ts`; Space Travel's heading font changes from Orbitron to it. Orbitron stays in the list for any theme that wants it.
 
-**Why:** Orbitron is wide, all one weight of square letters: on cards two columns wide, a name like "Naija Charades (Back to School Edition)" took four lines. Space Grotesk keeps a spacey, technical feel in about two thirds of the width.
+**Why:** Orbitron is wide, all one weight of square letters: on cards two columns wide, a name like "Naija Charades (Back to School Edition)" took four lines. Space Grotesk keeps a spacey, technical feel in noticeably narrower letters.
 
 Changing a theme's font is one line of its file: no code (goal 2). Adding a font to the list is code, as ADR 0010 says, and `fonts.test.ts` checks the new one is imported, named as its CSS says and OFL-licensed.
 
 ### How to verify
 
 `pnpm test src/app/theme`. Run `pnpm dev`, pick Space Travel, open Browse: the names fit on two lines.
+
+---
+
+## Step 9: Docs
+
+**What:** the standard's §1, §3, §9 and §13 (Browse lists variants, a game's `images/` folder, the categories list, games and custom as taken ids); CONTRIBUTING's "Add a variant" (categories) and a new "Add a picture"; README's license section (pictures keep their own license, credited in `CREDITS.md`); each game's README lists `images/`.
+
+The content (categories on every variant) went in with step 2, which made the field required.
+
+### How to verify
+
+Read CONTRIBUTING's "Add a picture" as someone with a picture for Naija Charades.
+
+---
+
+## Chapter summary
+
+| Step | What | SDK change? |
+|---|---|---|
+| 1 | ADR 0021: library pages, categories and pictures | |
+| 2 | Categories, and every variant's | Yes: variant `categories` |
+| 3 | `games` and `custom` are taken game ids | Yes: `defineGame` |
+| 4 | The card, and its picture | |
+| 5 | Browse | |
+| 6 | Custom game | |
+| 7 | The home page | |
+| 8 | Space Grotesk for Space Travel | Yes: a font in the list |
+| 9 | Docs | |
+
+**What we learned:**
+
+- A field name that already means something can't be reused, however natural: `tags` on a variant filters items, so categories got their own name.
+- A required field and the files that need it land together, or the app refuses to load between the two commits.
+- Navigation state is for convenience, not for truth: after a refresh it's gone, and it can hold anything, so the back link checks it and has a sensible default.
+
+**Tests:** 503 runtime tests and 31 compile-time checks.

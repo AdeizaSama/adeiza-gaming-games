@@ -64,7 +64,7 @@ export default defineGame({
     // freePlay: choiceFreePlay,     // optional: lets its variants be played alone (ADR 0019)
   },
   rules,                             // import rules from "./rules.md?raw": how to play (ADR 0009)
-  variants: loadVariants(            // the ways to play it on the home page (ADR 0018), one JSON file each
+  variants: loadVariants(            // the ways to play it, listed in Browse (ADR 0018), one JSON file each
     import.meta.glob("./variants/*.json", { eager: true, import: "default" }),
   ),
   machine,                           // ./machine.ts
@@ -287,9 +287,9 @@ Out of scope for v1: multiplayer or multi-device play; accounts, backends or any
 
 ```
 src/
-  app/                 app shell: routing (App.tsx), library page (library/), setup screen (setup/), game screen (play/), persistence
-    registry/          the list of games; the only part of app/ that imports games
-  sdk/                 defineGame and useGameSession (game/), machine runner (machine/), Rng, content packs (content/), formats with their default views (formats/<format>/)
+  app/                 app shell: routing (App.tsx), library pages: home, Browse, Custom game (library/), setup screen (setup/), game screen (play/), persistence
+    registry/          the list of games and their pictures; the only part of app/ that reads games/
+  sdk/                 defineGame and useGameSession (game/), machine runner (machine/), Rng, content packs and the categories list (content/), formats with their default views (formats/<format>/)
     interactions/      shared phase primitives (§6)
   ui/                  low-level components (button, dialog, …). Only what's used.
   games/
@@ -301,7 +301,8 @@ src/
       config.ts        the game's settings schema, if it has settings of its own (§7)
       views/           phase views, and the settings view (ADR 0008)
       content/*.json   content packs
-      variants/*.json  variants: the ways to play it on the home page (ADR 0018)
+      variants/*.json  variants: the ways to play it, listed in Browse (ADR 0018)
+      images/          optional pictures for its cards: game.webp, <variant-id>.webp (ADR 0021)
       rules.md         player-facing rules
       README.md        for contributors: what the game is, content guidelines
   themes/*.json        visual themes (§11)
@@ -437,7 +438,7 @@ Tailwind's built-in palette is switched off, so classes like `bg-red-500` produc
 
 - [ ] Fits an existing format, or is explicitly deferred
 - [ ] `defineGame` export with meta, content, config schema (defaults included), rules, variants, machine, views
-- [ ] At least one variant in `variants/`, so the game is on the home page
+- [ ] At least one variant in `variants/`, so the game is in Browse
 - [ ] Guards and actions are deterministic; full-playthrough test, `validateMachine` test, and per-guard and per-action tests
 - [ ] At least one content pack passing validation
 - [ ] Views use interaction primitives (custom UI justified)

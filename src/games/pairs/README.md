@@ -42,5 +42,6 @@ A pack is one of two kinds, and its variants say which (`twoWay`):
 | `machine.ts` | Dealing a card or a set of tiles, flipping, picking and checking, and scoring |
 | `rules.md` | How to play, for players |
 | `views/` | The card or tiles, the settings and Free Play's length on setup |
-| `variants/` | The ways to play it on the home page, one JSON file each |
+| `variants/` | The ways to play it, listed in Browse, one JSON file each |
+| `images/` | Optional pictures for its cards: `game.webp`, `<variant-id>.webp` (see CONTRIBUTING, "Add a picture") |
 | `content/` | The packs |
