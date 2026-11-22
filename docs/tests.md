@@ -792,7 +792,7 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
 | 421 | is a valid game with the Back to School pack, its settings and one view for turn and result | `index.ts` | The game's default export | Id `trivia-night`; Back to School; its machine and settings; `TurnView` for `turn` and `reveal`; rules with "## Ways to play" | `defineGame` checked the parts when the file loaded; this checks Trivia Night wired its own parts in. |
-| 464 | has Back to School Trivia, Conjugaison française (ten verbs in 90 s, shuffled) and Masculin ou féminin ? (ten words a minute, A to Z), the French ones Set questions only; all offer Free Play | Variants | The game's variants | `back-to-school`, `conjugaison` and `masculin-feminin`; Conjugaison plays 10 questions, 90 s, shuffled, on its own pack; Masculin ou féminin ? 10 questions, 60 s, A to Z; both French ones with mode closed; the choice Free Play, and all three variants offering it | The variant the home page lists plays the way it's meant to (ADR 0018). |
+| 464 | has Back to School Trivia, Conjugaison française (ten verbs in 90 s, shuffled) and Masculin ou féminin ? (ten words a minute, A to Z), the French ones Set questions only; all offer Free Play | Variants | The game's variants | `back-to-school`, `conjugaison` and `masculin-feminin`; Conjugaison plays 10 questions, 90 s, shuffled, on its own pack; Masculin ou féminin ? 10 questions, 60 s, A to Z; both French ones with mode closed; the choice Free Play, and all three variants offering it | The variant Browse lists plays the way it's meant to (ADR 0018). |
 
 ## Pairs content
 
@@ -867,9 +867,9 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 515 | lists every variant at /games, with a filter of the categories they use | Browse | Start at `/games` | The heading; All and the seven categories, in the list's order, All pressed; the seven variants, the first linking to `/charades/naija-back-to-school` with "Charades · 2–20 players" | Every way to play in one place; only filters that show something. |
-| 516 | filters by category, and a setup's back link returns to the same filter | Filter, back link | Tap Back to School; open Back to School Trivia; tap Games; tap All | Three variants; the setup's Games link to `/games?category=school`; Back to School still pressed with three; then all seven | The filter lives in the address, so coming back from a setup doesn't lose it. |
-| 517 | shows every game for a category it doesn't offer | Filter | Start at `/games?category=chess` | All pressed; seven variants | An old or mistyped link still shows the games. |
+| 515 | lists every variant at /games, with a filter of the categories they use | Browse | Start at `/games` | The heading; All and the seven categories, in the list's order, All pressed; the eight variants, the first linking to `/charades/naija-back-to-school` with "Charades · 2–20 players" | Every way to play in one place; only filters that show something. |
+| 516 | filters by category, and a setup's back link returns to the same filter | Filter, back link | Tap Back to School; open Back to School Trivia; tap Games; tap All | Three variants; the setup's Games link to `/games?category=school`; Back to School still pressed with three; then all eight | The filter lives in the address, so coming back from a setup doesn't lose it. |
+| 517 | shows every game for a category it doesn't offer | Filter | Start at `/games?category=chess` | All pressed; eight variants | An old or mistyped link still shows the games. |
 | 518 | sends a setup opened by its address back to Browse for a variant, Custom game for a game, unless the card said where | `backLink` | No state for a variant; none for a game; other state; a link off the site; a card's link home | `/games` "Games"; `/custom` "Custom game"; the same; `/games`; `/` "Home" | Navigation state can be anything: only a link inside the app is followed. |
 
 ## Custom game

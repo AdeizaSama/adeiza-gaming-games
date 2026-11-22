@@ -39,6 +39,7 @@ describe('Browse', () => {
       'Naija Charades (Back to School Edition)',
       'Name Ten (Back to School Edition)',
       'Back to School Trivia',
+      'Conjugaison française',
       'Masculin ou féminin ?',
       'French Flash Cards',
       'French Match-Up',
@@ -64,13 +65,13 @@ describe('Browse', () => {
     expect(names()).toHaveLength(3)
 
     await user.click(screen.getByRole('button', { name: 'All' }))
-    expect(names()).toHaveLength(7)
+    expect(names()).toHaveLength(8)
   })
 
   it('shows every game for a category it doesn’t offer', () => {
     renderAt('/games?category=chess')
     expect(pressed()).toBe('All')
-    expect(names()).toHaveLength(7)
+    expect(names()).toHaveLength(8)
   })
 
   it('sends a setup opened by its address back to Browse for a variant, Custom game for a game, unless the card said where', () => {

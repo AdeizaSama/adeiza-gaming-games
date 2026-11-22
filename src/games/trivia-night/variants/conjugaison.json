@@ -3,6 +3,7 @@
   "id": "conjugaison",
   "name": "Conjugaison française",
   "tagline": "French for beginners: pick the right present-tense form of everyday verbs.",
+  "categories": ["learning", "french", "words"],
   "packs": ["conjugaison"],
   "settings": { "questions": 10, "seconds": 90 },
   "open": ["rounds", "seconds", "questions"],

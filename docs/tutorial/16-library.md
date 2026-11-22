@@ -152,6 +152,12 @@ Read CONTRIBUTING's "Add a picture" as someone with a picture for Naija Charades
 
 ---
 
+## Merging Conjugaison française
+
+`content/conjugaison` (a French verbs pack and variant for Trivia Night, built alongside this chapter) is merged in. Two conflicts: the home page test (this chapter replaced its list of every variant with the featured two) and `docs/tests.md` (both branches numbered a new test 507; Conjugaison's became 521). Then one commit brings it up to date: its variant gets `categories` (learning, french, words), and Browse's tests list eight variants.
+
+---
+
 ## Chapter summary
 
 | Step | What | SDK change? |
@@ -172,4 +178,4 @@ Read CONTRIBUTING's "Add a picture" as someone with a picture for Naija Charades
 - A required field and the files that need it land together, or the app refuses to load between the two commits.
 - Navigation state is for convenience, not for truth: after a refresh it's gone, and it can hold anything, so the back link checks it and has a sensible default.
 
-**Tests:** 503 runtime tests and 31 compile-time checks.
+**Tests:** 504 runtime tests and 31 compile-time checks.
