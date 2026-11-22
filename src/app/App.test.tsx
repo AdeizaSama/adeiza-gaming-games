@@ -71,7 +71,7 @@ describe('App', () => {
     const nameTen = makeYourOwn().getByRole('link', { name: /Name Ten/ })
     expect(nameTen.getAttribute('href')).toBe('/name-ten')
     expect(nameTen.textContent).toContain('Name ten before the clock runs out.')
-    expect(nameTen.querySelector('.lucide-list-checks')).not.toBeNull()
+    expect(nameTen.querySelector('img, .lucide-list-checks')).not.toBeNull() // its picture, or its icon until it has one
 
     await user.click(nameTen)
     expect(screen.getByRole('heading', { level: 1, name: 'Name Ten' })).toBeDefined()
@@ -84,7 +84,7 @@ describe('App', () => {
     renderAt('/custom')
     const trivia = makeYourOwn().getByRole('link', { name: /Trivia Night/ })
     expect(trivia.getAttribute('href')).toBe('/trivia-night')
-    expect(trivia.querySelector('.lucide-lightbulb')).not.toBeNull()
+    expect(trivia.querySelector('img, .lucide-lightbulb')).not.toBeNull()
 
     await user.click(trivia)
     expect(screen.getByRole('heading', { level: 1, name: 'Trivia Night' })).toBeDefined()
