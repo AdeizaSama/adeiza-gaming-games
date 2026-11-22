@@ -123,3 +123,17 @@ The App tests that started on the home page and tapped a game in "Make your own"
 ### How to verify
 
 `pnpm test src/app/App.test.tsx`. Run `pnpm dev`: the home page fits on a phone's screen, with Browse games and Custom game in reach of a thumb.
+
+---
+
+## Step 8: A lighter heading font for Space Travel
+
+**What:** Space Grotesk (`@fontsource-variable/space-grotesk`, SIL Open Font License, 22 KB for Latin) added to `src/sdk/theme/fonts.ts` and imported in `src/app/theme/fonts.ts`; Space Travel's heading font changes from Orbitron to it. Orbitron stays in the list for any theme that wants it.
+
+**Why:** Orbitron is wide, all one weight of square letters: on cards two columns wide, a name like "Naija Charades (Back to School Edition)" took four lines. Space Grotesk keeps a spacey, technical feel in about two thirds of the width.
+
+Changing a theme's font is one line of its file: no code (goal 2). Adding a font to the list is code, as ADR 0010 says, and `fonts.test.ts` checks the new one is imported, named as its CSS says and OFL-licensed.
+
+### How to verify
+
+`pnpm test src/app/theme`. Run `pnpm dev`, pick Space Travel, open Browse: the names fit on two lines.
