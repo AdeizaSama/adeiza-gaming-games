@@ -3,6 +3,7 @@
   "id": "french-match-up",
   "name": "French Match-Up",
   "tagline": "Three words, ten tiles: find their partners.",
+  "categories": ["learning", "french", "words"],
   "packs": ["francais-anglais"],
   "settings": { "play": "match", "twoWay": true },
   "open": ["rounds", "seconds", "cards"],

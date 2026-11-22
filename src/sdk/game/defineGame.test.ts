@@ -32,7 +32,7 @@ const SummaryView = (props: Props) => props.points(props.context.turn, props.con
 
 /** A variant of Word Duel: the food pack, 30-second turns, rounds open. */
 function variant(id: string, changes: Partial<Variant> = {}): Variant {
-  return { id, name: 'Quick Food', tagline: 'Food, fast.', packs: ['food'], tags: [], settings: { seconds: 30 }, open: ['rounds'], freePlay: false, contributors: ['AdeizaSama'], ...changes }
+  return { id, name: 'Quick Food', tagline: 'Food, fast.', categories: ['party'], packs: ['food'], tags: [], settings: { seconds: 30 }, open: ['rounds'], freePlay: false, contributors: ['AdeizaSama'], ...changes }
 }
 
 function pack(id: string): Pack<Item> {

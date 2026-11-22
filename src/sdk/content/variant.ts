@@ -4,6 +4,7 @@
  * content helpers.
  */
 import { z } from 'zod'
+import { categories } from './categories'
 import { friendlyError } from './messages'
 import { PackInfo, Tag } from './pack'
 
@@ -26,6 +27,11 @@ export const VariantFile = z.strictObject({
     .min(1)
     .max(100, 'Keep the tagline to 100 characters')
     .meta({ description: 'One line under the name on the home page.' }),
+  categories: z
+    .array(z.enum(categories.map(({ id }) => id) as [string, ...string[]]))
+    .min(1, 'List at least one category')
+    .refine((ids) => new Set(ids).size === ids.length, 'List each category once')
+    .meta({ description: 'What kind of game it is, for the filter on Browse (ADR 0021), e.g. ["party", "naija"]. From src/sdk/content/categories.json.' }),
   packs: z
     .array(PackInfo.shape.id)
     .min(1, 'List at least one pack')

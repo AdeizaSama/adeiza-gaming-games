@@ -73,6 +73,7 @@ describe('checkVariantFile', () => {
       id: 'naija',
       name: 'Naija Charades',
       tagline: 'Act it out.',
+      categories: ['party'],
       packs: ['back-to-school'],
       contributors: ['AdeizaSama'],
       ...changes,

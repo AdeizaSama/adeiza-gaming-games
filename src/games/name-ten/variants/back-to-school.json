@@ -3,6 +3,7 @@
   "id": "back-to-school",
   "name": "Name Ten (Back to School Edition)",
   "tagline": "Subjects, snacks and school days: name ten before the clock runs out.",
+  "categories": ["party", "words", "school"],
   "packs": ["back-to-school"],
   "open": ["rounds", "seconds"],
   "contributors": ["AdeizaSama"]

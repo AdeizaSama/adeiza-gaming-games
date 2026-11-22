@@ -82,7 +82,7 @@ export default defineGame({
 
 **Settings view** ([ADR 0008](decisions/0008-settings-and-presets.md)): a game with settings of its own (Charades' mode and points) gives a component that the setup screen shows below the format's settings. It receives `settings` (every setting but the teams) and `onChange`, and on a variant's setup `open`: the settings the variant lets players change, the only ones it shows (`isOpen`). The setup screen keeps, saves and checks them with the rest.
 
-**Variants** ([ADR 0018](decisions/0018-variants.md)) are JSON files in `variants/`: a name and tagline, packs (and optionally tags), the settings that differ from the game's defaults, and `open`, the settings players may change. The home page lists them first, then "Make your own" with each game. A variant's setup (`/:gameId/:variantId`) shows teams and its open settings only; a game's own setup (`/:gameId`) shows every setting. Variants replaced presets.
+**Variants** ([ADR 0018](decisions/0018-variants.md)) are JSON files in `variants/`: a name and tagline, categories (what Browse filters by, from `src/sdk/content/categories.json`, [ADR 0021](decisions/0021-library-pages.md)), packs (and optionally tags), the settings that differ from the game's defaults, and `open`, the settings players may change. The home page lists them first, then "Make your own" with each game. A variant's setup (`/:gameId/:variantId`) shows teams and its open settings only; a game's own setup (`/:gameId`) shows every setting. Variants replaced presets.
 
 **Free Play** ([ADR 0019](decisions/0019-free-play.md)): a variant with `"freePlay": true` has two tabs on its setup, Competitive and Free Play (one player, at their own pace). Only a game that gives `config.freePlay` (its Free Play settings view, and where Free Play starts) can have such variants; `defineGame` checks. The choice turn gives `choiceFreePlay`: 10, 20 or 50 questions with no clock, or against the clock.
 
@@ -92,6 +92,7 @@ export default defineGame({
   "id": "masculin-feminin",
   "name": "Masculin ou féminin ?",
   "tagline": "French for beginners: is the word masculine or feminine?",
+  "categories": ["learning", "french", "words"],
   "packs": ["masculin-feminin"],
   "settings": { "questions": 10, "seconds": 60, "order": "alphabetical" },
   "open": ["rounds", "seconds", "questions"],

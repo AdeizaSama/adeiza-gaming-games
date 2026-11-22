@@ -50,6 +50,7 @@ A variant is a way to play a game that the home page lists: its packs, its setti
   "id": "anime",
   "name": "Anime Charades",
   "tagline": "Heroes, villains and catchphrases, acted out.",
+  "categories": ["party"],
   "packs": ["anime"],
   "settings": { "seconds": 90 },
   "open": ["rounds", "seconds", "mode"],
@@ -58,6 +59,7 @@ A variant is a way to play a game that the home page lists: its packs, its setti
 ```
 
 - `id` is the file name without `.json`, and the variant's address: `/charades/anime`.
+- `categories` says what kind of game it is, for the filter on Browse: at least one, from [the list](src/sdk/content/categories.json) (your editor suggests them). A new category is a line in that file, then `pnpm generate-schemas`. See [ADR 0021](docs/decisions/0021-library-pages.md).
 - `packs` lists pack ids from the game's `content/` folder. `tags`, optional, plays only items with those tags.
 - `settings` lists only what differs from the game's defaults. Each game's README says what its settings are called.
 - `open` lists the settings players may change on the variant's setup screen. Teams are always theirs; packs and tags never are.

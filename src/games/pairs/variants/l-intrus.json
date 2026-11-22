@@ -3,6 +3,7 @@
   "id": "l-intrus",
   "name": "L'intrus",
   "tagline": "Les animaux, les métiers… find the three words that don't belong.",
+  "categories": ["learning", "french", "words"],
   "packs": ["les-themes"],
   "settings": { "play": "odd", "twoWay": false },
   "open": ["rounds", "seconds", "cards"],

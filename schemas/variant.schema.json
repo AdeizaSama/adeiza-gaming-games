@@ -23,6 +23,23 @@
       "maxLength": 100,
       "description": "One line under the name on the home page."
     },
+    "categories": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "party",
+          "learning",
+          "trivia",
+          "words",
+          "school",
+          "french",
+          "naija"
+        ]
+      },
+      "description": "What kind of game it is, for the filter on Browse (ADR 0021), e.g. [\"party\", \"naija\"]. From src/sdk/content/categories.json."
+    },
     "packs": {
       "minItems": 1,
       "type": "array",
@@ -80,6 +97,7 @@
     "id",
     "name",
     "tagline",
+    "categories",
     "packs",
     "contributors"
   ],

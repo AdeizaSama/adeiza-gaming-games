@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 489 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
+**Counts:** 492 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -19,7 +19,8 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [Duplicate items](#duplicate-items) | `src/sdk/content/duplicates.test.ts` | 10 | |
 | [Multiple-choice options](#multiple-choice-options) | `src/sdk/content/choices.test.ts` | 5 | |
 | [Loading packs](#loading-packs) | `src/sdk/content/loadPacks.test.ts` | 12 | |
-| [Variant files](#variant-files) | `src/sdk/content/variant.test.ts` | 3 | |
+| [Variant files](#variant-files) | `src/sdk/content/variant.test.ts` | 4 | |
+| [Categories](#categories) | `src/sdk/content/categories.test.ts` | 2 | |
 | [Finding games (scripts)](#finding-games-scripts) | `scripts/lib/games.test.ts` | 6 | |
 | [Charades content](#charades-content) | `src/games/charades/schema.test.ts` | 8 | |
 | [Name Ten content](#name-ten-content) | `src/games/name-ten/schema.test.ts` | 6 | |
@@ -286,13 +287,23 @@ Each row is a mistake TypeScript must reject.
 
 ## Variant files
 
-`src/sdk/content/variant.test.ts`, testing `src/sdk/content/variant.ts` (ADR 0018): a variant file's shape, checked by the app and the content check. The variant is `quick-food`: pack `food`, 30-second turns, rounds open.
+`src/sdk/content/variant.test.ts`, testing `src/sdk/content/variant.ts` (ADR 0018, 0021): a variant file's shape, checked by the app and the content check. The variant is `quick-food`: category `party`, pack `food`, 30-second turns, rounds open.
 
 | # | Test | Feature | Input | Expected output | Why |
 |---|---|---|---|---|---|
-| 444 | accepts a variant file, filling in no tags, no settings and no open settings | `checkVariant` | The variant; one with only id, name, tagline, packs, contributors | The same with `tags: []` and `freePlay: false`; then `settings: {}`, `open: []` too | Only what makes a variant is required. |
+| 444 | accepts a variant file, filling in no tags, no settings and no open settings | `checkVariant` | The variant; one with only id, name, tagline, categories, packs, contributors | The same with `tags: []` and `freePlay: false`; then `settings: {}`, `open: []` too | Only what makes a variant is required. |
 | 445 | needs its id to be its file name, at least one pack, a name and contributors, and no unknown fields | `checkVariant` | File `food.json`; no packs; blank name, no contributors; a `presets` field | Problems at `id`; `packs`; `name` and `contributors`; one problem | The id is the address; a typo in a field name is caught. |
+| 507 | needs at least one category, each from the list and listed once | `checkVariant` | No categories; an empty list; `nigerian`; `party` twice | A problem at `categories`; `categories`; `categories.0`; `categories` | Browse filters by category, and one list keeps the names consistent (ADR 0021). |
 | 446 | loads every file, sorted by id, and throws one error listing every problem | `loadVariants` | Two good files; then a bad id and an empty pack list | `all-food`, `quick-food`; then one error naming both files | Every problem at once, like packs. |
+
+## Categories
+
+`src/sdk/content/categories.test.ts`, testing `src/sdk/content/categories.ts` and `categories.json` (ADR 0021): the list of categories variants can be in.
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 508 | loads the shipped list, each id once with a label | The list | `categories.json`; the label for `school` | party, learning, trivia, words, school, french, naija, in that order; "Back to School" | The order is the filter's on Browse. |
+| 509 | refuses a list with a bad id, a blank or long label, or an id used twice | `loadCategories` | `Party`; a blank label; a 33-character label; `party` twice; an empty list | Errors at `0.id`; `0.label`; "20 characters"; "used once"; "whole file" | A broken list stops the build, not Browse. |
 
 ## Finding games (scripts)
 

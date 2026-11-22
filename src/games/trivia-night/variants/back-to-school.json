@@ -3,6 +3,7 @@
   "id": "back-to-school",
   "name": "Back to School Trivia",
   "tagline": "Maths, science, social studies, and everything on telly after school.",
+  "categories": ["party", "trivia", "school"],
   "packs": ["back-to-school"],
   "open": ["rounds", "seconds", "mode", "questions"],
   "freePlay": true,
