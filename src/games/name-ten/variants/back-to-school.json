@@ -1,9 +1,9 @@
 {
   "$schema": "../../../../schemas/variant.schema.json",
   "id": "back-to-school",
-  "name": "Name Ten (Back to School Edition)",
+  "name": "Name Ten: Back To School",
   "tagline": "Subjects, snacks and school days: name ten before the clock runs out.",
-  "categories": ["party", "words", "school"],
+  "categories": ["party", "naija", "school"],
   "packs": ["back-to-school"],
   "open": ["rounds", "seconds"],
   "contributors": ["AdeizaSama"]
