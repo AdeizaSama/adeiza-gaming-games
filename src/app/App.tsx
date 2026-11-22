@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Route, Routes, useLocation, useNavigationType } from 'react-router'
 import { BrowsePage } from './library/BrowsePage'
+import { CustomPage } from './library/CustomPage'
 import { LibraryPage } from './library/LibraryPage'
 import { NotFoundPage } from './NotFoundPage'
 import { PlayPage } from './play/PlayPage'
@@ -33,6 +34,7 @@ export default function App() {
         <Route path="/" element={<LibraryPage />} />
         {/* Before /:gameId, which would match them too; defineGame keeps these ids from games (ADR 0021). */}
         <Route path="/games" element={<BrowsePage />} />
+        <Route path="/custom" element={<CustomPage />} />
         <Route path="/:gameId" element={<SetupPage />} />
         <Route path="/:gameId/play" element={<PlayPage />} />
         <Route path="/:gameId/rules" element={<RulesPage />} />

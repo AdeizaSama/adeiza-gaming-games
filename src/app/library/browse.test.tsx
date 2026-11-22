@@ -73,10 +73,10 @@ describe('Browse', () => {
     expect(names()).toHaveLength(7)
   })
 
-  it('sends a setup opened by its address back to Browse for a variant, home for a game, unless the card said where', () => {
+  it('sends a setup opened by its address back to Browse for a variant, Custom game for a game, unless the card said where', () => {
     expect(backLink(undefined, true)).toEqual({ to: '/games', label: 'Games' })
-    expect(backLink(null, false)).toEqual({ to: '/', label: 'Home' })
-    expect(backLink({ fromSetup: true }, false)).toEqual({ to: '/', label: 'Home' })
+    expect(backLink(null, false)).toEqual({ to: '/custom', label: 'Custom game' })
+    expect(backLink({ fromSetup: true }, false)).toEqual({ to: '/custom', label: 'Custom game' })
     expect(backLink({ back: { to: 'https://example.com', label: 'Away' } }, true)).toEqual({ to: '/games', label: 'Games' })
     expect(backLink({ back: { to: '/', label: 'Home' } }, true)).toEqual({ to: '/', label: 'Home' })
   })

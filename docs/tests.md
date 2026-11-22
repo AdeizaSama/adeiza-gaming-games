@@ -4,7 +4,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 
 **Keep it in sync.** A pull request that adds, removes or changes a test updates this file in the same commit. The "Test" column is the test's name in the code, so you can search for it.
 
-**Counts:** 501 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
+**Counts:** 502 runtime tests (`pnpm test`) and 31 compile-time checks (`pnpm typecheck`).
 
 | Area | File | Runtime tests | Compile-time checks |
 |---|---|---|---|
@@ -58,6 +58,7 @@ Every automated test in the repo, in plain English: what it checks, what goes in
 | [App](#app) | `src/app/App.test.tsx` | 10 | |
 | [Library cards](#library-cards) | `src/app/library/cards.test.tsx` | 4 | |
 | [Browse](#browse) | `src/app/library/browse.test.tsx` | 4 | |
+| [Custom game](#custom-game) | `src/app/library/custom.test.tsx` | 1 | |
 | [Theme tokens](#theme-tokens) | `src/app/theme.test.ts` | 6 | |
 | [Applying a theme](#applying-a-theme) | `src/app/theme/themes.test.tsx` | 4 | |
 | [Bundled fonts](#bundled-fonts) | `src/app/theme/fonts.test.ts` | 2 | |
@@ -868,7 +869,15 @@ Each is a game passed to `teamTurns` with one mistake, and must be a type error 
 | 515 | lists every variant at /games, with a filter of the categories they use | Browse | Start at `/games` | The heading; All and the seven categories, in the list's order, All pressed; the seven variants, the first linking to `/charades/naija-back-to-school` with "Charades · 2–20 players" | Every way to play in one place; only filters that show something. |
 | 516 | filters by category, and a setup's back link returns to the same filter | Filter, back link | Tap Back to School; open Back to School Trivia; tap Games; tap All | Three variants; the setup's Games link to `/games?category=school`; Back to School still pressed with three; then all seven | The filter lives in the address, so coming back from a setup doesn't lose it. |
 | 517 | shows every game for a category it doesn't offer | Filter | Start at `/games?category=chess` | All pressed; seven variants | An old or mistyped link still shows the games. |
-| 518 | sends a setup opened by its address back to Browse for a variant, home for a game, unless the card said where | `backLink` | No state for a variant; none for a game; other state; a link off the site; a card's link home | `/games` "Games"; `/` "Home"; the same; `/games`; `/` "Home" | Navigation state can be anything: only a link inside the app is followed. |
+| 518 | sends a setup opened by its address back to Browse for a variant, Custom game for a game, unless the card said where | `backLink` | No state for a variant; none for a game; other state; a link off the site; a card's link home | `/games` "Games"; `/custom` "Custom game"; the same; `/games`; `/` "Home" | Navigation state can be anything: only a link inside the app is followed. |
+
+## Custom game
+
+`src/app/library/custom.test.tsx`, testing `src/app/library/CustomPage.tsx` (ADR 0021). Screen test (happy-dom).
+
+| # | Test | Feature | Input | Expected output | Why |
+|---|---|---|---|---|---|
+| 519 | lists every game at /custom, each opening its own setup, which leads back here | Custom game | Start at `/custom`; tap Charades; tap Custom game; tap Home | Charades, Name Ten, Trivia Night, Pairs, linking to their setups, with players; Charades' setup; Custom game again; home | The full setup of every game, away from the home page; each page leads back the way it came. |
 
 ## App
 

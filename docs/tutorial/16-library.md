@@ -95,3 +95,15 @@ The home page still has its long list; step 7 replaces it.
 ### How to verify
 
 `pnpm test src/app/library/browse.test.tsx`. Run `pnpm dev`, open `/games`, tap French, open a game, tap Games at the top: French is still picked.
+
+---
+
+## Step 6: Custom game
+
+**What:** `src/app/library/CustomPage.tsx` at `/custom`: every game in the same grid, each opening its own setup with every setting. A game's own setup, opened by its address, now goes back here.
+
+**Why a page of its own:** most players want a ready-made way to play; the full setup (packs, tags, every setting) is for people who know what they want. On the home page it was a second list that pushed everything else down.
+
+### How to verify
+
+`pnpm test src/app/library/custom.test.tsx`. Open `/charades` directly: the back link at the top says Custom game.
